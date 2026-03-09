@@ -1,0 +1,39 @@
+{
+	email admin@hxroom.io
+}
+
+(ionos-tls) {
+	tls {
+		dns ionos {env.IONOS_API_TOKEN}
+	}
+}
+
+hxroom.io {
+	import ionos-tls
+	reverse_proxy landing:5176
+}
+
+api.hxroom.io {
+	import ionos-tls
+	reverse_proxy api:3000
+}
+
+app.hxroom.io {
+	import ionos-tls
+	reverse_proxy web:5173
+}
+
+admin.hxroom.io {
+	import ionos-tls
+	reverse_proxy admin:5175
+}
+
+livekit.hxroom.io {
+	import ionos-tls
+	reverse_proxy livekit:7880
+}
+
+*.hxroom.io {
+	import ionos-tls
+	reverse_proxy client:5174
+}

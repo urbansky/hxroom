@@ -1,4 +1,12 @@
-# Sitzraum – Docker Compose (Lokale Entwicklung)
+# HxRoom – Docker Compose (Lokale Entwicklung)
 # Startet PostgreSQL, Redis, LiveKit (dev), Whisper-Service.
-# Wird in Phase 1 mit den konkreten Services befüllt.
-services: {}
+# Weitere Services werden in späteren Phasen ergänzt.
+services:
+  caddy:
+    build: ./caddy
+    ports:
+      - "80:80"
+    volumes:
+      - ./caddy/Caddyfile.dev:/etc/caddy/Caddyfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

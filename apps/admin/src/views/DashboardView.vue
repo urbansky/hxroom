@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Sitzraum – Betreiber-Backoffice</h1>
-    <p>admin.sitzraum.de</p>
+    <h1>HxRoom – Betreiber-Backoffice</h1>
+    <p>admin.hxroom.io</p>
   </div>
 </template>

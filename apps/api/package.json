@@ -1,5 +1,5 @@
 {
-  "name": "@sitzraum/api",
+  "name": "@hxroom/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -13,7 +13,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "@sitzraum/shared": "workspace:*",
+    "@hxroom/shared": "workspace:*",
     "drizzle-orm": "^0.39.0",
     "postgres": "^3.4.0",
     "reflect-metadata": "^0.2.0",

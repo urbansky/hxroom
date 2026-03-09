@@ -1,5 +1,5 @@
 {
-  "name": "sitzraum",
+  "name": "hxroom",
   "private": true,
   "version": "1.0.0",
   "description": "",
@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
-    "build:types": "pnpm --filter @sitzraum/shared build",
+    "build:types": "pnpm --filter @hxroom/shared build",
     "db:generate": "pnpm --filter api db:generate",
     "db:migrate": "pnpm --filter api db:migrate"
   },

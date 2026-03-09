@@ -1,11 +1,11 @@
-# Sitzraum – Technisches Konzept
+# HxRoom – Technisches Konzept
 *Version 0.5 · MVP-Scope*
 
 ---
 
 ## 1. Überblick & Zielsetzung
 
-Sitzraum ist eine White-Label Videocall-Plattform für Coaches im DACH-Markt. Das technische Ziel ist ein schlankes, iterativ wachsendes System, das vom ersten Tag an DSGVO-konform, stabil und alleine wartbar ist. Der Einsatz von **Claude Code** ist expliziter Bestandteil des Entwicklungsprozesses – nicht als Gimmick, sondern als produktiver Pair-Programmer für Scaffolding, Codegenerierung, Migrations-Skripte und Dokumentation.
+HxRoom ist eine White-Label Videocall-Plattform für Coaches im DACH-Markt. Das technische Ziel ist ein schlankes, iterativ wachsendes System, das vom ersten Tag an DSGVO-konform, stabil und alleine wartbar ist. Der Einsatz von **Claude Code** ist expliziter Bestandteil des Entwicklungsprozesses – nicht als Gimmick, sondern als produktiver Pair-Programmer für Scaffolding, Codegenerierung, Migrations-Skripte und Dokumentation.
 
 Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst eingeschlossen – Stripe verarbeitet EU-Zahlungsdaten über irische und luxemburgische Entitäten (DSGVO-konform per SCCs).
 
@@ -42,7 +42,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **Hosting** | Hetzner Cloud, Standort Deutschland (Nürnberg / Falkenstein) |
 | **LiveKit Server** | Self-hosted Docker-Container auf Hetzner |
 | **Whisper Service** | Self-hosted Docker-Container auf Hetzner |
-| **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.sitzraum.de`) |
+| **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.hxroom.io`) |
 | **Object Storage** | Hetzner Object Storage (S3-kompatibel, Standort Falkenstein) |
 | **Deployment** | Docker Compose (Entwicklung & Produktion) |
 
@@ -62,7 +62,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 ## 3. Projektstruktur & Repositories
 
 ```
-sitzraum/
+hxroom/
 ├── apps/
 │   ├── api/          # NestJS Backend
 │   └── web/          # Vue.js Frontend (Nuxt UI)
@@ -154,7 +154,7 @@ Claude Code ist kein Ersatz für Architekturentscheidungen, aber ein erheblicher
 Im Root des Repos liegt eine `CLAUDE.md`, die Claude Code den Projektkontext erklärt:
 
 ```markdown
-# Sitzraum – Claude Code Kontext
+# HxRoom – Claude Code Kontext
 
 ## Stack
 - Backend: NestJS, PostgreSQL, Drizzle ORM, better-auth + organization plugin, LiveKit (self-hosted)
@@ -210,17 +210,17 @@ Claude Code erkennt Duplikate, vereinheitlicht DTOs auf Zod-Schemas und macht Fe
 ## 6. Domain-Architektur
 
 ```
-sitzraum.de              → Vue-App (Landingpage, öffentlich)
-app.sitzraum.de          → Vue-App (Coach-Backoffice, Login erforderlich)
-[slug].sitzraum.de       → Vue-App (Klienten-Subdomain: Buchung, Warteraum, Call)
-api.sitzraum.de          → NestJS API
-livekit.sitzraum.de      → LiveKit Server (intern, kein öffentliches UI)
-admin.sitzraum.de        → Internes Betreiber-Backoffice (später)
+hxroom.io              → Vue-App (Landingpage, öffentlich)
+app.hxroom.io          → Vue-App (Coach-Backoffice, Login erforderlich)
+[slug].hxroom.io       → Vue-App (Klienten-Subdomain: Buchung, Warteraum, Call)
+api.hxroom.io          → NestJS API
+livekit.hxroom.io      → LiveKit Server (intern, kein öffentliches UI)
+admin.hxroom.io        → Internes Betreiber-Backoffice (später)
 ```
 
 **Subdomain-Routing im Frontend:** Vue Router erkennt die Subdomain aus `window.location.hostname` und rendert den entsprechenden App-Kontext. Ein einziges Deployment, mehrere logische Apps.
 
-**Wildcard-Zertifikat:** Caddy mit Hetzner DNS-Provider für automatisches `*.sitzraum.de` Let's-Encrypt-Zertifikat.
+**Wildcard-Zertifikat:** Caddy mit Hetzner DNS-Provider für automatisches `*.hxroom.io` Let's-Encrypt-Zertifikat.
 
 ---
 
@@ -321,7 +321,7 @@ CMD ["python", "server.py"]
 ```
 Sitzung endet
   → LiveKit Egress API erstellt Audio-Recording (nur wenn Coach aktiviert)
-  → Recording landet im S3-Bucket `sitzraum-recordings` (Hetzner Object Storage)
+  → Recording landet im S3-Bucket `hxroom-recordings` (Hetzner Object Storage)
   → BullMQ Job `transcribe-session` wird eingereiht
   → Worker ruft Whisper-Service auf (POST /transcribe)
   → Transkript wird in session_notes.transcript gespeichert
@@ -393,13 +393,13 @@ export const s3 = new S3Client({
 
 | Bucket | Inhalt | Zugriff | Ablauf |
 |---|---|---|---|
-| `sitzraum-uploads` | Coach-Logos, Profilfotos | Public-Read (via CDN-URL) | Permanent |
-| `sitzraum-recordings` | LiveKit Audio-Recordings | Private | Nach Transkription (TTL 7 Tage) |
-| `sitzraum-exports` | PDF-Rechnungen, Datenexporte | Private, signierte URLs | 24h nach Generierung |
+| `hxroom-uploads` | Coach-Logos, Profilfotos | Public-Read (via CDN-URL) | Permanent |
+| `hxroom-recordings` | LiveKit Audio-Recordings | Private | Nach Transkription (TTL 7 Tage) |
+| `hxroom-exports` | PDF-Rechnungen, Datenexporte | Private, signierte URLs | 24h nach Generierung |
 
 ### Was landet wo
 
-**Coach-Logos & Profilfotos** (`sitzraum-uploads`)
+**Coach-Logos & Profilfotos** (`hxroom-uploads`)
 Beim Branding-Setup lädt der Coach sein Logo hoch. Das Backend empfängt die Datei, validiert Typ und Größe, und schreibt sie direkt in S3. Die öffentliche URL wird in `coach_profiles.branding_logo_url` gespeichert.
 
 ```
@@ -407,7 +407,7 @@ Key-Schema: uploads/{organizationId}/logo.{ext}
             uploads/{organizationId}/avatar.{ext}
 ```
 
-**Audio-Recordings** (`sitzraum-recordings`)
+**Audio-Recordings** (`hxroom-recordings`)
 LiveKit Egress schreibt fertige Recordings direkt in den S3-Bucket (LiveKit unterstützt S3-kompatible Endpoints nativ). Nach erfolgreicher Transkription durch Whisper wird die Audiodatei automatisch gelöscht – sie wird nicht dauerhaft aufbewahrt.
 
 ```
@@ -421,11 +421,11 @@ s3:
   secret: ${S3_SECRET_KEY}
   region: eu-central
   endpoint: https://fsn1.your-objectstorage.com
-  bucket: sitzraum-recordings
+  bucket: hxroom-recordings
   force_path_style: true
 ```
 
-**PDF-Rechnungen & Datenexporte** (`sitzraum-exports`)
+**PDF-Rechnungen & Datenexporte** (`hxroom-exports`)
 Generierte Rechnungen (Pro-Feature) und DSGVO-Datenexporte werden als PDFs in S3 gespeichert. Der Zugriff erfolgt ausschließlich über **signierte URLs** mit kurzer TTL – kein dauerhafter öffentlicher Zugriff.
 
 ```
@@ -439,7 +439,7 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const url = await getSignedUrl(s3, new GetObjectCommand({
-  Bucket: 'sitzraum-exports',
+  Bucket: 'hxroom-exports',
   Key: `exports/${orgId}/invoices/${invoiceId}.pdf`,
 }), { expiresIn: 3600 });
 ```
@@ -450,7 +450,7 @@ const url = await getSignedUrl(s3, new GetObjectCommand({
 Coach lädt Logo hoch (Frontend)
   → POST /api/v1/organizations/:id/branding/logo (multipart/form-data)
   → NestJS validiert: max. 2 MB, nur image/png + image/jpeg
-  → Upload nach S3: sitzraum-uploads/{organizationId}/logo.{ext}
+  → Upload nach S3: hxroom-uploads/{organizationId}/logo.{ext}
   → Public-URL wird in coach_profiles.branding_logo_url gespeichert
   → Altes Logo wird aus S3 gelöscht (falls vorhanden)
 ```
@@ -465,11 +465,11 @@ Coach lädt Logo hoch (Frontend)
 brandingLogoUrl: text('branding_logo_url'),  // vollständige S3-Public-URL
 
 // In bookings (für Recordings):
-recordingS3Key: text('recording_s3_key'),    // Key in sitzraum-recordings
+recordingS3Key: text('recording_s3_key'),    // Key in hxroom-recordings
 recordingDeletedAt: timestamp('recording_deleted_at'), // nach Transkription gesetzt
 
 // In einer zukünftigen invoices-Tabelle (Pro):
-invoiceS3Key: text('invoice_s3_key'),        // Key in sitzraum-exports
+invoiceS3Key: text('invoice_s3_key'),        // Key in hxroom-exports
 ```
 
 ### NestJS StorageModule
@@ -590,16 +590,16 @@ Claude Code kann die komplette BullMQ-Modul-Struktur inkl. Worker, Job-Definitio
 
 ### Stripe – Subscription & Billing
 
-Stripe wird für zwei Zwecke eingesetzt: **Einmalige Zahlungen** (z.B. Klient zahlt Sitzungshonorar, Pro-Feature) und **wiederkehrende Subscriptions** (Coach zahlt Sitzraum-Abo).
+Stripe wird für zwei Zwecke eingesetzt: **Einmalige Zahlungen** (z.B. Klient zahlt Sitzungshonorar, Pro-Feature) und **wiederkehrende Subscriptions** (Coach zahlt HxRoom-Abo).
 
 **Subscription-Modell:**
 
 | Plan | Stripe Product | Billing |
 |---|---|---|
 | Trial | – | 14 Tage kostenlos, kein Stripe nötig |
-| Solo | `sitzraum_solo` | monatlich / jährlich |
-| Pro | `sitzraum_pro` | monatlich / jährlich |
-| Studio | `sitzraum_studio` | monatlich / jährlich |
+| Solo | `hxroom_solo` | monatlich / jährlich |
+| Pro | `hxroom_pro` | monatlich / jährlich |
+| Studio | `hxroom_studio` | monatlich / jährlich |
 
 **Subscription-Flow (Coach):**
 
@@ -625,7 +625,7 @@ Coaches können ihr Abo, ihre Zahlungsmethode und ihre Rechnungen selbst verwalt
 // Billing Portal Session erstellen
 const session = await stripe.billingPortal.sessions.create({
   customer: organization.stripeCustomerId,
-  return_url: `https://app.sitzraum.de/settings/billing`,
+  return_url: `https://app.hxroom.io/settings/billing`,
 });
 // Coach wird zu session.url weitergeleitet
 ```
@@ -657,13 +657,13 @@ export const organizationBilling = pgTable('organization_billing', {
 
 **PostgreSQL**
 - Täglicher `pg_dump` via Cron-Job im `api`-Container, komprimiert als `.sql.gz`
-- Upload ins S3-Bucket `sitzraum-backups` (privat, Hetzner DE)
+- Upload ins S3-Bucket `hxroom-backups` (privat, Hetzner DE)
 - Aufbewahrung: 7 Tages-Backups, 4 Wochen-Backups, 3 Monats-Backups (GFS-Schema)
 - Restore-Test monatlich in Staging-Umgebung
 
 **Hetzner Object Storage (S3)**
 - Hetzner S3 ist intern redundant gespeichert – kein manuelles Backup nötig
-- Für kritische Daten (Rechnungen): zusätzliche Kopie in separatem Bucket `sitzraum-backups`
+- Für kritische Daten (Rechnungen): zusätzliche Kopie in separatem Bucket `hxroom-backups`
 
 **Redis**
 - Nur Job-Queue und Session-Daten – kein persistentes Backup nötig
@@ -719,7 +719,7 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 
 | # | Thema | Beschreibung | Priorität |
 |---|---|---|---|
-| 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.sitzraum.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
+| 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.hxroom.io`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
 
 ---
 

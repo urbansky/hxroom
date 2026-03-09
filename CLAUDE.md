@@ -1,9 +1,9 @@
-# Sitzraum – Claude Code Kontext
+# HxRoom – Claude Code Kontext
 
 ## Stack
 - Backend: NestJS, PostgreSQL, Drizzle ORM, better-auth + organization plugin, LiveKit (self-hosted)
 - Speech2Text: Whisper (self-hosted, HTTP-API via faster-whisper)
-- Frontend: Vue 3, Nuxt UI (Vue), Pinia, Shared Theme via @sitzraum/ui
+- Frontend: Vue 3, Nuxt UI (Vue), Pinia, Shared Theme via @hxroom/ui
 - Monorepo: pnpm workspaces
 - Deployment: Docker Compose auf Hetzner DE
 
@@ -20,18 +20,18 @@
 - DB-Schema ändern: pnpm db:generate && pnpm db:migrate
 - Typen generieren (shared): pnpm build:types
 - Whisper-Job manuell triggern: POST /api/v1/sessions/:id/transcribe
-- Neue Vue-App mit Theme: @sitzraum/ui als Dependency, `sitzraumUI()` in vite.config.ts, `import '@sitzraum/ui/theme'` in main.ts
+- Neue Vue-App mit Theme: @hxroom/ui als Dependency, `hxroomUI()` in vite.config.ts, `import '@hxroom/ui/theme'` in main.ts
 - Shared Komponente hinzufügen: in packages/ui/components/ anlegen, aus packages/ui/index.ts exportieren
 
 ## Projektstruktur
 ```
-sitzraum/
+hxroom/
 ├── apps/
-│   ├── api/          # NestJS Backend (api.sitzraum.de)
-│   ├── web/          # Coach-Backoffice (app.sitzraum.de)
-│   ├── client/       # Klienten-Subdomain ([slug].sitzraum.de)
-│   ├── admin/        # Betreiber-Backoffice (admin.sitzraum.de)
-│   └── landing/      # Landingpage (sitzraum.de)
+│   ├── api/          # NestJS Backend (api.hxroom.io)
+│   ├── web/          # Coach-Backoffice (app.hxroom.io)
+│   ├── client/       # Klienten-Subdomain ([slug].hxroom.io)
+│   ├── admin/        # Betreiber-Backoffice (admin.hxroom.io)
+│   └── landing/      # Landingpage (hxroom.io)
 ├── packages/
 │   ├── shared/       # Gemeinsame Types & Zod-Schemas
 │   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten

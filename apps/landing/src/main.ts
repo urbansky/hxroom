@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 import ui from '@nuxt/ui/vue-plugin';
 import App from './App.vue';
-import '@sitzraum/ui/theme';
+import '@hxroom/ui/theme';
 
 const app = createApp(App);
 app.use(ui);

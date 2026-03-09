@@ -113,7 +113,7 @@
   --ui-border-accented: rgba(0,0,0,0.12);
   --ui-border-inverted: #141814;
 
-  --ui-primary: var(--color-sage-600);
+  --ui-primary: var(--color-sage-700);
 }
 
 /* Dark mode */
@@ -136,5 +136,10 @@
   --ui-border-accented: rgba(255,255,255,0.10);
   --ui-border-inverted: #F5F0E8;
 
-  --ui-primary: var(--color-sage-400);
+  --ui-primary: var(--color-sage-500);
+}
+
+/* Primary solid buttons: white text in dark mode */
+.dark .bg-primary {
+  --ui-text-inverted: #fff;
 }

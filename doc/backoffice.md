@@ -1,6 +1,6 @@
-# Sitzraum · Backoffice – Funktionsliste
+# HxRoom · Backoffice – Funktionsliste
 
-Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** – von der Erstregistrierung des Coaches bis zur Nachbereitung einer Sitzung. Es ist der operative Kern von Sitzraum: unsichtbar für den Klienten, unverzichtbar für den Coach.
+Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** – von der Erstregistrierung des Coaches bis zur Nachbereitung einer Sitzung. Es ist der operative Kern von HxRoom: unsichtbar für den Klienten, unverzichtbar für den Coach.
 
 ---
 
@@ -10,10 +10,10 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
 | 01 | **Registrierung & Trial-Aktivierung** | Konto anlegen ohne Kreditkarte, 14-tägiger Trial startet automatisch mit vollem Feature-Zugang. | MVP |
-| 02 | **Branding-Setup** | Logo hochladen, Primärfarbe wählen, eigene Sub-Domain konfigurieren (z.B. anna.sitzraum.de). | MVP |
+| 02 | **Branding-Setup** | Logo hochladen, Primärfarbe wählen, eigene Sub-Domain konfigurieren (z.B. anna.hxroom.io). | MVP |
 | 03 | **Profilseite des Coaches** | Kurzbiografie, Foto, Schwerpunkte – sichtbar für Klienten im Warteraum und auf der Buchungsseite. | MVP |
 | 04 | **Onboarding-Checkliste** | Geführter Setup-Flow mit Fortschrittsanzeige: Logo → Buchungszeiten → erste Einladung. Kein leeres Dashboard. | MVP |
-| 05 | **Eigene Domain (CNAME)** | Vollständig weiße Domain, z.B. coaching.anna-bergmann.de – kein sitzraum.de sichtbar. | Pro |
+| 05 | **Eigene Domain (CNAME)** | Vollständig weiße Domain, z.B. coaching.anna-bergmann.de – kein hxroom.io sichtbar. | Pro |
 
 ---
 
@@ -66,7 +66,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
-| 01 | **Bezahlung bei Buchung (Stripe)** | Klient bezahlt direkt beim Buchen – Termin wird erst nach Zahlung bestätigt. Stripe-Integration, keine Zahlungsdaten bei Sitzraum. | Pro |
+| 01 | **Bezahlung bei Buchung (Stripe)** | Klient bezahlt direkt beim Buchen – Termin wird erst nach Zahlung bestätigt. Stripe-Integration, keine Zahlungsdaten bei HxRoom. | Pro |
 | 02 | **Honorar konfigurieren** | Preis pro Sitzungstyp festlegen, Währung (EUR), optionale Pakete (z.B. 5 Sitzungen zum Paketpreis). | Pro |
 | 03 | **Automatische Rechnungsstellung** | Nach jeder bezahlten Sitzung erhält der Klient automatisch eine DSGVO-konforme Rechnung per E-Mail. | Pro |
 | 04 | **Umsatzübersicht** | Monatliche und jährliche Übersicht der Einnahmen, filterbar nach Klient und Sitzungstyp. | Pro |

@@ -137,7 +137,7 @@ function statusLabel(status: string) {
         <div>
           <h1 class="text-3xl font-serif font-semibold">Nuxt UI – Komponentenübersicht</h1>
           <p class="mt-2 text-(--ui-text-muted)">
-            Wichtige Komponenten mit Beispieldaten für das Sitzraum Coach-Backoffice.
+            Wichtige Komponenten mit Beispieldaten für das HxRoom Coach-Backoffice.
           </p>
         </div>
         <UColorModeButton size="lg" />
@@ -399,7 +399,7 @@ function statusLabel(status: string) {
         <UAccordion
           :items="[
             { label: 'Wie funktioniert die Buchung?', content: 'Klienten erhalten einen personalisierten Link zu deiner Subdomain. Dort wählen sie einen freien Slot aus deinem Kalender und bestätigen die Buchung – ohne Account, ohne Login.' },
-            { label: 'Ist Sitzraum DSGVO-konform?', content: 'Ja. Alle Server stehen in Deutschland (Hetzner). Video, Audio und Transkription verlassen nie den EU-Raum. Ein AVV wird bei der Registrierung automatisch abgeschlossen.' },
+            { label: 'Ist HxRoom DSGVO-konform?', content: 'Ja. Alle Server stehen in Deutschland (Hetzner). Video, Audio und Transkription verlassen nie den EU-Raum. Ein AVV wird bei der Registrierung automatisch abgeschlossen.' },
             { label: 'Kann ich mein eigenes Branding verwenden?', content: 'Ja. Du kannst dein Logo, deine Farben und eine persönliche Willkommensnachricht hinterlegen. Deine Klienten sehen ausschließlich dein Branding.' },
           ]"
         />

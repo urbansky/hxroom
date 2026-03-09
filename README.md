@@ -1,4 +1,4 @@
-# Sitzraum
+# HxRoom
 
 White-Label Videocall-Plattform für Coaches im DACH-Markt.
 
@@ -12,7 +12,7 @@ White-Label Videocall-Plattform für Coaches im DACH-Markt.
 
 ```bash
 # Repository klonen
-git clone <repo-url> && cd sitzraum
+git clone <repo-url> && cd hxroom
 
 # Dependencies installieren
 pnpm install
@@ -63,10 +63,10 @@ pnpm --filter landing dev
 pnpm build:types
 
 # Watch-Modus (bei aktiver Entwicklung an Shared-Types)
-pnpm --filter @sitzraum/shared dev
+pnpm --filter @hxroom/shared dev
 ```
 
-`@sitzraum/ui` benötigt keinen Build-Schritt – Vite importiert die Quelldateien direkt aus dem Workspace.
+`@hxroom/ui` benötigt keinen Build-Schritt – Vite importiert die Quelldateien direkt aus dem Workspace.
 
 ## Build
 
@@ -94,13 +94,13 @@ Das Drizzle-Schema liegt in `apps/api/src/db/schema.ts`.
 ## Projektstruktur
 
 ```
-sitzraum/
+hxroom/
 ├── apps/
-│   ├── api/            NestJS Backend          → api.sitzraum.de
-│   ├── web/            Coach-Backoffice        → app.sitzraum.de
-│   ├── client/         Klienten-Subdomain      → [slug].sitzraum.de
-│   ├── admin/          Betreiber-Backoffice    → admin.sitzraum.de
-│   └── landing/        Landingpage             → sitzraum.de
+│   ├── api/            NestJS Backend          → api.hxroom.io
+│   ├── web/            Coach-Backoffice        → app.hxroom.io
+│   ├── client/         Klienten-Subdomain      → [slug].hxroom.io
+│   ├── admin/          Betreiber-Backoffice    → admin.hxroom.io
+│   └── landing/        Landingpage             → hxroom.io
 ├── packages/
 │   ├── shared/         Gemeinsame Types & Zod-Schemas
 │   └── ui/             Shared Theme, Nuxt UI Config & Vue-Komponenten

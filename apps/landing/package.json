@@ -1,5 +1,5 @@
 {
-  "name": "@sitzraum/landing",
+  "name": "@hxroom/landing",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^4.5.1",
-    "@sitzraum/ui": "workspace:*",
+    "@hxroom/ui": "workspace:*",
     "tailwindcss": "^4.2.1",
     "vue": "^3.5.0"
   },

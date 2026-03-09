@@ -1,0 +1,34 @@
+{
+	auto_https off
+}
+
+:80 {
+	@landing host hxroom.localhost
+	handle @landing {
+		reverse_proxy host.docker.internal:5176
+	}
+
+	@api host api.hxroom.localhost
+	handle @api {
+		reverse_proxy host.docker.internal:3000
+	}
+
+	@app host app.hxroom.localhost
+	handle @app {
+		reverse_proxy host.docker.internal:5173
+	}
+
+	@admin host admin.hxroom.localhost
+	handle @admin {
+		reverse_proxy host.docker.internal:5175
+	}
+
+	@livekit host livekit.hxroom.localhost
+	handle @livekit {
+		reverse_proxy host.docker.internal:7880
+	}
+
+	handle {
+		reverse_proxy host.docker.internal:5174
+	}
+}

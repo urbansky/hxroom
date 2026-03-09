@@ -1,10 +1,10 @@
 import ui from '@nuxt/ui/vite';
 
 /**
- * Vorkonfiguriertes Nuxt UI Vite-Plugin mit Sitzraum-Theme.
- * Nutzung in vite.config.ts: `plugins: [vue(), sitzraumUI()]`
+ * Vorkonfiguriertes Nuxt UI Vite-Plugin mit HxRoom-Theme.
+ * Nutzung in vite.config.ts: `plugins: [vue(), hxroomUI()]`
  */
-export function sitzraumUI() {
+export function hxroomUI() {
   return ui({
     theme: {
       colors: ['primary', 'secondary', 'sage', 'gold', 'success', 'info', 'warning', 'error'],

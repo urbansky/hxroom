@@ -1,4 +1,4 @@
-# Sitzraum – Projektdokumentation
+# HxRoom – Projektdokumentation
 *Dein digitaler Raum für echte Gespräche.*
 
 ---
@@ -13,20 +13,20 @@ Als selbständiger Software-Entwickler mit Expertise im Bereich **Videoconferenc
 
 **White-Label Videocall-Plattform für Coaches & Life Coaches**
 
-Coaches und Therapeuten nutzen heute Zoom oder Google Meet – generische Tools, die sich anfühlen wie ein Firmen-Meeting, nicht wie ein vertrauensvolles Gespräch. Sitzraum gibt ihnen einen gebrandeten, DSGVO-konformen digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in ihrem Namen.
+Coaches und Therapeuten nutzen heute Zoom oder Google Meet – generische Tools, die sich anfühlen wie ein Firmen-Meeting, nicht wie ein vertrauensvolles Gespräch. HxRoom gibt ihnen einen gebrandeten, DSGVO-konformen digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in ihrem Namen.
 
 ---
 
 ## 3. Arbeitstitel & Positionierung
 
-### Name: **Sitzraum**
+### Name: **HxRoom**
 Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, menschlich, sofort verständlich.
 
 ### Kernbotschaft
 > **„Deine Klienten verdienen mehr als einen Zoom-Link."**
 
 ### Tagline
-> *Sitzraum – Einfach. Professionell. Deins.*
+> *HxRoom – Einfach. Professionell. Deins.*
 
 ### Positionierung
 - **Für wen:** Solo-Coaches und Life Coaches, die professionell online arbeiten wollen – ohne IT-Stress
@@ -45,14 +45,14 @@ Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, 
 > Sein Klient muss sich anmelden. Einen Account erstellen. Die App runterladen.
 > Und dann erscheint er in einem Raum der aussieht wie ein Firmen-Meeting.
 > Das ist nicht das Gefühl das du verkaufst.
-> Sitzraum gibt dir einen digitalen Raum der sich anfühlt wie du.
+> HxRoom gibt dir einen digitalen Raum der sich anfühlt wie du.
 
 **Kalt-E-Mail:**
 > Ich baue gerade ein Tool speziell für Coaches: einen gebrandeten Online-Raum wo deine Klienten ohne Account, ohne Download, einfach per Link erscheinen – mit deinem Logo, deinem Namen, deinem Kalender. Würdest du 15 Minuten investieren um es zu sehen?
 
 ### Emotionaler Kern
 Coaches verkaufen Vertrauen. Vertrauen beginnt beim ersten Eindruck.
-**Sitzraum verkauft nicht Software – Sitzraum verkauft einen professionellen ersten Eindruck.**
+**HxRoom verkauft nicht Software – HxRoom verkauft einen professionellen ersten Eindruck.**
 
 ---
 
@@ -75,7 +75,7 @@ Warum diese Nische zuerst:
 
 ## 5. Features & Differenzierung gegenüber Zoom/Meet
 
-| Feature | Zoom/Meet | Sitzraum |
+| Feature | Zoom/Meet | HxRoom |
 |---|---|---|
 | Branding | ❌ Fremdes Logo | ✅ Komplett deins |
 | Buchung integriert | ❌ Separates Tool | ✅ Alles in einem |
@@ -234,14 +234,14 @@ Alles andere kommt nach den ersten zahlenden Kunden.
 
 | URL | Bereich | Zugang |
 |---|---|---|
-| `sitzraum.de` | Landingpage | öffentlich |
-| `app.sitzraum.de` | Coach-Backoffice | Login erforderlich |
-| `admin.sitzraum.de` | Betreiber-Backoffice | intern |
-| `[slug].sitzraum.de` | Klienten-Subdomain des Coaches | öffentlich, kein Login |
+| `hxroom.io` | Landingpage | öffentlich |
+| `app.hxroom.io` | Coach-Backoffice | Login erforderlich |
+| `admin.hxroom.io` | Betreiber-Backoffice | intern |
+| `[slug].hxroom.io` | Klienten-Subdomain des Coaches | öffentlich, kein Login |
 
-**Beispiel:** `anna.sitzraum.de` → gebrandete Buchungsseite, Warteraum & Videocall von Anna Bergmann.
+**Beispiel:** `anna.hxroom.io` → gebrandete Buchungsseite, Warteraum & Videocall von Anna Bergmann.
 
-**Pro-Feature (CNAME):** Coaches können ihre eigene Domain zeigen lassen – `coaching.anna-bergmann.de` zeigt auf `anna.sitzraum.de`, Sitzraum bleibt unsichtbar.
+**Pro-Feature (CNAME):** Coaches können ihre eigene Domain zeigen lassen – `coaching.anna-bergmann.de` zeigt auf `anna.hxroom.io`, HxRoom bleibt unsichtbar.
 
 ---
 
@@ -250,7 +250,7 @@ Alles andere kommt nach den ersten zahlenden Kunden.
 - [ ] Landingpage texten & bauen
 - [ ] Tech-Stack & MVP-Scope definieren
 - [ ] Erste 5 Coaches für Beta-Test identifizieren
-- [ ] LinkedIn-Profil auf Sitzraum ausrichten
+- [ ] LinkedIn-Profil auf HxRoom ausrichten
 
 ---
 
@@ -260,7 +260,7 @@ Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarke
 
 | Name | Verfügbarkeit | International lesbar | Assoziation | Bewertung |
 |---|---|---|---|---|
-| **Sitzraum** | ✅ frei | ✅ kein Umlaut | Sitzung, Raum, Vertrauen | ⭐⭐⭐⭐⭐ |
+| **HxRoom** | ✅ frei | ✅ kein Umlaut | Sitzung, Raum, Vertrauen | ⭐⭐⭐⭐⭐ |
 | **Wunderroom** | ✅ komplett frei | ✅ kein Umlaut | Positiv, einladend, Raum | ⭐⭐⭐⭐⭐ |
 | **Sitzly** | ✅ komplett frei | ✅ kein Umlaut | Sitzung, modern, SaaS-tauglich | ⭐⭐⭐⭐ |
 | **Wundercall** | ✅ komplett frei | ✅ kein Umlaut | Direkt, klar, Call-Bezug | ⭐⭐⭐ |
@@ -274,6 +274,6 @@ Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarke
 
 ### Empfehlung
 
-**Sitzraum** bleibt der stärkste Name – emotional, warm, kein Umlaut, frei und ideal für den DACH-Markt. Als internationale Alternative bietet sich **Wunderroom** an: positiv besetzt, einladend, komplett unbelegt und weltweit lesbar.
+**HxRoom** bleibt der stärkste Name – emotional, warm, kein Umlaut, frei und ideal für den DACH-Markt. Als internationale Alternative bietet sich **Wunderroom** an: positiv besetzt, einladend, komplett unbelegt und weltweit lesbar.
 
-> **Strategie-Option:** Sitzraum für DACH-Launch, Wunderroom als Reserve für spätere Internationalisierung.
+> **Strategie-Option:** HxRoom für DACH-Launch, Wunderroom als Reserve für spätere Internationalisierung.

@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { sitzraumUI } from '@sitzraum/ui/vite';
+import { hxroomUI } from '@hxroom/ui/vite';
 import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [
     vue(),
-    sitzraumUI(),
+    hxroomUI(),
   ],
   resolve: {
     alias: {
