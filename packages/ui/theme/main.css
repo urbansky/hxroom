@@ -1,0 +1,140 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Cormorant Garamond – local fonts */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url('./fonts/cormorant-garamond-latin-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url('./fonts/cormorant-garamond-latin-ext-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 300 400;
+  font-display: swap;
+  src: url('./fonts/cormorant-garamond-latin-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: italic;
+  font-weight: 300 400;
+  font-display: swap;
+  src: url('./fonts/cormorant-garamond-latin-ext-italic.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* DM Sans – local fonts */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('./fonts/dm-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 300 500;
+  font-display: swap;
+  src: url('./fonts/dm-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@theme {
+  /* Sage – Primary palette */
+  --color-sage-50:  #f2f5f2;
+  --color-sage-100: #e1e8e1;
+  --color-sage-200: #c5d0c4;
+  --color-sage-300: #a8b9a7;
+  --color-sage-400: #8B9E8A;
+  --color-sage-500: #748d73;
+  --color-sage-600: #5C6E5B;
+  --color-sage-700: #4a5a49;
+  --color-sage-800: #3b483a;
+  --color-sage-900: #2e3a2d;
+  --color-sage-950: #1a231a;
+
+  /* Gold – Secondary palette */
+  --color-gold-50:  #faf6ef;
+  --color-gold-100: #f0e5d0;
+  --color-gold-200: #e2caa4;
+  --color-gold-300: #D4AE78;
+  --color-gold-400: #B5935A;
+  --color-gold-500: #9a7a45;
+  --color-gold-600: #7d6237;
+  --color-gold-700: #634d2c;
+  --color-gold-800: #4e3d24;
+  --color-gold-900: #3d3020;
+  --color-gold-950: #231c13;
+
+  /* Accent */
+  --color-cream: #F5F0E8;
+
+  /* Fonts */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* Global radius override */
+:root {
+  --ui-radius: 0.5rem;
+}
+
+/* Light mode */
+:root {
+  --ui-bg:              #faf8f4;
+  --ui-bg-muted:        #f2efe8;
+  --ui-bg-elevated:     #eae6de;
+  --ui-bg-accented:     #e2ddd4;
+  --ui-bg-inverted:     #141814;
+
+  --ui-text:            #2e3a2d;
+  --ui-text-highlighted: #141814;
+  --ui-text-muted:      #5C6E5B;
+  --ui-text-toned:      #4a5a49;
+  --ui-text-dimmed:     #8B9E8A;
+  --ui-text-inverted:   #faf8f4;
+
+  --ui-border:          rgba(0,0,0,0.08);
+  --ui-border-muted:    rgba(0,0,0,0.05);
+  --ui-border-accented: rgba(0,0,0,0.12);
+  --ui-border-inverted: #141814;
+
+  --ui-primary: var(--color-sage-600);
+}
+
+/* Dark mode */
+.dark {
+  --ui-bg:              #141814;
+  --ui-bg-muted:        #1A1E1A;
+  --ui-bg-elevated:     #1E231E;
+  --ui-bg-accented:     #232823;
+  --ui-bg-inverted:     #F5F0E8;
+
+  --ui-text:            rgba(255,255,255,0.88);
+  --ui-text-highlighted: #fff;
+  --ui-text-muted:      rgba(255,255,255,0.45);
+  --ui-text-toned:      rgba(255,255,255,0.55);
+  --ui-text-dimmed:     rgba(255,255,255,0.22);
+  --ui-text-inverted:   #141814;
+
+  --ui-border:          rgba(255,255,255,0.06);
+  --ui-border-muted:    rgba(255,255,255,0.04);
+  --ui-border-accented: rgba(255,255,255,0.10);
+  --ui-border-inverted: #F5F0E8;
+
+  --ui-primary: var(--color-sage-400);
+}

@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitzraum – Dein digitaler Raum für echte Gespräche</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --sage:        #8B9E8A;
+        --sage-light:  #C5D0C4;
+        --sage-dark:   #5C6E5B;
+        --cream:       #F5F0E8;
+        --warm-white:  #FDFAF5;
+        --charcoal:    #2C2C2C;
+        --mid:         #6B6B6B;
+        --gold:        #B5935A;
+        --gold-light:  #D4AE78;
+        --bg:          #141814;
+        --bg-light:    #1A1E1A;
+        --surface:     #1E231E;
+        --surface2:    #232823;
+        --border:      rgba(255,255,255,0.06);
+        --border-soft: rgba(255,255,255,0.04);
+        --text-primary:   rgba(255,255,255,0.88);
+        --text-secondary: rgba(255,255,255,0.45);
+        --text-muted:     rgba(255,255,255,0.22);
+      }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text-primary);
+        overflow-x: hidden;
+      }
+
+      /* ─── NOISE OVERLAY ─── */
+      body::before {
+        content: '';
+        position: fixed; inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+        pointer-events: none; z-index: 0; opacity: 0.6;
+      }
+
+      /* ─── AMBIENT GLOWS ─── */
+      .glow-hero {
+        position: absolute;
+        top: -200px; left: 50%;
+        transform: translateX(-50%);
+        width: 1100px; height: 700px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(92,110,91,0.08) 0%, transparent 65%);
+        pointer-events: none;
+      }
+      .glow-mid {
+        position: absolute;
+        top: 50%; right: -200px;
+        width: 600px; height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(181,147,90,0.05) 0%, transparent 70%);
+        pointer-events: none;
+      }
+
+      /* ─── NAV ─── */
+      nav {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 48px;
+        height: 68px;
+        background: rgba(20,24,20,0.7);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .nav-logo {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--sage) 0%, var(--sage-dark) 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px; font-weight: 600;
+        color: rgba(255,255,255,0.92);
+      }
+      .nav-wordmark {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 22px; font-weight: 600;
+        color: #D4C9B8;
+        letter-spacing: 0.03em;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+      }
+      .nav-link {
+        font-size: 13px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        letter-spacing: 0.02em;
+        transition: color 0.2s;
+      }
+      .nav-link:hover { color: var(--text-primary); }
+
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .btn-ghost-sm {
+        font-size: 13px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        padding: 7px 16px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+      }
+      .btn-ghost-sm:hover { border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+
+      .btn-nav-cta {
+        background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 100%);
+        color: rgba(255,255,255,0.92);
+        border: none; border-radius: 9px;
+        padding: 8px 20px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px; font-weight: 500;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.15s;
+        display: inline-flex; align-items: center; gap: 6px;
+        text-decoration: none;
+      }
+      .btn-nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+      /* ─── HERO ─── */
+      .hero {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 140px 48px 100px;
+        overflow: hidden;
+      }
+
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(139,158,138,0.08);
+        border: 1px solid rgba(139,158,138,0.18);
+        border-radius: 20px;
+        padding: 6px 16px;
+        margin-bottom: 32px;
+        animation: fadeUp 0.7s ease both;
+      }
+      .hero-eyebrow-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--sage);
+      }
+      .hero-eyebrow-text {
+        font-size: 11px;
+        color: var(--sage-light);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .hero-headline {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(52px, 7vw, 88px);
+        font-weight: 300;
+        line-height: 1.04;
+        color: var(--cream);
+        letter-spacing: -0.02em;
+        max-width: 900px;
+        margin-bottom: 28px;
+        animation: fadeUp 0.7s 0.1s ease both;
+      }
+      .hero-headline em {
+        font-style: italic;
+        color: var(--gold-light);
+      }
+
+      .hero-sub {
+        font-size: 18px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        max-width: 520px;
+        margin-bottom: 48px;
+        animation: fadeUp 0.7s 0.2s ease both;
+      }
+
+      .hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 56px;
+        animation: fadeUp 0.7s 0.3s ease both;
+      }
+      .btn-hero-primary {
+        background: linear-gradient(135deg, var(--sage-dark) 0%, #7A9079 100%);
+        color: rgba(255,255,255,0.92);
+        border: none; border-radius: 14px;
+        padding: 16px 32px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 15px; font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex; align-items: center; gap: 8px;
+        box-shadow: 0 8px 40px rgba(92,110,91,0.3);
+        text-decoration: none;
+      }
+      .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 50px rgba(92,110,91,0.4); }
+      .btn-hero-primary svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+      .btn-hero-ghost {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 28px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+      .btn-hero-ghost:hover { border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+
+      .hero-trust {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        animation: fadeUp 0.7s 0.4s ease both;
+      }
+      .trust-item {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .trust-item svg { width: 13px; height: 13px; stroke: var(--sage); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+      .trust-sep { width: 1px; height: 14px; background: rgba(255,255,255,0.08); }
+
+      /* ─── HERO SCREEN MOCKUP ─── */
+      .hero-mockup-wrap {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 1100px;
+        margin: 72px auto 0;
+        animation: fadeUp 0.9s 0.5s ease both;
+      }
+      .mockup-glow {
+        position: absolute;
+        bottom: -60px; left: 50%;
+        transform: translateX(-50%);
+        width: 80%; height: 120px;
+        background: radial-gradient(ellipse, rgba(92,110,91,0.18) 0%, transparent 70%);
+        filter: blur(20px);
+      }
+      .mockup-frame {
+        background: #0D110D;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.1);
+        overflow: hidden;
+        box-shadow:
+          0 60px 120px rgba(0,0,0,0.7),
+          0 0 0 1px rgba(255,255,255,0.04),
+          inset 0 1px 0 rgba(255,255,255,0.06);
+        position: relative;
+      }
+      /* Browser chrome bar */
+      .mockup-bar {
+        height: 40px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 10px;
+      }
+      .mockup-dots { display: flex; gap: 6px; }
+      .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+      .mockup-dot:nth-child(1) { background: rgba(255,100,90,0.5); }
+      .mockup-dot:nth-child(2) { background: rgba(255,185,55,0.4); }
+      .mockup-dot:nth-child(3) { background: rgba(80,200,80,0.35); }
+      .mockup-url {
+        flex: 1;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 6px;
+        height: 22px;
+        display: flex; align-items: center;
+        padding: 0 10px;
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 0.04em;
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      /* Inner UI: simplified backoffice dashboard preview */
+      .mockup-body {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        height: 480px;
+      }
+      .mockup-sidebar {
+        background: #111511;
+        border-right: 1px solid rgba(255,255,255,0.05);
+        padding: 16px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .mockup-brand-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 8px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        margin-bottom: 8px;
+      }
+      .mockup-logo-sm {
+        width: 24px; height: 24px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 12px; font-weight: 600;
+        color: white;
+      }
+      .mockup-brand-label {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 14px; font-weight: 600;
+        color: #D4C9B8;
+      }
+
+      .mockup-nav-item {
+        display: flex; align-items: center; gap: 7px;
+        padding: 7px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        color: rgba(255,255,255,0.3);
+      }
+      .mockup-nav-item.active {
+        background: rgba(139,158,138,0.1);
+        color: var(--sage-light);
+      }
+      .mockup-nav-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+      }
+      .mockup-main {
+        background: var(--bg);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: hidden;
+      }
+      .mockup-topbar {
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .mockup-greeting {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px; font-weight: 400;
+        color: var(--cream);
+      }
+      .mockup-trial-pill {
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gold-light);
+        background: rgba(181,147,90,0.1);
+        border: 1px solid rgba(181,147,90,0.2);
+        border-radius: 20px;
+        padding: 3px 10px;
+      }
+      .mockup-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .mockup-stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .mockup-stat-label {
+        font-size: 9px; text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      .mockup-stat-val {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 26px; font-weight: 300;
+        color: var(--cream);
+        line-height: 1;
+      }
+      .mockup-stat-sub {
+        font-size: 9px; color: var(--sage);
+        margin-top: 4px;
+      }
+
+      .mockup-grid {
+        display: grid;
+        grid-template-columns: 1fr 200px;
+        gap: 10px;
+        flex: 1;
+        min-height: 0;
+      }
+      .mockup-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .mockup-card-head {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px; color: var(--cream);
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .mockup-card-head span {
+        font-size: 9px; color: var(--sage); font-family: 'DM Sans', sans-serif;
+      }
+
+      /* session rows in mockup */
+      .mockup-session-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 9px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+      }
+      .mockup-session-row.next { background: rgba(139,158,138,0.04); }
+      .mockup-avi {
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--sage-dark), #3A4A39);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 10px; font-weight: 600;
+        color: rgba(255,255,255,0.8);
+        flex-shrink: 0;
+      }
+      .mockup-session-info { flex: 1; }
+      .mockup-session-name { font-size: 11px; color: var(--text-primary); }
+      .mockup-session-type { font-size: 9px; color: var(--text-muted); }
+      .mockup-session-chip {
+        font-size: 9px; padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid rgba(255,255,255,0.07);
+        color: var(--text-muted);
+      }
+      .mockup-session-chip.active {
+        background: rgba(139,158,138,0.1);
+        border-color: rgba(139,158,138,0.2);
+        color: var(--sage-light);
+      }
+      .mockup-open-btn {
+        font-size: 9px;
+        background: rgba(139,158,138,0.12);
+        border: 1px solid rgba(139,158,138,0.2);
+        border-radius: 5px;
+        padding: 3px 8px;
+        color: var(--sage-light);
+      }
+
+      /* client list in mockup */
+      .mockup-client-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+      }
+      .mockup-client-info { flex: 1; }
+      .mockup-client-name { font-size: 11px; color: var(--text-primary); }
+      .mockup-client-sub { font-size: 9px; color: var(--text-muted); }
+      .mockup-client-count {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 16px; color: var(--text-secondary);
+      }
+
+      /* ─── QUOTE BAND ─── */
+      .quote-band {
+        position: relative;
+        z-index: 1;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 56px 48px;
+        text-align: center;
+        background: rgba(255,255,255,0.015);
+      }
+      .quote-text {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(26px, 3.5vw, 44px);
+        font-weight: 300;
+        font-style: italic;
+        color: var(--cream);
+        line-height: 1.35;
+        max-width: 800px;
+        margin: 0 auto 16px;
+      }
+      .quote-attribution {
+        font-size: 12px;
+        color: var(--text-muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      /* ─── FEATURES ─── */
+      .section {
+        position: relative;
+        z-index: 1;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 100px 48px;
+      }
+
+      .section-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .eyebrow-line {
+        width: 24px; height: 1px;
+        background: var(--sage);
+      }
+      .eyebrow-text {
+        font-size: 10px;
+        color: var(--sage);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(36px, 4vw, 54px);
+        font-weight: 300;
+        color: var(--cream);
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        margin-bottom: 16px;
+      }
+      .section-title em { font-style: italic; color: var(--gold-light); }
+
+      .section-sub {
+        font-size: 15px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        max-width: 480px;
+        margin-bottom: 60px;
+      }
+
+      /* Feature grid 3-col */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .feature-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        transition: border-color 0.2s, transform 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(139,158,138,0.15), transparent);
+      }
+      .feature-card:hover {
+        border-color: rgba(139,158,138,0.2);
+        transform: translateY(-2px);
+      }
+      .feature-icon {
+        width: 44px; height: 44px;
+        border-radius: 12px;
+        background: rgba(139,158,138,0.08);
+        border: 1px solid rgba(139,158,138,0.14);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 18px;
+      }
+      .feature-icon svg {
+        width: 20px; height: 20px;
+        stroke: var(--sage);
+        fill: none; stroke-width: 1.6;
+        stroke-linecap: round; stroke-linejoin: round;
+      }
+      .feature-icon.gold {
+        background: rgba(181,147,90,0.08);
+        border-color: rgba(181,147,90,0.14);
+      }
+      .feature-icon.gold svg { stroke: var(--gold); }
+
+      .feature-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 20px; font-weight: 400;
+        color: var(--cream);
+        margin-bottom: 10px;
+        line-height: 1.2;
+      }
+      .feature-body {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+      }
+      .feature-tag {
+        display: inline-block;
+        margin-top: 14px;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--sage);
+        background: rgba(139,158,138,0.08);
+        border: 1px solid rgba(139,158,138,0.15);
+        border-radius: 4px;
+        padding: 3px 8px;
+      }
+
+      /* ─── COMPARISON TABLE ─── */
+      .compare-wrap {
+        position: relative;
+        z-index: 1;
+        background: rgba(255,255,255,0.015);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+      .compare-inner {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 80px 48px;
+      }
+
+      .compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 40px;
+      }
+      .compare-table th {
+        padding: 14px 24px;
+        text-align: left;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px; font-weight: 400;
+        color: var(--cream);
+        border-bottom: 1px solid var(--border);
+      }
+      .compare-table th:nth-child(2) {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 400;
+      }
+      .compare-table th:nth-child(3) {
+        text-align: center;
+        background: rgba(139,158,138,0.06);
+        border-radius: 8px 8px 0 0;
+        color: var(--sage-light);
+        border: 1px solid rgba(139,158,138,0.15);
+        border-bottom: none;
+      }
+      .compare-table td {
+        padding: 14px 24px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+      }
+      .compare-table td:nth-child(2) {
+        text-align: center;
+        color: var(--text-muted);
+      }
+      .compare-table td:nth-child(3) {
+        text-align: center;
+        background: rgba(139,158,138,0.04);
+        border-left: 1px solid rgba(139,158,138,0.1);
+        border-right: 1px solid rgba(139,158,138,0.1);
+      }
+      .compare-table tr:last-child td:nth-child(3) {
+        border-radius: 0 0 8px 8px;
+        border-bottom: 1px solid rgba(139,158,138,0.1);
+      }
+      .check { color: var(--sage); font-size: 16px; }
+      .cross { color: rgba(255,255,255,0.2); font-size: 14px; }
+      .compare-td-label { font-size: 13px; color: var(--text-primary); }
+
+      /* ─── HOW IT WORKS ─── */
+      .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-top: 56px;
+      }
+      .step-block {
+        background: var(--surface);
+        padding: 32px 28px;
+        position: relative;
+      }
+      .step-num {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 56px; font-weight: 300;
+        color: rgba(139,158,138,0.12);
+        line-height: 1;
+        margin-bottom: 16px;
+        letter-spacing: -0.02em;
+      }
+      .step-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 18px; font-weight: 400;
+        color: var(--cream);
+        margin-bottom: 10px;
+      }
+      .step-body {
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+      }
+      .step-arrow {
+        position: absolute;
+        right: -12px; top: 50%;
+        transform: translateY(-50%);
+        width: 24px; height: 24px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1;
+      }
+      .step-arrow svg {
+        width: 10px; height: 10px;
+        stroke: var(--text-muted); fill: none;
+        stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      }
+
+      /* ─── PRICING ─── */
+      .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 56px;
+      }
+      .pricing-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+      .pricing-card.featured {
+        border-color: rgba(139,158,138,0.3);
+        background: linear-gradient(180deg, rgba(139,158,138,0.06) 0%, var(--surface) 100%);
+      }
+      .pricing-card.featured::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--sage), transparent);
+      }
+      .pricing-badge {
+        display: inline-block;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--sage-light);
+        background: rgba(139,158,138,0.12);
+        border: 1px solid rgba(139,158,138,0.2);
+        border-radius: 4px;
+        padding: 3px 9px;
+        margin-bottom: 20px;
+        width: fit-content;
+      }
+      .pricing-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 24px; font-weight: 400;
+        color: var(--cream);
+        margin-bottom: 6px;
+      }
+      .pricing-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 28px;
+        line-height: 1.6;
+      }
+      .pricing-price-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        margin-bottom: 28px;
+      }
+      .pricing-price {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 48px; font-weight: 300;
+        color: var(--cream);
+        line-height: 1;
+      }
+      .pricing-price.free { color: var(--sage-light); font-size: 36px; }
+      .pricing-period {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .pricing-divider {
+        height: 1px;
+        background: var(--border);
+        margin-bottom: 24px;
+      }
+      .pricing-features {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        margin-bottom: 28px;
+      }
+      .pricing-feature-row {
+        display: flex; align-items: flex-start; gap: 9px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+      }
+      .pricing-feature-row svg {
+        width: 14px; height: 14px;
+        stroke: var(--sage); fill: none;
+        stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .pricing-feature-row.muted { color: var(--text-muted); }
+      .pricing-feature-row.muted svg { stroke: rgba(255,255,255,0.15); }
+
+      .btn-pricing {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 12px;
+        border-radius: 11px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px; font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        text-decoration: none;
+      }
+      .btn-pricing.ghost {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+      }
+      .btn-pricing.ghost:hover { border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+      .btn-pricing.primary {
+        background: linear-gradient(135deg, var(--sage-dark), var(--sage));
+        color: rgba(255,255,255,0.92);
+        box-shadow: 0 6px 28px rgba(92,110,91,0.25);
+      }
+      .btn-pricing.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+      .btn-pricing svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+      /* ─── TESTIMONIALS ─── */
+      .testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 56px;
+      }
+      .testi-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .testi-stars {
+        display: flex; gap: 3px;
+      }
+      .testi-stars svg {
+        width: 12px; height: 12px;
+        fill: var(--gold); stroke: none;
+      }
+      .testi-text {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.75;
+        font-style: italic;
+        flex: 1;
+      }
+      .testi-author {
+        display: flex; align-items: center; gap: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
+      }
+      .testi-avi {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--sage-dark), #3A4A39);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 13px; font-weight: 600;
+        color: rgba(255,255,255,0.8);
+        flex-shrink: 0;
+      }
+      .testi-name { font-size: 13px; color: var(--text-primary); }
+      .testi-role { font-size: 11px; color: var(--text-muted); }
+
+      /* ─── DSGVO BAND ─── */
+      .trust-band {
+        position: relative; z-index: 1;
+        background: rgba(255,255,255,0.015);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 48px 48px;
+      }
+      .trust-band-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 64px;
+        justify-content: center;
+      }
+      .trust-pillar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .trust-pillar-icon {
+        width: 42px; height: 42px;
+        border-radius: 11px;
+        background: rgba(139,158,138,0.08);
+        border: 1px solid rgba(139,158,138,0.14);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .trust-pillar-icon svg {
+        width: 18px; height: 18px;
+        stroke: var(--sage); fill: none;
+        stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+      }
+      .trust-pillar-title {
+        font-size: 13px; font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+      }
+      .trust-pillar-sub {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .trust-pillar-sep {
+        width: 1px; height: 40px;
+        background: var(--border);
+      }
+
+      /* ─── FINAL CTA ─── */
+      .final-cta {
+        position: relative; z-index: 1;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 120px 48px;
+        text-align: center;
+      }
+      .final-cta-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(40px, 5vw, 66px);
+        font-weight: 300;
+        color: var(--cream);
+        line-height: 1.07;
+        margin-bottom: 20px;
+        letter-spacing: -0.015em;
+      }
+      .final-cta-title em { font-style: italic; color: var(--gold-light); }
+      .final-cta-sub {
+        font-size: 15px;
+        color: var(--text-secondary);
+        margin-bottom: 40px;
+        line-height: 1.7;
+      }
+      .final-cta-note {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 16px;
+        letter-spacing: 0.02em;
+      }
+
+      /* ─── FOOTER ─── */
+      footer {
+        position: relative; z-index: 1;
+        border-top: 1px solid var(--border);
+        padding: 32px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .footer-brand {
+        display: flex; align-items: center; gap: 10px;
+      }
+      .footer-logo {
+        width: 28px; height: 28px;
+        border-radius: 7px;
+        background: linear-gradient(135deg, var(--sage), var(--sage-dark));
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 14px; font-weight: 600;
+        color: rgba(255,255,255,0.9);
+      }
+      .footer-wordmark {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 17px; font-weight: 600;
+        color: #D4C9B8;
+      }
+      .footer-tagline {
+        font-size: 11px; color: var(--text-muted);
+        margin-left: 4px;
+      }
+      .footer-links {
+        display: flex; gap: 24px;
+      }
+      .footer-links a {
+        font-size: 12px; color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover { color: var(--text-secondary); }
+      .footer-right {
+        font-size: 12px; color: var(--text-muted);
+        display: flex; align-items: center; gap: 6px;
+      }
+      .footer-de-badge {
+        font-size: 10px;
+        color: var(--sage);
+        background: rgba(139,158,138,0.08);
+        border: 1px solid rgba(139,158,138,0.14);
+        border-radius: 4px;
+        padding: 2px 7px;
+        letter-spacing: 0.04em;
+      }
+
+      /* ─── ANIMATIONS ─── */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ─── SCROLLBAR ─── */
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+    <div class="nav-brand">
+        <div class="nav-logo">S</div>
+        <span class="nav-wordmark">Sitzraum</span>
+    </div>
+    <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#vergleich" class="nav-link">Vergleich</a>
+        <a href="#preise" class="nav-link">Preise</a>
+        <a href="#stimmen" class="nav-link">Stimmen</a>
+    </div>
+    <div class="nav-right">
+        <a href="#" class="btn-ghost-sm">Anmelden</a>
+        <a href="#preise" class="btn-nav-cta">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="13 17 18 12 13 7"/><path d="M6 12h12"/></svg>
+            14 Tage kostenlos
+        </a>
+    </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+    <div class="glow-hero"></div>
+
+    <div class="hero-eyebrow">
+        <div class="hero-eyebrow-dot"></div>
+        <span class="hero-eyebrow-text">Für Coaches &amp; Life Coaches im DACH-Markt</span>
+    </div>
+
+    <h1 class="hero-headline">
+        Deine Klienten verdienen<br>mehr als einen <em>Zoom-Link.</em>
+    </h1>
+
+    <p class="hero-sub">
+        Sitzraum gibt dir einen gebrandeten digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in deinem Namen.
+    </p>
+
+    <div class="hero-actions">
+        <a href="#preise" class="btn-hero-primary">
+            <svg viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"/><path d="M6 12h12"/></svg>
+            Trial starten – kostenlos
+        </a>
+        <a href="#features" class="btn-hero-ghost">Wie es funktioniert</a>
+    </div>
+
+    <div class="hero-trust">
+        <div class="trust-item">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Keine Kreditkarte
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            14 Tage alle Features
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            DSGVO · Server Deutschland
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Kein Account für Klienten
+        </div>
+    </div>
+
+    <!-- Mockup -->
+    <div class="hero-mockup-wrap">
+        <div class="mockup-glow"></div>
+        <div class="mockup-frame">
+            <div class="mockup-bar">
+                <div class="mockup-dots">
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                    <div class="mockup-dot"></div>
+                </div>
+                <div class="mockup-url">anna.sitzraum.de/backoffice</div>
+            </div>
+            <div class="mockup-body">
+                <!-- Sidebar -->
+                <div class="mockup-sidebar">
+                    <div class="mockup-brand-row">
+                        <div class="mockup-logo-sm">S</div>
+                        <span class="mockup-brand-label">Sitzraum</span>
+                    </div>
+                    <div class="mockup-nav-item active"><div class="mockup-nav-dot"></div>Dashboard</div>
+                    <div class="mockup-nav-item"><div class="mockup-nav-dot"></div>Kalender</div>
+                    <div class="mockup-nav-item"><div class="mockup-nav-dot"></div>Klienten</div>
+                    <div class="mockup-nav-item"><div class="mockup-nav-dot"></div>Notizen</div>
+                    <div class="mockup-nav-item"><div class="mockup-nav-dot"></div>Umsatz</div>
+                    <div class="mockup-nav-item"><div class="mockup-nav-dot"></div>Branding</div>
+                </div>
+                <!-- Main -->
+                <div class="mockup-main">
+                    <div class="mockup-topbar">
+                        <span class="mockup-greeting">Guten Morgen, Anna</span>
+                        <span class="mockup-trial-pill">Trial · 9 Tage</span>
+                    </div>
+                    <div class="mockup-stats">
+                        <div class="mockup-stat">
+                            <div class="mockup-stat-label">Sitzungen gesamt</div>
+                            <div class="mockup-stat-val">24</div>
+                            <div class="mockup-stat-sub">+3 diesen Monat</div>
+                        </div>
+                        <div class="mockup-stat">
+                            <div class="mockup-stat-label">Aktive Klienten</div>
+                            <div class="mockup-stat-val">7</div>
+                            <div class="mockup-stat-sub">2 neue Woche</div>
+                        </div>
+                        <div class="mockup-stat">
+                            <div class="mockup-stat-label">Diese Woche</div>
+                            <div class="mockup-stat-val">5</div>
+                            <div class="mockup-stat-sub">Termine Mo–Fr</div>
+                        </div>
+                        <div class="mockup-stat">
+                            <div class="mockup-stat-label">Umsatz / Monat</div>
+                            <div class="mockup-stat-val">1.350 €</div>
+                            <div class="mockup-stat-sub">+450 € Vormonat</div>
+                        </div>
+                    </div>
+                    <div class="mockup-grid">
+                        <div class="mockup-card">
+                            <div class="mockup-card-head">Heute – Freitag, 6. März <span>Woche →</span></div>
+                            <div class="mockup-session-row">
+                                <div class="mockup-avi">SL</div>
+                                <div class="mockup-session-info">
+                                    <div class="mockup-session-name">Sarah Lindner</div>
+                                    <div class="mockup-session-type">Coaching-Sitzung · 09:00</div>
+                                </div>
+                                <div class="mockup-session-chip">Abgeschlossen</div>
+                            </div>
+                            <div class="mockup-session-row next">
+                                <div class="mockup-avi">MK</div>
+                                <div class="mockup-session-info">
+                                    <div class="mockup-session-name">Markus Kellner</div>
+                                    <div class="mockup-session-type">Sitzung 4 · 11:00</div>
+                                </div>
+                                <div class="mockup-session-chip active">In 47 min</div>
+                                <div class="mockup-open-btn">Raum öffnen</div>
+                            </div>
+                            <div class="mockup-session-row">
+                                <div class="mockup-avi">TF</div>
+                                <div class="mockup-session-info">
+                                    <div class="mockup-session-name">Thomas Fischer</div>
+                                    <div class="mockup-session-type">Erstgespräch · 14:30</div>
+                                </div>
+                                <div class="mockup-session-chip">Kostenlos</div>
+                            </div>
+                            <div class="mockup-session-row">
+                                <div class="mockup-avi">JM</div>
+                                <div class="mockup-session-info">
+                                    <div class="mockup-session-name">Julia Meier</div>
+                                    <div class="mockup-session-type">Intensiv-Session · 17:00</div>
+                                </div>
+                                <div class="mockup-session-chip">150 €</div>
+                            </div>
+                        </div>
+                        <div class="mockup-card">
+                            <div class="mockup-card-head">Klienten <span>Alle →</span></div>
+                            <div class="mockup-client-row">
+                                <div class="mockup-avi">MK</div>
+                                <div class="mockup-client-info">
+                                    <div class="mockup-client-name">Markus K.</div>
+                                    <div class="mockup-client-sub">Heute 11:00</div>
+                                </div>
+                                <div class="mockup-client-count">4</div>
+                            </div>
+                            <div class="mockup-client-row">
+                                <div class="mockup-avi">SL</div>
+                                <div class="mockup-client-info">
+                                    <div class="mockup-client-name">Sarah L.</div>
+                                    <div class="mockup-client-sub">Mo 10:00</div>
+                                </div>
+                                <div class="mockup-client-count">6</div>
+                            </div>
+                            <div class="mockup-client-row">
+                                <div class="mockup-avi">JM</div>
+                                <div class="mockup-client-info">
+                                    <div class="mockup-client-name">Julia M.</div>
+                                    <div class="mockup-client-sub">Heute 17:00</div>
+                                </div>
+                                <div class="mockup-client-count">2</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── QUOTE ── -->
+<div class="quote-band">
+    <p class="quote-text">„Vertrauen beginnt beim ersten Eindruck.<br>Sitzraum ist dieser erste Eindruck."</p>
+    <div class="quote-attribution">Das Versprechen hinter jedem Sitzraum</div>
+</div>
+
+<!-- ── FEATURES ── -->
+<section class="section" id="features">
+    <div class="glow-mid"></div>
+    <div class="section-eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Was Sitzraum kann</span>
+    </div>
+    <h2 class="section-title">Kein Videocall-Tool.<br>Ein <em>kompletter Empfangsraum.</em></h2>
+    <p class="section-sub">Alles was du brauchst, um professionell online zu coachen – ohne IT-Stress, ohne Sammelsurium aus Tools.</p>
+
+    <div class="features-grid">
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <div class="feature-title">Vollständiges Branding</div>
+            <div class="feature-body">Dein Logo, deine Farben, deine Domain. Klienten sehen nur dich – kein Zoom-Logo, kein Google-Stempel.</div>
+            <span class="feature-tag">Sofort sichtbar</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="feature-title">Buchung & automatischer Link</div>
+            <div class="feature-body">Klient bucht → bekommt automatisch seinen Raumlink per E-Mail. Keine manuelle Arbeit für dich.</div>
+            <span class="feature-tag">Zeitersparnis</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <div class="feature-title">Digitaler Warteraum</div>
+            <div class="feature-body">Dein Klient erscheint in deinem persönlichen Warteraum – mit deinem Foto, Namen und einer Willkommensnachricht.</div>
+            <span class="feature-tag">Vertrauen ab Minute 1</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <div class="feature-title">Kein Account für Klienten</div>
+            <div class="feature-body">Dein Klient klickt auf den Link – und ist im Raum. Kein Download, kein Login, null Hürde.</div>
+            <span class="feature-tag">Null Reibung</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon gold">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="feature-title">DSGVO-konform by Design</div>
+            <div class="feature-body">Server in Deutschland. AVV automatisch inklusive. Du kannst gegenüber Klienten rechtssicher belegen, wo ihre Daten liegen.</div>
+            <span class="feature-tag" style="color:var(--gold);background:rgba(181,147,90,0.08);border-color:rgba(181,147,90,0.15);">Rechtssicherheit</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <div class="feature-title">Notizen & KI-Zusammenfassung</div>
+            <div class="feature-body">Schreib direkt während des Calls. Nach der Sitzung erstellt Sitzraum automatisch eine Zusammenfassung – nur für dich.</div>
+            <span class="feature-tag">Dokumentation</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.26 8.68 19.79 19.79 0 0 1 1.19 0 2 2 0 0 1 3.17 0h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.18 7.18a16 16 0 0 0 6.37 6.37l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 14.92z"/></svg>
+            </div>
+            <div class="feature-title">Automatische Erinnerungen</div>
+            <div class="feature-body">24h und 1h vor jeder Sitzung bekommt dein Klient automatisch eine E-Mail-Erinnerung. Nie wieder No-Shows.</div>
+            <span class="feature-tag">Weniger No-Shows</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon gold">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div class="feature-title">Integrierte Bezahlung</div>
+            <div class="feature-body">Klient bucht und bezahlt in einem Schritt. Stripe-Integration, automatische Rechnungsstellung per E-Mail.</div>
+            <span class="feature-tag" style="color:var(--gold);background:rgba(181,147,90,0.08);border-color:rgba(181,147,90,0.15);">Pro</span>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="feature-title">Einfaches Klienten-CRM</div>
+            <div class="feature-body">Alle Klienten auf einen Blick. Notiz-Historie, letzter Termin, nächster Schritt – ohne aufwändiges Tool.</div>
+            <span class="feature-tag">Überblick</span>
+        </div>
+
+    </div>
+</section>
+
+<!-- ── VERGLEICH ── -->
+<div class="compare-wrap" id="vergleich">
+    <div class="compare-inner">
+        <div class="section-eyebrow">
+            <div class="eyebrow-line"></div>
+            <span class="eyebrow-text">Sitzraum vs. Zoom / Meet</span>
+        </div>
+        <h2 class="section-title">Kein Ersatz.<br>Ein <em>Upgrade.</em></h2>
+
+        <table class="compare-table">
+            <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Zoom / Meet</th>
+                <th>Sitzraum</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="compare-td-label">Branding & eigene Domain</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Buchung integriert</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Kein Login für Klienten</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Persönlicher Warteraum</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">DSGVO – Server Deutschland</td>
+                <td style="text-align:center;font-size:11px;color:rgba(255,180,60,0.6);">⚠ US-Server</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Automatische Erinnerungen</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Sitzungsnotizen & KI</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Integrierte Bezahlung</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">Klienten-Übersicht (CRM)</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            <tr>
+                <td class="compare-td-label">DACH-Markt & Deutsch</td>
+                <td class="cross">—</td>
+                <td class="check">✓</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="section">
+    <div class="section-eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">So funktioniert es</span>
+    </div>
+    <h2 class="section-title">In 15 Minuten<br><em>bereit für Klienten.</em></h2>
+
+    <div class="steps-grid">
+        <div class="step-block">
+            <div class="step-num">01</div>
+            <div class="step-title">Account erstellen</div>
+            <div class="step-body">Kein Kreditkartenzwang. Trial startet sofort mit allen Features für 14 Tage.</div>
+            <div class="step-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="step-block">
+            <div class="step-num">02</div>
+            <div class="step-title">Branding einrichten</div>
+            <div class="step-body">Logo hochladen, Farbe wählen, Sub-Domain konfigurieren – in wenigen Minuten.</div>
+            <div class="step-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="step-block">
+            <div class="step-num">03</div>
+            <div class="step-title">Verfügbarkeiten setzen</div>
+            <div class="step-body">Wochentage und Zeiten freigeben. Buchungsseite ist sofort live und buchbar.</div>
+            <div class="step-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="step-block">
+            <div class="step-num">04</div>
+            <div class="step-title">Ersten Klienten einladen</div>
+            <div class="step-body">Link verschicken. Klient bucht, zahlt, und erscheint pünktlich in deinem Raum.</div>
+        </div>
+    </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<div style="position:relative;z-index:1;background:rgba(255,255,255,0.01);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <section class="section" id="stimmen" style="padding-top:80px;padding-bottom:80px;">
+        <div class="section-eyebrow">
+            <div class="eyebrow-line"></div>
+            <span class="eyebrow-text">Was Coaches sagen</span>
+        </div>
+        <h2 class="section-title">Echte <em>Stimmen.</em></h2>
+
+        <div class="testimonials-grid">
+            <div class="testi-card">
+                <div class="testi-stars">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testi-text">„Ich habe Zoom nie gemocht – es fühlte sich immer wie ein Firmenmeeting an. Seit Sitzraum sagen meine Klienten beim ersten Call: das sieht wirklich professionell aus. Das hat meine Buchungsrate verändert."</p>
+                <div class="testi-author">
+                    <div class="testi-avi">AB</div>
+                    <div>
+                        <div class="testi-name">Anna Bergmann</div>
+                        <div class="testi-role">Life Coach · Berlin</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <div class="testi-stars">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testi-text">„Die DSGVO-Frage war bei mir immer im Kopf. Mit Sitzraum kann ich meinen Klienten konkret sagen: deutsche Server, Auftragsverarbeitung geregelt. Das gibt mir Ruhe."</p>
+                <div class="testi-author">
+                    <div class="testi-avi">MH</div>
+                    <div>
+                        <div class="testi-name">Markus Hoffmann</div>
+                        <div class="testi-role">Business Coach · München</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <div class="testi-stars">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testi-text">„Buchung, Link, Erinnerung – alles automatisch. Ich spare jede Woche mindestens eine Stunde Organisationskram. Das Geld für Pro ist in der ersten Woche drin."</p>
+                <div class="testi-author">
+                    <div class="testi-avi">SK</div>
+                    <div>
+                        <div class="testi-name">Sandra Kern</div>
+                        <div class="testi-role">Life & Career Coach · Hamburg</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- ── PREISE ── -->
+<section class="section" id="preise">
+    <div class="section-eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Preise</span>
+    </div>
+    <h2 class="section-title">Einfach.<br><em>Transparent.</em></h2>
+    <p class="section-sub">Kein Freemium. Trial gibt dir 14 Tage alle Features – dann entscheidest du.</p>
+
+    <div class="pricing-grid">
+
+        <!-- Trial -->
+        <div class="pricing-card">
+            <div class="pricing-badge">Einstieg</div>
+            <div class="pricing-name">Trial</div>
+            <div class="pricing-desc">Alle Features, 14 Tage, ohne Kreditkarte.</div>
+            <div class="pricing-price-row">
+                <span class="pricing-price free">0 €</span>
+                <span class="pricing-period">/ 14 Tage</span>
+            </div>
+            <div class="pricing-divider"></div>
+            <div class="pricing-features">
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Alle Features freigeschaltet</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Branding & eigene Sub-Domain</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Buchung + automatischer Link</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>DSGVO, AVV inklusive</div>
+                <div class="pricing-feature-row muted"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Kein Kreditkartenzwang</div>
+            </div>
+            <a href="#" class="btn-pricing ghost">Jetzt starten</a>
+        </div>
+
+        <!-- Pro -->
+        <div class="pricing-card featured">
+            <div class="pricing-badge">Empfohlen</div>
+            <div class="pricing-name">Pro</div>
+            <div class="pricing-desc">Für Solo-Coaches, die professionell online coachen.</div>
+            <div class="pricing-price-row">
+                <span class="pricing-price">79 €</span>
+                <span class="pricing-period">/ Monat</span>
+            </div>
+            <div class="pricing-divider"></div>
+            <div class="pricing-features">
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Unlimitierte Sitzungen</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Alle Trial-Features</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Integrierte Stripe-Bezahlung</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Automatische Rechnungsstellung</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Kalender-Sync (Google/Apple)</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Eigene CNAME-Domain</div>
+            </div>
+            <a href="#" class="btn-pricing primary">
+                Trial starten
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+        </div>
+
+        <!-- Studio -->
+        <div class="pricing-card">
+            <div class="pricing-badge" style="color:var(--gold-light);background:rgba(181,147,90,0.1);border-color:rgba(181,147,90,0.2);">Team</div>
+            <div class="pricing-name">Studio</div>
+            <div class="pricing-desc">Bis zu 3 Coaches unter einer gemeinsamen Marke.</div>
+            <div class="pricing-price-row">
+                <span class="pricing-price">149 €</span>
+                <span class="pricing-period">/ Monat</span>
+            </div>
+            <div class="pricing-divider"></div>
+            <div class="pricing-features">
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Alle Pro-Features</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Bis zu 3 Coaches</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Gemeinsamer Kalender</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Rollen & Berechtigungen</div>
+                <div class="pricing-feature-row"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Konsolidierte Umsatzübersicht</div>
+            </div>
+            <a href="#" class="btn-pricing ghost">Jetzt starten</a>
+        </div>
+
+    </div>
+
+    <p style="text-align:center;margin-top:24px;font-size:12px;color:var(--text-muted);">
+        Jahresabo: 2 Monate gratis — entspricht ~17 % Rabatt &nbsp;·&nbsp; Alle Preise zzgl. MwSt.
+    </p>
+</section>
+
+<!-- ── TRUST BAND ── -->
+<div class="trust-band">
+    <div class="trust-band-inner">
+        <div class="trust-pillar">
+            <div class="trust-pillar-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div>
+                <div class="trust-pillar-title">DSGVO-konform</div>
+                <div class="trust-pillar-sub">AVV automatisch inklusive</div>
+            </div>
+        </div>
+        <div class="trust-pillar-sep"></div>
+        <div class="trust-pillar">
+            <div class="trust-pillar-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            <div>
+                <div class="trust-pillar-title">Server Deutschland</div>
+                <div class="trust-pillar-sub">Hetzner / AWS Frankfurt</div>
+            </div>
+        </div>
+        <div class="trust-pillar-sep"></div>
+        <div class="trust-pillar">
+            <div class="trust-pillar-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div>
+                <div class="trust-pillar-title">Kein Login für Klienten</div>
+                <div class="trust-pillar-sub">Link klicken – fertig</div>
+            </div>
+        </div>
+        <div class="trust-pillar-sep"></div>
+        <div class="trust-pillar">
+            <div class="trust-pillar-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.26 8.68 19.79 19.79 0 0 1 1.19 0 2 2 0 0 1 3.17 0h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.18 7.18a16 16 0 0 0 6.37 6.37l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 14.92z"/></svg></div>
+            <div>
+                <div class="trust-pillar-title">Menschlicher Support</div>
+                <div class="trust-pillar-sub">Auf Deutsch · DACH-fokussiert</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── FINAL CTA ── -->
+<div class="final-cta">
+    <h2 class="final-cta-title">
+        Dein Coaching.<br>
+        Dein Raum.<br>
+        <em>Dein Name.</em>
+    </h2>
+    <p class="final-cta-sub">14 Tage alle Features. Keine Kreditkarte. Kein Risiko.<br>Einfach loslegen – und deinen ersten Klienten einladen.</p>
+    <a href="#" class="btn-hero-primary" style="display:inline-flex;margin:0 auto;">
+        <svg viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"/><path d="M6 12h12"/></svg>
+        Trial kostenlos starten
+    </a>
+    <p class="final-cta-note">Schon ein Konto? <a href="#" style="color:var(--sage);text-decoration:none;">Anmelden →</a></p>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+    <div class="footer-brand">
+        <div class="footer-logo">S</div>
+        <span class="footer-wordmark">Sitzraum</span>
+        <span class="footer-tagline">· Einfach. Professionell. Deins.</span>
+    </div>
+    <div class="footer-links">
+        <a href="#">Features</a>
+        <a href="#">Preise</a>
+        <a href="#">Datenschutz</a>
+        <a href="#">Impressum</a>
+        <a href="#">AGB</a>
+        <a href="#">Blog</a>
+    </div>
+    <div class="footer-right">
+        <span class="footer-de-badge">🇩🇪 DACH</span>
+        © 2025 Sitzraum
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Sitzraum – Docker Compose (Produktion)
+# Wird in Phase 1 mit den konkreten Services befüllt.
+# Siehe doc/technical.md Abschnitt 4 für die geplante Architektur.
+services: {}

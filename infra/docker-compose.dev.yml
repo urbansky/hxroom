@@ -1,0 +1,4 @@
+# Sitzraum – Docker Compose (Lokale Entwicklung)
+# Startet PostgreSQL, Redis, LiveKit (dev), Whisper-Service.
+# Wird in Phase 1 mit den konkreten Services befüllt.
+services: {}

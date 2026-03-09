@@ -1,0 +1,19 @@
+{
+  "name": "@sitzraum/ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./theme": "./theme/main.css",
+    "./vite": "./vite.ts"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  },
+  "peerDependencies": {
+    "@nuxt/ui": "^4.5.0",
+    "tailwindcss": "^4.0.0",
+    "vue": "^3.5.0"
+  }
+}
