@@ -8,30 +8,35 @@
 	}
 }
 
+www.hxroom.io {
+	import ionos-tls
+	redir https://hxroom.io{uri} permanent
+}
+
 hxroom.io {
 	import ionos-tls
 	reverse_proxy landing:80
 }
 
-api.hxroom.io {
-	import ionos-tls
-	reverse_proxy api:3000
-}
+#api.hxroom.io {
+#	import ionos-tls
+#	reverse_proxy api:3000
+#}
 
-app.hxroom.io {
-	import ionos-tls
-	reverse_proxy web:80
-}
+#app.hxroom.io {
+#	import ionos-tls
+#	reverse_proxy web:80
+#}
 
-admin.hxroom.io {
-	import ionos-tls
-	reverse_proxy admin:80
-}
+#admin.hxroom.io {
+#	import ionos-tls
+#	reverse_proxy admin:80
+#}
 
-livekit.hxroom.io {
-	import ionos-tls
-	reverse_proxy livekit:7880
-}
+#livekit.hxroom.io {
+#	import ionos-tls
+#	reverse_proxy livekit:7880
+#}
 
 *.hxroom.io {
 	import ionos-tls

@@ -10,8 +10,8 @@ services:
       - "443:443/udp"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./caddy/data:/data
+      - ./caddy/config:/config
     environment:
       - IONOS_API_TOKEN=${IONOS_API_TOKEN}
     depends_on:
@@ -33,6 +33,3 @@ services:
       dockerfile: apps/client/Dockerfile
     restart: unless-stopped
 
-volumes:
-  caddy_data:
-  caddy_config:

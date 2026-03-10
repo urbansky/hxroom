@@ -36,15 +36,15 @@ MVP-Kern                          Post-MVP
 | 1.7 | Health-Endpoint | `apps/api/src/health/` | ✅ |
 | 1.8 | Shared UI-Theme (Nuxt UI) | `packages/ui/theme/`, `packages/ui/vite.ts` | ✅ |
 | 1.9 | Client-App PoC (CoachLandingView) | `apps/client/src/views/CoachLandingView.vue` | ✅ |
-| 1.10 | Dockerfile API (NestJS, multi-stage) | `apps/api/Dockerfile` | ⬜ |
-| 1.11 | Dockerfile Web (Vite build + static serve) | `apps/web/Dockerfile` | ⬜ |
-| 1.12 | Dockerfile Client | `apps/client/Dockerfile` | ⬜ |
-| 1.13 | Dockerfile Admin | `apps/admin/Dockerfile` | ⬜ |
-| 1.14 | Dockerfile Landing | `apps/landing/Dockerfile` | ⬜ |
-| 1.15 | Docker Compose: App-Services einbinden | `infra/docker-compose.yml` | ⬜ |
-| 1.16 | GitHub-Repo & Remote einrichten | GitHub | ⬜ |
-| 1.17 | GitHub Actions (CI: Lint, Build, Test) | `.github/workflows/` | ⬜ |
-| 1.18 | Hetzner Server einrichten (Cloud, DNS, S3-Buckets, Secrets) | `infra/` | ⬜ |
+| 1.10 | Dockerfile API (NestJS, multi-stage) | `apps/api/Dockerfile` | ✅ |
+| 1.11 | Dockerfile Web (Vite build + static serve) | `apps/web/Dockerfile` | ✅ |
+| 1.12 | Dockerfile Client | `apps/client/Dockerfile` | ✅ |
+| 1.13 | Dockerfile Admin | `apps/admin/Dockerfile` | ✅ |
+| 1.14 | Dockerfile Landing | `apps/landing/Dockerfile` | ✅ |
+| 1.15 | Docker Compose: App-Services einbinden | `infra/docker-compose.yml` | ✅ |
+| 1.16 | GitHub-Repo & Remote einrichten | GitHub | ✅ |
+| 1.17 | GitHub Actions (Docker Build & Push: Client, Landing) | `.github/workflows/docker-build.yml` | ✅ |
+| 1.18 | Hetzner Server einrichten (Docker, Caddy, DNS) | `infra/` | ✅ |
 | 1.19 | GitHub Actions (CD: Deploy auf Hetzner) | `.github/workflows/` | ⬜ |
 
 ---
@@ -181,4 +181,4 @@ MVP-Kern                          Post-MVP
 
 ## Nächster Schritt
 
-**Phase 1 abschließen** → GitHub-Repo einrichten, CI/CD-Pipeline aufsetzen, Hetzner-Server provisionieren. Dann Phase 2 (Auth & Profil).
+**Phase 1 abschließen** → CD-Pipeline (1.19: automatisches Deploy auf Hetzner bei Push). Dann Phase 2 (Auth & Profil).
