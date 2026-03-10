@@ -44,5 +44,5 @@ WORKDIR /app/apps/api
 EXPOSE 3000
 CMD ["node", "dist/main"]
 
-LABEL org.opencontainers.image.source="https://github.com/hxroom/hxroom"
+LABEL org.opencontainers.image.source="https://github.com/urbansky/hxroom"
 LABEL org.opencontainers.image.description="HxRoom API Server"
