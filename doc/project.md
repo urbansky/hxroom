@@ -1,4 +1,4 @@
-# HxRoom – Projektdokumentation
+# Sitzraum – Projektdokumentation
 *Dein digitaler Raum für echte Gespräche.*
 
 ---
@@ -13,20 +13,20 @@ Als selbständiger Software-Entwickler mit Expertise im Bereich **Videoconferenc
 
 **White-Label Videocall-Plattform für Coaches & Life Coaches**
 
-Coaches und Therapeuten nutzen heute Zoom oder Google Meet – generische Tools, die sich anfühlen wie ein Firmen-Meeting, nicht wie ein vertrauensvolles Gespräch. HxRoom gibt ihnen einen gebrandeten, DSGVO-konformen digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in ihrem Namen.
+Coaches und Therapeuten nutzen heute Zoom oder Google Meet – generische Tools, die sich anfühlen wie ein Firmen-Meeting, nicht wie ein vertrauensvolles Gespräch. Sitzraum gibt ihnen einen gebrandeten, DSGVO-konformen digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in ihrem Namen.
 
 ---
 
 ## 3. Arbeitstitel & Positionierung
 
-### Name: **HxRoom**
+### Name: **Sitzraum**
 Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, menschlich, sofort verständlich.
 
 ### Kernbotschaft
 > **„Deine Klienten verdienen mehr als einen Zoom-Link."**
 
 ### Tagline
-> *HxRoom – Einfach. Professionell. Deins.*
+> *Sitzraum – Einfach. Professionell. Deins.*
 
 ### Positionierung
 - **Für wen:** Solo-Coaches und Life Coaches, die professionell online arbeiten wollen – ohne IT-Stress
@@ -45,14 +45,14 @@ Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, 
 > Sein Klient muss sich anmelden. Einen Account erstellen. Die App runterladen.
 > Und dann erscheint er in einem Raum der aussieht wie ein Firmen-Meeting.
 > Das ist nicht das Gefühl das du verkaufst.
-> HxRoom gibt dir einen digitalen Raum der sich anfühlt wie du.
+> Sitzraum gibt dir einen digitalen Raum der sich anfühlt wie du.
 
 **Kalt-E-Mail:**
 > Ich baue gerade ein Tool speziell für Coaches: einen gebrandeten Online-Raum wo deine Klienten ohne Account, ohne Download, einfach per Link erscheinen – mit deinem Logo, deinem Namen, deinem Kalender. Würdest du 15 Minuten investieren um es zu sehen?
 
 ### Emotionaler Kern
 Coaches verkaufen Vertrauen. Vertrauen beginnt beim ersten Eindruck.
-**HxRoom verkauft nicht Software – HxRoom verkauft einen professionellen ersten Eindruck.**
+**Sitzraum verkauft nicht Software – Sitzraum verkauft einen professionellen ersten Eindruck.**
 
 ---
 
@@ -75,7 +75,7 @@ Warum diese Nische zuerst:
 
 ## 5. Features & Differenzierung gegenüber Zoom/Meet
 
-| Feature | Zoom/Meet | HxRoom |
+| Feature | Zoom/Meet | Sitzraum |
 |---|---|---|
 | Branding | ❌ Fremdes Logo | ✅ Komplett deins |
 | Buchung integriert | ❌ Separates Tool | ✅ Alles in einem |
@@ -151,29 +151,18 @@ Folgende Features werden nicht gebaut – sie widersprechen der Positionierung a
 
 Bewusste Entscheidung gegen einen dauerhaft kostenlosen Plan: Freemium braucht Volumen (hunderte Nutzer) um zu funktionieren. In der Frühphase verwässert es das Signal – wer kostenlos nutzt, validiert nichts. Trial senkt die Einstiegshürde ohne den wahrgenommenen Wert zu senken.
 
-| Plan | Preis | Für wen |
-|---|---|---|
-| **Trial** | 0 € / 14 Tage | Alle Features testen, kein Kreditkartenzwang |
-| **Pro** | 79 €/Monat | Solo-Coach, unlimitierte Sitzungen, alle Features |
-| **Studio** | 149 €/Monat | Bis zu 3 Coaches, gemeinsamer Kalender |
-
-**Jahresabo:** 2 Monate gratis (entspricht ~17% Rabatt) → reduziert Churn
-
-### Feature-Übersicht nach Plan
-
-| Feature | Trial | Pro | Studio |
+| Plan | Preis | Provision | Für wen |
 |---|---|---|---|
-| Branding & eigene Domain | ✅ | ✅ | ✅ |
-| Buchung + automatischer Link | ✅ | ✅ | ✅ |
-| DSGVO + kein Klienten-Account | ✅ | ✅ | ✅ |
-| Automatische Erinnerungen | ✅ | ✅ | ✅ |
-| KI-Notizen & Zusammenfassung | ✅ | ✅ | ✅ |
-| Integrierte Bezahlung | ✅ | ✅ | ✅ |
-| Klienten-CRM | ✅ | ✅ | ✅ |
-| Mehrere Coaches | ❌ | ❌ | bis 3 |
-| Laufzeit | 14 Tage | unlimitiert | unlimitiert |
+| **Trial** | 0 € / 14 Tage | – | Alle Features testen, kein Kreditkartenzwang |
+| **Basic** | 19 €/Monat | 10 % auf Zahlungen | Einstieg ohne Risiko – HxRoom verdient mit dir |
+| **Pro** | 59 €/Monat | 0 % | Solo-Coach ab 4 Sitzungen/Monat günstiger als Basic |
+| **Studio** | 99 €/Monat | 0 % | Bis zu 5 Coaches, Studioseite, Klientenübergabe, Studiobetreiber-Rolle |
+
+**Break-even Basic → Pro:** Ab **400 € Monatsumsatz** über die Plattform (z. B. 4 Sitzungen à 100 €) lohnt sich der Wechsel zu Pro – Coaches erkennen das selbst, kein Verkaufsgespräch nötig.
 
 > **Designprinzip:** Im Trial alles freischalten – kein künstliches Einschränken. Der Coach soll den vollen Wert erleben, damit die Kaufentscheidung auf echter Erfahrung basiert, nicht auf Versprechen.
+
+→ Vollständige Preisdetails, Feature-Matrix und Positionierung: [pricing.md](pricing.md)
 
 ---
 
@@ -196,6 +185,12 @@ Alles andere kommt nach den ersten zahlenden Kunden.
 3. Facebook-Gruppen für Coaches & Heilpraktiker
 4. 1 Case Study nach Beta → "Wie Anna Schmidt 30% mehr Buchungen hatte"
 5. Kaltakquise per E-Mail an Coaches mit schlechter Online-Präsenz
+
+### Marketing-Strategie (Detaildokument)
+
+Die vollständige Marketing-Strategie umfasst zwei sofort startbare Kanäle – **Kalt-E-Mail** (CTA auf persönliche HxRoom-Coaching-Seite mit 15-min Live-Demo) und **LinkedIn-Direktansprache** – sowie weitere Aktionen wie Facebook-Gruppen, Beta-Testimonials, Podcast-Gastauftritte, SEO-Content, ein Affiliate-Programm und Kooperationen mit Coach-Ausbildungsinstituten.
+
+→ Details, Templates & Zeitplan: [marketing.md](marketing.md)
 
 ---
 
@@ -234,14 +229,16 @@ Alles andere kommt nach den ersten zahlenden Kunden.
 
 | URL | Bereich | Zugang |
 |---|---|---|
-| `hxroom.io` | Landingpage | öffentlich |
-| `app.hxroom.io` | Coach-Backoffice | Login erforderlich |
-| `admin.hxroom.io` | Betreiber-Backoffice | intern |
-| `[slug].hxroom.io` | Klienten-Subdomain des Coaches | öffentlich, kein Login |
+| `sitzraum.de` | Landingpage | öffentlich |
+| `app.sitzraum.de` | Coach-Backoffice | Login erforderlich |
+| `admin.sitzraum.de` | Betreiber-Backoffice | intern |
+| `[slug].sitzraum.de` | Klienten-Subdomain des Coaches | öffentlich, kein Login |
 
-**Beispiel:** `anna.hxroom.io` → gebrandete Buchungsseite, Warteraum & Videocall von Anna Bergmann.
+**Beispiel (Solo):** `anna.sitzraum.de` → gebrandete Buchungsseite, Warteraum & Videocall von Anna Bergmann.
 
-**Pro-Feature (CNAME):** Coaches können ihre eigene Domain zeigen lassen – `coaching.anna-bergmann.de` zeigt auf `anna.hxroom.io`, HxRoom bleibt unsichtbar.
+**Beispiel (Studio):** `mindflow.sitzraum.de` → Studioseite mit Coachliste; `mindflow.sitzraum.de/sarah` → Profil & Buchung von Sarah direkt.
+
+**Pro/Studio-Feature (CNAME):** Coaches und Studios können ihre eigene Domain zeigen lassen – `coaching.anna-bergmann.de` bzw. `mindflow-coaching.de` zeigt auf die jeweilige Sitzraum-Subdomain, Sitzraum bleibt unsichtbar.
 
 ---
 
@@ -250,30 +247,43 @@ Alles andere kommt nach den ersten zahlenden Kunden.
 - [ ] Landingpage texten & bauen
 - [ ] Tech-Stack & MVP-Scope definieren
 - [ ] Erste 5 Coaches für Beta-Test identifizieren
-- [ ] LinkedIn-Profil auf HxRoom ausrichten
+- [ ] LinkedIn-Profil auf Sitzraum ausrichten
 
 ---
 
 ## 13. Namens-Recherche & Kandidaten
 
-Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarkeit, internationale Lesbarkeit, kein Umlaut, Assoziation zum Produkt.
+Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarkeit, internationale Lesbarkeit, kein Umlaut, Assoziation zum Produkt, Passung zur Produktfamilie hxcode.io.
 
 | Name | Verfügbarkeit | International lesbar | Assoziation | Bewertung |
 |---|---|---|---|---|
-| **HxRoom** | ✅ frei | ✅ kein Umlaut | Sitzung, Raum, Vertrauen | ⭐⭐⭐⭐⭐ |
+| **HxRoom** 🏆 | ✅ komplett frei | ✅ kein Umlaut | Raum, Produktfamilie hxcode.io, modern | ⭐⭐⭐⭐⭐ |
+| **HxTalk** | ✅ komplett frei | ✅ kein Umlaut | Gespräch, Produktfamilie hxcode.io | ⭐⭐⭐⭐⭐ |
+| **HxSpace** | ✅ komplett frei | ✅ kein Umlaut | Raum, offen, Produktfamilie hxcode.io | ⭐⭐⭐⭐ |
+| **Sitzraum** | ✅ frei | ✅ kein Umlaut | Sitzung, Raum, Vertrauen | ⭐⭐⭐⭐⭐ |
 | **Wunderroom** | ✅ komplett frei | ✅ kein Umlaut | Positiv, einladend, Raum | ⭐⭐⭐⭐⭐ |
 | **Sitzly** | ✅ komplett frei | ✅ kein Umlaut | Sitzung, modern, SaaS-tauglich | ⭐⭐⭐⭐ |
 | **Wundercall** | ✅ komplett frei | ✅ kein Umlaut | Direkt, klar, Call-Bezug | ⭐⭐⭐ |
-| **Conva** | ❓ ungeprüft | ✅ kein Umlaut | Konversation, professionell | ❓ |
-| **Tala** | ❓ ungeprüft | ✅ kein Umlaut | „Sprechen" (Schwedisch), warm | ❓ |
 | **Coachroom** | ⚠️ .com geparkt | ✅ kein Umlaut | Coaching + Raum, beschreibend | ⭐⭐ |
 | **Roomly** | ⚠️ .io geparkt | ✅ kein Umlaut | Raum – falsche Assoziation (Airbnb) | ⭐⭐ |
 | **Sessio** | ❌ vergeben | ✅ kein Umlaut | Sitzung (Lateinisch) | ausgeschieden |
 | **Coachly** | ❌ mehrfach vergeben | ✅ kein Umlaut | Coaching | ausgeschieden |
 | **Parlo** | ❌ vergeben (ServiceNow) | ✅ kein Umlaut | Sprechen (Italienisch) | ausgeschieden |
+| **Wunderraum** | ❌ vergeben (Wien, Coaching) | ✅ kein Umlaut | Raum, Coaching | ausgeschieden |
+| **Zeitraum** | ❌ vergeben (Erlangen, Coaching) | ✅ kein Umlaut | Zeit + Raum | ausgeschieden |
+| **Roomio** | ❌ mehrfach vergeben | ✅ kein Umlaut | Raum-Buchung | ausgeschieden |
 
-### Empfehlung
+### Entscheidung: HxRoom 🏆
 
-**HxRoom** bleibt der stärkste Name – emotional, warm, kein Umlaut, frei und ideal für den DACH-Markt. Als internationale Alternative bietet sich **Wunderroom** an: positiv besetzt, einladend, komplett unbelegt und weltweit lesbar.
+**HxRoom** ist der finale Top-Favorit. Die Entscheidung basiert auf folgenden Stärken:
 
-> **Strategie-Option:** HxRoom für DACH-Launch, Wunderroom als Reserve für spätere Internationalisierung.
+1. **Produktfamilie** – passt nahtlos in die hxcode.io-Linie neben hxmeet.io
+2. **Raum-DNA** – behält das Kernkonzept „Raum" aus dem ursprünglichen Arbeitstitel Sitzraum
+3. **Komplett frei** – kein einziger Treffer bei der Recherche
+4. **International** – kein Umlaut, weltweit lesbar und aussprechbar
+5. **Kurz & modern** – SaaS-tauglich, einprägsam
+
+> **Produktname:** HxRoom  
+> **Domain:** hxroom.io  
+> **Dachmarke:** hxcode.io  
+> **Arbeitstitel (intern/DACH):** Sitzraum

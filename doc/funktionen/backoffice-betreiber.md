@@ -1,6 +1,6 @@
-# HxRoom · Betreiber-Backoffice – Feature-Liste
+# Sitzraum · Betreiber-Backoffice – Feature-Liste
 
-> **URL:** `admin.hxroom.io` · Zugang intern, nur für HxRoom-Betreiber  
+> **URL:** `admin.sitzraum.de` · Zugang intern, nur für Sitzraum-Betreiber  
 > Das Betreiber-Backoffice ist das Steuerungszentrum der gesamten Plattform – unsichtbar für Coaches und Klienten, unverzichtbar für den Betrieb.
 
 ---
@@ -73,7 +73,7 @@
 
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
-| 01 | **Sub-Domain-Übersicht** | Liste aller vergebenen `[slug].hxroom.io`-Subdomains mit zugehörigem Coach. | MVP |
+| 01 | **Sub-Domain-Übersicht** | Liste aller vergebenen `[slug].sitzraum.de`-Subdomains mit zugehörigem Coach. | MVP |
 | 02 | **CNAME-Einträge verwalten** | Übersicht aller aktiven Custom-Domains (Pro-Feature) mit Status (aktiv / fehlerhafter DNS-Eintrag). | Pro |
 | 03 | **Slug-Konflikte lösen** | Anzeige doppelt angeforderter Slugs und manuelle Zuweisung bei Konflikten. | MVP |
 | 04 | **Infrastruktur-Status** | Echtzeit-Statusanzeige von API, LiveKit, Redis und Datenbank – mit Alarmierung bei Ausfällen. | Später |

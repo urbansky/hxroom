@@ -54,12 +54,11 @@ hxroom/
 ## Dokumentation
 Die folgenden Dokumente in `doc/` sind immer zu beachten:
 - [Projektübersicht](doc/project.md)
-- [Technische Architektur](doc/technical.md)
-- [Backoffice (Admin)](doc/backoffice.md)
-- [Betreiber-Backoffice](doc/betreiber-backoffice.md)
-- UI-PoCs in `doc/ui-poc/`:
-  - [Landingpage](doc/ui-poc/landingpage.html)
-  - [Coach-Landing](doc/ui-poc/coach-landing.html)
-  - [Video-Call](doc/ui-poc/video-call.html)
-  - [Backoffice](doc/ui-poc/backoffice.html)
-  - [Betreiber-Backoffice](doc/ui-poc/betreiber-backoffice.html)
+- [Technisches Konzept](doc/technisches-konzept.md)
+- [Zeitplan](doc/zeitplan.md)
+- [Pricing](doc/pricing.md)
+- [Marketing](doc/marketing.md)
+- [S3-Verzeichnisschema](doc/s3-verzeichnisschema.md)
+- Funktionen:
+  - [Coach-Backoffice](doc/funktionen/backoffice-coach.md)
+  - [Betreiber-Backoffice](doc/funktionen/backoffice-betreiber.md)
