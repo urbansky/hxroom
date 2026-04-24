@@ -54,6 +54,15 @@ hxroom/
 ## Videokonferenz
 Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/room/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.
 
+## Pre-Launch: noindex in `landing` und `room`
+Beide Apps führen aktuell einen Suchmaschinen-Ausschluss, solange HxRoom noch nicht öffentlich beworben wird:
+- `<meta name="robots" content="noindex, nofollow" />` in `apps/landing/index.html` und `apps/room/index.html`
+- `add_header X-Robots-Tag "noindex, nofollow, noarchive" always;` in `apps/landing/nginx.conf` und `apps/room/nginx.conf` (server-Block **und** `location /assets/`)
+
+**Vor dem öffentlichen Launch** müssen diese vier Einträge entfernt werden – `grep -rn noindex apps/landing apps/room` findet alle Stellen auf einen Schlag.
+
+**Bei größeren Änderungen an `apps/landing/` oder `apps/room/`** (neue öffentliche Seiten, SEO-Arbeiten, Launch-Vorbereitung, Landingpage-Umbau, o. Ä.): vor dem Loslegen kurz nachfragen, ob der noindex-Status noch gelten soll. Kleine Bugfixes und interne Refactorings brauchen die Rückfrage nicht.
+
 ## Dokumentation im Ordner `doc/`
 
 Im Ordner `doc/` liegen die fachlichen und technischen Markdown-Dokumente zu **HxRoom**. Diese Dateien sind die maßgebliche Referenz für Architektur, Konzepte, Rollenmodell und technische Entscheidungen und müssen bei allen Aufgaben berücksichtigt werden.
