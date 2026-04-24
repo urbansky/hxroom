@@ -1,4 +1,4 @@
-# Sitzraum – Projektdokumentation
+# HxRoom – Projektdokumentation
 *Dein digitaler Raum für echte Gespräche.*
 
 ---
@@ -13,20 +13,20 @@ Als selbständiger Software-Entwickler mit Expertise im Bereich **Videoconferenc
 
 **White-Label Videocall-Plattform für Coaches & Life Coaches**
 
-Coaches und Therapeuten nutzen heute Zoom oder Google Meet – generische Tools, die sich anfühlen wie ein Firmen-Meeting, nicht wie ein vertrauensvolles Gespräch. Sitzraum gibt ihnen einen gebrandeten, DSGVO-konformen digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in ihrem Namen.
+Coaches und Therapeuten nutzen heute Zoom oder Google Meet – generische Tools, die sich anfühlen wie ein Firmen-Meeting, nicht wie ein vertrauensvolles Gespräch. HxRoom gibt ihnen einen gebrandeten, DSGVO-konformen digitalen Empfangsraum – von der Buchung bis zur Nachbereitung, vollständig in ihrem Namen.
 
 ---
 
 ## 3. Arbeitstitel & Positionierung
 
-### Name: **Sitzraum**
+### Name: **HxRoom**
 Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, menschlich, sofort verständlich.
 
 ### Kernbotschaft
 > **„Deine Klienten verdienen mehr als einen Zoom-Link."**
 
 ### Tagline
-> *Sitzraum – Einfach. Professionell. Deins.*
+> *HxRoom – Einfach. Professionell. Deins.*
 
 ### Positionierung
 - **Für wen:** Solo-Coaches und Life Coaches, die professionell online arbeiten wollen – ohne IT-Stress
@@ -45,14 +45,14 @@ Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, 
 > Sein Klient muss sich anmelden. Einen Account erstellen. Die App runterladen.
 > Und dann erscheint er in einem Raum der aussieht wie ein Firmen-Meeting.
 > Das ist nicht das Gefühl das du verkaufst.
-> Sitzraum gibt dir einen digitalen Raum der sich anfühlt wie du.
+> HxRoom gibt dir einen digitalen Raum der sich anfühlt wie du.
 
 **Kalt-E-Mail:**
 > Ich baue gerade ein Tool speziell für Coaches: einen gebrandeten Online-Raum wo deine Klienten ohne Account, ohne Download, einfach per Link erscheinen – mit deinem Logo, deinem Namen, deinem Kalender. Würdest du 15 Minuten investieren um es zu sehen?
 
 ### Emotionaler Kern
 Coaches verkaufen Vertrauen. Vertrauen beginnt beim ersten Eindruck.
-**Sitzraum verkauft nicht Software – Sitzraum verkauft einen professionellen ersten Eindruck.**
+**HxRoom verkauft nicht Software – HxRoom verkauft einen professionellen ersten Eindruck.**
 
 ---
 
@@ -75,7 +75,7 @@ Warum diese Nische zuerst:
 
 ## 5. Features & Differenzierung gegenüber Zoom/Meet
 
-| Feature | Zoom/Meet | Sitzraum |
+| Feature | Zoom/Meet | HxRoom |
 |---|---|---|
 | Branding | ❌ Fremdes Logo | ✅ Komplett deins |
 | Buchung integriert | ❌ Separates Tool | ✅ Alles in einem |
@@ -229,16 +229,16 @@ Die vollständige Marketing-Strategie umfasst zwei sofort startbare Kanäle – 
 
 | URL | Bereich | Zugang |
 |---|---|---|
-| `sitzraum.de` | Landingpage | öffentlich |
-| `app.sitzraum.de` | Coach-Backoffice | Login erforderlich |
-| `admin.sitzraum.de` | Betreiber-Backoffice | intern |
-| `[slug].sitzraum.de` | Klienten-Subdomain des Coaches | öffentlich, kein Login |
+| `hxroom.de` | Landingpage | öffentlich |
+| `app.hxroom.de` | Coach-Backoffice | Login erforderlich |
+| `admin.hxroom.de` | Betreiber-Backoffice | intern |
+| `[slug].hxroom.de` | Klienten-Subdomain des Coaches | öffentlich, kein Login |
 
-**Beispiel (Solo):** `anna.sitzraum.de` → gebrandete Buchungsseite, Warteraum & Videocall von Anna Bergmann.
+**Beispiel (Solo):** `anna.hxroom.de` → gebrandete Buchungsseite, Warteraum & Videocall von Anna Bergmann.
 
-**Beispiel (Studio):** `mindflow.sitzraum.de` → Studioseite mit Coachliste; `mindflow.sitzraum.de/sarah` → Profil & Buchung von Sarah direkt.
+**Beispiel (Studio):** `mindflow.hxroom.de` → Studioseite mit Coachliste; `mindflow.hxroom.de/sarah` → Profil & Buchung von Sarah direkt.
 
-**Pro/Studio-Feature (CNAME):** Coaches und Studios können ihre eigene Domain zeigen lassen – `coaching.anna-bergmann.de` bzw. `mindflow-coaching.de` zeigt auf die jeweilige Sitzraum-Subdomain, Sitzraum bleibt unsichtbar.
+**Pro/Studio-Feature (CNAME):** Coaches und Studios können ihre eigene Domain zeigen lassen – `coaching.anna-bergmann.de` bzw. `mindflow-coaching.de` zeigt auf die jeweilige HxRoom-Subdomain, HxRoom bleibt unsichtbar.
 
 ---
 
@@ -247,7 +247,7 @@ Die vollständige Marketing-Strategie umfasst zwei sofort startbare Kanäle – 
 - [ ] Landingpage texten & bauen
 - [ ] Tech-Stack & MVP-Scope definieren
 - [ ] Erste 5 Coaches für Beta-Test identifizieren
-- [ ] LinkedIn-Profil auf Sitzraum ausrichten
+- [ ] LinkedIn-Profil auf HxRoom ausrichten
 
 ---
 
@@ -277,13 +277,22 @@ Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarke
 
 **HxRoom** ist der finale Top-Favorit. Die Entscheidung basiert auf folgenden Stärken:
 
-1. **Produktfamilie** – passt nahtlos in die hxcode.io-Linie neben hxmeet.io
+1. **Produktfamilie** – passt in die hxcode.io-Linie neben hxmeet.io
 2. **Raum-DNA** – behält das Kernkonzept „Raum" aus dem ursprünglichen Arbeitstitel Sitzraum
 3. **Komplett frei** – kein einziger Treffer bei der Recherche
 4. **International** – kein Umlaut, weltweit lesbar und aussprechbar
 5. **Kurz & modern** – SaaS-tauglich, einprägsam
 
+### Domain-Strategie
+
+**Primär `hxroom.de`** – für den DACH-Markt und alle kundenseitigen URLs (Landingpage, Coach-Subdomains, Buchung). `.de` signalisiert Vertrauen und deutschen Anbieter, passt zum DSGVO-Claim („Server Deutschland") und ist in Google.de lokal bevorzugt. Für die nicht-tech-affine Coach-Zielgruppe ist `.de` die natürlichere Wahl.
+
+**Reserviert `hxroom.io`** – als Brand-Reserve und für die spätere Internationalisierung (UK/US). Passt zur Dachmarken-Linie `hxcode.io` / `hxmeet.io`. Bis dahin per 301 auf `hxroom.de` weiterleiten, um Brand-Squatting zu verhindern.
+
+**Optional defensiv:** `hxroom.at`, `hxroom.ch` (DACH-Schutz), `hxroom.com` (falls verfügbar).
+
 > **Produktname:** HxRoom  
-> **Domain:** hxroom.io  
+> **Primärdomain:** hxroom.de (DACH)  
+> **Reserviert für Internationalisierung:** hxroom.io  
 > **Dachmarke:** hxcode.io  
-> **Arbeitstitel (intern/DACH):** Sitzraum
+> *(Ursprünglicher Arbeitstitel: Sitzraum)*

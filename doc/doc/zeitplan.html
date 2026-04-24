@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HxRoom – Entwicklungsplan</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sage:        #8B9E8A;
+  --sage-light:  #C5D0C4;
+  --sage-dark:   #5C6E5B;
+  --cream:       #F5F0E8;
+  --warm-white:  #FDFAF5;
+  --charcoal:    #2C2C2C;
+  --gold:        #B5935A;
+  --gold-light:  #D4AE78;
+  --bg:          #141814;
+  --bg-light:    #1A1E1A;
+  --surface:     #1E231E;
+  --surface2:    #232823;
+  --border:      rgba(255,255,255,0.06);
+  --border-soft: rgba(255,255,255,0.04);
+  --text-primary:   rgba(255,255,255,0.88);
+  --text-secondary: rgba(255,255,255,0.45);
+  --text-muted:     rgba(255,255,255,0.22);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.6;
+}
+
+/* NAV */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 60px;
+  background: rgba(20,24,20,0.85);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; }
+.nav-logo {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--sage) 0%, var(--sage-dark) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.92);
+}
+.nav-wordmark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600; color: #D4C9B8; letter-spacing: 0.03em;
+}
+.nav-badge {
+  font-size: 10px; color: var(--text-muted);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 2px 8px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 8px;
+}
+.nav-meta { font-size: 12px; color: var(--text-muted); letter-spacing: 0.06em; }
+
+/* LAYOUT */
+.page {
+  max-width: 960px; margin: 0 auto;
+  padding: 100px 40px 80px;
+  position: relative; z-index: 1;
+}
+
+/* HERO */
+.hero { text-align: center; margin-bottom: 72px; padding-bottom: 64px; border-bottom: 1px solid var(--border); }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(139,158,138,0.08); border: 1px solid rgba(139,158,138,0.16);
+  border-radius: 20px; padding: 5px 14px; margin-bottom: 28px;
+}
+.hero-eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--sage); }
+.hero-eyebrow-text { font-size: 10px; color: var(--sage-light); letter-spacing: 0.1em; text-transform: uppercase; }
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(44px, 6vw, 76px); font-weight: 300; line-height: 1.04;
+  color: var(--cream); letter-spacing: -0.02em; margin-bottom: 20px;
+}
+.hero-title em { font-style: italic; color: var(--gold-light); }
+.hero-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.7; max-width: 520px; margin: 0 auto 36px; }
+
+/* SUMMARY STATS */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 72px;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 20px;
+  text-align: center;
+}
+.stat-card.gold { background: rgba(181,147,90,0.06); border-color: rgba(181,147,90,0.18); }
+.stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px; font-weight: 300; color: var(--cream); line-height: 1;
+}
+.stat-num-gold { color: var(--gold-light); }
+.stat-unit { font-size: 16px; color: var(--sage-light); }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.07em; text-transform: uppercase; }
+
+/* SECTION HEADER */
+.section-header { margin-bottom: 28px; }
+.eyebrow {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+}
+.eyebrow-line { width: 28px; height: 1px; background: var(--sage-dark); }
+.eyebrow-text { font-size: 10px; color: var(--sage); letter-spacing: 0.12em; text-transform: uppercase; }
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px; font-weight: 300; color: var(--cream); letter-spacing: -0.01em;
+}
+
+/* PHASES */
+.phases { display: flex; flex-direction: column; gap: 16px; margin-bottom: 64px; }
+
+.phase-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  transition: border-color 0.25s;
+  cursor: pointer;
+}
+.phase-card:hover { border-color: rgba(255,255,255,0.1); }
+.phase-card.expanded { border-color: rgba(139,158,138,0.2); }
+.phase-card.milestone { border-color: rgba(181,147,90,0.2); background: rgba(181,147,90,0.04); }
+
+.phase-header {
+  display: grid; grid-template-columns: 56px 1fr auto auto;
+  align-items: center; gap: 20px; padding: 22px 24px;
+}
+
+.phase-num {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: rgba(139,158,138,0.1); border: 1px solid rgba(139,158,138,0.16);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 300; color: var(--sage-light);
+}
+.phase-card.milestone .phase-num {
+  background: rgba(181,147,90,0.1); border-color: rgba(181,147,90,0.2);
+  color: var(--gold-light);
+}
+
+.phase-info {}
+.phase-name { font-size: 15px; color: var(--text-primary); font-weight: 500; margin-bottom: 3px; }
+.phase-sub { font-size: 12px; color: var(--text-muted); }
+
+.phase-meta { text-align: right; }
+.phase-weeks { font-size: 13px; color: var(--text-secondary); margin-bottom: 2px; }
+.phase-hours { font-size: 11px; color: var(--text-muted); }
+
+.phase-chevron {
+  width: 28px; height: 28px; border-radius: 7px;
+  border: 1px solid var(--border); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: all 0.2s; flex-shrink: 0;
+}
+.phase-chevron svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.25s; }
+.phase-card.expanded .phase-chevron svg { transform: rotate(180deg); }
+
+.phase-body {
+  display: none; padding: 0 24px 24px; border-top: 1px solid var(--border-soft);
+}
+.phase-card.expanded .phase-body { display: block; }
+
+.phase-body-inner { padding-top: 20px; }
+
+.phase-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px; }
+
+.phase-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 6px; padding: 4px 10px; font-size: 11px;
+}
+.tag-sage { background: rgba(139,158,138,0.08); border: 1px solid rgba(139,158,138,0.16); color: var(--sage-light); }
+.tag-gold { background: rgba(181,147,90,0.08); border: 1px solid rgba(181,147,90,0.18); color: var(--gold-light); }
+.tag-muted { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text-muted); }
+
+.claude-box {
+  background: rgba(92,110,91,0.08); border: 1px solid rgba(139,158,138,0.12);
+  border-radius: 10px; padding: 14px 16px;
+}
+.claude-box-label { font-size: 10px; color: var(--sage); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.claude-box-items { display: flex; flex-direction: column; gap: 5px; }
+.claude-item { font-size: 12px; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+.claude-item::before { content: '›'; color: var(--sage-dark); flex-shrink: 0; margin-top: 0px; }
+
+.risk-box {
+  margin-top: 12px;
+  background: rgba(181,147,90,0.06); border: 1px solid rgba(181,147,90,0.14);
+  border-radius: 10px; padding: 12px 16px;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.risk-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.risk-text { font-size: 12px; color: rgba(212,174,120,0.7); line-height: 1.5; }
+
+/* VISUAL TIMELINE STRIP */
+.timeline-section { margin-bottom: 64px; }
+.timeline-strip {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px 28px 24px;
+}
+.timeline-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
+.timeline-track { position: relative; }
+.timeline-bar-bg {
+  height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px;
+  position: relative; margin-bottom: 20px;
+}
+.timeline-bar-fill {
+  position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--sage-dark), var(--sage));
+  transition: width 0.8s ease;
+}
+.timeline-milestones {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.milestone-item {}
+.milestone-dot-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.milestone-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 2px solid var(--sage-dark); background: var(--bg);
+  flex-shrink: 0;
+}
+.milestone-dot.m1 { border-color: var(--sage); background: var(--sage); }
+.milestone-dot.m2 { border-color: var(--gold); background: var(--gold); }
+.milestone-dot.m3 { border-color: var(--sage-light); background: var(--sage-light); }
+.milestone-line { flex: 1; height: 1px; background: var(--border); }
+.milestone-when { font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; }
+.milestone-title { font-size: 13px; color: var(--text-primary); margin-bottom: 3px; }
+.milestone-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* SUMMARY TABLE */
+.summary-section { margin-bottom: 64px; }
+.summary-table { width: 100%; border-collapse: collapse; }
+.summary-table thead th {
+  font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.summary-table tbody td {
+  padding: 13px 16px; font-size: 13px; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+.summary-table tbody tr:last-child td { border-bottom: none; }
+.summary-table tbody td:first-child { color: var(--text-primary); font-size: 14px; }
+.td-phase { display: flex; align-items: center; gap: 10px; }
+.td-phase-num {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: rgba(139,158,138,0.1); border: 1px solid rgba(139,158,138,0.16);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--sage-light); font-family: 'Cormorant Garamond', serif;
+  flex-shrink: 0;
+}
+.td-weeks { color: var(--text-muted); }
+.td-hours {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; color: var(--cream);
+}
+.summary-total {
+  background: var(--surface2); border-top: 1px solid rgba(255,255,255,0.08);
+}
+.summary-total td { color: var(--text-primary) !important; font-weight: 500; padding: 14px 16px !important; border-bottom: none !important; }
+.summary-total .td-hours { color: var(--gold-light) !important; }
+
+/* ASSUMPTIONS */
+.assumptions {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; margin-bottom: 64px;
+}
+.assumptions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+.assumption-item {}
+.assumption-title { font-size: 13px; color: var(--text-primary); margin-bottom: 4px; font-weight: 500; }
+.assumption-text { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+/* BUFFER BOX */
+.buffer-box {
+  background: rgba(181,147,90,0.05); border: 1px solid rgba(181,147,90,0.15);
+  border-radius: 16px; padding: 28px; margin-bottom: 64px;
+  display: flex; gap: 24px; align-items: flex-start;
+}
+.buffer-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(181,147,90,0.1); border: 1px solid rgba(181,147,90,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.buffer-content {}
+.buffer-title { font-size: 15px; color: var(--gold-light); font-weight: 500; margin-bottom: 6px; }
+.buffer-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+/* FOOTER */
+.footer { text-align: center; padding-top: 48px; border-top: 1px solid var(--border); }
+.footer-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px; font-weight: 300; color: rgba(255,255,255,0.2); margin-bottom: 8px;
+}
+.footer-meta { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; }
+
+/* GLOW */
+.glow-tl {
+  position: fixed; top: -200px; left: -200px;
+  width: 700px; height: 700px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(92,110,91,0.06) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+.glow-br {
+  position: fixed; bottom: -200px; right: -200px;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(181,147,90,0.04) 0%, transparent 65%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim { opacity: 0; animation: fadeUp 0.6s ease forwards; }
+.anim-1 { animation-delay: 0.1s; }
+.anim-2 { animation-delay: 0.2s; }
+.anim-3 { animation-delay: 0.3s; }
+.anim-4 { animation-delay: 0.4s; }
+.anim-5 { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">S</div>
+    <div class="nav-wordmark">HxRoom</div>
+    <span class="nav-badge">Entwicklungsplan</span>
+  </div>
+  <div class="nav-meta">10h / Woche · Claude Code</div>
+</nav>
+
+<main class="page">
+
+  <!-- HERO -->
+  <header class="hero anim anim-1">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-dot"></div>
+      <span class="hero-eyebrow-text">Realistischer Zeitplan · Solo-Entwicklung</span>
+    </div>
+    <h1 class="hero-title">Von Null zum<br>fertigen <em>Produkt.</em></h1>
+    <p class="hero-sub">9 Phasen, ausschließlich mit Claude Code entwickelt. 10 Stunden pro Woche, kein manuelles Coding.</p>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-row anim anim-2">
+    <div class="stat-card">
+      <div class="stat-num">9</div>
+      <div class="stat-label">Phasen gesamt</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">36</div>
+      <div class="stat-label">Wochen bis Launch</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">360</div>
+      <div class="stat-label">Entwicklungsstunden</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-num"><span class="stat-num-gold">~9</span></div>
+      <div class="stat-label">Monate bis Vollprodukt</div>
+    </div>
+  </div>
+
+  <!-- PHASES -->
+  <section class="anim anim-3">
+    <div class="section-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Entwicklungsphasen</span>
+      </div>
+      <h2 class="section-title">Schritt für Schritt</h2>
+    </div>
+
+    <div class="phases">
+
+      <!-- Phase 1 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">1</div>
+          <div class="phase-info">
+            <div class="phase-name">Fundament & Infrastruktur</div>
+            <div class="phase-sub">Monorepo · Docker Compose · DB-Schema · CLAUDE.md</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 1–4</div>
+            <div class="phase-hours">40 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">Monorepo-Setup mit pnpm Workspaces, Docker Compose Stack (Postgres, Redis, Caddy, LiveKit, Whisper), vollständiges Drizzle-Schema aller Kerntabellen, CLAUDE.md Instruktionsdatei, lokale Subdomain-Entwicklung mit /etc/hosts Einträgen.</p>
+            <div class="phase-tags">
+              <span class="tag tag-muted">pnpm Workspaces</span>
+              <span class="tag tag-muted">Docker Compose</span>
+              <span class="tag tag-muted">Drizzle ORM</span>
+              <span class="tag tag-muted">Caddy HTTPS</span>
+              <span class="tag tag-muted">Hetzner Setup</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">Monorepo-Scaffolding mit korrekter pnpm Workspace-Struktur</div>
+                <div class="claude-item">Docker Compose für alle Services generieren</div>
+                <div class="claude-item">Vollständiges Drizzle-Schema aller Kerntabellen inkl. Migrationen</div>
+                <div class="claude-item">Caddyfile mit Wildcard-Zertifikaten für *.hxroom.de</div>
+                <div class="claude-item">CLAUDE.md mit Konventionen und Projektstruktur</div>
+              </div>
+            </div>
+            <div class="risk-box">
+              <span class="risk-icon">⚠</span>
+              <span class="risk-text">LiveKit-Konfiguration und Hetzner Object Storage Setup sind infrastrukturlastig – hier kann es haken. Puffer einplanen.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">2</div>
+          <div class="phase-info">
+            <div class="phase-name">Auth & Coach-Profil</div>
+            <div class="phase-sub">better-auth · Subdomain-Routing · Branding · Onboarding</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 5–7</div>
+            <div class="phase-hours">30 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">better-auth Integration im NestJS Backend, Registrierung und Login, Subdomain-Routing-Middleware (anna.hxroom.de), Coach-Profil mit Branding-Setup (Logo, Primärfarbe), Onboarding-Checkliste im Frontend, Basis-Dashboard-Shell.</p>
+            <div class="phase-tags">
+              <span class="tag tag-muted">better-auth</span>
+              <span class="tag tag-muted">NestJS Guard</span>
+              <span class="tag tag-muted">S3 Upload</span>
+              <span class="tag tag-muted">Vue Router</span>
+              <span class="tag tag-muted">Pinia Store</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">better-auth NestJS-Modul mit Session-Management</div>
+                <div class="claude-item">Subdomain-Middleware für Wildcard-Routing</div>
+                <div class="claude-item">Vue-Auth-Composables und geschützte Routen</div>
+                <div class="claude-item">Coach-Modul CRUD (NestJS + Drizzle)</div>
+                <div class="claude-item">Branding-Upload-Flow mit Hetzner S3 Integration</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">3</div>
+          <div class="phase-info">
+            <div class="phase-name">Buchungssystem</div>
+            <div class="phase-sub">Verfügbarkeiten · Buchungsseite · Erinnerungen · E-Mail</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 8–12</div>
+            <div class="phase-hours">50 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">Verfügbarkeits-Engine mit Slot-Logik, öffentliche gebrandete Buchungsseite auf der Coach-Subdomain, Klientenformular, automatische E-Mail-Bestätigung mit Raumlink via Resend, BullMQ-Erinnerungsjobs (24h/1h vor Termin), Termin-Dashboard für den Coach, manuelle Terminanlage.</p>
+            <div class="phase-tags">
+              <span class="tag tag-muted">BullMQ</span>
+              <span class="tag tag-muted">Resend E-Mail</span>
+              <span class="tag tag-muted">Slot-Logik</span>
+              <span class="tag tag-muted">Zeitzonen</span>
+              <span class="tag tag-muted">Kalender-UI</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">Availability-Modul mit Slot-Generierung, Pufferzeit und Vorlaufzeit</div>
+                <div class="claude-item">Booking-Modul mit HMAC-signierten Klienten-Tokens</div>
+                <div class="claude-item">Resend E-Mail-Templates (Bestätigung, Erinnerung, Stornierung)</div>
+                <div class="claude-item">BullMQ Worker für zeitbasierte Erinnerungs-Jobs</div>
+                <div class="claude-item">Vue-Kalender-Komponente für Coach-Dashboard</div>
+              </div>
+            </div>
+            <div class="risk-box">
+              <span class="risk-icon">⚠</span>
+              <span class="risk-text">Komplexestes Modul im MVP. Zeitlogik, Zeitzonen, Pufferzeiten und Edge Cases brauchen besondere Sorgfalt – hier 20% Mehraufwand einplanen.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">4</div>
+          <div class="phase-info">
+            <div class="phase-name">Videocall</div>
+            <div class="phase-sub">LiveKit · Warteraum · Call-UI · Sitzungsabschluss</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 13–16</div>
+            <div class="phase-hours">40 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Generierung im Backend, Call-UI mit Kamera/Mikro-Controls und Screen-Share, Sitzungsabschluss-Flow, Danke-Seite für Klienten, Einwilligungsbanner für Aufnahmen (DSGVO).</p>
+            <div class="phase-tags">
+              <span class="tag tag-muted">LiveKit SDK</span>
+              <span class="tag tag-muted">WebRTC</span>
+              <span class="tag tag-muted">Vue Composable</span>
+              <span class="tag tag-muted">Session-State</span>
+              <span class="tag tag-muted">DSGVO Consent</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">LiveKit-Service-Modul im NestJS Backend (Token-Generierung, Room-Management)</div>
+                <div class="claude-item">Vue-Composable für LiveKit Room-Verbindung und State</div>
+                <div class="claude-item">Warteraum-Komponenten mit Coach-Branding</div>
+                <div class="claude-item">Call-UI mit Kamera/Mikro-Controls, Screen-Share</div>
+                <div class="claude-item">Consent-Flow für Aufnahme-Einwilligung (DSGVO-konform)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 5 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">5</div>
+          <div class="phase-info">
+            <div class="phase-name">Nachbereitung & CRM</div>
+            <div class="phase-sub">Notizen · Session-Protokoll · Klientenliste</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 17–19</div>
+            <div class="phase-hours">30 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenliste mit Sitzungshistorie, einfache Suchfunktion. Nach dieser Phase ist der MVP bereit für echte Beta-Coaches.</p>
+            <div class="phase-tags">
+              <span class="tag tag-sage">Beta-ready</span>
+              <span class="tag tag-muted">Notes-Modul</span>
+              <span class="tag tag-muted">CRM-Queries</span>
+              <span class="tag tag-muted">Dashboard</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">Notes-Modul mit Auto-Save während des Calls</div>
+                <div class="claude-item">Client-Modul mit Sitzungshistorie und Klientenprofil</div>
+                <div class="claude-item">Dashboard-Queries mit Drizzle (Aggregate, Joins)</div>
+                <div class="claude-item">Vue-Tabellen-Komponenten für CRM-Ansichten</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 6 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">6</div>
+          <div class="phase-info">
+            <div class="phase-name">Whisper-Transkription</div>
+            <div class="phase-sub">LiveKit Egress · faster-whisper · BullMQ · Transkript-UI</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 20–22</div>
+            <div class="phase-hours">30 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">LiveKit Egress-Konfiguration (Aufnahme → S3), BullMQ-Job für asynchrone Transkription, faster-whisper HTTP-Wrapper auf Hetzner, Transkript-Speicherung in der DB, Transkript-Ansicht im Backoffice, automatisches Löschen der Audiodatei nach erfolgreicher Transkription.</p>
+            <div class="phase-tags">
+              <span class="tag tag-muted">LiveKit Egress</span>
+              <span class="tag tag-muted">faster-whisper</span>
+              <span class="tag tag-muted">BullMQ Job</span>
+              <span class="tag tag-muted">S3 Lifecycle</span>
+              <span class="tag tag-muted">Whisper small</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">LiveKit Egress YAML-Konfiguration für Aufnahme → Hetzner S3</div>
+                <div class="claude-item">BullMQ-Job: Audio-Download → Whisper → Transkript-Speicherung → Audio-Delete</div>
+                <div class="claude-item">faster-whisper HTTP-Wrapper Dockerfile und API</div>
+                <div class="claude-item">Transkript-UI-Komponenten im Coach-Backoffice</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 7 -->
+      <div class="phase-card milestone" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">7</div>
+          <div class="phase-info">
+            <div class="phase-name">Billing (Stripe)</div>
+            <div class="phase-sub">Subscriptions · Webhooks · Billing Portal · Plan-Enforcement</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 23–26</div>
+            <div class="phase-hours">40 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">Stripe Subscription-Integration, organizationBilling-Tabelle, Webhook-Handler für alle relevanten Events (subscription created/updated/deleted, payment_failed), Stripe Billing Portal für Selbstverwaltung, Plan-Enforcement-Guards in der API, Trial-Ablauf-Flow, Upgrade-CTA im Dashboard.</p>
+            <div class="phase-tags">
+              <span class="tag tag-gold">Zahlende Kunden möglich</span>
+              <span class="tag tag-muted">Stripe Webhooks</span>
+              <span class="tag tag-muted">Grace Period</span>
+              <span class="tag tag-muted">Plan Guards</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">Stripe-Webhook-Handler mit Signatur-Verifikation und allen Events</div>
+                <div class="claude-item">Plan-Guard-Middleware für geschützte API-Endpunkte</div>
+                <div class="claude-item">organizationBilling-Modul (Drizzle Schema + NestJS Service)</div>
+                <div class="claude-item">Vue-Upgrade-Flow und Trial-Countdown-UI</div>
+              </div>
+            </div>
+            <div class="risk-box">
+              <span class="risk-icon">⚠</span>
+              <span class="risk-text">Stripe-Webhooks sind erfahrungsgemäß aufwändig. Grace Period, Reaktivierung, fehlgeschlagene Zahlung – alle Edge Cases müssen sauber abgedeckt sein.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 8 -->
+      <div class="phase-card" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">8</div>
+          <div class="phase-info">
+            <div class="phase-name">Pro-Features & Betreiber-Backoffice</div>
+            <div class="phase-sub">Rechnungsstellung · Calendar Sync · Admin-Dashboard</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 27–32</div>
+            <div class="phase-hours">60 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">PDF-Rechnungsgenerierung (nach jeder Sitzung → S3), Umsatzübersicht für Coach, Google Calendar Sync (iCal/OAuth), Betreiber-Backoffice unter admin.hxroom.de: Coach-Liste, Subscription-Verwaltung, MRR-Dashboard, Plan-Änderungen, Trial-Verlängerung.</p>
+            <div class="phase-tags">
+              <span class="tag tag-muted">PDF-Generierung</span>
+              <span class="tag tag-muted">Google Calendar</span>
+              <span class="tag tag-muted">Admin-Guards</span>
+              <span class="tag tag-muted">MRR Dashboard</span>
+              <span class="tag tag-muted">Coach-Verwaltung</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">PDF-Rechnungs-Generator (puppeteer oder pdf-lib) → S3-Upload → signierte URL</div>
+                <div class="claude-item">Google Calendar OAuth-Flow und iCal-Integration</div>
+                <div class="claude-item">Admin-NestJS-Guards mit Betreiber-Rolle</div>
+                <div class="claude-item">Betreiber-Dashboard-Queries (MRR, Churn, Conversion)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 9 -->
+      <div class="phase-card milestone" onclick="togglePhase(this)">
+        <div class="phase-header">
+          <div class="phase-num">9</div>
+          <div class="phase-info">
+            <div class="phase-name">Beta-Härtung & Launch</div>
+            <div class="phase-sub">Tests · DSGVO · Backup · Monitoring · Produktion</div>
+          </div>
+          <div class="phase-meta">
+            <div class="phase-weeks">Woche 33–36</div>
+            <div class="phase-hours">40 Stunden</div>
+          </div>
+          <button class="phase-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="phase-body">
+          <div class="phase-body-inner">
+            <p class="phase-desc">End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cascade-Delete), Backup-Cron-Jobs (pg_dump → S3), Monitoring-Setup, Performance-Optimierung kritischer DB-Queries, Fehlerbehandlung und Edge Cases schließen, Produktions-Deployment auf Hetzner finalisieren.</p>
+            <div class="phase-tags">
+              <span class="tag tag-gold">Vollständiges Produkt</span>
+              <span class="tag tag-muted">pg_dump Backup</span>
+              <span class="tag tag-muted">DSGVO Delete</span>
+              <span class="tag tag-muted">Monitoring</span>
+              <span class="tag tag-muted">Hetzner Prod</span>
+            </div>
+            <div class="claude-box">
+              <div class="claude-box-label">Claude Code Hauptaufgaben</div>
+              <div class="claude-box-items">
+                <div class="claude-item">Backup-Cron-Job mit GFS-Schema (täglich/wöchentlich/monatlich)</div>
+                <div class="claude-item">DSGVO-Löschprotokoll-Implementierung prüfen und testen</div>
+                <div class="claude-item">Drizzle Query-Optimierung (Indizes, N+1-Probleme)</div>
+                <div class="claude-item">Produktions-Docker-Compose finalisieren und Deployment-Skripte</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- VISUAL MILESTONE TIMELINE -->
+  <section class="timeline-section anim anim-3">
+    <div class="section-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Meilensteine</span>
+      </div>
+      <h2 class="section-title">Wann ist was möglich?</h2>
+    </div>
+    <div class="timeline-strip">
+      <div class="timeline-label">9 Monate Entwicklungspfad</div>
+      <div class="timeline-track">
+        <div class="timeline-bar-bg">
+          <div class="timeline-bar-fill" style="width: 100%;"></div>
+        </div>
+        <div class="timeline-milestones">
+          <div class="milestone-item">
+            <div class="milestone-dot-row">
+              <div class="milestone-dot m1"></div>
+              <div class="milestone-line"></div>
+              <div class="milestone-when">Woche 19 · ~5 Monate</div>
+            </div>
+            <div class="milestone-title">Beta mit echten Coaches</div>
+            <div class="milestone-desc">Buchung, Videocall und Notizen funktionieren. Kein Billing nötig für die ersten Beta-Coaches.</div>
+          </div>
+          <div class="milestone-item">
+            <div class="milestone-dot-row">
+              <div class="milestone-dot m2"></div>
+              <div class="milestone-line"></div>
+              <div class="milestone-when">Woche 26 · ~6,5 Monate</div>
+            </div>
+            <div class="milestone-title">Erste zahlende Kunden</div>
+            <div class="milestone-desc">Stripe Billing ist live. Trial-to-Paid-Conversion kann beginnen.</div>
+          </div>
+          <div class="milestone-item">
+            <div class="milestone-dot-row">
+              <div class="milestone-dot m3"></div>
+              <div class="milestone-line" style="display:none;"></div>
+              <div class="milestone-when">Woche 36 · ~9 Monate</div>
+            </div>
+            <div class="milestone-title">Vollständiges Produkt</div>
+            <div class="milestone-desc">Alle Features live, Betreiber-Backoffice aktiv, Production-ready.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUMMARY TABLE -->
+  <section class="summary-section anim anim-4">
+    <div class="section-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Übersicht</span>
+      </div>
+      <h2 class="section-title">Alle Phasen auf einen Blick</h2>
+    </div>
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;">
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Zeitraum</th>
+            <th>Stunden</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">1</div>Fundament & Infrastruktur</div></td>
+            <td class="td-weeks">Woche 1–4</td>
+            <td><span class="td-hours">40h</span></td>
+            <td><span class="tag tag-muted">Start</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">2</div>Auth & Coach-Profil</div></td>
+            <td class="td-weeks">Woche 5–7</td>
+            <td><span class="td-hours">30h</span></td>
+            <td><span class="tag tag-muted">—</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">3</div>Buchungssystem</div></td>
+            <td class="td-weeks">Woche 8–12</td>
+            <td><span class="td-hours">50h</span></td>
+            <td><span class="tag tag-muted">Komplex</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">4</div>Videocall</div></td>
+            <td class="td-weeks">Woche 13–16</td>
+            <td><span class="td-hours">40h</span></td>
+            <td><span class="tag tag-muted">—</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">5</div>Nachbereitung & CRM</div></td>
+            <td class="td-weeks">Woche 17–19</td>
+            <td><span class="td-hours">30h</span></td>
+            <td><span class="tag tag-sage">Beta-ready</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">6</div>Whisper-Transkription</div></td>
+            <td class="td-weeks">Woche 20–22</td>
+            <td><span class="td-hours">30h</span></td>
+            <td><span class="tag tag-muted">—</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">7</div>Billing (Stripe)</div></td>
+            <td class="td-weeks">Woche 23–26</td>
+            <td><span class="td-hours">40h</span></td>
+            <td><span class="tag tag-gold">Zahlende Kunden</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">8</div>Pro-Features & Admin</div></td>
+            <td class="td-weeks">Woche 27–32</td>
+            <td><span class="td-hours">60h</span></td>
+            <td><span class="tag tag-muted">—</span></td>
+          </tr>
+          <tr>
+            <td><div class="td-phase"><div class="td-phase-num">9</div>Beta-Härtung & Launch</div></td>
+            <td class="td-weeks">Woche 33–36</td>
+            <td><span class="td-hours">40h</span></td>
+            <td><span class="tag tag-gold">Launch</span></td>
+          </tr>
+          <tr class="summary-total">
+            <td><strong>Gesamt</strong></td>
+            <td class="td-weeks">36 Wochen · ~9 Monate</td>
+            <td><span class="td-hours">360h</span></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ASSUMPTIONS -->
+  <section class="anim anim-4">
+    <div class="section-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Kalkulations-Basis</span>
+      </div>
+      <h2 class="section-title">Annahmen & Grundlagen</h2>
+    </div>
+    <div class="assumptions">
+      <div class="assumptions-grid">
+        <div class="assumption-item">
+          <div class="assumption-title">Claude Code Effizienz</div>
+          <div class="assumption-text">60–70% Effizienzgewinn gegenüber manueller Entwicklung. Nicht 90% – Debugging, Infrastruktur-Setup und Integrationsarbeit brauchen immer echte Auseinandersetzungszeit.</div>
+        </div>
+        <div class="assumption-item">
+          <div class="assumption-title">Wochenleistung</div>
+          <div class="assumption-text">10 fokussierte Entwicklungsstunden pro Woche. Kein manuelles Coding – ausschließlich Claude Code für Scaffolding, Codegenerierung, Migrations-Skripte und Debugging.</div>
+        </div>
+        <div class="assumption-item">
+          <div class="assumption-title">CLAUDE.md als Multiplikator</div>
+          <div class="assumption-text">Eine sorgfältig gepflegte CLAUDE.md mit Konventionen, Projektstruktur und Modulmustern ist entscheidend für konsistente Claude-Output-Qualität über alle Phasen hinweg.</div>
+        </div>
+        <div class="assumption-item">
+          <div class="assumption-title">Pufferlogik</div>
+          <div class="assumption-text">Die 360h sind bereits konservativ kalkuliert. Trotzdem: Infrastruktur-Integrationen (LiveKit Egress, Stripe Webhooks, Whisper) haben erfahrungsgemäß Eigenheiten, die sich schwer vorhersagen lassen.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUFFER -->
+  <div class="buffer-box anim anim-5">
+    <div class="buffer-icon">⚠</div>
+    <div class="buffer-content">
+      <div class="buffer-title">Wichtigste Empfehlung: 20% Puffer pro Phase einplanen</div>
+      <div class="buffer-text">Nicht weil Claude Code schlecht ist – sondern weil echte Infrastruktur-Arbeit schwer exakt zu schätzen ist. Wer in Woche 12 fertig sein will, sollte in Woche 10 fertig sein wollen. Der Puffer rettet den Zeitplan, er kostet ihn nicht.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-brand">HxRoom</div>
+    <div class="footer-meta">Entwicklungsplan v1.0 · Solo-Entwicklung mit Claude Code · 10h / Woche</div>
+  </footer>
+
+</main>
+
+<script>
+function togglePhase(card) {
+  const wasExpanded = card.classList.contains('expanded');
+  // Close all
+  document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('expanded'));
+  // Toggle clicked
+  if (!wasExpanded) card.classList.add('expanded');
+}
+
+// Animate on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.animationPlayState = 'running';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.anim').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
+});
+
+// Auto-open first phase
+setTimeout(() => {
+  document.querySelector('.phase-card').classList.add('expanded');
+}, 600);
+</script>
+
+</body>
+</html>

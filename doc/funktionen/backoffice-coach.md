@@ -1,6 +1,6 @@
-# Sitzraum · Backoffice – Funktionsliste
+# HxRoom · Backoffice – Funktionsliste
 
-Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** – von der Erstregistrierung des Coaches bis zur Nachbereitung einer Sitzung. Es ist der operative Kern von Sitzraum: unsichtbar für den Klienten, unverzichtbar für den Coach.
+Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** – von der Erstregistrierung des Coaches bis zur Nachbereitung einer Sitzung. Es ist der operative Kern von HxRoom: unsichtbar für den Klienten, unverzichtbar für den Coach.
 
 ---
 
@@ -10,10 +10,10 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
 | 01 | **Registrierung & Trial-Aktivierung** | Konto anlegen ohne Kreditkarte, 14-tägiger Trial startet automatisch mit vollem Feature-Zugang. | MVP |
-| 02 | **Branding-Setup** | Logo hochladen, Primärfarbe wählen, eigene Sub-Domain konfigurieren (z.B. anna.sitzraum.de). | MVP |
+| 02 | **Branding-Setup** | Logo hochladen, Primärfarbe wählen, eigene Sub-Domain konfigurieren (z.B. anna.hxroom.de). | MVP |
 | 03 | **Profilseite des Coaches** | Kurzbiografie, Foto, Schwerpunkte – sichtbar für Klienten im Warteraum und auf der Buchungsseite. | MVP |
 | 04 | **Onboarding-Checkliste** | Geführter Setup-Flow mit Fortschrittsanzeige: Logo → Buchungszeiten → erste Einladung. Kein leeres Dashboard. | MVP |
-| 05 | **Eigene Domain (CNAME)** | Vollständig weiße Domain, z.B. coaching.anna-bergmann.de – kein sitzraum.de sichtbar. | Pro |
+| 05 | **Eigene Domain (CNAME)** | Vollständig weiße Domain, z.B. coaching.anna-bergmann.de – kein hxroom.de sichtbar. | Pro |
 
 ---
 
@@ -28,8 +28,8 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | 04 | **Termin manuell anlegen / einladen** | Coach kann Termin direkt erstellen und Einladungslink an Klienten per E-Mail schicken – ohne öffentliche Buchung. | MVP |
 | 05 | **Automatische Erinnerungen** | E-Mail-Erinnerung 24h und 1h vor der Sitzung an Klient (und optional Coach), anpassbare Texte. | MVP |
 | 06 | **Termin absagen & verschieben** | Coach oder Klient kann Termin stornieren – automatische Benachrichtigung, Freigabe des Slots. | MVP |
-| 07 | **iCal-Abo (Kalender-Feed)** | Eindeutige, private iCal-URL pro Coach – einmalig in Google, Apple oder Outlook eintragen. Gebuchte Termine erscheinen im externen Kalender. Einseitiger Sync (Sitzraum → Kalender). | Basic |
-| 08 | **Google Calendar API Sync** | Bidirektionaler Echtzeit-Sync via Google Calendar API: gebuchte Termine werden sofort übertragen, externe Termine blockieren Slots in Sitzraum automatisch – keine Doppelbuchungen möglich. | Pro |
+| 07 | **iCal-Abo (Kalender-Feed)** | Eindeutige, private iCal-URL pro Coach – einmalig in Google, Apple oder Outlook eintragen. Gebuchte Termine erscheinen im externen Kalender. Einseitiger Sync (HxRoom → Kalender). | Basic |
+| 08 | **Google Calendar API Sync** | Bidirektionaler Echtzeit-Sync via Google Calendar API: gebuchte Termine werden sofort übertragen, externe Termine blockieren Slots in HxRoom automatisch – keine Doppelbuchungen möglich. | Pro |
 | 09 | **Wiederkehrende Termine** | Regelmäßige Sitzungsserien (z.B. wöchentlich für 8 Wochen) mit einmaliger Buchung anlegen. | Später |
 | 10 | **Sitzungstypen & Dauer** | Verschiedene buchbare Formate definieren: Erstgespräch (30 min, kostenlos), Standardsitzung (60 min), Intensiv (90 min). | Später |
 
@@ -67,7 +67,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
-| 01 | **Bezahlung bei Buchung (Stripe)** | Klient bezahlt direkt beim Buchen – Termin wird erst nach Zahlung bestätigt. Stripe-Integration, keine Zahlungsdaten bei Sitzraum. | Pro |
+| 01 | **Bezahlung bei Buchung (Stripe)** | Klient bezahlt direkt beim Buchen – Termin wird erst nach Zahlung bestätigt. Stripe-Integration, keine Zahlungsdaten bei HxRoom. | Pro |
 | 02 | **Honorar konfigurieren** | Preis pro Sitzungstyp festlegen, Währung (EUR), optionale Pakete (z.B. 5 Sitzungen zum Paketpreis). | Pro |
 | 03 | **Automatische Rechnungsstellung** | Nach jeder bezahlten Sitzung erhält der Klient automatisch eine DSGVO-konforme Rechnung per E-Mail. | Pro |
 | 04 | **Umsatzübersicht** | Monatliche und jährliche Übersicht der Einnahmen, filterbar nach Klient und Sitzungstyp. | Pro |

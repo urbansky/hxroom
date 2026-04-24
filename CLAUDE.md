@@ -27,11 +27,11 @@
 ```
 hxroom/
 ├── apps/
-│   ├── api/          # NestJS Backend (api.hxroom.io)
-│   ├── web/          # Coach-Backoffice (app.hxroom.io)
-│   ├── client/       # Klienten-Subdomain ([slug].hxroom.io)
-│   ├── admin/        # Betreiber-Backoffice (admin.hxroom.io)
-│   └── landing/      # Landingpage (hxroom.io)
+│   ├── api/          # NestJS Backend (api.hxroom.de)
+│   ├── web/          # Coach-Backoffice (app.hxroom.de)
+│   ├── client/       # Klienten-Subdomain ([slug].hxroom.de)
+│   ├── admin/        # Betreiber-Backoffice (admin.hxroom.de)
+│   └── landing/      # Landingpage (hxroom.de)
 ├── packages/
 │   ├── shared/       # Gemeinsame Types & Zod-Schemas
 │   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten
@@ -51,8 +51,26 @@ hxroom/
 - admin: 5175
 - landing: 5176
 
-## Dokumentation
-Die folgenden Dokumente in `doc/` sind immer zu beachten:
+## Dokumentation im Ordner `doc/`
+
+Im Ordner `doc/` liegen die fachlichen und technischen Markdown-Dokumente zu **HxRoom**. Diese Dateien sind die maßgebliche Referenz für Architektur, Konzepte, Rollenmodell und technische Entscheidungen und müssen bei allen Aufgaben berücksichtigt werden.
+
+**Lese-Pflicht:** Bevor du Code änderst oder neue Features umsetzt, prüfe die relevanten Dokumente in `doc/` und richte deine Vorschläge an deren Inhalten aus. Bei Widersprüchen zwischen Code und Dokumentation gilt die Dokumentation als Quelle der Wahrheit für die fachliche Absicht – weise auf den Widerspruch hin.
+
+**Rollen-Terminologie (verbindlich):**
+- **Betreiber** = Inhaber/Betreiber der Plattform (Stefan)
+- **Coachs** = Kunden des Betreibers
+- **Klienten** = Kunden der Coachs
+
+Verwende diese Begriffe konsistent in Code, Kommentaren, Commits und neuen Dokumenten. Der Produktname ist immer **HxRoom**.
+
+**Schreibrechte auf `doc/`:**
+- **Technische Dokumente** (z. B. Architektur, API-Specs, Datenmodelle, Setup-Anleitungen, Build-/Deployment-Notizen): Du darfst diese eigenständig anpassen, erweitern oder korrigieren, wenn sich der Code oder die technische Realität ändert. Halte Änderungen knapp und nachvollziehbar.
+- **Fachliche/konzeptionelle Dokumente** (Produktvision, Rollenmodell, Geschäftslogik, UX-Konzepte, Pricing, Marketing, Zeitplan): Nicht ohne Rücksprache ändern. Schlage Änderungen vor, statt sie selbst durchzuführen.
+
+**Ignorieren:** Der Ordner `old/` (sofern vorhanden) ist veraltet und darf bei der Bearbeitung nicht berücksichtigt werden.
+
+**Übersicht der Dokumente:**
 - [Projektübersicht](doc/project.md)
 - [Technisches Konzept](doc/technisches-konzept.md)
 - [Zeitplan](doc/zeitplan.md)

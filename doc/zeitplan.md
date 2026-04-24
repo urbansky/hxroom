@@ -1,4 +1,4 @@
-# Sitzraum – Entwicklungsplan
+# HxRoom – Entwicklungsplan
 
 > Realistischer Zeitplan · Solo-Entwicklung mit Claude Code · 10h / Woche
 
@@ -32,7 +32,7 @@ Monorepo-Setup mit pnpm Workspaces, Docker Compose Stack (Postgres, Redis, Caddy
 - Monorepo-Scaffolding mit korrekter pnpm Workspace-Struktur
 - Docker Compose für alle Services generieren
 - Vollständiges Drizzle-Schema aller Kerntabellen inkl. Migrationen
-- Caddyfile mit Wildcard-Zertifikaten für *.sitzraum.de
+- Caddyfile mit Wildcard-Zertifikaten für *.hxroom.de
 - CLAUDE.md mit Konventionen und Projektstruktur
 
 > ⚠ **Risiko:** LiveKit-Konfiguration und Hetzner Object Storage Setup sind infrastrukturlastig – hier kann es haken. Puffer einplanen.
@@ -44,7 +44,7 @@ Monorepo-Setup mit pnpm Workspaces, Docker Compose Stack (Postgres, Redis, Caddy
 
 *better-auth · Subdomain-Routing · Branding · Onboarding*
 
-better-auth Integration im NestJS Backend, Registrierung und Login, Subdomain-Routing-Middleware (anna.sitzraum.de), Coach-Profil mit Branding-Setup (Logo, Primärfarbe), Onboarding-Checkliste im Frontend, Basis-Dashboard-Shell.
+better-auth Integration im NestJS Backend, Registrierung und Login, Subdomain-Routing-Middleware (anna.hxroom.de), Coach-Profil mit Branding-Setup (Logo, Primärfarbe), Onboarding-Checkliste im Frontend, Basis-Dashboard-Shell.
 
 **Technologien:** better-auth · NestJS Guard · S3 Upload · Vue Router · Pinia Store
 
@@ -153,7 +153,7 @@ Stripe Subscription-Integration, organizationBilling-Tabelle, Webhook-Handler f�
 
 *Rechnungsstellung · Calendar Sync · Admin-Dashboard*
 
-PDF-Rechnungsgenerierung (nach jeder Sitzung → S3), Umsatzübersicht für Coach, Google Calendar Sync (iCal/OAuth), Betreiber-Backoffice unter admin.sitzraum.de: Coach-Liste, Subscription-Verwaltung, MRR-Dashboard, Plan-Änderungen, Trial-Verlängerung.
+PDF-Rechnungsgenerierung (nach jeder Sitzung → S3), Umsatzübersicht für Coach, Google Calendar Sync (iCal/OAuth), Betreiber-Backoffice unter admin.hxroom.de: Coach-Liste, Subscription-Verwaltung, MRR-Dashboard, Plan-Änderungen, Trial-Verlängerung.
 
 **Technologien:** PDF-Generierung · Google Calendar · Admin-Guards · MRR Dashboard · Coach-Verwaltung
 

@@ -1,5 +1,5 @@
-# Sitzraum – S3-Verzeichnisschema (MinIO)
-*Version 1.1 · Stand: April 2026*
+# HxRoom – S3-Verzeichnisschema
+*Version 1.1 · Stand: April 2026 · S3-kompatibel; primär Hetzner Object Storage, alternativ MinIO self-hosted*
 
 ---
 
@@ -240,7 +240,7 @@ Alle Dateien sind **nicht öffentlich**. Zugriff erfolgt ausschließlich über *
 
 ## Bucket-Konfiguration (MinIO)
 
-- **Ein Bucket** für alle Daten: `sitzraum-files`
+- **Ein Bucket** für alle Daten: `hxroom-files`
 - Bucket-Policy: **private** (kein öffentlicher Lesezugriff)
 - Versioning: **deaktiviert** (Überschreiben bei Profilbildern gewünscht)
 - Lifecycle-Regeln: noch offen – ggf. automatisches Löschen alter Aufzeichnungen nach X Monaten

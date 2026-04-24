@@ -25,7 +25,7 @@
 >
 > Ich würde dir das gerne in 15 Minuten live zeigen – direkt in deinem eigenen Proberaum.
 >
-> → [Hier deinen Raum ansehen & Termin buchen](**[slug].hxroom.io**)
+> → [Hier deinen Raum ansehen & Termin buchen](**[slug].hxroom.de**)
 >
 > Kein Risiko, kein Kreditkartenzwang – einfach reinschauen.
 >
@@ -62,7 +62,7 @@ Die verlinkte Seite ist die **eigene HxRoom-Coaching-Seite** von Stefan – als 
 > Ich habe gerade HxRoom gelauncht – einen digitalen Coaching-Raum mit deinem Namen, deinem Branding, integriertem Kalender. Kein Zoom, DSGVO-konform, kein Stress für Klienten.
 >
 > Ich zeige dir das gerne in 15 Minuten live – in deinem eigenen Proberaum:
-> → [slug].hxroom.io
+> → [slug].hxroom.de
 >
 > Was meinst du?
 

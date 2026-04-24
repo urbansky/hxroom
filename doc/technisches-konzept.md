@@ -1,11 +1,11 @@
-# Sitzraum – Technisches Konzept
+# HxRoom – Technisches Konzept
 *Version 0.5 · MVP-Scope*
 
 ---
 
 ## 1. Überblick & Zielsetzung
 
-Sitzraum ist eine White-Label Videocall-Plattform für Coaches im DACH-Markt. Das technische Ziel ist ein schlankes, iterativ wachsendes System, das vom ersten Tag an DSGVO-konform, stabil und alleine wartbar ist. Der Einsatz von **Claude Code** ist expliziter Bestandteil des Entwicklungsprozesses – nicht als Gimmick, sondern als produktiver Pair-Programmer für Scaffolding, Codegenerierung, Migrations-Skripte und Dokumentation.
+HxRoom ist eine White-Label Videocall-Plattform für Coaches im DACH-Markt. Das technische Ziel ist ein schlankes, iterativ wachsendes System, das vom ersten Tag an DSGVO-konform, stabil und alleine wartbar ist. Der Einsatz von **Claude Code** ist expliziter Bestandteil des Entwicklungsprozesses – nicht als Gimmick, sondern als produktiver Pair-Programmer für Scaffolding, Codegenerierung, Migrations-Skripte und Dokumentation.
 
 Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst eingeschlossen – Stripe verarbeitet EU-Zahlungsdaten über irische und luxemburgische Entitäten (DSGVO-konform per SCCs).
 
@@ -24,7 +24,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **Whisper (faster-whisper)** | Speech-to-Text – self-hosted, kein externer API-Aufruf |
 | **Resend** | Transaktionale E-Mails – EU-Infrastruktur (Frankfurt) |
 | **BullMQ + Redis** | Job-Queue für Erinnerungen, Transkription & Async-Tasks |
-| **MinIO (self-hosted)** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos (self-hosted, EU) |
+| **Hetzner Object Storage** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos (EU-Frankfurt). Alternative: MinIO self-hosted. |
 | **Stripe** | Zahlungsabwicklung & Subscription-Management (Billing Portal, Webhooks) – EU-Entities, SCCs |
 
 ### Frontend
@@ -42,8 +42,8 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **Hosting** | Hetzner Cloud, Standort Deutschland (Nürnberg / Falkenstein) |
 | **LiveKit Server** | Self-hosted Docker-Container auf Hetzner |
 | **Whisper Service** | Self-hosted Docker-Container auf Hetzner |
-| **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.sitzraum.de`) |
-| **Object Storage** | MinIO – Self-hosted Docker-Container auf Hetzner (S3-kompatibel) |
+| **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.hxroom.de`) |
+| **Object Storage** | Hetzner Object Storage (S3-kompatibel, EU-Frankfurt). Alternative: MinIO self-hosted als Docker-Container. |
 | **Deployment** | Docker Compose (Entwicklung & Produktion) |
 
 ### Externe Dienste – EU-Übersicht
@@ -55,19 +55,23 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | Zertifikate | Let's Encrypt via Caddy | – | Kein Datentransfer |
 | Video / Audio | LiveKit self-hosted | Hetzner DE | Vollständig EU |
 | Transkription | Whisper self-hosted | Hetzner DE | Vollständig EU |
-| Datei-Speicher | MinIO self-hosted | Hetzner DE | Vollständig EU, kein externer Anbieter |
+| Datei-Speicher | Hetzner Object Storage | Hetzner DE (Frankfurt) | S3-kompatibel, vollständig EU; MinIO self-hosted als Alternative |
 
 ---
 
 ## 3. Projektstruktur & Repositories
 
 ```
-sitzraum/
+hxroom/
 ├── apps/
-│   ├── api/          # NestJS Backend
-│   └── web/          # Vue.js Frontend (Nuxt UI)
+│   ├── api/          # NestJS Backend (api.hxroom.de)
+│   ├── web/          # Coach-Backoffice (app.hxroom.de)
+│   ├── client/       # Klienten-Subdomain ([slug].hxroom.de)
+│   ├── admin/        # Betreiber-Backoffice (admin.hxroom.de)
+│   └── landing/      # Landingpage (hxroom.de)
 ├── packages/
-│   └── shared/       # Gemeinsame Types & Zod-Schemas
+│   ├── shared/       # Gemeinsame Types & Zod-Schemas
+│   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten
 ├── infra/
 │   ├── docker-compose.yml          # Produktion
 │   ├── docker-compose.dev.yml      # Lokale Entwicklung
@@ -77,7 +81,7 @@ sitzraum/
 └── CLAUDE.md         # Claude Code Instruktionsdatei
 ```
 
-Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist.
+Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Die vier Vue-Apps sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden; `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends.
 
 ---
 
@@ -128,17 +132,21 @@ services:
     volumes:
       - whisper-models:/app/models
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      - MINIO_ROOT_USER=${S3_ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}
-    volumes:
-      - minio-data:/data
-    ports:
-      - "9000:9000"   # S3 API (intern, nicht öffentlich)
-      - "9001:9001"   # MinIO Console (nur intern)
+  # Object Storage: primär Hetzner Object Storage (extern), angebunden via
+  # S3_ENDPOINT / S3_ACCESS_KEY / S3_SECRET_KEY in der api-Umgebung.
+  # Der folgende minio-Service ist eine optionale Alternative für On-Premises-Deploys
+  # oder Migrationen – Client-Code und Key-Schema bleiben durch S3-Kompatibilität identisch.
+  # minio:
+  #   image: minio/minio:latest
+  #   command: server /data --console-address ":9001"
+  #   environment:
+  #     - MINIO_ROOT_USER=${S3_ACCESS_KEY}
+  #     - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}
+  #   volumes:
+  #     - minio-data:/data
+  #   ports:
+  #     - "9000:9000"   # S3 API (intern, nicht öffentlich)
+  #     - "9001:9001"   # MinIO Console (nur intern)
 
   caddy:
     image: caddy:latest
@@ -151,7 +159,7 @@ services:
 volumes:
   pgdata:
   whisper-models:
-  minio-data:
+  # minio-data:   # nur aktivieren, wenn der optionale minio-Service oben genutzt wird
 ```
 
 **Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können später ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
@@ -167,7 +175,7 @@ Claude Code ist kein Ersatz für Architekturentscheidungen, aber ein erheblicher
 Im Root des Repos liegt eine `CLAUDE.md`, die Claude Code den Projektkontext erklärt:
 
 ```markdown
-# Sitzraum – Claude Code Kontext
+# HxRoom – Claude Code Kontext
 
 ## Stack
 - Backend: NestJS, PostgreSQL, Drizzle ORM, better-auth + organization plugin, LiveKit (self-hosted)
@@ -223,17 +231,17 @@ Claude Code erkennt Duplikate, vereinheitlicht DTOs auf Zod-Schemas und macht Fe
 ## 6. Domain-Architektur
 
 ```
-sitzraum.de              → Vue-App (Landingpage, öffentlich)
-app.sitzraum.de          → Vue-App (Coach-Backoffice, Login erforderlich)
-[slug].sitzraum.de       → Vue-App (Klienten-Subdomain: Buchung, Warteraum, Call)
-api.sitzraum.de          → NestJS API
-livekit.sitzraum.de      → LiveKit Server (intern, kein öffentliches UI)
-admin.sitzraum.de        → Internes Betreiber-Backoffice (ab MVP)
+hxroom.de              → Vue-App (Landingpage, öffentlich)
+app.hxroom.de          → Vue-App (Coach-Backoffice, Login erforderlich)
+[slug].hxroom.de       → Vue-App (Klienten-Subdomain: Buchung, Warteraum, Call)
+api.hxroom.de          → NestJS API
+livekit.hxroom.de      → LiveKit Server (intern, kein öffentliches UI)
+admin.hxroom.de        → Internes Betreiber-Backoffice (ab MVP)
 ```
 
 **Subdomain-Routing im Frontend:** Vue Router erkennt die Subdomain aus `window.location.hostname` und rendert den entsprechenden App-Kontext. Ein einziges Deployment, mehrere logische Apps.
 
-**Wildcard-Zertifikat:** Caddy mit Ionos DNS-Provider (`caddy-dns/ionos`) für automatisches `*.sitzraum.de` Let's-Encrypt-Zertifikat via DNS-01 Challenge.
+**Wildcard-Zertifikat:** Caddy mit Ionos DNS-Provider (`caddy-dns/ionos`) für automatisches `*.hxroom.de` Let's-Encrypt-Zertifikat via DNS-01 Challenge.
 
 ---
 
@@ -334,7 +342,7 @@ CMD ["python", "server.py"]
 ```
 Sitzung endet
   → LiveKit Egress API erstellt Audio-Recording (nur wenn Coach aktiviert)
-  → Recording landet im S3-Bucket `sitzraum-recordings` (Hetzner Object Storage)
+  → Recording landet im S3-Bucket `hxroom-recordings` (Hetzner Object Storage)
   → BullMQ Job `transcribe-session` wird eingereiht
   → Worker ruft Whisper-Service auf (POST /transcribe)
   → Transkript wird in session_notes.transcript gespeichert
@@ -381,26 +389,26 @@ Das Modell `small` liefert für deutschsprachige Coaching-Gespräche sehr gute E
 
 ---
 
-## 10. Object Storage – MinIO (self-hosted)
+## 10. Object Storage (S3-kompatibel)
 
 ### Überblick
 
-Anstelle von Hetzner Object Storage wird **MinIO** als self-hosted Docker-Container im selben Compose-Stack betrieben. MinIO ist vollständig S3-kompatibel – die Integration via AWS SDK v3 (`@aws-sdk/client-s3`) bleibt identisch, lediglich der Endpunkt zeigt auf den lokalen MinIO-Container. Damit entfällt die Abhängigkeit von einem externen Speicheranbieter vollständig; alle Daten liegen auf dem eigenen Hetzner-Server.
+Primärer Speicher ist **Hetzner Object Storage** (S3-kompatibel, EU-Frankfurt). Die Anbindung erfolgt über AWS SDK v3 (`@aws-sdk/client-s3`); Endpoint und Credentials kommen aus Umgebungsvariablen. Damit bleiben Uploads, Recordings und Exports vollständig in der EU, ohne dass ein zusätzlicher Service im Compose-Stack laufen muss.
 
-**Motivation:** Hetzner Object Storage hat sich als unzuverlässig erwiesen. Mit MinIO self-hosted besteht volle Kontrolle über Verfügbarkeit, Performance und Datenhaltung.
+**Alternative MinIO (self-hosted):** Für On-Premises-Deploys oder Migrationen kann stattdessen MinIO als Docker-Container im selben Compose-Stack betrieben werden. MinIO ist vollständig S3-kompatibel – Client-Code, Bucket-Struktur und Key-Schema bleiben identisch; es ändern sich nur `S3_ENDPOINT` und ggf. `forcePathStyle`.
 
 ```typescript
 // apps/api/src/storage/s3.client.ts
 import { S3Client } from '@aws-sdk/client-s3';
 
 export const s3 = new S3Client({
-  endpoint: process.env.S3_ENDPOINT ?? 'http://minio:9000', // MinIO Container
-  region: 'us-east-1', // MinIO erwartet diesen Wert (ignoriert intern)
+  endpoint: process.env.S3_ENDPOINT,                // z.B. https://fsn1.your-objectstorage.com
+  region: process.env.S3_REGION ?? 'eu-central',    // Hetzner-Region; bei MinIO: 'us-east-1'
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY,
     secretAccessKey: process.env.S3_SECRET_KEY,
   },
-  forcePathStyle: true, // erforderlich für MinIO
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // true für MinIO, optional bei Hetzner
 });
 ```
 
@@ -408,13 +416,13 @@ export const s3 = new S3Client({
 
 | Bucket | Inhalt | Zugriff | Ablauf |
 |---|---|---|---|
-| `sitzraum-uploads` | Coach-Logos, Profilfotos | Public-Read (via CDN-URL) | Permanent |
-| `sitzraum-recordings` | LiveKit Audio-Recordings | Private | Nach Transkription (TTL 7 Tage) |
-| `sitzraum-exports` | PDF-Rechnungen, Datenexporte | Private, signierte URLs | 24h nach Generierung |
+| `hxroom-uploads` | Coach-Logos, Profilfotos | Public-Read (via CDN-URL) | Permanent |
+| `hxroom-recordings` | LiveKit Audio-Recordings | Private | Nach Transkription (TTL 7 Tage) |
+| `hxroom-exports` | PDF-Rechnungen, Datenexporte | Private, signierte URLs | 24h nach Generierung |
 
 ### Was landet wo
 
-**Coach-Logos & Profilfotos** (`sitzraum-uploads`)
+**Coach-Logos & Profilfotos** (`hxroom-uploads`)
 Beim Branding-Setup lädt der Coach sein Logo hoch. Das Backend empfängt die Datei, validiert Typ und Größe, und schreibt sie direkt in S3. Die öffentliche URL wird in `coach_profiles.branding_logo_url` gespeichert.
 
 ```
@@ -422,7 +430,7 @@ Key-Schema: uploads/{organizationId}/logo.{ext}
             uploads/{organizationId}/avatar.{ext}
 ```
 
-**Audio-Recordings** (`sitzraum-recordings`)
+**Audio-Recordings** (`hxroom-recordings`)
 LiveKit Egress schreibt fertige Recordings direkt in den S3-Bucket (LiveKit unterstützt S3-kompatible Endpoints nativ). Nach erfolgreicher Transkription durch Whisper wird die Audiodatei automatisch gelöscht – sie wird nicht dauerhaft aufbewahrt.
 
 ```
@@ -434,13 +442,13 @@ Key-Schema: recordings/{organizationId}/{bookingId}/{timestamp}.ogg
 s3:
   access_key: ${S3_ACCESS_KEY}
   secret: ${S3_SECRET_KEY}
-  region: us-east-1
-  endpoint: http://minio:9000   # MinIO Container im selben Compose-Netzwerk
-  bucket: sitzraum-recordings
-  force_path_style: true
+  region: ${S3_REGION}                 # Hetzner-Region, z.B. eu-central
+  endpoint: ${S3_ENDPOINT}             # Hetzner Object Storage; bei MinIO: http://minio:9000
+  bucket: hxroom-recordings
+  force_path_style: ${S3_FORCE_PATH_STYLE}   # true für MinIO
 ```
 
-**PDF-Rechnungen & Datenexporte** (`sitzraum-exports`)
+**PDF-Rechnungen & Datenexporte** (`hxroom-exports`)
 Generierte Rechnungen (Pro-Feature) und DSGVO-Datenexporte werden als PDFs in S3 gespeichert. Der Zugriff erfolgt ausschließlich über **signierte URLs** mit kurzer TTL – kein dauerhafter öffentlicher Zugriff.
 
 ```
@@ -454,7 +462,7 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const url = await getSignedUrl(s3, new GetObjectCommand({
-  Bucket: 'sitzraum-exports',
+  Bucket: 'hxroom-exports',
   Key: `exports/${orgId}/invoices/${invoiceId}.pdf`,
 }), { expiresIn: 3600 });
 ```
@@ -465,7 +473,7 @@ const url = await getSignedUrl(s3, new GetObjectCommand({
 Coach lädt Logo hoch (Frontend)
   → POST /api/v1/organizations/:id/branding/logo (multipart/form-data)
   → NestJS validiert: max. 2 MB, nur image/png + image/jpeg
-  → Upload nach S3: sitzraum-uploads/{organizationId}/logo.{ext}
+  → Upload nach S3: hxroom-uploads/{organizationId}/logo.{ext}
   → Public-URL wird in coach_profiles.branding_logo_url gespeichert
   → Altes Logo wird aus S3 gelöscht (falls vorhanden)
 ```
@@ -480,11 +488,11 @@ Coach lädt Logo hoch (Frontend)
 brandingLogoUrl: text('branding_logo_url'),  // vollständige S3-Public-URL
 
 // In bookings (für Recordings):
-recordingS3Key: text('recording_s3_key'),    // Key in sitzraum-recordings
+recordingS3Key: text('recording_s3_key'),    // Key in hxroom-recordings
 recordingDeletedAt: timestamp('recording_deleted_at'), // nach Transkription gesetzt
 
 // In einer zukünftigen invoices-Tabelle (Pro):
-invoiceS3Key: text('invoice_s3_key'),        // Key in sitzraum-exports
+invoiceS3Key: text('invoice_s3_key'),        // Key in hxroom-exports
 ```
 
 ### NestJS StorageModule
@@ -605,16 +613,16 @@ Claude Code kann die komplette BullMQ-Modul-Struktur inkl. Worker, Job-Definitio
 
 ### Stripe – Subscription & Billing
 
-Stripe wird für zwei Zwecke eingesetzt: **Einmalige Zahlungen** (z.B. Klient zahlt Sitzungshonorar, Pro-Feature) und **wiederkehrende Subscriptions** (Coach zahlt Sitzraum-Abo).
+Stripe wird für zwei Zwecke eingesetzt: **Einmalige Zahlungen** (z.B. Klient zahlt Sitzungshonorar, Pro-Feature) und **wiederkehrende Subscriptions** (Coach zahlt HxRoom-Abo).
 
 **Subscription-Modell:**
 
 | Plan | Stripe Product | Billing |
 |---|---|---|
 | Trial | – | 14 Tage kostenlos, kein Stripe nötig |
-| Solo | `sitzraum_solo` | monatlich / jährlich |
-| Pro | `sitzraum_pro` | monatlich / jährlich |
-| Studio | `sitzraum_studio` | monatlich / jährlich |
+| Solo | `hxroom_solo` | monatlich / jährlich |
+| Pro | `hxroom_pro` | monatlich / jährlich |
+| Studio | `hxroom_studio` | monatlich / jährlich |
 
 **Subscription-Flow (Coach):**
 
@@ -640,7 +648,7 @@ Coaches können ihr Abo, ihre Zahlungsmethode und ihre Rechnungen selbst verwalt
 // Billing Portal Session erstellen
 const session = await stripe.billingPortal.sessions.create({
   customer: organization.stripeCustomerId,
-  return_url: `https://app.sitzraum.de/settings/billing`,
+  return_url: `https://app.hxroom.de/settings/billing`,
 });
 // Coach wird zu session.url weitergeleitet
 ```
@@ -672,18 +680,17 @@ export const organizationBilling = pgTable('organization_billing', {
 
 **PostgreSQL**
 - Täglicher `pg_dump` via Cron-Job im `api`-Container, komprimiert als `.sql.gz`
-- Upload ins S3-Bucket `sitzraum-backups` (privat, Hetzner DE)
+- Upload ins S3-Bucket `hxroom-backups` (privat, Hetzner DE)
 - Aufbewahrung: 7 Tages-Backups, 4 Wochen-Backups, 3 Monats-Backups (GFS-Schema)
 - Restore-Test monatlich in Staging-Umgebung
 
-**MinIO (self-hosted S3)**
-- MinIO-Daten liegen im Docker Volume `minio-data` auf demselben Hetzner-Server
-- **Hetzner Server Backup** (täglich automatisch): Vollständiges Server-Snapshot – deckt Docker Volumes inkl. `minio-data` ab. Aufbewahrung: letzte 7 Snapshots (Hetzner-Standard)
-- **rclone Off-Site-Backup** (täglich per Cron): `rclone sync` kopiert den MinIO-Datenordner auf einen zweiten Server (anderer Hetzner-Standort oder separates Hetzner-Projekt). Damit sind Daten auch bei vollständigem Ausfall des Primär-Servers wiederherstellbar.
+**Object Storage**
+- **Primär Hetzner Object Storage**: Hetzner verantwortet Redundanz und Replikation innerhalb Frankfurts. Zusätzlich läuft täglich ein `rclone sync` in einen zweiten Bucket (separates Hetzner-Projekt) als Off-Site-Kopie.
+- **Alternative MinIO (self-hosted)**: Wenn MinIO eingesetzt wird, liegen die Daten im Docker Volume `minio-data`. Dann greift das **Hetzner Server Backup** (täglich, letzte 7 Snapshots) und zusätzlich ein `rclone sync` auf einen Zweitserver.
 
 ```bash
-# Beispiel rclone Cron (täglich 03:00)
-0 3 * * * rclone sync /var/lib/docker/volumes/minio-data/_data remote:sitzraum-minio-backup
+# Beispiel rclone Cron (täglich 03:00) – gilt für beide Varianten
+0 3 * * * rclone sync remote-primary:hxroom-uploads remote-backup:hxroom-uploads-backup
 ```
 
 **Redis**
@@ -741,7 +748,7 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 
 | # | Thema | Beschreibung | Priorität |
 |---|---|---|---|
-| 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.sitzraum.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
+| 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.hxroom.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
 
 ---
 
@@ -750,7 +757,7 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 - **Server ausschließlich Hetzner Deutschland** (Nürnberg / Falkenstein)
 - **LiveKit self-hosted** auf demselben Hetzner-Projekt → Mediendaten verlassen nie Deutschland
 - **Whisper self-hosted** → Audiodaten und Transkripte bleiben auf Hetzner
-- **MinIO self-hosted** → alle Dateien (Logos, Recordings, Exports) auf eigenem Hetzner-Server, kein externer Speicheranbieter
+- **Hetzner Object Storage** (EU-Frankfurt) → alle Dateien (Logos, Recordings, Exports) in der EU, S3-kompatibel. Alternative MinIO self-hosted möglich, gleiches Key-Schema.
 - **Resend EU-Region** → E-Mail-Versand vollständig in der EU
 - **Stripe** mit EU-Entities und SCCs → DSGVO-konform für Zahlungsdaten
 - better-auth HttpOnly Cookies, kein Token in LocalStorage

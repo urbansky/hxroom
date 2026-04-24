@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HxRoom – Pitch Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sage:        #8B9E8A;
+  --sage-light:  #C5D0C4;
+  --sage-dark:   #5C6E5B;
+  --cream:       #F5F0E8;
+  --warm-white:  #FDFAF5;
+  --charcoal:    #2C2C2C;
+  --gold:        #B5935A;
+  --gold-light:  #D4AE78;
+  --bg:          #141814;
+  --bg-light:    #1A1E1A;
+  --surface:     #1E231E;
+  --surface2:    #232823;
+  --border:      rgba(255,255,255,0.06);
+  --border-soft: rgba(255,255,255,0.04);
+  --text-primary:   rgba(255,255,255,0.88);
+  --text-secondary: rgba(255,255,255,0.45);
+  --text-muted:     rgba(255,255,255,0.22);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+/* NOISE */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.6;
+}
+
+/* ── NAVIGATION ── */
+.deck-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 60px;
+  background: rgba(20,24,20,0.85);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.nav-logo {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--sage) 0%, var(--sage-dark) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 600;
+  color: rgba(255,255,255,0.92);
+}
+.nav-wordmark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600;
+  color: #D4C9B8; letter-spacing: 0.03em;
+}
+.nav-badge {
+  font-size: 10px; color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px; padding: 2px 8px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-left: 8px;
+}
+.slide-counter {
+  font-size: 12px; color: var(--text-muted); letter-spacing: 0.06em;
+}
+.nav-controls {
+  display: flex; gap: 8px;
+}
+.nav-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.nav-btn:hover { border-color: rgba(255,255,255,0.14); color: var(--text-primary); }
+.nav-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── SLIDE SYSTEM ── */
+.slides-container {
+  position: relative;
+}
+.slide {
+  min-height: 100vh;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 48px 80px;
+  position: relative;
+  overflow: hidden;
+}
+.slide.active { display: flex; }
+
+/* SLIDE PROGRESS DOTS */
+.progress-dots {
+  position: fixed;
+  right: 24px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 100;
+}
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-muted);
+  cursor: pointer; transition: all 0.3s;
+}
+.dot.active { background: var(--sage); transform: scale(1.5); }
+.dot:hover { background: var(--text-secondary); }
+
+/* AMBIENT GLOWS */
+.glow-tl {
+  position: absolute; top: -150px; left: -150px;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(92,110,91,0.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.glow-br {
+  position: absolute; bottom: -150px; right: -150px;
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(181,147,90,0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+.glow-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 900px; height: 500px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(92,110,91,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── SLIDE LABELS ── */
+.slide-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(139,158,138,0.08);
+  border: 1px solid rgba(139,158,138,0.16);
+  border-radius: 20px; padding: 5px 14px;
+  margin-bottom: 28px;
+}
+.slide-label-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--sage); }
+.slide-label-text { font-size: 10px; color: var(--sage-light); letter-spacing: 0.1em; text-transform: uppercase; }
+
+.slide-num {
+  font-size: 11px; color: var(--text-muted);
+  letter-spacing: 0.06em; margin-bottom: 12px;
+}
+
+/* ── TYPOGRAPHY ── */
+.display-xl {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(52px, 7vw, 90px);
+  font-weight: 300; line-height: 1.03;
+  color: var(--cream); letter-spacing: -0.02em;
+  text-align: center;
+}
+.display-xl em { font-style: italic; color: var(--gold-light); }
+
+.display-lg {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(40px, 5.5vw, 70px);
+  font-weight: 300; line-height: 1.08;
+  color: var(--cream); letter-spacing: -0.02em;
+}
+.display-lg em { font-style: italic; color: var(--gold-light); }
+
+.display-md {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 300; line-height: 1.1;
+  color: var(--cream); letter-spacing: -0.015em;
+}
+.display-md em { font-style: italic; color: var(--gold-light); }
+
+.body-lg { font-size: 18px; color: var(--text-secondary); line-height: 1.7; }
+.body-md { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+.body-sm { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+/* SECTION LINE */
+.section-eyebrow {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+}
+.eyebrow-line { width: 32px; height: 1px; background: var(--sage-dark); }
+.eyebrow-text { font-size: 10px; color: var(--sage); letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* ── CARD COMPONENTS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: rgba(255,255,255,0.1); }
+
+.card-gold {
+  background: rgba(181,147,90,0.06);
+  border-color: rgba(181,147,90,0.16);
+}
+
+/* ── GRIDS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+/* ── STAT NUMBERS ── */
+.big-stat {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 56px; font-weight: 300; line-height: 1;
+  color: var(--cream);
+}
+.big-stat-unit { font-size: 24px; color: var(--sage-light); }
+.big-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ── TABLE ── */
+.comp-table { width: 100%; border-collapse: collapse; }
+.comp-table th {
+  font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.comp-table td {
+  padding: 12px 16px; font-size: 13px; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-soft);
+}
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table td:first-child { color: var(--text-primary); font-size: 14px; }
+.check { color: var(--sage); font-size: 16px; }
+.cross { color: rgba(255,255,255,0.15); font-size: 16px; }
+.warn { color: var(--gold-light); font-size: 14px; }
+
+/* ── HIGHLIGHT QUOTE ── */
+.quote-block {
+  border-left: 2px solid var(--sage-dark);
+  padding: 24px 32px;
+  margin: 32px 0;
+}
+.quote-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(24px, 3.5vw, 40px);
+  font-weight: 300; font-style: italic;
+  color: var(--cream); line-height: 1.3;
+}
+.quote-text em { color: var(--gold-light); font-style: normal; }
+
+/* ── TIMELINE ── */
+.timeline { display: flex; gap: 0; position: relative; }
+.timeline-item { flex: 1; padding: 20px 20px 20px 0; position: relative; }
+.timeline-item::before {
+  content: '';
+  position: absolute; top: 28px; left: 0; right: 0;
+  height: 1px; background: var(--border);
+}
+.timeline-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--sage-dark); border: 2px solid var(--sage);
+  position: relative; z-index: 1; margin-bottom: 16px;
+}
+.timeline-item.active .timeline-dot { background: var(--sage); box-shadow: 0 0 12px rgba(139,158,138,0.4); }
+.timeline-quarter { font-size: 10px; color: var(--sage); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.timeline-title { font-size: 13px; color: var(--text-primary); margin-bottom: 4px; }
+.timeline-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── PILL / BADGES ── */
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 20px; padding: 4px 12px; font-size: 11px;
+}
+.pill-sage { background: rgba(139,158,138,0.1); border: 1px solid rgba(139,158,138,0.2); color: var(--sage-light); }
+.pill-gold { background: rgba(181,147,90,0.1); border: 1px solid rgba(181,147,90,0.2); color: var(--gold-light); }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+/* ── ICON CONTAINERS ── */
+.icon-box {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(139,158,138,0.1);
+  border: 1px solid rgba(139,158,138,0.15);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.icon-box svg { width: 18px; height: 18px; stroke: var(--sage); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.icon-box.gold { background: rgba(181,147,90,0.1); border-color: rgba(181,147,90,0.15); }
+.icon-box.gold svg { stroke: var(--gold-light); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide.active .anim-1 { animation: fadeUp 0.6s 0.05s ease both; }
+.slide.active .anim-2 { animation: fadeUp 0.6s 0.15s ease both; }
+.slide.active .anim-3 { animation: fadeUp 0.6s 0.25s ease both; }
+.slide.active .anim-4 { animation: fadeUp 0.6s 0.35s ease both; }
+.slide.active .anim-5 { animation: fadeUp 0.6s 0.45s ease both; }
+
+/* ── SLIDE-SPECIFIC ── */
+
+/* Slide 1: Cover */
+#s1 { text-align: center; }
+.cover-tagline { font-size: 13px; color: var(--text-muted); margin-top: 32px; letter-spacing: 0.06em; }
+.cover-meta { display: flex; gap: 24px; align-items: center; justify-content: center; margin-top: 48px; }
+.cover-meta-item { font-size: 12px; color: var(--text-muted); }
+.cover-meta-sep { width: 1px; height: 16px; background: var(--border); }
+
+/* Slide 3: Problem */
+.problem-col { display: flex; flex-direction: column; gap: 16px; }
+.problem-item { display: flex; gap: 16px; align-items: flex-start; }
+.problem-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--text-muted); line-height: 1; flex-shrink: 0; width: 36px; }
+
+/* Slide 5: Differenzierung */
+.feature-row { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border-soft); }
+.feature-row:last-child { border-bottom: none; }
+
+/* Slide 8: Roadmap */
+.road-phase { padding: 20px 24px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.road-phase.now { border-color: rgba(139,158,138,0.3); background: rgba(139,158,138,0.05); }
+.road-phase-label { font-size: 10px; color: var(--sage); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.road-phase.now .road-phase-label { color: var(--sage-light); }
+.road-phase-title { font-size: 16px; color: var(--text-primary); margin-bottom: 8px; }
+.road-bullet { font-size: 12px; color: var(--text-muted); display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; line-height: 1.5; }
+.road-bullet::before { content: '—'; color: var(--sage-dark); flex-shrink: 0; }
+
+/* Wide layout for some slides */
+.slide-inner { width: 100%; max-width: 1000px; }
+.slide-inner-wide { width: 100%; max-width: 1100px; }
+.slide-inner-narrow { width: 100%; max-width: 760px; }
+
+/* pricing card */
+.price-card { text-align: center; padding: 28px 20px; }
+.price-card-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--cream); margin-bottom: 6px; }
+.price-card-price { font-family: 'Cormorant Garamond', serif; font-size: 44px; font-weight: 300; color: var(--cream); }
+.price-card-unit { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.price-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.price-card.highlight { border-color: rgba(139,158,138,0.3); background: rgba(139,158,138,0.05); }
+
+/* team */
+.team-card { display: flex; gap: 16px; align-items: center; }
+.team-avi { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, var(--sage-dark), var(--sage)); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 22px; color: rgba(255,255,255,0.9); flex-shrink: 0; }
+
+/* Full-width CTA slide */
+#s10 { text-align: center; }
+
+/* Keyboard hint */
+.key-hint {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em;
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; animation: fadeUp 0.6s 1.5s ease forwards;
+}
+.key-hint kbd { border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 10px; font-family: inherit; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="deck-nav">
+  <div class="nav-brand">
+    <div class="nav-logo">S</div>
+    <span class="nav-wordmark">HxRoom</span>
+    <span class="nav-badge">Pitch Deck</span>
+  </div>
+  <div class="slide-counter" id="counter">01 / 10</div>
+  <div class="nav-controls">
+    <button class="nav-btn" onclick="prevSlide()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="nav-btn" onclick="nextSlide()">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- PROGRESS DOTS -->
+<div class="progress-dots" id="dots"></div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 1 · COVER
+══════════════════════════════════════════ -->
+<div class="slide active" id="s1">
+  <div class="glow-center"></div>
+  <div class="glow-br"></div>
+
+  <div class="slide-label anim-1">
+    <div class="slide-label-dot"></div>
+    <span class="slide-label-text">Investor Pitch · 2025</span>
+  </div>
+
+  <div class="display-xl anim-2">
+    Dein Coaching.<br>
+    Dein Raum.<br>
+    <em>Dein Name.</em>
+  </div>
+
+  <p class="body-lg anim-3" style="max-width:520px;text-align:center;margin-top:28px;">
+    White-Label Videocall-Plattform für Coaches & Berater im DACH-Markt — von der Buchung bis zur Nachbereitung.
+  </p>
+
+  <div class="cover-meta anim-4">
+    <span class="cover-meta-item">DACH-Markt</span>
+    <div class="cover-meta-sep"></div>
+    <span class="cover-meta-item">SaaS · Recurring Revenue</span>
+    <div class="cover-meta-sep"></div>
+    <span class="cover-meta-item">Pre-Seed · 2025</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 2 · PROBLEM
+══════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="glow-tl"></div>
+  <div class="slide-inner">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Das Problem</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:48px;">
+      Coaches coachen.<br>Aber sie kommunizieren<br>wie <em>Firmenmeetings.</em>
+    </div>
+
+    <div class="grid-3 anim-3">
+      <div class="card">
+        <div class="icon-box" style="margin-bottom:16px;">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <p style="font-size:15px;color:var(--text-primary);margin-bottom:8px;font-weight:500;">Fremdes Branding</p>
+        <p class="body-sm">Zoom, Teams, Google Meet – das Logo ist immer von einem anderen Unternehmen. Das Vertrauen leidet beim ersten Klick.</p>
+      </div>
+      <div class="card">
+        <div class="icon-box" style="margin-bottom:16px;">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </div>
+        <p style="font-size:15px;color:var(--text-primary);margin-bottom:8px;font-weight:500;">Klienten müssen sich anmelden</p>
+        <p class="body-sm">Account erstellen. App installieren. Erst dann kommt man rein. Jede Hürde kostet Vertrauen – und manchmal den Klienten.</p>
+      </div>
+      <div class="card">
+        <div class="icon-box" style="margin-bottom:16px;">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <p style="font-size:15px;color:var(--text-primary);margin-bottom:8px;font-weight:500;">DSGVO-Grauzone</p>
+        <p class="body-sm">US-amerikanische Server, keine AVV – Coaches haften, wissen es oft nicht. Die Rechtsunsicherheit blockiert.</p>
+      </div>
+    </div>
+
+    <div class="quote-block anim-4">
+      <p class="quote-text">„Ich schicke einen Zoom-Link."<br><em>Das ist nicht das Gefühl, das du verkaufst.</em></p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 3 · LÖSUNG
+══════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="glow-br"></div>
+  <div class="slide-inner">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Die Lösung</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:12px;">
+      HxRoom ist kein Videocall-Tool.<br>Es ist ein <em>digitaler Empfang.</em>
+    </div>
+    <p class="body-md anim-2" style="max-width:580px;margin-bottom:40px;">Von der Buchung bis zur KI-Nachbereitung – vollständig im Namen des Coaches, vollständig DSGVO-konform.</p>
+
+    <div class="grid-2 anim-3" style="gap:24px;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="feature-row">
+          <div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z" opacity="0.3"/></svg></div>
+          <div>
+            <p style="font-size:14px;color:var(--text-primary);margin-bottom:3px;">Vollständiges Branding</p>
+            <p class="body-sm">Eigene Domain, Logo, Farben – alles deins. Kein fremdes Logo, kein fremder Raum.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="icon-box"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div>
+            <p style="font-size:14px;color:var(--text-primary);margin-bottom:3px;">Integrierte Buchung</p>
+            <p class="body-sm">Klient bucht → bekommt automatisch Link → fertig. Kein Copy-Paste, keine Rückfragen.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div>
+            <p style="font-size:14px;color:var(--text-primary);margin-bottom:3px;">Kein Login für Klienten</p>
+            <p class="body-sm">Link klicken – fertig. Null Hürde, null Frustration, 100 % Professionalität.</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="feature-row">
+          <div class="icon-box gold"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div>
+            <p style="font-size:14px;color:var(--text-primary);margin-bottom:3px;">DSGVO by Design</p>
+            <p class="body-sm">Server Deutschland (Hetzner), AVV automatisch inklusive. Rechtssicher ohne Aufwand.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="icon-box gold"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div>
+            <p style="font-size:14px;color:var(--text-primary);margin-bottom:3px;">Integrierte Bezahlung</p>
+            <p class="body-sm">Buchen und bezahlen in einem Schritt – Stripe, automatische Rechnung per E-Mail.</p>
+          </div>
+        </div>
+        <div class="feature-row">
+          <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div>
+            <p style="font-size:14px;color:var(--text-primary);margin-bottom:3px;">KI-Sitzungsnotizen</p>
+            <p class="body-sm">Automatische Zusammenfassung nach dem Call. Whisper-basiert, self-hosted, privat.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 4 · MARKT
+══════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="glow-tl"></div>
+  <div class="slide-inner">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Marktpotenzial</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:40px;">Ein großer Markt.<br><em>Noch nicht besetzt.</em></div>
+
+    <div class="grid-3 anim-3" style="margin-bottom:32px;">
+      <div class="card" style="text-align:center;">
+        <div class="big-stat">120<span class="big-stat-unit">k+</span></div>
+        <div class="big-stat-label">Coaches im DACH-Raum</div>
+        <p class="body-sm" style="margin-top:12px;">Zertifizierte und aktive Business- & Life Coaches in Deutschland, Österreich, Schweiz</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="big-stat">79<span class="big-stat-unit">%</span></div>
+        <div class="big-stat-label">arbeiten online oder hybrid</div>
+        <p class="body-sm" style="margin-top:12px;">Nach 2020 hat sich Online-Coaching als Standard etabliert – der Bedarf an professionellen Tools ist da</p>
+      </div>
+      <div class="card card-gold" style="text-align:center;">
+        <div class="big-stat" style="color:var(--gold-light);">€ 57M</div>
+        <div class="big-stat-label">Erreichbares ARR (5 % Penetration)</div>
+        <p class="body-sm" style="margin-top:12px;">Bei 6.000 zahlenden Coaches × 79 €/Monat – konservative Schätzung</p>
+      </div>
+    </div>
+
+    <div class="grid-2 anim-4" style="gap:16px;">
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
+        <div class="icon-box"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <div>
+          <p style="font-size:14px;color:var(--text-primary);margin-bottom:4px;">Wachsender Markt</p>
+          <p class="body-sm">Coaching-Markt wächst 6–8 % jährlich – getrieben durch Digitalisierung und Remote-Arbeit.</p>
+        </div>
+      </div>
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
+        <div class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div>
+          <p style="font-size:14px;color:var(--text-primary);margin-bottom:4px;">Erweiterbar</p>
+          <p class="body-sm">Therapeuten, Heilpraktiker, Steuerberater, Anwälte – gleicher Bedarf, gleiche Lösung.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 5 · WETTBEWERB
+══════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="glow-br"></div>
+  <div class="slide-inner-wide">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Wettbewerbsvergleich</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:32px;">
+      HxRoom macht das,<br>was andere <em>nicht können.</em>
+    </div>
+
+    <div class="anim-3">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Zoom / Meet</th>
+            <th>Calendly + Zoom</th>
+            <th>CoachAccountable</th>
+            <th style="color:var(--sage-light);">HxRoom ✦</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Eigenes Branding</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="warn">~</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>Kein Klienten-Login nötig</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>Buchung integriert</td>
+            <td class="cross">✕</td>
+            <td class="warn">~</td>
+            <td class="warn">~</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>Zahlung integriert</td>
+            <td class="cross">✕</td>
+            <td class="warn">~</td>
+            <td class="warn">~</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>DSGVO / DE-Server</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>KI-Sitzungsnotizen</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>Auf Deutsch / DACH</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td class="cross">✕</td>
+            <td style="color:var(--sage);">✓</td>
+          </tr>
+          <tr>
+            <td>Preis (typisch)</td>
+            <td class="body-sm">15–20 €/Mo</td>
+            <td class="body-sm">~45 €/Mo</td>
+            <td class="body-sm">~40 $/Mo</td>
+            <td style="color:var(--sage-light);">79 €/Mo</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 6 · BUSINESS MODEL
+══════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="glow-tl"></div>
+  <div class="slide-inner">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Business Model</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:36px;">
+      SaaS.<br><em>Recurring. Einfach.</em>
+    </div>
+
+    <div class="grid-3 anim-3" style="margin-bottom:28px;">
+      <div class="card price-card">
+        <div style="margin-bottom:8px;"><span class="pill pill-sage">Einstieg</span></div>
+        <div class="price-card-name">Trial</div>
+        <div class="price-card-price">0 €</div>
+        <div class="price-card-unit">/ 14 Tage · alle Features</div>
+        <div class="divider"></div>
+        <div class="price-card-desc">Keine Kreditkarte. Voller Funktionsumfang. Conversion-Treiber.</div>
+      </div>
+      <div class="card price-card highlight">
+        <div style="margin-bottom:8px;"><span class="pill pill-sage">Empfohlen</span></div>
+        <div class="price-card-name">Pro</div>
+        <div class="price-card-price">79 €</div>
+        <div class="price-card-unit">/ Monat · Solo-Coach</div>
+        <div class="divider"></div>
+        <div class="price-card-desc">Unlimitierte Sitzungen, Stripe-Zahlung, Kalender-Sync, eigene Domain.</div>
+      </div>
+      <div class="card price-card">
+        <div style="margin-bottom:8px;"><span class="pill pill-gold">Team</span></div>
+        <div class="price-card-name">Studio</div>
+        <div class="price-card-price">149 €</div>
+        <div class="price-card-unit">/ Monat · bis 3 Coaches</div>
+        <div class="divider"></div>
+        <div class="price-card-desc">Gemeinsamer Kalender, Rollen & Rechte, konsolidierte Umsatzübersicht.</div>
+      </div>
+    </div>
+
+    <div class="grid-2 anim-4" style="gap:16px;">
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
+        <div class="icon-box gold"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div>
+          <p style="font-size:14px;color:var(--text-primary);margin-bottom:4px;">Unit Economics</p>
+          <p class="body-sm">LTV/CAC Ziel: 5×. Churn-Ziel unter 3 % / Monat. Jahresabo bringt 2 Monate gratis → reduziert Churn.</p>
+        </div>
+      </div>
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
+        <div class="icon-box gold"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+        <div>
+          <p style="font-size:14px;color:var(--text-primary);margin-bottom:4px;">Virales Potenzial</p>
+          <p class="body-sm">Jede Sitzung ist Werbung für HxRoom. Klienten sehen das Branding ihres Coaches – und fragen nach dem Tool.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 7 · TECH STACK
+══════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="glow-br"></div>
+  <div class="slide-inner">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Technologie</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:32px;">
+      Solide.<br><em>EU-only. Skalierbar.</em>
+    </div>
+
+    <div class="grid-2 anim-3" style="gap:24px;align-items:start;">
+      <div>
+        <p style="font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;">Backend & Infrastruktur</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">NestJS + PostgreSQL</span>
+            <span class="body-sm">API & Datenbank</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">LiveKit (self-hosted)</span>
+            <span class="body-sm">WebRTC · Hetzner DE</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">Whisper (self-hosted)</span>
+            <span class="body-sm">KI-Transkription · EU only</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">BullMQ + Redis</span>
+            <span class="body-sm">Job-Queue, Erinnerungen</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+            <span style="font-size:13px;color:var(--text-primary);">Stripe + Resend</span>
+            <span class="body-sm">Zahlung & E-Mail · EU</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:11px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;">Frontend & Deployment</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">Vue 3 + Nuxt UI</span>
+            <span class="body-sm">SPA-Frontend</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">Hetzner Cloud</span>
+            <span class="body-sm">Nürnberg / Falkenstein</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">Caddy (Wildcard SSL)</span>
+            <span class="body-sm">*.hxroom.de automatisch</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);">
+            <span style="font-size:13px;color:var(--text-primary);">Docker Compose</span>
+            <span class="body-sm">Dev & Prod unified</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+            <span style="font-size:13px;color:var(--text-primary);">Claude Code</span>
+            <span class="body-sm">AI-Pair-Programmer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-gold anim-4" style="margin-top:24px;display:flex;gap:12px;align-items:center;">
+      <div class="icon-box gold"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <p class="body-sm" style="color:var(--text-secondary);">100 % EU-Infrastruktur · Kein einziger nicht-europäischer Server für Gesundheitsdaten · DSGVO-konform by Architecture</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 8 · ROADMAP
+══════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="glow-tl"></div>
+  <div class="slide-inner">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Roadmap</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:36px;">
+      Klar. Fokussiert.<br><em>Iterativ.</em>
+    </div>
+
+    <div class="grid-4 anim-3" style="gap:14px;">
+      <div class="road-phase now">
+        <div class="road-phase-label">Q1–Q2 2025 · Jetzt</div>
+        <div class="road-phase-title">MVP & Beta</div>
+        <div class="road-bullet">Videocall, Buchung, Branding</div>
+        <div class="road-bullet">Sub-Domain live</div>
+        <div class="road-bullet">DSGVO-Setup</div>
+        <div class="road-bullet">20 Beta-Coaches</div>
+      </div>
+      <div class="road-phase">
+        <div class="road-phase-label">Q3 2025</div>
+        <div class="road-phase-title">Launch & Revenue</div>
+        <div class="road-bullet">Stripe-Zahlung live</div>
+        <div class="road-bullet">Kalender-Sync</div>
+        <div class="road-bullet">Öffentlicher Launch</div>
+        <div class="road-bullet">100 zahlende Nutzer</div>
+      </div>
+      <div class="road-phase">
+        <div class="road-phase-label">Q4 2025</div>
+        <div class="road-phase-title">KI & Studio</div>
+        <div class="road-bullet">Whisper Transkription</div>
+        <div class="road-bullet">KI-Zusammenfassung</div>
+        <div class="road-bullet">Studio-Plan (3 Coaches)</div>
+        <div class="road-bullet">500 zahlende Nutzer</div>
+      </div>
+      <div class="road-phase">
+        <div class="road-phase-label">2026</div>
+        <div class="road-phase-title">Skalierung</div>
+        <div class="road-bullet">Therapeuten & Heilprakt.</div>
+        <div class="road-bullet">Gruppen-Sessions</div>
+        <div class="road-bullet">API / Integrationen</div>
+        <div class="road-bullet">Internationalisierung</div>
+      </div>
+    </div>
+
+    <div class="grid-3 anim-4" style="gap:16px;margin-top:24px;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">Ziel Q3 2025</div>
+        <div class="big-stat" style="font-size:40px;">100</div>
+        <div class="big-stat-label">zahlende Coaches</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">MRR Q3 2025</div>
+        <div class="big-stat" style="font-size:40px;">7.900<span class="big-stat-unit" style="font-size:18px;">€</span></div>
+        <div class="big-stat-label">Monthly Recurring Revenue</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;text-transform:uppercase;">Ziel Q4 2025</div>
+        <div class="big-stat" style="font-size:40px;">500</div>
+        <div class="big-stat-label">zahlende Coaches</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 9 · GRÜNDER
+══════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="glow-br"></div>
+  <div class="slide-inner-narrow">
+
+    <div class="section-eyebrow anim-1">
+      <div class="eyebrow-line"></div>
+      <span class="eyebrow-text">Gründer</span>
+    </div>
+
+    <div class="display-md anim-2" style="margin-bottom:36px;">
+      Der richtige Gründer<br>für <em>dieses Produkt.</em>
+    </div>
+
+    <div class="card anim-3" style="margin-bottom:20px;">
+      <div class="team-card">
+        <div class="team-avi">F</div>
+        <div>
+          <p style="font-size:16px;color:var(--text-primary);margin-bottom:4px;">Freiberuflicher Software-Entwickler</p>
+          <p class="body-sm">Spezialisiert auf Videoconferencing · HxRoom ist die logische Eigenproduktion nach Jahren in der Branche</p>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="grid-3" style="gap:16px;">
+        <div>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Expertise</p>
+          <p class="body-sm">WebRTC, LiveKit, Videoconferencing-Infrastruktur – das Kernprodukt ist das eigene Spezialgebiet.</p>
+        </div>
+        <div>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Motivation</p>
+          <p class="body-sm">Übergang von Freelancer zu Produktgründer. HxRoom = wiederkehrendes Einkommen statt Stundensätzen.</p>
+        </div>
+        <div>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Ansatz</p>
+          <p class="body-sm">Solo-Entwickler mit AI-Pair-Programmer (Claude Code). Schlanke Entwicklung, kein unnötiges Team.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-gold anim-4">
+      <div class="section-eyebrow" style="margin-bottom:12px;">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Was wir suchen</span>
+      </div>
+      <div class="grid-2" style="gap:20px;">
+        <div>
+          <p style="font-size:14px;color:var(--text-primary);margin-bottom:6px;">Strategischer Partner</p>
+          <p class="body-sm">Jemanden mit Netzwerk zu Coaches & Therapeuten im DACH-Raum, der den Go-to-Market beschleunigt.</p>
+        </div>
+        <div>
+          <p style="font-size:14px;color:var(--text-primary);margin-bottom:6px;">Pre-Seed Kapital</p>
+          <p class="body-sm">50–150k € für Infrastruktur, Marketing und die ersten 12 Monate bis zur Profitabilität.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 10 · ABSCHLUSS / CTA
+══════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="glow-center"></div>
+  <div class="glow-tl"></div>
+
+  <div class="slide-label anim-1">
+    <div class="slide-label-dot"></div>
+    <span class="slide-label-text">Zusammenfassung</span>
+  </div>
+
+  <div class="display-xl anim-2">
+    Vertrauen beginnt<br>beim ersten<br><em>Eindruck.</em>
+  </div>
+
+  <p class="body-lg anim-3" style="max-width:500px;text-align:center;margin-top:24px;">
+    HxRoom verkauft nicht Software —<br>HxRoom verkauft einen professionellen ersten Eindruck.
+  </p>
+
+  <div class="grid-4 anim-4" style="margin-top:48px;max-width:800px;width:100%;">
+    <div style="text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--cream);">120k+</div>
+      <div class="body-sm" style="margin-top:4px;">Coaches DACH</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--cream);">79€</div>
+      <div class="body-sm" style="margin-top:4px;">Pro / Monat</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--sage-light);">100%</div>
+      <div class="body-sm" style="margin-top:4px;">EU-Infrastruktur</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--gold-light);">€57M</div>
+      <div class="body-sm" style="margin-top:4px;">erreichbares ARR</div>
+    </div>
+  </div>
+
+  <div class="card card-gold anim-5" style="margin-top:40px;max-width:500px;width:100%;text-align:center;padding:24px 32px;">
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;">Interesse? Kontakt</p>
+    <p style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);">hxroom.de</p>
+    <p class="body-sm" style="margin-top:4px;">Gespräch anfragen – wir antworten auf Deutsch.</p>
+  </div>
+</div>
+
+<!-- KEY HINT -->
+<div class="key-hint">
+  <kbd>←</kbd> <kbd>→</kbd> navigieren · <kbd>F</kbd> Vollbild
+</div>
+
+<script>
+let current = 0;
+const total = 10;
+
+const slides = document.querySelectorAll('.slide');
+const counter = document.getElementById('counter');
+const dotsContainer = document.getElementById('dots');
+
+// Build dots
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => goTo(i);
+  dotsContainer.appendChild(d);
+});
+
+function goTo(idx) {
+  slides[current].classList.remove('active');
+  dotsContainer.children[current].classList.remove('active');
+  current = (idx + total) % total;
+  slides[current].classList.add('active');
+  dotsContainer.children[current].classList.add('active');
+  counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+}
+
+function nextSlide() { goTo(current + 1); }
+function prevSlide() { goTo(current - 1); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+  if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+});
+
+// Touch / swipe
+let touchX = 0;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) { dx < 0 ? nextSlide() : prevSlide(); }
+});
+</script>
+</body>
+</html>

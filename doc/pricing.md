@@ -22,7 +22,7 @@
 | Feature | Trial | Basic | Pro | Studio |
 |---|:---:|:---:|:---:|:---:|
 | Vollständiges Branding (Logo, Farben) | ✅ | ✅ | ✅ | ✅ |
-| Eigene Subdomain (`name.hxroom.io`) | ✅ | ✅ | ✅ | ✅ |
+| Eigene Subdomain (`name.hxroom.de`) | ✅ | ✅ | ✅ | ✅ |
 | Integrierte Buchung + automatischer Link | ✅ | ✅ | ✅ | ✅ |
 | Kein Account / kein Download für Klienten | ✅ | ✅ | ✅ | ✅ |
 | Digitaler Warteraum mit Branding | ✅ | ✅ | ✅ | ✅ |
@@ -154,4 +154,4 @@ Mit per-Transaktion-Fix (0,25 € × n Sitzungen) verschiebt sich der Break-even
 
 ---
 
-*HxRoom · hxroom.io · Die Videoplattform für Coaches*
+*HxRoom · hxroom.de · Die Videoplattform für Coaches*

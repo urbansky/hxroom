@@ -1,5 +1,5 @@
 {
-	email admin@hxroom.io
+	email admin@hxroom.de
 }
 
 (ionos-tls) {
@@ -8,37 +8,37 @@
 	}
 }
 
-www.hxroom.io {
+www.hxroom.de {
 	import ionos-tls
-	redir https://hxroom.io{uri} permanent
+	redir https://hxroom.de{uri} permanent
 }
 
-hxroom.io {
+hxroom.de {
 	import ionos-tls
 	reverse_proxy landing:80
 }
 
-#api.hxroom.io {
+#api.hxroom.de {
 #	import ionos-tls
 #	reverse_proxy api:3000
 #}
 
-#app.hxroom.io {
+#app.hxroom.de {
 #	import ionos-tls
 #	reverse_proxy web:80
 #}
 
-#admin.hxroom.io {
+#admin.hxroom.de {
 #	import ionos-tls
 #	reverse_proxy admin:80
 #}
 
-#livekit.hxroom.io {
+#livekit.hxroom.de {
 #	import ionos-tls
 #	reverse_proxy livekit:7880
 #}
 
-*.hxroom.io {
+*.hxroom.de {
 	import ionos-tls
 	reverse_proxy client:80
 }
