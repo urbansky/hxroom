@@ -42,3 +42,28 @@ hxroom.de {
 	import ionos-tls
 	reverse_proxy client:80
 }
+
+# ---------------------------------------------------------------------------
+# hxroom.io – Brand-Reserve. Aktuell 301 pfadgenau auf die jeweilige .de-Domain.
+# Explizite http://-Blöcke vermeiden die HTTP→HTTPS→Redirect-Kette (genau 1 Hop).
+# TLS via Ionos DNS-01 Challenge (gleicher API-Token wie .de-Zone).
+# www wird auf den Apex (hxroom.de) gestrippt, alle anderen Subdomains bleiben erhalten.
+# ---------------------------------------------------------------------------
+
+http://hxroom.io, http://www.hxroom.io {
+	redir https://hxroom.de{uri} permanent
+}
+
+http://*.hxroom.io {
+	redir https://{labels.2}.hxroom.de{uri} permanent
+}
+
+hxroom.io, www.hxroom.io {
+	import ionos-tls
+	redir https://hxroom.de{uri} permanent
+}
+
+*.hxroom.io {
+	import ionos-tls
+	redir https://{labels.2}.hxroom.de{uri} permanent
+}

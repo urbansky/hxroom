@@ -32,7 +32,7 @@ import CtaSection from '@/components/CtaSection.vue';
       </div>
       <div class="flex items-center gap-3">
         <UButton variant="outline" color="neutral" size="sm" class="hidden sm:inline-flex">Anmelden</UButton>
-        <UButton color="primary" size="sm" icon="i-lucide-arrow-right">15 Tage kostenlos</UButton>
+        <UButton color="primary" size="sm" icon="i-lucide-arrow-right">14 Tage kostenlos</UButton>
       </div>
     </nav>
 

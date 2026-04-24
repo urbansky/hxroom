@@ -243,6 +243,54 @@ admin.hxroom.de        → Internes Betreiber-Backoffice (ab MVP)
 
 **Wildcard-Zertifikat:** Caddy mit Ionos DNS-Provider (`caddy-dns/ionos`) für automatisches `*.hxroom.de` Let's-Encrypt-Zertifikat via DNS-01 Challenge.
 
+### 6.1 Domain-Status & Brand-Reserve `hxroom.io`
+
+- **`hxroom.de`** ist die **Primärdomain** für den DACH-Markt (Produktiv). Alle öffentlichen URLs, Marketing-Links und kundenseitigen Inhalte laufen ausschließlich über `.de`.
+- **`hxroom.io`** ist registriert und für eine spätere **Internationalisierung** (englischer/internationaler Auftritt, Brand-Linie `hxcode.io` / `hxmeet.io`) reserviert. Bis dahin läuft `.io` **nicht eigenständig**, sondern wird per **permanenter 301-Weiterleitung pfadgenau** auf das jeweilige Pendant unter `.de` umgeleitet. Ziel: Backlinks nicht ins Leere laufen lassen, Brand-Squatting verhindern, Link-Equity auf `.de` konsolidieren.
+
+**Redirect-Regeln** (umgesetzt in `infra/caddy/Caddyfile`):
+
+| Quelle | Ziel |
+|---|---|
+| `http(s)://hxroom.io/<path>?<query>` | `https://hxroom.de/<path>?<query>` |
+| `http(s)://www.hxroom.io/<path>` | `https://hxroom.de/<path>` (www wird gestrippt) |
+| `http(s)://app.hxroom.io/<path>` | `https://app.hxroom.de/<path>` |
+| `http(s)://admin.hxroom.io/<path>` | `https://admin.hxroom.de/<path>` |
+| `http(s)://api.hxroom.io/<path>` | `https://api.hxroom.de/<path>` |
+| `http(s)://[slug].hxroom.io/<path>` | `https://[slug].hxroom.de/<path>` |
+
+Eigene `http://`-Blöcke in der Caddy-Config vermeiden die Kette `http://.io → https://.io → https://.de` – jeder Request benötigt **genau einen Hop**.
+
+### 6.2 DNS-Records bei Ionos
+
+Beide Zonen liegen bei Ionos im selben Account; der vorhandene `IONOS_API_TOKEN` deckt DNS-01-Challenges für beide ab.
+
+**Zone `hxroom.de` (Primär, Produktiv):**
+
+| Typ | Name | Wert |
+|---|---|---|
+| A | `@` | Hetzner-IP des Caddy-Hosts |
+| AAAA | `@` | Hetzner-IPv6 des Caddy-Hosts |
+| A | `www` | Hetzner-IP |
+| A | `*` | Hetzner-IP (Wildcard für Klienten-Subdomains, `app.`, `admin.`, `api.`, `livekit.`) |
+| AAAA | `*` | Hetzner-IPv6 |
+
+**Zone `hxroom.io` (Brand-Reserve, 301 auf `.de`):**
+
+| Typ | Name | Wert |
+|---|---|---|
+| A | `@` | Hetzner-IP des Caddy-Hosts (gleicher Host wie `.de`) |
+| AAAA | `@` | Hetzner-IPv6 |
+| A | `www` | Hetzner-IP |
+| A | `*` | Hetzner-IP (Wildcard, damit auch `app.hxroom.io` etc. den Caddy erreichen und weitergeleitet werden können) |
+| AAAA | `*` | Hetzner-IPv6 |
+
+Caddy fordert per DNS-01 Challenge separate Let's-Encrypt-Zertifikate für `hxroom.io` + `www.hxroom.io` sowie für `*.hxroom.io` an – analog zum `.de`-Setup. Ohne `*.hxroom.io`-Wildcard-Cert lassen sich die Subdomain-Redirects nicht per HTTPS bedienen.
+
+### 6.3 Spätere Internationalisierung (ausblickend)
+
+Bei Aktivierung des englischen Auftritts: eigener Content unter `hxroom.io` (nicht Kopie von `.de`), Sprachverknüpfung via `hreflang` (`de-DE` ↔ `en`, `x-default` auf `.de`). Bis dahin bleibt `.io` reiner 301-Umleiter und bekommt **keine eigenständigen Inhalte** – sonst entsteht Duplicate-Content-Risiko.
+
 ---
 
 ## 7. Authentifizierung & Sessions (better-auth)
