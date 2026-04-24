@@ -1,5 +1,5 @@
 {
-  "name": "@hxroom/client",
+  "name": "@hxroom/coach",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -12,6 +12,7 @@
     "@nuxt/ui": "^4.5.1",
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
+    "pinia": "^3.0.0",
     "tailwindcss": "^4.2.1",
     "vue": "^3.5.0",
     "vue-router": "^4.5.0"

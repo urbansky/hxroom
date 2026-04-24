@@ -28,8 +28,8 @@
 hxroom/
 ├── apps/
 │   ├── api/          # NestJS Backend (api.hxroom.de)
-│   ├── web/          # Coach-Backoffice (app.hxroom.de)
-│   ├── client/       # Klienten-Subdomain ([slug].hxroom.de)
+│   ├── coach/        # Coach-Backoffice (app.hxroom.de)
+│   ├── room/         # Klienten-Subdomain: Buchung, Warteraum, Videocall ([slug].hxroom.de)
 │   ├── admin/        # Betreiber-Backoffice (admin.hxroom.de)
 │   └── landing/      # Landingpage (hxroom.de)
 ├── packages/
@@ -46,10 +46,13 @@ hxroom/
 
 ## Ports (Entwicklung)
 - api: 3000
-- web: 5173
-- client: 5174
+- coach: 5173
+- room: 5174
 - admin: 5175
 - landing: 5176
+
+## Videokonferenz
+Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/room/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.
 
 ## Dokumentation im Ordner `doc/`
 

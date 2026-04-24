@@ -16,7 +16,7 @@ services:
       - IONOS_API_TOKEN=${IONOS_API_TOKEN}
     depends_on:
       - landing
-      - client
+      - room
     restart: unless-stopped
 
   landing:
@@ -26,10 +26,10 @@ services:
       dockerfile: apps/landing/Dockerfile
     restart: unless-stopped
 
-  client:
-    image: ghcr.io/urbansky/hxroom/client:latest
+  room:
+    image: ghcr.io/urbansky/hxroom/room:latest
     build:
       context: ..
-      dockerfile: apps/client/Dockerfile
+      dockerfile: apps/room/Dockerfile
     restart: unless-stopped
 

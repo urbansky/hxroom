@@ -65,8 +65,8 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 hxroom/
 ├── apps/
 │   ├── api/          # NestJS Backend (api.hxroom.de)
-│   ├── web/          # Coach-Backoffice (app.hxroom.de)
-│   ├── client/       # Klienten-Subdomain ([slug].hxroom.de)
+│   ├── coach/        # Coach-Backoffice (app.hxroom.de)
+│   ├── room/         # Klienten-Subdomain: Buchung, Warteraum, Videocall ([slug].hxroom.de)
 │   ├── admin/        # Betreiber-Backoffice (admin.hxroom.de)
 │   └── landing/      # Landingpage (hxroom.de)
 ├── packages/
@@ -100,8 +100,8 @@ services:
       - LIVEKIT_API_KEY=...
       - WHISPER_API_URL=http://whisper:9000
 
-  web:
-    build: ./apps/web
+  coach:
+    build: ./apps/coach
 
   postgres:
     image: postgres:16-alpine
@@ -311,6 +311,17 @@ Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist 
 ---
 
 ## 8. Videocall-Architektur (LiveKit self-hosted)
+
+### Verortung im Monorepo
+
+Der Videocall verteilt sich auf mehrere Ebenen:
+
+| Ort | Verantwortung |
+|---|---|
+| `infra/livekit/` | LiveKit-Server (Docker-Container) mit `livekit.yaml`/`egress.yaml`. |
+| `apps/api/` | Erzeugt HMAC-Buchungstokens für Klienten und LiveKit-Access-Tokens, verwaltet Rooms (`session_${bookingId}`), empfängt LiveKit-Webhooks, enqueued nach Sessionende den Whisper-Job. |
+| `apps/room/` | **Klienten-Subdomain** (`[slug].hxroom.de`) – deckt den vollständigen Klient-Lifecycle ab: Buchungsseite → Einwilligungs-Banner → Warteraum-UI → Call-UI. Nutzt das LiveKit JS SDK. |
+| `apps/coach/` | Coach-Seite des Calls im Backoffice (`app.hxroom.de`): „Klient wartet"-Anzeige, Einlassen-Button, Coach-Video-UI, Session-Notizen parallel zum Call. |
 
 ### Deployment
 

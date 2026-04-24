@@ -40,7 +40,7 @@ hxroom.de {
 
 *.hxroom.de {
 	import ionos-tls
-	reverse_proxy client:80
+	reverse_proxy room:80
 }
 
 # ---------------------------------------------------------------------------

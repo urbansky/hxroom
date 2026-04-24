@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/client/**"
+      - "apps/room/**"
       - "apps/landing/**"
       - "packages/ui/**"
       - "packages/shared/**"
@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [client, landing]
+        app: [room, landing]
 
     steps:
       - name: Checkout
