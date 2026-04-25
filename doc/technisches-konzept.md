@@ -22,7 +22,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **better-auth** | Authentifizierung & Session-Management |
 | **LiveKit** | WebRTC-Infrastruktur – self-hosted auf Hetzner DE |
 | **Whisper (faster-whisper)** | Speech-to-Text – self-hosted, kein externer API-Aufruf |
-| **Resend** | Transaktionale E-Mails – EU-Infrastruktur (Frankfurt) |
+| **Brevo** | Transaktionale E-Mails **und** Newsletter/Marketing – ein Anbieter für den gesamten Versand (französisch, Server in der EU) |
 | **BullMQ + Redis** | Job-Queue für Erinnerungen, Transkription & Async-Tasks |
 | **Hetzner Object Storage** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos (EU-Frankfurt). Alternative: MinIO self-hosted. |
 | **Stripe** | Zahlungsabwicklung & Subscription-Management (Billing Portal, Webhooks) – EU-Entities, SCCs |
@@ -49,9 +49,10 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 ### Externe Dienste – EU-Übersicht
 | Dienst | Anbieter | Serverstandort | Anmerkung |
 |---|---|---|---|
-| E-Mail | Resend | EU (Frankfurt) | Vollständig EU |
+| E-Mail-Versand (transaktional + Newsletter) | Brevo | EU (Frankreich/Deutschland) | Vollständig EU, AVV |
+| E-Mail-Empfang / Postfächer (`kontakt@hxroom.de` etc.) | Ionos Mail Business | Deutschland | Vollständig EU, IMAP/SMTP für Apple Mail / Thunderbird |
 | Zahlung & Abo | Stripe | EU (Irland / Luxemburg) | SCCs vorhanden, Billing Portal |
-| DNS | Ionos | Deutschland | Vollständig EU |
+| DNS | Ionos | Deutschland | Vollständig EU; gleicher Anbieter wie Mail |
 | Zertifikate | Let's Encrypt via Caddy | – | Kein Datentransfer |
 | Video / Audio | LiveKit self-hosted | Hetzner DE | Vollständig EU |
 | Transkription | Whisper self-hosted | Hetzner DE | Vollständig EU |
@@ -286,6 +287,17 @@ Beide Zonen liegen bei Ionos im selben Account; der vorhandene `IONOS_API_TOKEN`
 | AAAA | `*` | Hetzner-IPv6 |
 
 Caddy fordert per DNS-01 Challenge separate Let's-Encrypt-Zertifikate für `hxroom.io` + `www.hxroom.io` sowie für `*.hxroom.io` an – analog zum `.de`-Setup. Ohne `*.hxroom.io`-Wildcard-Cert lassen sich die Subdomain-Redirects nicht per HTTPS bedienen.
+
+**E-Mail-relevante DNS-Records** (in derselben Ionos-Zone `hxroom.de`):
+
+| Typ | Name | Wert | Zweck |
+|---|---|---|---|
+| MX | `@` | von Ionos Mail Business automatisch gesetzt | Empfang an Ionos-Postfächern (`kontakt@`, `noreply@` etc.) |
+| TXT | `@` | `v=spf1 include:spf.brevo.com include:_spf.ionos.de -all` | SPF: Brevo (App-Versand) + Ionos (manuelle Replys aus Apple Mail) |
+| TXT | `mail._domainkey` | DKIM-Key von Brevo | Signatur für Brevo-Versand |
+| TXT | `_dmarc` | `v=DMARC1; p=quarantine; rua=mailto:dmarc@hxroom.de` | DMARC-Policy |
+
+Vollständiges Setup-Verfahren siehe `newsletter-brevo.md`.
 
 ### 6.3 Spätere Internationalisierung (ausblickend)
 
@@ -666,7 +678,7 @@ export const reminderJobs = pgTable('reminder_jobs', {
 - Nach Buchung: Jobs einplanen (`reminder-24h`, `reminder-1h`)
 - Nach Sitzungsende: Job `transcribe-session` (wenn Einwilligung vorhanden)
 - Job-Worker in NestJS (`@Processor`-Decorator)
-- E-Mail-Versand via **Resend** (EU-Infrastruktur Frankfurt, zuverlässige Zustellraten, gute DX)
+- E-Mail-Versand via **Brevo** (französischer Anbieter, EU-Server, zuverlässige Zustellraten). Brevo deckt sowohl transaktionale Mails (Buchungsbestätigung, Erinnerung, Passwort-Reset) als auch Newsletter ab. Getrennte Sender-Adressen für Transaktional (`noreply@hxroom.de`) und Marketing (`newsletter@hxroom.de`) schützen die Zustellbarkeit. Setup-Details siehe `newsletter-brevo.md`.
 
 Claude Code kann die komplette BullMQ-Modul-Struktur inkl. Worker, Job-Definitionen und Whisper-Client aus einem einzigen Prompt generieren.
 
@@ -691,7 +703,7 @@ Coach wählt Plan im Backoffice
   → Coach wird zu Stripe Checkout weitergeleitet (gehostet, kein eigenes Zahlungsformular)
   → Nach Zahlung: Stripe sendet webhook checkout.session.completed
   → Backend aktiviert Plan in organizations.plan + organizations.plan_expires_at
-  → Resend schickt Bestätigungs-E-Mail
+  → Brevo schickt Bestätigungs-E-Mail
 
 Abo läuft weiter (monatlich/jährlich):
   → Stripe sendet invoice.paid → Plan-Ablaufdatum wird verlängert
@@ -762,7 +774,7 @@ export const organizationBilling = pgTable('organization_billing', {
 
 **Monitoring**
 - Backup-Job schreibt Ergebnis (Erfolg / Dateigröße) in eine `backup_logs`-Tabelle
-- Fehlgeschlagene Backups lösen Alarm per E-Mail aus (Resend)
+- Fehlgeschlagene Backups lösen Alarm per E-Mail aus (Brevo)
 
 ---
 
@@ -817,7 +829,8 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 - **LiveKit self-hosted** auf demselben Hetzner-Projekt → Mediendaten verlassen nie Deutschland
 - **Whisper self-hosted** → Audiodaten und Transkripte bleiben auf Hetzner
 - **Hetzner Object Storage** (EU-Frankfurt) → alle Dateien (Logos, Recordings, Exports) in der EU, S3-kompatibel. Alternative MinIO self-hosted möglich, gleiches Key-Schema.
-- **Resend EU-Region** → E-Mail-Versand vollständig in der EU
+- **Brevo (französisch, EU-Server)** → E-Mail-Versand (transaktional + Newsletter) vollständig in der EU, AVV abgeschlossen
+- **Ionos Mail Business (Deutschland)** → E-Mail-Empfang / Postfächer für `kontakt@hxroom.de` etc., vollständig EU
 - **Stripe** mit EU-Entities und SCCs → DSGVO-konform für Zahlungsdaten
 - better-auth HttpOnly Cookies, kein Token in LocalStorage
 - Klienten-Buchungstoken: HMAC-signiert, TTL, einmalig verwendbar

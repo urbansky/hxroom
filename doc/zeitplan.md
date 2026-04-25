@@ -62,14 +62,14 @@ better-auth Integration im NestJS Backend, Registrierung und Login, Subdomain-Ro
 
 *Verfügbarkeiten · Buchungsseite · Erinnerungen · E-Mail*
 
-Verfügbarkeits-Engine mit Slot-Logik, öffentliche gebrandete Buchungsseite auf der Coach-Subdomain, Klientenformular, automatische E-Mail-Bestätigung mit Raumlink via Resend, BullMQ-Erinnerungsjobs (24h/1h vor Termin), Termin-Dashboard für den Coach, manuelle Terminanlage.
+Verfügbarkeits-Engine mit Slot-Logik, öffentliche gebrandete Buchungsseite auf der Coach-Subdomain, Klientenformular, automatische E-Mail-Bestätigung mit Raumlink via Brevo, BullMQ-Erinnerungsjobs (24h/1h vor Termin), Termin-Dashboard für den Coach, manuelle Terminanlage.
 
-**Technologien:** BullMQ · Resend E-Mail · Slot-Logik · Zeitzonen · Kalender-UI
+**Technologien:** BullMQ · Brevo E-Mail · Slot-Logik · Zeitzonen · Kalender-UI
 
 **Claude Code Hauptaufgaben:**
 - Availability-Modul mit Slot-Generierung, Pufferzeit und Vorlaufzeit
 - Booking-Modul mit HMAC-signierten Klienten-Tokens
-- Resend E-Mail-Templates (Bestätigung, Erinnerung, Stornierung)
+- Brevo E-Mail-Templates (Bestätigung, Erinnerung, Stornierung)
 - BullMQ Worker für zeitbasierte Erinnerungs-Jobs
 - Vue-Kalender-Komponente für Coach-Dashboard
 
