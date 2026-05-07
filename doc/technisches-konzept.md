@@ -30,8 +30,8 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 ### Frontend
 | Technologie | Rolle |
 |---|---|
-| **Vue.js 3** | SPA-Framework |
-| **Nuxt UI (Vue-Version)** | Komponenten-Bibliothek (Reka UI + Tailwind) |
+| **Nuxt 3** | Vue 3 Meta-Framework (SSR/SSG, file-based Routing, Auto-Imports) |
+| **Nuxt UI** | Komponenten-Bibliothek (Reka UI + Tailwind) |
 | **Pinia** | State Management |
 | **LiveKit JS SDK** | WebRTC-Client-Integration |
 | **VueUse** | Utility Composables |
@@ -82,7 +82,7 @@ hxroom/
 └── CLAUDE.md         # Claude Code Instruktionsdatei
 ```
 
-Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Die vier Vue-Apps sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden; `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends.
+Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Die vier Nuxt-Apps sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden; `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends.
 
 ---
 
@@ -181,7 +181,7 @@ Im Root des Repos liegt eine `CLAUDE.md`, die Claude Code den Projektkontext erk
 ## Stack
 - Backend: NestJS, PostgreSQL, Drizzle ORM, better-auth + organization plugin, LiveKit (self-hosted)
 - Speech2Text: Whisper (self-hosted, HTTP-API via faster-whisper)
-- Frontend: Vue 3, Nuxt UI (Vue), Pinia
+- Frontend: Nuxt 3, Nuxt UI, Pinia
 - Monorepo: pnpm workspaces
 - Deployment: Docker Compose auf Hetzner DE
 
@@ -232,15 +232,15 @@ Claude Code erkennt Duplikate, vereinheitlicht DTOs auf Zod-Schemas und macht Fe
 ## 6. Domain-Architektur
 
 ```
-hxroom.de              → Vue-App (Landingpage, öffentlich)
-app.hxroom.de          → Vue-App (Coach-Backoffice, Login erforderlich)
-[slug].hxroom.de       → Vue-App (Klienten-Subdomain: Buchung, Warteraum, Call)
+hxroom.de              → Nuxt-App `landing` (öffentlich)
+app.hxroom.de          → Nuxt-App `coach` (Coach-Backoffice, Login erforderlich)
+[slug].hxroom.de       → Nuxt-App `room` (Klienten-Subdomain: Buchung, Warteraum, Call)
 api.hxroom.de          → NestJS API
 livekit.hxroom.de      → LiveKit Server (intern, kein öffentliches UI)
-admin.hxroom.de        → Internes Betreiber-Backoffice (ab MVP)
+admin.hxroom.de        → Nuxt-App `admin` (internes Betreiber-Backoffice, ab MVP)
 ```
 
-**Subdomain-Routing im Frontend:** Vue Router erkennt die Subdomain aus `window.location.hostname` und rendert den entsprechenden App-Kontext. Ein einziges Deployment, mehrere logische Apps.
+**Subdomain-Routing im Frontend:** Jede Subdomain wird von ihrer eigenen Nuxt-App bedient (`apps/landing`, `apps/coach`, `apps/room`, `apps/admin`). Caddy routet anhand des Hostnames an den jeweiligen Container; innerhalb der App übernimmt Nuxts file-based Routing (`pages/`) die URL-Auflösung. Die `room`-App liest den Coach-Slug serverseitig aus dem Hostname (Nuxt Server Middleware), um Branding und Buchungs­kontext bereits beim ersten Render zu laden – wichtig für SEO und schnellen Erstaufbau der Buchungsseite.
 
 **Wildcard-Zertifikat:** Caddy mit Ionos DNS-Provider (`caddy-dns/ionos`) für automatisches `*.hxroom.de` Let's-Encrypt-Zertifikat via DNS-01 Challenge.
 

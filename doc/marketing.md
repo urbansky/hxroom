@@ -156,3 +156,9 @@ Coaching-Ausbildungen (z. B. dvct, ICF-akkreditierte Institute) haben direkten Z
 | Zahlende Kunden | 2–3 | 10+ |
 | E-Mail-Öffnungsrate | >40 % | >40 % |
 | LinkedIn-Antwortrate | >10 % | >10 % |
+
+---
+
+## Web-Ressourcen
+
+- [managerseminare.de](https://www.managerseminare.de/) – Fachportal für Trainer, Coaches und Berater im DACH-Raum. Quelle für Branchen-News, Coach-Profile (Coach-Datenbank), Seminar-Anbieter und potenzielle Kontakte für Kalt-Akquise und Kooperationen.
