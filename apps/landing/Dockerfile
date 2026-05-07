@@ -26,7 +26,7 @@ RUN pnpm --filter landing build
 
 # ---- Production ----
 FROM nginx:alpine
-COPY --from=build /app/apps/landing/dist /usr/share/nginx/html
+COPY --from=build /app/apps/landing/.output/public /usr/share/nginx/html
 COPY apps/landing/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

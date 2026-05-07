@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import HeroSection from '@/components/HeroSection.vue';
-import QuoteBand from '@/components/QuoteBand.vue';
-import FeaturesSection from '@/components/FeaturesSection.vue';
-import ComparisonSection from '@/components/ComparisonSection.vue';
-import StepsSection from '@/components/StepsSection.vue';
-import TestimonialsSection from '@/components/TestimonialsSection.vue';
-import PricingSection from '@/components/PricingSection.vue';
-import TrustBand from '@/components/TrustBand.vue';
-import CtaSection from '@/components/CtaSection.vue';
+useHead({
+  htmlAttrs: { lang: 'de' },
+  title: 'HxRoom – Einfach. Professionell. Deins.',
+  meta: [
+    { name: 'description', content: 'HxRoom – Dein digitaler Raum für echte Gespräche. White-Label Videocall-Plattform für Coaches.' },
+    // Pre-Launch: Suchmaschinen komplett fernhalten. Vor dem Launch entfernen.
+    { name: 'robots', content: 'noindex, nofollow' },
+  ],
+})
 </script>
 
 <template>

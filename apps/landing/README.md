@@ -1,10 +1,18 @@
 # HxRoom Landing
 
-Vue 3 SPA – Landingpage unter hxroom.io.
+Nuxt 4 SPA – Landingpage unter hxroom.de.
+
+## Entwicklung
+
+```bash
+pnpm dev        # Dev-Server auf http://localhost:5176
+pnpm build      # nuxt generate → .output/public/
+pnpm preview    # Vorschau des statischen Builds (via npx serve)
+```
 
 ## Docker
 
-Das Image wird per GitHub Actions gebaut und in die GitHub Container Registry gepusht (`ghcr.io/hxroom/hxroom-landing`).
+Das Image wird per GitHub Actions gebaut und in die GitHub Container Registry gepusht.
 
 ### Lokal bauen
 
@@ -25,8 +33,8 @@ Die App ist unter `http://localhost:5176` erreichbar.
 
 ### Multi-Stage Build
 
-| Stage | Basis | Zweck |
-|---|---|---|
-| `deps` | node:22-alpine | pnpm install (gecached) |
-| `build` | deps | Vite-Build mit @hxroom/ui |
-| Production | nginx:alpine | Statische Auslieferung der SPA |
+| Stage      | Basis         | Zweck                             |
+|------------|---------------|-----------------------------------|
+| `deps`     | node:22-alpine| pnpm install (gecached)           |
+| `build`    | deps          | `nuxt generate` mit @hxroom/ui   |
+| Production | nginx:alpine  | Statische Auslieferung via nginx  |
