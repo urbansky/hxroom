@@ -18,14 +18,14 @@ hxroom.de {
 	reverse_proxy landing:80
 }
 
-#api.hxroom.de {
-#	import ionos-tls
-#	reverse_proxy api:3000
-#}
+api.hxroom.de {
+	import ionos-tls
+	reverse_proxy api:3000
+}
 
 #app.hxroom.de {
 #	import ionos-tls
-#	reverse_proxy web:80
+#	reverse_proxy coach:80
 #}
 
 #admin.hxroom.de {
