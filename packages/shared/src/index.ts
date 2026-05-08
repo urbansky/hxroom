@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export * from './schemas/newsletter';
+
 // Booking status
 export const BookingStatus = z.enum(['pending', 'confirmed', 'completed', 'cancelled']);
 export type BookingStatus = z.infer<typeof BookingStatus>;

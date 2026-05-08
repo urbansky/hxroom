@@ -181,22 +181,20 @@ export class NewsletterService {
 }
 ```
 
-### 4.3 Controller mit Rate Limiting
+### 4.3 Controller
 
 ```typescript
 // apps/api/src/newsletter/newsletter.controller.ts
 import { Body, Controller, Ip, Post, UsePipes } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { Throttle } from '@nestjs/throttler';
 import { NewsletterService } from './newsletter.service';
-import { subscribeSchema, SubscribeDto } from './dto/subscribe.dto';
+import { subscribeSchema, SubscribeDto } from '@hxroom/shared';
 
 @Controller('newsletter')
 export class NewsletterController {
   constructor(private readonly service: NewsletterService) {}
 
   @Post('subscribe')
-  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 Anmeldungen/IP/Minute
   @UsePipes(new ZodValidationPipe(subscribeSchema))
   async subscribe(@Body() dto: SubscribeDto, @Ip() ip: string) {
     await this.service.subscribe(dto, ip);
