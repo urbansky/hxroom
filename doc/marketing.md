@@ -3,6 +3,48 @@
 
 ---
 
+## 0. Tonalität & Ansprache
+
+**Grundprinzip: Im Marketing wird durchgängig informell mit „Du" und Vornamen angesprochen.**
+
+Das gilt für **alle** kundenseitigen Marketing-Touchpoints:
+
+- Landingpages (`hxroom.de`, Coach-Akquise-Seiten)
+- Newsletter & Marketing-Mails (Welcome-Strecke, Kampagnen)
+- Kalt-E-Mails an Coaches
+- LinkedIn-Direktansprache & Posts
+- Facebook-Gruppen-Beiträge
+- Social-Media-Ads (Meta, LinkedIn, Google)
+- Blog-Artikel & SEO-Content
+- Lead Magnets (Vorlagen, Mini-Kurse, Whitepaper)
+- Podcast-Beschreibungen & Show Notes
+- Affiliate-/Empfehlungs-Kommunikation
+
+### Warum Du, nicht Sie
+
+1. **Branchen-Standard im Coaching:** Die Zielgruppe duzt sich untereinander – ein „Sehr geehrte Frau Müller" wirkt distanziert und falsch.
+2. **SaaS-Konvention im DACH-Raum:** Moderne Tools (Notion, Slack, Personio) duzen ihre Nutzer selbstverständlich.
+3. **Beziehungsgeschäft:** Coaches kaufen Vertrauen, nicht Features. Du-Ansprache senkt die Distanz schon im Erstkontakt.
+4. **Konsistenz mit dem Produkt:** Die HxRoom-App selbst duzt den Coach – Marketing darf nicht steifer klingen als das Produkt.
+
+### Stil-Leitplanken
+
+- **Vorname statt Nachname** in Anreden: „Hallo Anna" statt „Hallo Frau Schmidt".
+- **„Du" und „dein/deine"** kleingeschrieben (gemäß aktueller Duden-Empfehlung für persönliche Ansprache, nur in formellen Briefen großgeschrieben).
+- **Persönliche Absender:** Mails werden mit „Stefan" unterschrieben, nicht mit „Das HxRoom-Team".
+- **Reden statt verkaufen:** Tonfall wie unter Kollegen – warm, direkt, ohne Marketing-Floskeln („revolutionär", „die ultimative Lösung", „game-changing").
+- **Konkret statt generisch:** Beispiele aus der Coaching-Praxis statt abstrakter Versprechen.
+
+### Ausnahmen (bewusst formell)
+
+Es gibt **drei** Bereiche, in denen das „Sie" weiter Standard bleibt:
+
+1. **Rechtstexte:** Impressum, AGB, Datenschutzerklärung, Auftragsverarbeitungsverträge – hier ist „Sie" die juristisch übliche Form.
+2. **B2B-Kooperationsanfragen** an Verbände, Ausbildungsinstitute oder Pressekontakte im Erstkontakt – hier wird erst mit Vereinbarung beider Seiten ins „Du" gewechselt.
+3. **Coach-Klient-Kommunikation in der App:** Wie Coachs ihre Klienten ansprechen, entscheidet jeder Coach selbst (konfigurierbar pro Coach/Klient). Das ist **nicht** Marketing-Kommunikation und folgt anderen Regeln.
+
+---
+
 ## 1. Kalt-Akquise per E-Mail
 
 **Ziel:** Coaches direkt ansprechen und auf die persönliche Coaching-Seite in HxRoom leiten – mit CTA zu einer 15-minütigen Live-Demo des Raums.

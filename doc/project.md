@@ -54,6 +54,11 @@ Der Name erinnert an „Sitzung" – die natürliche Sprache von Coaches. Warm, 
 Coaches verkaufen Vertrauen. Vertrauen beginnt beim ersten Eindruck.
 **HxRoom verkauft nicht Software – HxRoom verkauft einen professionellen ersten Eindruck.**
 
+### Tonalität & Ansprache
+Marketing-Kommunikation erfolgt durchgängig informell mit **„Du" und Vornamen** – auf Landingpages, in Newslettern, Ads, Social-Posts und Kalt-Akquise. Ausnahmen sind Rechtstexte (Impressum, AGB, Datenschutz) und B2B-Erstkontakte mit Verbänden/Institutionen.
+
+→ Vollständige Tonalitäts-Leitplanken: [marketing.md → Abschnitt 0](marketing.md#0-tonalität--ansprache)
+
 ---
 
 ## 4. Zielgruppe

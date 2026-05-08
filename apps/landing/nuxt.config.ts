@@ -1,5 +1,4 @@
 export default defineNuxtConfig({
-  srcDir: '.',
   modules: ['@nuxt/ui'],
 
   ui: {

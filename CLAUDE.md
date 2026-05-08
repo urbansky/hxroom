@@ -3,7 +3,7 @@
 ## Stack
 - Backend: NestJS, PostgreSQL, Drizzle ORM, better-auth + organization plugin, LiveKit (self-hosted)
 - Speech2Text: Whisper (self-hosted, HTTP-API via faster-whisper)
-- Frontend: Vue 3, Nuxt UI (Vue), Pinia, Shared Theme via @hxroom/ui
+- Frontend: Nuxt 4, Nuxt UI v4, Pinia, Shared Theme via @hxroom/ui
 - Monorepo: pnpm workspaces
 - Deployment: Docker Compose auf Hetzner DE
 
@@ -14,6 +14,21 @@
 - Auth: better-auth Session, Guard via @UseGuards(AuthGuard)
 - Fehlerbehandlung: NestJS HttpException mit deutschen Fehlertexten
 - DSGVO: Kein Logging von personenbezogenen Daten ohne explizite Kennzeichnung
+
+## Nuxt UI (Frontend-Konventionen)
+
+Alle Frontend-Apps (`coach`, `room`, `admin`, `landing`) verwenden **Nuxt 4** mit **Nuxt UI v4**. Die vollständigen Guidelines sind unter https://ui.nuxt.com/llms-full.txt abrufbar – diese sind verbindlich beim Schreiben von Frontend-Code.
+
+Wichtigste Regeln:
+- Semantische Farb-Aliases verwenden: `primary`, `secondary`, `success`, `info`, `warning`, `error`, `neutral` – keine direkten Tailwind-Farben (z. B. `gray-500`) in Props
+- `neutral` statt `gray`/`black`/`white` als Farbreferenz
+- `items`-Prop für Select, Breadcrumb, NavigationMenu etc.
+- `v-model:open` für modal-artige Komponenten; Trigger im Default-Slot, Inhalt im `#content`-Slot
+- `@update:modelValue` statt `@change` für Wert-Updates
+- `:dismissible="false"` statt `prevent-close` zum Deaktivieren des Schließens
+- Globale Theme-Overrides in `app.config.ts` unter `ui.colors`, `ui.theme.defaultVariants` und pro Komponente
+- Design-Tokens wie `text-muted`, `text-highlighted` für automatisches Light/Dark-Mode-Support
+- App mit `<UApp>` wrappen (wird für Toast, Tooltip etc. benötigt)
 
 ## Häufige Tasks
 - Neues NestJS Modul: nest generate module <n>
