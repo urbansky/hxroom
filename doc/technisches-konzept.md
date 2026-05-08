@@ -667,6 +667,48 @@ export const reminderJobs = pgTable('reminder_jobs', {
 });
 ```
 
+### 11.1 Validierungs- und DTO-Konvention
+
+Alle Request- und Response-Schemas werden mit **Zod** definiert und leben in `packages/shared/src/schemas/`. TypeScript-Typen werden ausschließlich via `z.infer<>` abgeleitet – keine separaten Interface- oder Class-Definitionen.
+
+```
+packages/shared/src/schemas/
+  booking.ts       # createBookingSchema, updateBookingSchema, BookingResponseSchema
+  client.ts        # createClientSchema, ClientResponseSchema
+  availability.ts  # availabilitySlotSchema
+  profile.ts       # updateCoachProfileSchema, CoachProfileResponseSchema
+  newsletter.ts    # subscribeSchema
+```
+
+**Warum shared:** Die Frontend-Apps (`coach`, `room`) importieren dieselben Schemas direkt für Formularvalidierung (`schema.safeParse(formData)`) und Response-Parsing (`schema.parse(await res.json())`). Eine einzige Source of Truth – kein Typ-Drift zwischen API und Frontend.
+
+**Muster je Ressource:**
+
+```typescript
+// packages/shared/src/schemas/booking.ts
+const bookingBase = z.object({ ... });
+
+export const createBookingSchema = bookingBase;
+export const updateBookingSchema = bookingBase.partial();
+export const bookingResponseSchema = bookingBase.extend({ id: z.string().uuid(), ... });
+
+export type CreateBookingDto   = z.infer<typeof createBookingSchema>;
+export type UpdateBookingDto   = z.infer<typeof updateBookingSchema>;
+export type BookingResponseDto = z.infer<typeof bookingResponseSchema>;
+```
+
+**Im NestJS-Controller** per `ZodValidationPipe` (`apps/api/src/common/pipes/zod-validation.pipe.ts`):
+
+```typescript
+import { createBookingSchema, CreateBookingDto } from '@hxroom/shared';
+
+@Post()
+@UsePipes(new ZodValidationPipe(createBookingSchema))
+create(@Body() dto: CreateBookingDto) { ... }
+```
+
+Rein API-interne Schemas (z.B. Webhook-Payloads, interne Job-DTOs) können lokal im jeweiligen Modul bleiben.
+
 ---
 
 ## 12. E-Mail, Job-Queue & Stripe-Billing

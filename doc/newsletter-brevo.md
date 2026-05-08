@@ -62,7 +62,8 @@ Unter **Contacts → Settings → Contact attributes** anlegen:
 
 | Attribut | Typ | Zweck |
 |---|---|---|
-| `FIRSTNAME` | Text | Persönliche Anrede |
+| `FIRSTNAME` | Text | Vorname – persönliche Anrede |
+| `LASTNAME` | Text | Nachname |
 | `SOURCE` | Text | Eintrag-Quelle (`landing`, `coach-page`, `pricing`) |
 | `SIGNUP_IP` | Text | DSGVO-Nachweis Double-Opt-In |
 | `SIGNUP_AT` | Datum | Zeitpunkt Anmeldung |
@@ -104,13 +105,16 @@ Neues Modul `apps/api/src/newsletter/`:
 
 ### 4.1 DTO mit Zod-Validierung
 
+Das Schema lebt in `packages/shared` damit die Landing-Page dasselbe Schema für clientseitige Formularvalidierung verwenden kann (siehe [Validierungs-Konvention](technisches-konzept.md#111-validierungs--und-dto-konvention)).
+
 ```typescript
-// apps/api/src/newsletter/dto/subscribe.dto.ts
+// packages/shared/src/schemas/newsletter.ts
 import { z } from 'zod';
 
 export const subscribeSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse').max(254),
   firstName: z.string().min(1).max(80).optional(),
+  lastName: z.string().min(1).max(80).optional(),
   source: z.enum(['landing', 'coach-page', 'pricing']).default('landing'),
   role: z.enum(['coach', 'interessent', 'klient']).default('interessent'),
   consent: z.literal(true, {
@@ -136,7 +140,7 @@ export class NewsletterService {
   constructor(private readonly config: ConfigService) {}
 
   async subscribe(
-    dto: { email: string; firstName?: string; source: string; role: string },
+    dto: { email: string; firstName?: string; lastName?: string; source: string; role: string },
     ipAddress: string,
   ): Promise<void> {
     const apiKey = this.config.getOrThrow<string>('BREVO_API_KEY');
@@ -154,6 +158,7 @@ export class NewsletterService {
         email: dto.email,
         attributes: {
           FIRSTNAME: dto.firstName ?? '',
+          LASTNAME: dto.lastName ?? '',
           SOURCE: dto.source,
           ROLE: dto.role,
           SIGNUP_IP: ipAddress,
@@ -241,6 +246,7 @@ type Status = 'idle' | 'loading' | 'success' | 'error';
 const form = reactive({
   email: '',
   firstName: '',
+  lastName: '',
   consent: false,
 });
 const status = ref<Status>('idle');
@@ -263,6 +269,7 @@ async function submit() {
       body: JSON.stringify({
         email: form.email,
         firstName: form.firstName || undefined,
+        lastName: form.lastName || undefined,
         source: props.source,
         role: props.role,
         consent: form.consent,
@@ -296,14 +303,20 @@ async function submit() {
         :disabled="status === 'loading'"
       />
       <UInput
-        v-model="form.email"
-        type="email"
-        placeholder="deine@email.de"
-        autocomplete="email"
-        required
+        v-model="form.lastName"
+        placeholder="Nachname (optional)"
+        autocomplete="family-name"
         :disabled="status === 'loading'"
       />
     </div>
+    <UInput
+      v-model="form.email"
+      type="email"
+      placeholder="deine@email.de"
+      autocomplete="email"
+      required
+      :disabled="status === 'loading'"
+    />
 
     <label class="consent">
       <UCheckbox v-model="form.consent" :disabled="status === 'loading'" />
