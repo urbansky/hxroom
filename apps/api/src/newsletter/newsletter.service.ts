@@ -15,6 +15,9 @@ export class NewsletterService {
     const templateId = Number(this.config.getOrThrow<string>('BREVO_DOI_TEMPLATE_ID'));
     const redirectUrl = this.config.getOrThrow<string>('BREVO_REDIRECT_URL');
 
+    const [firstName = '', ...rest] = (dto.name ?? '').split(' ');
+    const lastName = rest.join(' ');
+
     const response = await fetch(`${this.apiUrl}/contacts/doubleOptinConfirmation`, {
       method: 'POST',
       headers: {
@@ -24,10 +27,9 @@ export class NewsletterService {
       body: JSON.stringify({
         email: dto.email,
         attributes: {
-          FIRSTNAME: dto.firstName ?? '',
-          LASTNAME: dto.lastName ?? '',
+          FIRSTNAME: firstName,
+          LASTNAME: lastName,
           SOURCE: dto.source,
-          ROLE: dto.role,
           SIGNUP_IP: ipAddress,
           SIGNUP_AT: new Date().toISOString(),
         },
