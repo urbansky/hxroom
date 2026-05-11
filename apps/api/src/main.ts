@@ -15,8 +15,14 @@ async function bootstrap() {
 
   app.enableCors({ origin: allowedOrigins, credentials: true });
   app.setGlobalPrefix('api/v1');
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+  const port = Number(process.env.PORT ?? 3000);
+  await app.listen(port).catch((err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} ist bereits belegt. Anderer Prozess läuft noch?`);
+      process.exit(1);
+    }
+    throw err;
+  });
   console.log(`API running on http://localhost:${port}/api/v1`);
 }
 bootstrap();
