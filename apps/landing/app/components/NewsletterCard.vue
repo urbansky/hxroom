@@ -1,8 +1,6 @@
 <script setup lang="ts">
 defineProps<{
   cta?: string
-  // Wird im Markup nicht gebraucht, bleibt als Optionalprop für Aufruferkompatibilität.
-  source?: string
 }>()
 
 // Brevo-Form-Endpoint. Liefert auf POST?isAjax=1 ein JSON mit success/message/errors.

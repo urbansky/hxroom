@@ -117,338 +117,109 @@ Die Template-ID notieren (z.B. `12`).
 
 ---
 
-## 3. API-Key generieren
+## 3. Embedded Form bei Brevo anlegen (Newsletter-Signup)
 
-Unter **SMTP & API → API Keys → Create new key**. Namen `hxroom-api-newsletter` vergeben. Den Key **einmalig** kopieren – Brevo zeigt ihn später nicht mehr. Eintrag in `.env` der NestJS-API:
+Der Newsletter-Signup auf der Landing Page läuft **ohne eigenen API-Endpunkt** – die Vue-Komponente postet direkt an Brevos Embedded-Form-Endpoint. Vorteil: kein API-Key im Frontend, kein eigener Backend-Code für den Anmelde-Pfad, Brevo übernimmt Double-Opt-In, Bot-Schutz auf Server-Seite und Erfolgsmessung.
+
+### 3.1 Form anlegen
+
+Im Brevo-Dashboard unter **Marketing → Forms → New form** ein Form für die in 2.1 angelegte Liste erstellen. Brevo bietet zwei Embed-Modi:
+
+- **Iframe** – HTML-Snippet mit `<iframe src="…sibforms.com/serve/…">`. Geht, aber das Iframe ist styling-resistent und passt nicht zum Look der Landing Page.
+- **Native form** – HTML-Snippet mit einer rohen `<form action="https://<account>.sibforms.com/serve/<token>">`. Genau das brauchen wir: wir kopieren die `action`-URL und bauen das Form-Markup selbst, mit unserem CSS.
+
+Nach dem Anlegen das Form-Snippet kopieren und die `action`-URL extrahieren. Beispiel:
 
 ```
-BREVO_API_KEY=xkeysib-...
-BREVO_LIST_ID=5
-BREVO_DOI_TEMPLATE_ID=12
-BREVO_REDIRECT_URL=https://hxroom.de/newsletter/bestaetigt
+https://3c8e304e.sibforms.com/serve/MUIFAL……==
 ```
 
-Niemals in Frontend einbetten. Der Key hat Vollzugriff auf den Account.
+Diese URL ist **Public-by-Design** (Brevo erwartet sie im Markup), enthält keinen API-Key und kein admin-relevantes Geheimnis. Sie taucht im Klartext im Frontend auf.
+
+### 3.2 Felder + Double-Opt-In
+
+Im Form-Editor:
+
+- Pflichtfelder: **EMAIL**, **VORNAME** (genau diese Brevo-Attribut-Namen verwenden, damit `FormData` matcht)
+- Double-Opt-In aktivieren und das in 2.3 angelegte Confirmation-Template auswählen
+- Erfolgsverhalten: „Show success message" – wir zeigen unsere eigene Inline-Erfolg-Card, der eigentliche Klick auf den Confirm-Link erfolgt aus der Bestätigungsmail.
+
+### 3.3 CORS / Origin-Allowlist
+
+Brevos Form-Endpoint spiegelt den Request-`Origin` reflektiv im `Access-Control-Allow-Origin`-Header zurück (geprüft mit `curl` von `localhost:5176` und `hxroom.de` – beide Origins werden akzeptiert). Kein zusätzliches Setup nötig.
 
 ---
 
-## 4. NestJS-Endpoint für Newsletter-Anmeldung
+## 4. API-Key für Transaktionsmails (`MailService`)
 
-Neues Modul `apps/api/src/newsletter/`:
+Der Newsletter-Signup braucht **keinen** API-Key. Für **Transaktionsmails** (Buchungsbestätigung, Erinnerung, Passwort-Reset, später Coach-Notifications) liefert das NestJS-Backend einen generischen `MailService`, der über `POST /v3/smtp/email` an Brevo geht. Dafür ist ein API-Key nötig.
 
-### 4.1 DTO mit Zod-Validierung
+### 4.1 API-Key anlegen
 
-Das Schema lebt in `packages/shared` damit die Landing-Page dasselbe Schema für clientseitige Formularvalidierung verwenden kann (siehe [Validierungs-Konvention](technisches-konzept.md#111-validierungs--und-dto-konvention)).
+Im Brevo-Dashboard unter **SMTP & API → API Keys → Create new key**. Namen z. B. `hxroom-api-transactional`. Key **einmalig** kopieren – Brevo zeigt ihn nicht erneut.
 
-```typescript
-// packages/shared/src/schemas/newsletter.ts
-import { z } from 'zod';
+### 4.2 `.env`-Einträge
 
-export const subscribeSchema = z.object({
-  // Voller eingegebener Name – wird serverseitig in FIRSTNAME + LASTNAME
-  // gesplittet (siehe Abschnitt 2.2.1).
-  name: z.string().trim().min(1, 'Bitte gib deinen Namen ein').max(120),
-  email: z.string().email('Ungültige E-Mail-Adresse').max(254),
-  source: z.enum(['landing', 'coach-page', 'pricing']).default('landing'),
-});
-
-export type SubscribeDto = z.infer<typeof subscribeSchema>;
+```env
+# Brevo – Transaktionsmails (POST /smtp/email)
+BREVO_API_KEY=xkeysib-…
+BREVO_SENDER_EMAIL=noreply@hxroom.de
+BREVO_SENDER_NAME=HxRoom
 ```
 
-Hinweis zur Consent-Bestätigung: Eine separate Checkbox ist nicht vorhanden, weil die Card sehr kompakt bleiben soll. Die Einwilligung wird durch das Abschicken des Formulars erteilt – der Button-Klick selbst ist die aktive Handlung. Der Datenschutz-Hinweis steht als Fineprint unmittelbar unter der Card und nennt den Versanddienstleister explizit. Diese Variante ist DSGVO-konform, solange (a) der Hinweis vor dem Submit sichtbar ist, (b) Double-Opt-In erfolgt und (c) der DSGVO-Nachweis (`SIGNUP_IP`, `SIGNUP_AT`) gespeichert wird. Letzteres geschieht serverseitig im NewsletterService.
+Niemals ins Frontend einbetten. Der Key hat Vollzugriff auf den Brevo-Account.
 
-### 4.2 Service
+### 4.3 `MailModule` und `MailService`
 
-```typescript
-// apps/api/src/newsletter/newsletter.service.ts
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-
-@Injectable()
-export class NewsletterService {
-  private readonly logger = new Logger(NewsletterService.name);
-  private readonly apiUrl = 'https://api.brevo.com/v3';
-
-  constructor(private readonly config: ConfigService) {}
-
-  async subscribe(
-    dto: { email: string; name: string; source: string },
-    ipAddress: string,
-  ): Promise<void> {
-    const apiKey = this.config.getOrThrow<string>('BREVO_API_KEY');
-    const listId = Number(this.config.getOrThrow<string>('BREVO_LIST_ID'));
-    const templateId = Number(this.config.getOrThrow<string>('BREVO_DOI_TEMPLATE_ID'));
-    const redirectUrl = this.config.getOrThrow<string>('BREVO_REDIRECT_URL');
-
-    // Name am ersten Leerzeichen aufsplitten – Vorname für Anrede, Rest als
-    // Nachname. Siehe Abschnitt 2.2.1 für die Designbegründung.
-    const trimmed = dto.name.trim();
-    const firstSpace = trimmed.indexOf(' ');
-    const firstName = firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace);
-    const lastName  = firstSpace === -1 ? ''      : trimmed.slice(firstSpace + 1).trim();
-
-    const response = await fetch(`${this.apiUrl}/contacts/doubleOptinConfirmation`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': apiKey,
-      },
-      body: JSON.stringify({
-        email: dto.email,
-        attributes: {
-          FIRSTNAME: firstName,
-          LASTNAME: lastName,
-          SOURCE: dto.source,
-          SIGNUP_IP: ipAddress,
-          SIGNUP_AT: new Date().toISOString(),
-        },
-        includeListIds: [listId],
-        templateId,
-        redirectionUrl: redirectUrl,
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      // Hinweis: KEINE personenbezogenen Daten loggen – nur Status
-      this.logger.error(`Brevo DOI failed: ${response.status} ${body.slice(0, 120)}`);
-      throw new BadRequestException('Anmeldung fehlgeschlagen, bitte später erneut versuchen.');
-    }
-    // 201 = neue Anmeldung, 204 = bereits bestätigt → in beiden Fällen UI = Erfolg
-  }
-}
-```
-
-### 4.3 Controller
-
-```typescript
-// apps/api/src/newsletter/newsletter.controller.ts
-import { Body, Controller, Ip, Post, UsePipes } from '@nestjs/common';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { NewsletterService } from './newsletter.service';
-import { subscribeSchema, SubscribeDto } from '@hxroom/shared';
-
-@Controller('newsletter')
-export class NewsletterController {
-  constructor(private readonly service: NewsletterService) {}
-
-  @Post('subscribe')
-  @UsePipes(new ZodValidationPipe(subscribeSchema))
-  async subscribe(@Body() dto: SubscribeDto, @Ip() ip: string) {
-    await this.service.subscribe(dto, ip);
-    return { ok: true };
-  }
-}
-```
-
-### 4.4 Modul registrieren
-
-```typescript
-// apps/api/src/newsletter/newsletter.module.ts
-import { Module } from '@nestjs/common';
-import { NewsletterController } from './newsletter.controller';
-import { NewsletterService } from './newsletter.service';
-
-@Module({
-  controllers: [NewsletterController],
-  providers: [NewsletterService],
-})
-export class NewsletterModule {}
-```
-
-In `AppModule` importieren.
+- `apps/api/src/mail/mail.module.ts` – exportiert `MailService`, **kein Controller**. Andere Module importieren `MailModule`, um `MailService` per DI zu nutzen.
+- `apps/api/src/mail/mail.service.ts` – `send(options)`-Methode, unterstützt `htmlContent` / `textContent` / `templateId` + `params`, Default-Sender aus den `.env`-Variablen, Per-Call-Override über `options.sender`. Bei 4xx/5xx wird `InternalServerErrorException` geworfen, das Log enthält nur Status + abgeschnittene Brevo-Antwort, **keine PII** (kein `to`, kein `subject`, kein Body-Content).
+- Tests in `apps/api/src/mail/mail.service.spec.ts` decken Request-Form, Sender-Handling, optionale Felder, Fehler-Pfad und das DSGVO-Logging-Verhalten ab (Vitest, läuft im PR-CI über `.github/workflows/test.yml`).
 
 ---
 
-## 5. Vue-3-Komponente für die Landing Page
+## 5. Frontend-Komponente `NewsletterCard.vue`
 
-Komponente `apps/landing/src/components/NewsletterForm.vue`:
+Datei: `apps/landing/app/components/NewsletterCard.vue` (Verwendung in `HeroSection.vue` und `FinalCtaSection.vue`).
 
-Layout-Pattern: Zweispaltige Card mit „Dein Name" (links) und „Deine E-Mail" (rechts), breiter Submit-Button darunter, Trust-Reihe mit drei Checkmark-Items im Card-Footer. Auf Mobile stacken Name+Email vertikal, Trust-Items ebenfalls.
+### 5.1 Layout-Pattern
 
-```vue
-<script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
+Zweispaltige Card: links „Dein Name", rechts „Deine E-Mail", DSGVO-Hinweis als Block darunter, breiter Submit-Button, Trust-Row mit drei Checkmark-Items im Card-Footer. Auf Mobile (`max-width: 640px`) stacken Name + Email vertikal, Trust-Items ebenfalls.
 
-interface Props {
-  source?: 'landing' | 'coach-page' | 'pricing';
-  submitLabel?: string;
-}
-const props = withDefaults(defineProps<Props>(), {
-  source: 'landing',
-  submitLabel: 'Early-Access-Platz sichern',
-});
+### 5.2 Submit-Logik (Kurzfassung – der ausgeschriebene Code lebt in der Datei)
 
-type Status = 'idle' | 'loading' | 'success' | 'error';
+```ts
+const body = new FormData()
+body.set('VORNAME', name.value)
+body.set('EMAIL', email.value)
+body.set('email_address_check', '')   // Brevo-Honeypot-Feldname im Body
+body.set('locale', 'de')
 
-const form = reactive({
-  name: '',
-  email: '',
-});
-const status = ref<Status>('idle');
-const errorMessage = ref('');
-
-const isValid = computed(() => {
-  return (
-    form.name.trim().length > 0 &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
-  );
-});
-
-async function submit() {
-  if (!isValid.value || status.value === 'loading') return;
-  status.value = 'loading';
-  errorMessage.value = '';
-
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/newsletter/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        source: props.source,
-      }),
-    });
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.message ?? 'Anmeldung fehlgeschlagen');
-    }
-    status.value = 'success';
-  } catch (e: unknown) {
-    status.value = 'error';
-    errorMessage.value = e instanceof Error ? e.message : 'Ein Fehler ist aufgetreten';
-  }
-}
-</script>
-
-<template>
-  <form
-    v-if="status !== 'success'"
-    class="newsletter-card"
-    @submit.prevent="submit"
-    novalidate
-  >
-    <div class="fields">
-      <div class="field">
-        <label class="label" for="nl-name">Dein Name</label>
-        <div class="input-wrap">
-          <UInput
-            id="nl-name"
-            v-model="form.name"
-            type="text"
-            placeholder="Anna Bergmann"
-            autocomplete="name"
-            required
-            :disabled="status === 'loading'"
-          />
-        </div>
-      </div>
-      <div class="field">
-        <label class="label" for="nl-email">Deine E-Mail</label>
-        <div class="input-wrap">
-          <UIcon name="i-heroicons-envelope" />
-          <UInput
-            id="nl-email"
-            v-model="form.email"
-            type="email"
-            placeholder="anna@beispiel.de"
-            autocomplete="email"
-            required
-            :disabled="status === 'loading'"
-          />
-        </div>
-      </div>
-    </div>
-
-    <UButton
-      type="submit"
-      :loading="status === 'loading'"
-      :disabled="!isValid"
-      block
-      class="submit"
-    >
-      {{ submitLabel }}
-    </UButton>
-
-    <div class="divider"></div>
-
-    <div class="trust">
-      <span class="trust-item">
-        <UIcon name="i-heroicons-check" /> Eine Mail pro Meilenstein
-      </span>
-      <span class="trust-item">
-        <UIcon name="i-heroicons-check" /> Kein Spam, keine Werbung
-      </span>
-      <span class="trust-item">
-        <UIcon name="i-heroicons-check" /> Jederzeit abmeldbar
-      </span>
-    </div>
-
-    <p v-if="status === 'error'" class="error" role="alert">
-      {{ errorMessage }}
-    </p>
-  </form>
-
-  <div v-else class="success" role="status">
-    <h3>Fast geschafft</h3>
-    <p>
-      Wir haben dir eine Bestätigungs-E-Mail an
-      <strong>{{ form.email }}</strong> geschickt. Klicke auf den Link darin,
-      um die Anmeldung abzuschließen.
-    </p>
-  </div>
-
-  <p class="fineprint">
-    Mit dem Absenden willigst du in den Versand des Newsletters über Brevo ein.
-    Details in der
-    <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a>.
-    Abmeldung jederzeit per Link in jeder Mail.
-  </p>
-</template>
-
-<style scoped>
-.newsletter-card {
-  background: var(--surface, #1E231E);
-  border: 1px solid var(--border, rgba(255,255,255,0.06));
-  border-radius: 18px;
-  padding: 36px 36px 28px;
-}
-.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
-.field { display: flex; flex-direction: column; gap: 8px; }
-.label { font-size: 13px; font-weight: 500; color: var(--cream); }
-.input-wrap { display: flex; align-items: center; gap: 10px; }
-.submit { padding: 16px 24px; border-radius: 12px; }
-.divider { height: 1px; background: var(--border); margin: 24px 0 18px; }
-.trust { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
-.trust-item { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
-.trust-item :deep(svg) { color: var(--sage); }
-.fineprint { font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; line-height: 1.5; }
-.fineprint a { color: var(--sage-light); text-decoration: underline; }
-.error { color: #d14343; font-size: 0.85rem; margin-top: 10px; }
-.success { padding: 1.5rem; border-radius: 14px; background: rgba(139, 158, 138, 0.1); }
-.success h3 { margin-bottom: 0.5rem; }
-
-@media (max-width: 700px) {
-  .newsletter-card { padding: 26px 22px 22px; }
-  .fields { grid-template-columns: 1fr; gap: 14px; }
-  .trust { flex-direction: column; align-items: flex-start; gap: 10px; }
-}
-</style>
+const res = await fetch(`${BREVO_ACTION}?isAjax=1`, { method: 'POST', body })
+const data: BrevoAjaxResponse = await res.json()
+//   { success: boolean, message?: string, redirect?: string|null, errors?: Record<string,string> }
 ```
 
-Verwendung auf der allgemeinen Landing Page:
+States: `idle → loading → success | error`. Bei `success` wird die ganze Card durch eine „Fast geschafft / Bestätigungs-Mail unterwegs"-Variante ersetzt. Bei `error` bleibt das Form sichtbar und ein roter Banner zeigt entweder `data.message`, den ersten Eintrag aus `data.errors` oder einen generischen Netzfehler-Text.
+
+### 5.3 Bot-Schutz
+
+Zusätzlich zum serverseitigen Brevo-Schutz und dem `email_address_check`-Body-Feld hängt die Komponente einen **Honeypot-Input** ins Form, der per `display: none` ausgeblendet ist und einen neutralen Namen (`b_company_url`, **nicht** `email_address_check`) trägt – sonst füllt Chrome-Autofill ihn fälschlich aus, weil der Name das Wort „email" enthält. Ist das Feld nach Submit nicht leer, schalten wir lautlos auf den Erfolgs-State um, ohne Brevo zu kontaktieren.
+
+### 5.4 Mehrfach-Einbindung pro Seite
+
+Die Komponente ist über `useId()` so gebaut, dass Input-`id`s und `label[for]`-Verknüpfungen pro Instanz eindeutig sind (`nl-name-<uid>`, `nl-email-<uid>`). Hero- **und** Final-CTA-Form auf derselben Seite verhalten sich unabhängig; ein Klick auf den Submit-Button der zweiten Karte submittet auch nur die zweite Karte.
+
+### 5.5 Verwendung
 
 ```vue
-<NewsletterForm source="landing" submit-label="Early-Access-Platz sichern" />
+<NewsletterCard cta="Early-Access-Platz sichern" />
 ```
 
-Auf der Coach-Akquise-Seite mit anderem CTA-Wording (gleiche Felder, nur Button-Text und Source-Tag ändern sich):
+`cta` ist optional (Default „Early-Access-Platz sichern"). Es gibt **keinen** `source`-Prop mehr – Quellen-Tracking läuft komplett über Brevos eigene Form-Statistik (welches Form geklickt → welcher Account-Bereich); wenn wir später per Subdomain-Karten differenzieren wollen, ist der bessere Weg, **mehrere Brevo-Forms** mit eigener Action-URL anzulegen statt das Quellfeld im Submit-Body zu manipulieren.
 
-```vue
-<NewsletterForm source="coach-page" submit-label="Als Coach dabei sein" />
-```
+### 5.6 Wenn doch wieder ein eigener API-Endpunkt nötig wird
+
+Die alte API-Proxy-Variante (eigener `POST /api/v1/newsletter/subscribe`, der die Brevo-`/contacts/doubleOptinConfirmation`-Route nutzt) ist im PR-Verlauf entfernt worden. Falls sie wiederkommt – etwa für eigenen Audit-Trail, eigene Liste in der HxRoom-DB oder serverseitiges Pre-Filtering – gilt das in `CLAUDE.md` festgehaltene `subscribeSchema` (`email`, `name?`, `source`) als verbindliche Datenstruktur, und die Brevo-Anbindung kann sich am `MailService` (Abschnitt 4.3) orientieren statt als eigenständige Logik daneben zu wachsen.
 
 ---
 

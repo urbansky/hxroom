@@ -20,7 +20,7 @@ const content = {
     </p>
 
     <div class="flex justify-center">
-      <NewsletterCard :cta="content.cta" source="landing" />
+      <NewsletterCard :cta="content.cta" />
     </div>
   </section>
 </template>
