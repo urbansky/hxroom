@@ -19,13 +19,5 @@ export default defineNuxtConfig({
     preference: 'dark',
   },
 
-  devServer: {
-    port: 5176,
-  },
-
-  experimental: {
-    viteEnvironmentApi: true,
-  },
-
   compatibilityDate: '2025-05-07',
 })

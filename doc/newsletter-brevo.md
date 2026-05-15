@@ -62,14 +62,47 @@ Unter **Contacts → Settings → Contact attributes** anlegen:
 
 | Attribut | Typ | Zweck |
 |---|---|---|
-| `FIRSTNAME` | Text | Vorname – persönliche Anrede |
-| `LASTNAME` | Text | Nachname |
+| `FIRSTNAME` | Text | Vorname – persönliche Anrede (`Hallo Anna,…`) |
+| `LASTNAME` | Text | Nachname – falls vom Nutzer angegeben |
 | `SOURCE` | Text | Eintrag-Quelle (`landing`, `coach-page`, `pricing`) |
 | `SIGNUP_IP` | Text | DSGVO-Nachweis Double-Opt-In |
 | `SIGNUP_AT` | Datum | Zeitpunkt Anmeldung |
-| `ROLE` | Text | `coach` / `interessent` / `klient` |
 
-Letzteres ist für HxRoom besonders wertvoll: Coachs (Kunden) und Interessenten bekommen unterschiedliche Newsletter-Strecken.
+Eine Rollen-Segmentierung (Coach vs. Klient vs. Interessent) findet auf Public-Landingpages **nicht** statt. Begründung: die Rolle wird über die `SOURCE` indirekt erschlossen (Besucher der Coach-Akquise-Landingpage sind mit hoher Wahrscheinlichkeit Coachs), und bei Bedarf kann später über Reaktivität auf Inhalte segmentiert werden. Eine harte Rollen-Pflichtfrage drückt die Conversion, ohne im Frühstadium wirklichen Mehrwert zu liefern.
+
+### 2.2.1 Welche Felder werden im Anmeldeformular abgefragt?
+
+**Designprinzip:** Minimaler Formularkörper, freundliches Layout, Trust-Signale sichtbar. Inspiration: das klassische zweispaltige Newsletter-Card-Pattern (Name links, Email rechts, breiter Submit-Button, darunter eine Reihe Checkmark-Trust-Items).
+
+| Feld | Pflicht? | UI |
+|---|---|---|
+| Name | **ja** | Einzelnes Textfeld („Dein Name"), Placeholder z.B. `Anna Bergmann` |
+| E-Mail | **ja** | Textfeld mit Mail-Icon, Placeholder `anna@beispiel.de` |
+| Consent | implizit | Über Submit-Button-Label + Datenschutz-Hinweis als Fineprint unter der Card |
+
+Der Name wird als **ein** Eingabefeld erfasst. Manche Nutzer geben nur den Vornamen ein, manche den vollen Namen. Beides ist okay.
+
+**Mapping Name → Brevo-Attribute (serverseitig):**
+
+Das Backend splittet den eingegebenen Namen am ersten Leerzeichen:
+
+| Eingabe | `FIRSTNAME` | `LASTNAME` |
+|---|---|---|
+| `Anna` | `Anna` | `` |
+| `Anna Bergmann` | `Anna` | `Bergmann` |
+| `Anna Maria Bergmann` | `Anna` | `Maria Bergmann` |
+
+Damit funktioniert die Begrüßung `Hallo {{FIRSTNAME}},…` zuverlässig, und die volle Information bleibt im Datensatz erhalten. Edge-Case mit akademischen Titeln (`Dr. Anna Bergmann` → `FIRSTNAME=Dr.`) ist akzeptiert; kann später per Heuristik verbessert werden, falls relevant.
+
+**Trust-Signale unter dem Submit-Button (im Card-Footer):**
+
+```
+✓ Eine Mail pro Meilenstein
+✓ Kein Spam, keine Werbung
+✓ Jederzeit abmeldbar
+```
+
+**Begründung der Vereinfachung:** Eine ältere Variante dieses Designs hatte zusätzlich eine Rollen-Pflichtwahl (Coach / Klient / Interessent). Die wurde verworfen, weil sie (a) die wahrgenommene Formular-Schwere erhöht, (b) die Conversion gegenüber Email+Name spürbar drückt und (c) die Information nur sekundären Wert für die initiale Newsletter-Strecke hat. Sollte Segmentierung später wichtiger werden, kann sie in der Welcome-Mail nachgefragt oder über Klick-Verhalten abgeleitet werden.
 
 ### 2.3 Double-Opt-In Template
 
@@ -112,18 +145,17 @@ Das Schema lebt in `packages/shared` damit die Landing-Page dasselbe Schema für
 import { z } from 'zod';
 
 export const subscribeSchema = z.object({
+  // Voller eingegebener Name – wird serverseitig in FIRSTNAME + LASTNAME
+  // gesplittet (siehe Abschnitt 2.2.1).
+  name: z.string().trim().min(1, 'Bitte gib deinen Namen ein').max(120),
   email: z.string().email('Ungültige E-Mail-Adresse').max(254),
-  firstName: z.string().min(1).max(80).optional(),
-  lastName: z.string().min(1).max(80).optional(),
   source: z.enum(['landing', 'coach-page', 'pricing']).default('landing'),
-  role: z.enum(['coach', 'interessent', 'klient']).default('interessent'),
-  consent: z.literal(true, {
-    errorMap: () => ({ message: 'Einwilligung erforderlich' }),
-  }),
 });
 
 export type SubscribeDto = z.infer<typeof subscribeSchema>;
 ```
+
+Hinweis zur Consent-Bestätigung: Eine separate Checkbox ist nicht vorhanden, weil die Card sehr kompakt bleiben soll. Die Einwilligung wird durch das Abschicken des Formulars erteilt – der Button-Klick selbst ist die aktive Handlung. Der Datenschutz-Hinweis steht als Fineprint unmittelbar unter der Card und nennt den Versanddienstleister explizit. Diese Variante ist DSGVO-konform, solange (a) der Hinweis vor dem Submit sichtbar ist, (b) Double-Opt-In erfolgt und (c) der DSGVO-Nachweis (`SIGNUP_IP`, `SIGNUP_AT`) gespeichert wird. Letzteres geschieht serverseitig im NewsletterService.
 
 ### 4.2 Service
 
@@ -140,13 +172,20 @@ export class NewsletterService {
   constructor(private readonly config: ConfigService) {}
 
   async subscribe(
-    dto: { email: string; firstName?: string; lastName?: string; source: string; role: string },
+    dto: { email: string; name: string; source: string },
     ipAddress: string,
   ): Promise<void> {
     const apiKey = this.config.getOrThrow<string>('BREVO_API_KEY');
     const listId = Number(this.config.getOrThrow<string>('BREVO_LIST_ID'));
     const templateId = Number(this.config.getOrThrow<string>('BREVO_DOI_TEMPLATE_ID'));
     const redirectUrl = this.config.getOrThrow<string>('BREVO_REDIRECT_URL');
+
+    // Name am ersten Leerzeichen aufsplitten – Vorname für Anrede, Rest als
+    // Nachname. Siehe Abschnitt 2.2.1 für die Designbegründung.
+    const trimmed = dto.name.trim();
+    const firstSpace = trimmed.indexOf(' ');
+    const firstName = firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace);
+    const lastName  = firstSpace === -1 ? ''      : trimmed.slice(firstSpace + 1).trim();
 
     const response = await fetch(`${this.apiUrl}/contacts/doubleOptinConfirmation`, {
       method: 'POST',
@@ -157,10 +196,9 @@ export class NewsletterService {
       body: JSON.stringify({
         email: dto.email,
         attributes: {
-          FIRSTNAME: dto.firstName ?? '',
-          LASTNAME: dto.lastName ?? '',
+          FIRSTNAME: firstName,
+          LASTNAME: lastName,
           SOURCE: dto.source,
-          ROLE: dto.role,
           SIGNUP_IP: ipAddress,
           SIGNUP_AT: new Date().toISOString(),
         },
@@ -226,33 +264,35 @@ In `AppModule` importieren.
 
 Komponente `apps/landing/src/components/NewsletterForm.vue`:
 
+Layout-Pattern: Zweispaltige Card mit „Dein Name" (links) und „Deine E-Mail" (rechts), breiter Submit-Button darunter, Trust-Reihe mit drei Checkmark-Items im Card-Footer. Auf Mobile stacken Name+Email vertikal, Trust-Items ebenfalls.
+
 ```vue
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
 
 interface Props {
   source?: 'landing' | 'coach-page' | 'pricing';
-  role?: 'coach' | 'interessent' | 'klient';
+  submitLabel?: string;
 }
 const props = withDefaults(defineProps<Props>(), {
   source: 'landing',
-  role: 'interessent',
+  submitLabel: 'Early-Access-Platz sichern',
 });
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 const form = reactive({
+  name: '',
   email: '',
-  firstName: '',
-  lastName: '',
-  consent: false,
 });
 const status = ref<Status>('idle');
 const errorMessage = ref('');
 
 const isValid = computed(() => {
-  // Einfache Pre-Validierung – Server validiert nochmal mit Zod
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && form.consent;
+  return (
+    form.name.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+  );
 });
 
 async function submit() {
@@ -265,12 +305,9 @@ async function submit() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: form.email,
-        firstName: form.firstName || undefined,
-        lastName: form.lastName || undefined,
+        name: form.name.trim(),
+        email: form.email.trim(),
         source: props.source,
-        role: props.role,
-        consent: form.consent,
       }),
     });
 
@@ -289,50 +326,65 @@ async function submit() {
 <template>
   <form
     v-if="status !== 'success'"
-    class="newsletter-form"
+    class="newsletter-card"
     @submit.prevent="submit"
     novalidate
   >
-    <div class="row">
-      <UInput
-        v-model="form.firstName"
-        placeholder="Vorname (optional)"
-        autocomplete="given-name"
-        :disabled="status === 'loading'"
-      />
-      <UInput
-        v-model="form.lastName"
-        placeholder="Nachname (optional)"
-        autocomplete="family-name"
-        :disabled="status === 'loading'"
-      />
+    <div class="fields">
+      <div class="field">
+        <label class="label" for="nl-name">Dein Name</label>
+        <div class="input-wrap">
+          <UInput
+            id="nl-name"
+            v-model="form.name"
+            type="text"
+            placeholder="Anna Bergmann"
+            autocomplete="name"
+            required
+            :disabled="status === 'loading'"
+          />
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="nl-email">Deine E-Mail</label>
+        <div class="input-wrap">
+          <UIcon name="i-heroicons-envelope" />
+          <UInput
+            id="nl-email"
+            v-model="form.email"
+            type="email"
+            placeholder="anna@beispiel.de"
+            autocomplete="email"
+            required
+            :disabled="status === 'loading'"
+          />
+        </div>
+      </div>
     </div>
-    <UInput
-      v-model="form.email"
-      type="email"
-      placeholder="deine@email.de"
-      autocomplete="email"
-      required
-      :disabled="status === 'loading'"
-    />
-
-    <label class="consent">
-      <UCheckbox v-model="form.consent" :disabled="status === 'loading'" />
-      <span>
-        Ich willige ein, den HxRoom-Newsletter zu erhalten. Hinweise zum
-        Versanddienstleister und Widerruf in der
-        <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a>.
-      </span>
-    </label>
 
     <UButton
       type="submit"
       :loading="status === 'loading'"
       :disabled="!isValid"
       block
+      class="submit"
     >
-      Anmelden
+      {{ submitLabel }}
     </UButton>
+
+    <div class="divider"></div>
+
+    <div class="trust">
+      <span class="trust-item">
+        <UIcon name="i-heroicons-check" /> Eine Mail pro Meilenstein
+      </span>
+      <span class="trust-item">
+        <UIcon name="i-heroicons-check" /> Kein Spam, keine Werbung
+      </span>
+      <span class="trust-item">
+        <UIcon name="i-heroicons-check" /> Jederzeit abmeldbar
+      </span>
+    </div>
 
     <p v-if="status === 'error'" class="error" role="alert">
       {{ errorMessage }}
@@ -347,30 +399,55 @@ async function submit() {
       um die Anmeldung abzuschließen.
     </p>
   </div>
+
+  <p class="fineprint">
+    Mit dem Absenden willigst du in den Versand des Newsletters über Brevo ein.
+    Details in der
+    <a href="/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a>.
+    Abmeldung jederzeit per Link in jeder Mail.
+  </p>
 </template>
 
 <style scoped>
-.newsletter-form { display: flex; flex-direction: column; gap: 0.75rem; }
-.row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-@media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
-.consent { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.85rem; line-height: 1.4; }
-.consent a { text-decoration: underline; }
-.error { color: #d14343; font-size: 0.85rem; }
-.success { padding: 1rem; border-radius: 0.5rem; background: rgba(139, 158, 138, 0.1); }
+.newsletter-card {
+  background: var(--surface, #1E231E);
+  border: 1px solid var(--border, rgba(255,255,255,0.06));
+  border-radius: 18px;
+  padding: 36px 36px 28px;
+}
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.label { font-size: 13px; font-weight: 500; color: var(--cream); }
+.input-wrap { display: flex; align-items: center; gap: 10px; }
+.submit { padding: 16px 24px; border-radius: 12px; }
+.divider { height: 1px; background: var(--border); margin: 24px 0 18px; }
+.trust { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.trust-item { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+.trust-item :deep(svg) { color: var(--sage); }
+.fineprint { font-size: 12px; color: var(--text-muted); margin-top: 12px; text-align: center; line-height: 1.5; }
+.fineprint a { color: var(--sage-light); text-decoration: underline; }
+.error { color: #d14343; font-size: 0.85rem; margin-top: 10px; }
+.success { padding: 1.5rem; border-radius: 14px; background: rgba(139, 158, 138, 0.1); }
 .success h3 { margin-bottom: 0.5rem; }
+
+@media (max-width: 700px) {
+  .newsletter-card { padding: 26px 22px 22px; }
+  .fields { grid-template-columns: 1fr; gap: 14px; }
+  .trust { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
 </style>
 ```
 
-Verwendung auf der Landing Page:
+Verwendung auf der allgemeinen Landing Page:
 
 ```vue
-<NewsletterForm source="landing" role="interessent" />
+<NewsletterForm source="landing" submit-label="Early-Access-Platz sichern" />
 ```
 
-Auf der Coach-Akquise-Seite mit anderem Targeting:
+Auf der Coach-Akquise-Seite mit anderem CTA-Wording (gleiche Felder, nur Button-Text und Source-Tag ändern sich):
 
 ```vue
-<NewsletterForm source="coach-page" role="coach" />
+<NewsletterForm source="coach-page" submit-label="Als Coach dabei sein" />
 ```
 
 ---
@@ -380,7 +457,7 @@ Auf der Coach-Akquise-Seite mit anderem Targeting:
 In `apps/landing` die Datenschutzerklärung um folgenden Abschnitt ergänzen:
 
 > **Newsletter-Versand mit Brevo**
-> Für den Versand unseres Newsletters nutzen wir den Dienst Brevo (Sendinblue GmbH, Köthener Straße 2, 10963 Berlin; Konzernmutter: Sendinblue SAS, 106 Boulevard Haussmann, 75008 Paris, Frankreich). Mit der Anmeldung willigst du ein, dass deine E-Mail-Adresse, ggf. dein Vorname sowie deine IP-Adresse und der Zeitpunkt der Anmeldung an Brevo übermittelt und dort gespeichert werden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO. Mit Brevo wurde ein Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) geschlossen. Die Speicherung der Anmeldedaten erfolgt zum Nachweis des Double-Opt-In-Verfahrens. Du kannst die Einwilligung jederzeit über den Abmelde-Link in jedem Newsletter oder per Mail an `kontakt@hxroom.de` widerrufen.
+> Für den Versand unseres Newsletters nutzen wir den Dienst Brevo (Sendinblue GmbH, Köthener Straße 2, 10963 Berlin; Konzernmutter: Sendinblue SAS, 106 Boulevard Haussmann, 75008 Paris, Frankreich). Mit der Anmeldung willigst du ein, dass dein Name, deine E-Mail-Adresse sowie deine IP-Adresse und der Zeitpunkt der Anmeldung an Brevo übermittelt und dort gespeichert werden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. a DSGVO. Mit Brevo wurde ein Vertrag zur Auftragsverarbeitung (Art. 28 DSGVO) geschlossen. Die Speicherung der Anmeldedaten erfolgt zum Nachweis des Double-Opt-In-Verfahrens. Du kannst die Einwilligung jederzeit über den Abmelde-Link in jedem Newsletter oder per Mail an `kontakt@hxroom.de` widerrufen.
 
 ---
 
@@ -389,7 +466,7 @@ In `apps/landing` die Datenschutzerklärung um folgenden Abschnitt ergänzen:
 Im Brevo-Dashboard unter **Automations → Create a new workflow → Welcome message**:
 
 1. Trigger: „A contact is added to a list" → Liste `Newsletter HxRoom`
-2. Bedingung (optional): `ROLE == coach` → unterschiedliche Strecke
+2. Bedingung (optional): `SOURCE == coach-page` → eigene Coach-Strecke (z.B. mit Demo-Link statt Whitepaper)
 3. Aktion: „Send an email" → Welcome-Template
 
 Damit bekommt jeder bestätigte Kontakt automatisch eine erste Mail mit Whitepaper / Demo-Link / o.ä. Workflows lassen sich später beliebig erweitern (Reaktivierung nach 30 Tagen Inaktivität, Geburtstagsmails etc.).

@@ -4,9 +4,9 @@ const content = {
   headlineMain: 'Dein Coaching. Dein Raum.',
   headlineEm: 'Dein Name.',
   sub: 'Ein gebrandeter Videocall-Raum für Coaches – ohne Zoom-Link, ohne Klienten-Account, ohne fremdes Logo. Gebaut in Deutschland, DSGVO-konform by Design.',
-  cta: 'Early-Access-Platz sichern',
-  fineprintStrong: 'Die ersten 20 Coaches',
-  fineprintRest: ' bekommen Launch-Preis auf Lebenszeit, direkten Draht zur Entwicklung und ersten Zugriff.',
+  cta: 'Benachrichtigt werden',
+  // fineprintStrong: 'Die ersten 20 Coaches',
+  // fineprintRest: ' bekommen Launch-Preis auf Lebenszeit, direkten Draht zur Entwicklung und ersten Zugriff.',
 }
 </script>
 
@@ -30,13 +30,8 @@ const content = {
 
     <!-- Newsletter card -->
     <div class="a4 w-full flex justify-center mb-5">
-      <NewsletterCard :cta="content.cta" source="landing" />
+      <NewsletterCard :cta="content.cta"/>
     </div>
-
-    <!-- Fineprint -->
-    <p class="a5 text-[12px] text-(--ui-text-dimmed) max-w-[460px] leading-[1.6]">
-      <strong class="text-sage-200 font-medium">{{ content.fineprintStrong }}</strong>{{ content.fineprintRest }}
-    </p>
   </section>
 </template>
 
