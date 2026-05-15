@@ -1,6 +1,9 @@
 <script setup lang="ts">
+const colorMode = useColorMode()
+colorMode.preference = 'dark'
+
 useHead({
-  htmlAttrs: { lang: 'de' },
+  htmlAttrs: { lang: 'de', class: 'dark' },
   title: 'HxRoom – Einfach. Professionell. Deins.',
   meta: [
     { name: 'description', content: 'HxRoom – Dein digitaler Raum für echte Gespräche. White-Label Videocall-Plattform für Coaches.' },

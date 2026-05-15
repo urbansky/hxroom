@@ -1,6 +1,12 @@
 export default defineNuxtConfig({
   modules: ['@nuxt/ui'],
 
+  runtimeConfig: {
+    public: {
+      apiUrl: process.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1',
+    },
+  },
+
   ui: {
     theme: {
       colors: ['primary', 'secondary', 'sage', 'gold', 'success', 'info', 'warning', 'error'],
@@ -11,14 +17,6 @@ export default defineNuxtConfig({
 
   colorMode: {
     preference: 'dark',
-  },
-
-  devServer: {
-    port: 5176,
-  },
-
-  experimental: {
-    viteEnvironmentApi: true,
   },
 
   compatibilityDate: '2025-05-07',

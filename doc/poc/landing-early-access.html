@@ -192,32 +192,125 @@ nav {
   animation: fadeUp 0.7s 0.2s ease both;
 }
 
-/* Signup form */
-.signup-form {
+/* Newsletter card */
+.newsletter-card {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 36px 36px 28px;
+  text-align: left;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+.newsletter-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.newsletter-field { display: flex; flex-direction: column; gap: 8px; }
+.newsletter-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cream);
+  letter-spacing: 0.01em;
+}
+.newsletter-input-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 6px 6px 6px 18px;
-  width: 100%;
-  max-width: 460px;
-  margin-bottom: 20px;
-  animation: fadeUp 0.7s 0.3s ease both;
-  transition: border-color 0.2s;
+  border-radius: 12px;
+  padding: 0 14px;
+  transition: border-color 0.2s, background 0.2s;
 }
-.signup-form:focus-within { border-color: rgba(139,158,138,0.35); }
-.signup-input {
+.newsletter-input-wrap:focus-within {
+  border-color: rgba(139,158,138,0.4);
+  background: rgba(255,255,255,0.04);
+}
+.newsletter-input-wrap > svg {
+  width: 16px; height: 16px;
+  stroke: var(--text-muted);
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.newsletter-input {
   flex: 1;
   background: transparent;
   border: none; outline: none;
   color: var(--text-primary);
   font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  padding: 12px 0;
+  font-size: 14px;
+  padding: 14px 0 14px 10px;
+  min-width: 0;
 }
-.signup-input::placeholder { color: var(--text-muted); }
+.newsletter-input:first-child { padding-left: 0; }
+.newsletter-input::placeholder { color: var(--text-muted); }
+
+.newsletter-submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 100%);
+  color: rgba(255,255,255,0.96);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.newsletter-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 36px rgba(92,110,91,0.32);
+}
+.newsletter-submit svg {
+  width: 14px; height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.newsletter-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0 18px;
+}
+.newsletter-trust {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.newsletter-trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.newsletter-trust-item svg {
+  width: 14px; height: 14px;
+  stroke: var(--sage);
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
 .btn-primary {
   background: linear-gradient(135deg, var(--sage-dark) 0%, #7A9079 100%);
   color: rgba(255,255,255,0.95);
@@ -793,10 +886,30 @@ section { position: relative; padding: 120px 48px; }
   margin: 0 auto 40px;
   line-height: 1.6;
 }
-.final-cta .signup-form {
-  margin-left: auto;
-  margin-right: auto;
+.final-cta .newsletter-card { margin-left: auto; margin-right: auto; }
+
+/* Hero centers its newsletter card */
+.hero .newsletter-card { margin-left: auto; margin-right: auto; }
+
+/* Newsletter consent (DSGVO-Hinweis am Formular) */
+.newsletter-consent {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
 }
+.newsletter-consent strong { color: var(--text-secondary); font-weight: 500; }
+.newsletter-consent a {
+  color: var(--sage-light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+.newsletter-consent a:hover { color: var(--cream); }
 
 /* Footer */
 footer {
@@ -829,9 +942,10 @@ footer {
   .about-photo { margin: 0 auto; }
   .about-links { justify-content: center; }
   .preview-thumbs { grid-template-columns: 1fr; }
-  .signup-form { flex-direction: column; align-items: stretch; padding: 12px; }
-  .signup-input { padding: 8px 6px; text-align: center; }
   .btn-primary { justify-content: center; }
+  .newsletter-card { padding: 26px 22px 22px; }
+  .newsletter-fields { grid-template-columns: 1fr; gap: 14px; }
+  .newsletter-trust { flex-direction: column; align-items: flex-start; gap: 10px; }
 }
 </style>
 </head>
@@ -868,16 +982,45 @@ footer {
     Ein gebrandeter Videocall-Raum für Coaches – ohne Zoom-Link, ohne Klienten-Account, ohne fremdes Logo. Gebaut in Deutschland, DSGVO-konform by Design.
   </p>
 
-  <form class="signup-form" id="signup" onsubmit="event.preventDefault(); alert('Danke! Ich melde mich, sobald HxRoom bereit ist.');">
-    <input type="email" class="signup-input" placeholder="deine@email.de" required>
-    <button type="submit" class="btn-primary">
-      Early-Access-Platz sichern
+  <form class="newsletter-card" id="signup" onsubmit="event.preventDefault(); alert('Danke! Ich melde mich, sobald HxRoom bereit ist.');">
+    <div class="newsletter-fields">
+      <div class="newsletter-field">
+        <label class="newsletter-label" for="hero-name">Dein Name</label>
+        <div class="newsletter-input-wrap">
+          <input id="hero-name" class="newsletter-input" type="text" name="name" placeholder="Anna Bergmann" autocomplete="name" required>
+        </div>
+      </div>
+      <div class="newsletter-field">
+        <label class="newsletter-label" for="hero-email">Deine E-Mail</label>
+        <div class="newsletter-input-wrap">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 7 9-7"/></svg>
+          <input id="hero-email" class="newsletter-input" type="email" name="email" placeholder="anna@beispiel.de" autocomplete="email" required>
+        </div>
+      </div>
+    </div>
+    <p class="newsletter-consent">
+      Mit Klick auf <strong>„Mich vormerken"</strong> willigst du ein, dass ich dir per E-Mail Neuigkeiten zu HxRoom sende. Versand über Brevo (EU-Server). Abmeldung jederzeit per Klick. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>.
+    </p>
+    <button type="submit" class="newsletter-submit">
+      Mich vormerken
       <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
     </button>
+    <div class="newsletter-divider"></div>
+    <div class="newsletter-trust">
+      <span class="newsletter-trust-item">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Eine Mail pro Meilenstein
+      </span>
+      <span class="newsletter-trust-item">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Kein Spam, keine Werbung
+      </span>
+      <span class="newsletter-trust-item">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Jederzeit abmeldbar
+      </span>
+    </div>
   </form>
-  <p class="hero-fineprint">
-    <strong>Die ersten 20 Coaches</strong> bekommen Launch-Preis auf Lebenszeit, direkten Draht zur Entwicklung und ersten Zugriff. Keine Kreditkarte, kein Spam.
-  </p>
 </section>
 
 <!-- PROBLEM -->
@@ -1073,39 +1216,6 @@ footer {
   </div>
 </section>
 
-<!-- EARLY ACCESS PROMISE -->
-<section class="promise">
-  <div class="promise-inner">
-    <div class="promise-count">Die ersten 20 Coaches</div>
-    <h2 class="promise-headline">
-      Was <em>Early Access</em> konkret bedeutet.
-    </h2>
-
-    <div class="promise-list">
-      <div class="promise-card">
-        <div class="promise-card-num">01</div>
-        <h3 class="promise-card-title">Launch-Preis auf Lebenszeit</h3>
-        <p class="promise-card-text">Der Einführungspreis bleibt deiner – auch wenn HxRoom später teurer wird. Du bist dabei, solange du willst.</p>
-      </div>
-      <div class="promise-card">
-        <div class="promise-card-num">02</div>
-        <h3 class="promise-card-title">Direkter Draht zur Entwicklung</h3>
-        <p class="promise-card-text">Dein Feedback fließt direkt in das Produkt. Kein Ticket-System, keine Roadmap hinter Glas. Wir bauen das Ding gemeinsam.</p>
-      </div>
-      <div class="promise-card">
-        <div class="promise-card-num">03</div>
-        <h3 class="promise-card-title">Erster Zugriff</h3>
-        <p class="promise-card-text">Du nutzt HxRoom, bevor es öffentlich startet. Die Plattform wächst mit deinen ersten Klienten, nicht mit einer anonymen Nutzerwelle.</p>
-      </div>
-    </div>
-
-    <a href="#signup" class="btn-primary" style="padding: 14px 28px; font-size: 15px;">
-      Mitgestalten statt zuschauen
-      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-    </a>
-  </div>
-</section>
-
 <!-- FAQ -->
 <section class="faq">
   <div class="section-inner">
@@ -1150,13 +1260,45 @@ footer {
 <!-- FINAL CTA -->
 <section class="final-cta">
   <h2>Sag mir, dass du <em>dabei sein willst</em>.</h2>
-  <p>Den Rest melde ich dir, sobald es losgeht. Eine E-Mail pro Meilenstein – nicht mehr.</p>
-  <form class="signup-form" onsubmit="event.preventDefault(); alert('Danke! Ich melde mich, sobald HxRoom bereit ist.');">
-    <input type="email" class="signup-input" placeholder="deine@email.de" required>
-    <button type="submit" class="btn-primary">
-      Benachrichtigt werden
+  <p>Den Rest melde ich dir, sobald es losgeht.</p>
+  <form class="newsletter-card" onsubmit="event.preventDefault(); alert('Danke! Ich melde mich, sobald HxRoom bereit ist.');">
+    <div class="newsletter-fields">
+      <div class="newsletter-field">
+        <label class="newsletter-label" for="final-name">Dein Name</label>
+        <div class="newsletter-input-wrap">
+          <input id="final-name" class="newsletter-input" type="text" name="name" placeholder="Anna Bergmann" autocomplete="name" required>
+        </div>
+      </div>
+      <div class="newsletter-field">
+        <label class="newsletter-label" for="final-email">Deine E-Mail</label>
+        <div class="newsletter-input-wrap">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 7 9-7"/></svg>
+          <input id="final-email" class="newsletter-input" type="email" name="email" placeholder="anna@beispiel.de" autocomplete="email" required>
+        </div>
+      </div>
+    </div>
+    <p class="newsletter-consent">
+      Mit Klick auf <strong>„Mich vormerken"</strong> willigst du ein, dass ich dir per E-Mail Neuigkeiten zu HxRoom sende. Versand über Brevo (EU-Server). Abmeldung jederzeit per Klick. Details in der <a href="datenschutz.html">Datenschutzerklärung</a>.
+    </p>
+    <button type="submit" class="newsletter-submit">
+      Mich vormerken
       <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
     </button>
+    <div class="newsletter-divider"></div>
+    <div class="newsletter-trust">
+      <span class="newsletter-trust-item">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Eine Mail pro Meilenstein
+      </span>
+      <span class="newsletter-trust-item">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Kein Spam, keine Werbung
+      </span>
+      <span class="newsletter-trust-item">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Jederzeit abmeldbar
+      </span>
+    </div>
   </form>
 </section>
 
@@ -1164,9 +1306,9 @@ footer {
 <footer>
   <div>© 2026 HxRoom · Stefan Urbansky · hxcode.io</div>
   <div class="footer-links">
-    <a href="#">Impressum</a>
-    <a href="#">Datenschutz</a>
-    <a href="mailto:stefan@hxroom.de">Kontakt</a>
+    <a href="impressum.html">Impressum</a>
+    <a href="datenschutz.html">Datenschutz</a>
+    <a href="mailto:kontakt@hxroom.de">Kontakt</a>
   </div>
 </footer>
 

@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "apps/api/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  api-tests:
+    name: API tests (Vitest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build @hxroom/shared
+        run: pnpm --filter @hxroom/shared build
+
+      - name: Run API tests
+        run: pnpm --filter @hxroom/api test
