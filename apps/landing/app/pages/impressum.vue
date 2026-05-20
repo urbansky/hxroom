@@ -5,6 +5,7 @@ useHead({
   title: 'Impressum · HxRoom',
   meta: [
     { name: 'description', content: 'Impressum nach § 5 DDG für HxRoom – Anbieter, Kontakt, Verantwortlichkeiten.' },
+    { name: 'robots', content: 'noindex, follow' },
   ],
 })
 </script>

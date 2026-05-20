@@ -5,6 +5,7 @@ useHead({
   title: 'Datenschutz · HxRoom',
   meta: [
     { name: 'description', content: 'Datenschutzerklärung der HxRoom-Landingpage – Datenminimum, EU-Hosting, kein Tracking.' },
+    { name: 'robots', content: 'noindex, follow' },
   ],
 })
 </script>

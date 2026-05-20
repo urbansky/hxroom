@@ -1,15 +1,14 @@
 <script setup lang="ts">
 const content = {
   label: 'Wer das baut',
-  initial: 'S',
-  headline: 'Ein Entwickler. Kein Startup-Theater.',
+  headline: 'Ein Entwickler. Ein Produkt.',
   paragraphs: [
-    'Ich bin <strong>Stefan</strong>. Als selbständiger Softwareentwickler arbeite ich seit Jahren an Videoconferencing-Systemen – und habe gesehen, was passiert, wenn Tools für Konzerne gebaut werden und dann in einem 1:1-Coaching-Setting landen.',
+    'Ich bin <strong>Stefan</strong>. Ich entwickle seit Jahren Videoconferencing-Software – meistens für Unternehmen, die ganz andere Probleme haben als du.',
     'HxRoom baue ich als Einzelperson. Kein Investor, kein Pitch Deck, keine Wachstumsrunde. Nur ein Produkt, das genau eine Zielgruppe richtig bedienen will. <strong>Server in Deutschland, Daten bleiben hier</strong>, und wenn du mir schreibst, schreibe ich zurück – keine Support-Pipeline dazwischen.',
   ],
   links: [
-    { label: 'LinkedIn', href: '#' },
-    { label: 'hxcode.io', href: '#' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/in/stefan-urbansky-99291484/' },
+    { label: 'hxcode.io', href: 'https://hxcode.io' },
     { label: 'stefan@hxroom.de', href: 'mailto:stefan@hxroom.de' },
   ],
 }
@@ -19,8 +18,8 @@ const content = {
   <section class="relative z-1 py-[120px] px-12 max-sm:py-20 max-sm:px-6">
     <div class="about-inner max-w-[780px] mx-auto grid gap-12 items-center" style="grid-template-columns: 160px 1fr;">
       <!-- Photo -->
-      <div class="about-photo size-[160px] rounded-full flex items-center justify-center font-serif text-[52px] text-white/88 shrink-0">
-        {{ content.initial }}
+      <div class="about-photo size-[160px] rounded-full overflow-hidden shrink-0">
+        <img src="/stefan.jpg" alt="Stefan Urbansky" class="w-full h-full object-cover object-top" />
       </div>
 
       <!-- Body -->
@@ -53,7 +52,6 @@ const content = {
 
 <style scoped>
 .about-photo {
-  background: linear-gradient(135deg, var(--color-gold-400) 0%, var(--color-gold-300) 50%, var(--color-sage-400) 100%);
   border: 3px solid rgba(255, 255, 255, 0.06);
 }
 

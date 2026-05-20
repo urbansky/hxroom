@@ -6,7 +6,6 @@ const content = {
   headlineEnd: 'Klienten aussehen.',
   mockupUrl: 'anna.hxroom.de/raum',
   coach: {
-    initial: 'A',
     name: 'Anna Bergmann',
     role: 'Life Coach · Berlin',
     welcome: '„Schön, dass du da bist. Ich komme gleich zu dir."',
@@ -17,7 +16,6 @@ const content = {
     booking: {
       label: 'Buchungsseite',
       title: '60-Min-Sitzung · Anna Bergmann',
-      initial: 'A',
       slots: [
         { label: 'Di · 09:00', selected: false },
         { label: 'Di · 10:30', selected: true },
@@ -66,8 +64,8 @@ const content = {
           <div class="waiting-room px-12 py-16 flex items-center justify-center min-h-[420px]">
             <div class="text-center max-w-[420px]">
               <!-- Avatar -->
-              <div class="coach-photo size-[120px] rounded-full mx-auto mb-7 flex items-center justify-center font-serif text-[42px] text-white/85">
-                {{ content.coach.initial }}
+              <div class="coach-photo size-[120px] rounded-full mx-auto mb-7 overflow-hidden">
+                <img src="/anna.jpg" alt="Anna Bergmann" class="w-full h-full object-cover object-top" />
               </div>
               <div class="font-serif text-[26px] text-(--color-cream) mb-1.5">{{ content.coach.name }}</div>
               <div class="text-[12px] text-(--ui-text-dimmed) tracking-[0.08em] uppercase mb-8">{{ content.coach.role }}</div>
@@ -89,8 +87,8 @@ const content = {
           <div class="text-[11px] text-sage-200 tracking-[0.1em] uppercase mb-3.5">{{ content.thumbs.booking.label }}</div>
           <div class="bg-[#0D110D] rounded-lg p-5 min-h-[160px]">
             <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-white/6">
-              <div class="size-7 rounded-full bg-gradient-to-br from-sage-400 to-sage-600 flex items-center justify-center font-serif text-[13px] text-white/90">
-                {{ content.thumbs.booking.initial }}
+              <div class="size-7 rounded-full overflow-hidden shrink-0">
+                <img src="/anna.jpg" alt="Anna Bergmann" class="w-full h-full object-cover object-top" />
               </div>
               <div class="font-serif text-[14px] text-(--color-cream)">{{ content.thumbs.booking.title }}</div>
             </div>
