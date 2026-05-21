@@ -1,5 +1,9 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxtjs/plausible'],
+
+  plausible: {
+    domain: 'hxroom.de',
+  },
 
   runtimeConfig: {
     public: {

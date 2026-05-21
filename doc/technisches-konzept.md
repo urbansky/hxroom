@@ -57,6 +57,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | Video / Audio | LiveKit self-hosted | Hetzner DE | Vollständig EU |
 | Transkription | Whisper self-hosted | Hetzner DE | Vollständig EU |
 | Datei-Speicher | Hetzner Object Storage | Hetzner DE (Frankfurt) | S3-kompatibel, vollständig EU; MinIO self-hosted als Alternative |
+| Web-Analytics | Plausible Cloud | EU (Estland/Deutschland) | Cookie-frei, kein Consent-Banner; AVV via Plausible-Dashboard |
 
 ---
 

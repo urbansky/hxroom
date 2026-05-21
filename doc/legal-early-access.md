@@ -332,7 +332,7 @@ Submit-Button-Beschriftung: **„Mich vormerken"** (oder „Dabei sein", „Ich 
 |---|---|
 | Kontaktformular hinzufügen | Eigener Abschnitt in der Datenschutz, neue Rechtsgrundlage |
 | Externe Inhalte einbetten (YouTube, Vimeo, Calendly) | Klick-Wall + Erweiterung Datenschutz |
-| Tracking einbauen (Plausible, Matomo, Pixel) | Eventuell Cookie-Banner, Consent-Logik |
+| Tracking mit Cookies einbauen (Matomo, Meta Pixel, LinkedIn Insight) | Cookie-Banner + Consent-Logik nötig. **Plausible-Cloud ist bereits Default und Cookie-frei – kein Scope-Change.** |
 | Coach kann sich registrieren (Trial) | Voller AGB-Satz nötig → [`legal.md`](legal.md) |
 | Zahlungsabwicklung über Stripe live | AGB + AVV mit Stripe-Bezug |
 | Coach-Subdomains live | Coach-Impressum-Pflichtfeld, Coach-Datenschutz-Template, AVV pro Coach |

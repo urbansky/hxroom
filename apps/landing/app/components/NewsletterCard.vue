@@ -56,6 +56,7 @@ async function onSubmit() {
     const data = (await res.json()) as BrevoAjaxResponse
 
     if (data.success) {
+      useTrackEvent('newsletter_signup')
       status.value = 'success'
       return
     }

@@ -417,7 +417,7 @@ Mehr als 10 % der Coach-Recherche läuft inzwischen über ChatGPT, Claude, Perpl
 ### 9.1 Tools
 
 - **Google Search Console** (Pflicht, kostenlos, datenschutzkonform).
-- **Plausible Analytics** oder **Matomo** (selbst-gehostet) statt Google Analytics 4 – passt zum DSGVO-Versprechen, vermeidet Cookie-Banner-Friktion auf der eigenen Landingpage.
+- **Plausible Analytics (Cloud, EU-gehostet, ~10 €/Monat)** statt Google Analytics 4 – Cookie-frei, kein Consent-Banner, passt zum DSGVO-Versprechen und zur Marken-Positionierung.
 - **Ahrefs** oder **Sistrix** ab Monat 3 (~150 €/Monat) – Sistrix hat den besseren DACH-Index, Ahrefs den besseren Backlink-Index. Erst dann, wenn man Daten zum Steuern braucht.
 - **Screaming Frog** (199 £/Jahr) für quartalsweise Technical-Audits.
 

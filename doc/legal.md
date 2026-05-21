@@ -176,9 +176,10 @@ Position: **so wenig wie möglich**, damit wir kein Consent-Banner brauchen – 
 - **Stripe-Cookies** im Checkout (technisch notwendig für Zahlung)
 - **Brevo-Tracking** im Newsletter? → wenn ja, dann **mit Consent** beim Anmelden
 
-### 7.3 Wenn wir später tracken müssen
-- Plausible Analytics (self-hosted, Cookie-frei) oder Matomo on-prem → bevorzugt
-- Erst dann Consent-Banner notwendig, wenn echte Tracking-Cookies gesetzt werden
+### 7.3 Analytics ohne Consent-Pflicht
+- **Plausible Analytics (Cloud, EU-gehostet)** ist von Beginn an im Einsatz – Cookie-frei, kein Fingerprinting, keine personenbezogenen Daten im Sinne der DSGVO-Cookie-Pflicht; daher **kein Consent-Banner** notwendig.
+- Plausible muss in der Datenschutzerklärung als Auftragsverarbeiter (Plausible Insights OÜ, Estland) genannt werden – AVV ist via Plausible-Dashboard verfügbar.
+- Falls später zusätzliche Tracking-Tools mit Cookies (Matomo on-prem, Meta Pixel etc.) eingebaut werden, wird zu dem Zeitpunkt ein Consent-Banner notwendig.
 
 > **Designentscheidung:** Starten **ohne** Consent-Banner. Marketing-Wirkung ist ein Wettbewerbsvorteil – „die einzige Coaching-Plattform die euch nicht trackt".
 
