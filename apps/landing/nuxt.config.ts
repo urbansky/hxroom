@@ -23,5 +23,11 @@ export default defineNuxtConfig({
     preference: 'dark',
   },
 
+  vite: {
+    optimizeDeps: {
+      exclude: ['@plausible-analytics/tracker'],
+    },
+  },
+
   compatibilityDate: '2025-05-07',
 })

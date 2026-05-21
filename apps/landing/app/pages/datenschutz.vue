@@ -4,7 +4,7 @@ definePageMeta({ layout: 'legal' })
 useHead({
   title: 'Datenschutz · HxRoom',
   meta: [
-    { name: 'description', content: 'Datenschutzerklärung der HxRoom-Landingpage – Datenminimum, EU-Hosting, kein Tracking.' },
+    { name: 'description', content: 'Datenschutzerklärung der HxRoom-Landingpage – Datenminimum, EU-Hosting, cookiefreie Analyse.' },
     { name: 'robots', content: 'noindex, follow' },
   ],
 })
@@ -14,7 +14,7 @@ useHead({
   <div class="legal-container">
     <span class="legal-eyebrow">Rechtliches</span>
     <h1 class="legal-headline">Datenschutz&shy;erklärung</h1>
-    <p class="legal-sub">Deine Daten – kurz und klar erklärt. So wenig wie möglich, alles in der EU, kein Tracking.</p>
+    <p class="legal-sub">Deine Daten – kurz und klar erklärt. So wenig wie möglich, alles in der EU, kein Cookie-Tracking.</p>
 
     <!-- AUF EINEN BLICK -->
     <div class="glance">
@@ -40,13 +40,13 @@ useHead({
       <div class="glance-tile">
         <div class="icon">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7z" />
-            <circle cx="12" cy="12" r="3" />
-            <line x1="3" y1="3" x2="21" y2="21" />
+            <rect x="3" y="12" width="4" height="8" rx="1" />
+            <rect x="10" y="7" width="4" height="13" rx="1" />
+            <rect x="17" y="3" width="4" height="17" rx="1" />
           </svg>
         </div>
-        <h4>Kein Tracking</h4>
-        <p>Keine Werbecookies, keine Analyse-Tools, keine Profilbildung.</p>
+        <h4>Cookie-freie Analyse</h4>
+        <p>Ich nutze Plausible Analytics – cookiefrei, kein Fingerprinting, keine Profilbildung, kein Consent-Banner nötig.</p>
       </div>
       <div class="glance-tile">
         <div class="icon">
@@ -155,21 +155,68 @@ useHead({
       </div>
     </section>
 
-    <!-- 4. SCHRIFTARTEN -->
+    <!-- 4. WEB-ANALYTICS -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">4</span> Schriftarten &amp; externe Inhalte</div>
+      <div class="legal-section-label"><span class="num">4</span> Web-Analytics (Plausible)</div>
+      <div class="legal-card">
+        <h2>Plausible Analytics</h2>
+        <p class="muted">Plausible Insights OÜ, Västriku tn 2, 50403 Tartu, Estland (EU). Mit Plausible Insights OÜ besteht ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO.</p>
+
+        <h3>Was Plausible erfasst</h3>
+        <ul class="legal-list">
+          <li>Aufgerufene Seite und Referrer (ohne Query-Parameter)</li>
+          <li>Standort (Land und Region – nicht genauer)</li>
+          <li>Gerätekategorie, Betriebssystem, Browser</li>
+          <li>Aggregierte Seitenaufrufe und Sitzungsdauer</li>
+        </ul>
+
+        <h3>Was Plausible ausdrücklich NICHT erfasst</h3>
+        <ul class="legal-list">
+          <li>IP-Adresse (wird serverseitig sofort verworfen, nicht gespeichert)</li>
+          <li>Cookies oder persistente Gerätekennzeichner</li>
+          <li>Personenbezogene Daten im Sinne der DSGVO</li>
+        </ul>
+
+        <div class="legal-meta-grid">
+          <div class="legal-meta-item">
+            <div class="lbl">Zweck</div>
+            <div class="val">Webseitenoptimierung &amp; Reichweitenmessung</div>
+          </div>
+          <div class="legal-meta-item">
+            <div class="lbl">Rechtsgrundlage</div>
+            <div class="val">Art. 6 Abs. 1 lit. f DSGVO</div>
+          </div>
+          <div class="legal-meta-item">
+            <div class="lbl">Drittlandtransfer</div>
+            <div class="val">nein (EU-Server)</div>
+          </div>
+          <div class="legal-meta-item">
+            <div class="lbl">Datenschutz Plausible</div>
+            <div class="val"><a href="https://plausible.io/privacy" target="_blank" rel="noopener">plausible.io/privacy</a></div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Opt-out möglich.</strong> Da Plausible keine Cookies setzt, gibt es keinen Cookie-Banner. Wer die Messung dennoch unterbinden möchte, kann einen Content-Blocker verwenden, der Anfragen an <em>plausible.io</em> blockiert, oder die „Do Not Track"-Einstellung im Browser aktivieren – Plausible respektiert dieses Signal.
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. SCHRIFTARTEN -->
+    <section class="legal-section">
+      <div class="legal-section-label"><span class="num">5</span> Schriftarten &amp; externe Inhalte</div>
       <div class="legal-card">
         <h3>Lokal eingebunden</h3>
         <p>Die verwendeten Schriftarten liefere ich vom eigenen Server aus. Es findet kein Verbindungsaufbau zu Google Fonts oder ähnlichen Drittanbieter-CDNs statt.</p>
 
-        <h3>Kein Tracking, keine Pixel</h3>
-        <p>Diese Seite setzt keine Tools wie Google Analytics, Facebook Pixel oder LinkedIn Insight Tag ein.</p>
+        <h3>Keine Werbepixel</h3>
+        <p>Diese Seite setzt keine Werbe-Tracker wie Google Analytics, Facebook Pixel oder LinkedIn Insight Tag ein. Für die datenschutzfreundliche Besucherzählung wird ausschließlich Plausible Analytics verwendet (→ Abschnitt 4).</p>
       </div>
     </section>
 
-    <!-- 5. COOKIES -->
+    <!-- 6. COOKIES -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">5</span> Cookies</div>
+      <div class="legal-section-label"><span class="num">6</span> Cookies</div>
       <div class="legal-card">
         <h3>Keine Werbung, keine Analyse</h3>
         <p>Diese Seite setzt keine Cookies zu Werbe- oder Analysezwecken.</p>
@@ -179,9 +226,9 @@ useHead({
       </div>
     </section>
 
-    <!-- 6. RECHTE -->
+    <!-- 7. RECHTE -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">6</span> Deine Rechte</div>
+      <div class="legal-section-label"><span class="num">7</span> Deine Rechte</div>
       <div class="legal-card">
         <div class="rights-grid">
           <div class="rights-block">
@@ -219,9 +266,9 @@ useHead({
       </div>
     </section>
 
-    <!-- 7. BESCHWERDERECHT -->
+    <!-- 8. BESCHWERDERECHT -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">7</span> Beschwerderecht</div>
+      <div class="legal-section-label"><span class="num">8</span> Beschwerderecht</div>
       <div class="legal-card">
         <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig für mich ist:</p>
         <p class="legal-address">
@@ -242,31 +289,31 @@ useHead({
       </div>
     </section>
 
-    <!-- 8. DRITTLAND -->
+    <!-- 9. DRITTLAND -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">8</span> Drittlandsübermittlung</div>
+      <div class="legal-section-label"><span class="num">9</span> Drittlandsübermittlung</div>
       <div class="legal-card">
         <p>Eine Übermittlung deiner personenbezogenen Daten in Länder außerhalb der EU oder des EWR findet <strong>nicht</strong> statt.</p>
       </div>
     </section>
 
-    <!-- 9. AUTOMATISIERTE ENTSCHEIDUNG -->
+    <!-- 10. AUTOMATISIERTE ENTSCHEIDUNG -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">9</span> Keine automatisierte Entscheidung</div>
+      <div class="legal-section-label"><span class="num">10</span> Keine automatisierte Entscheidung</div>
       <div class="legal-card">
         <p>Eine automatisierte Entscheidungsfindung einschließlich Profiling im Sinne des Art. 22 DSGVO findet <strong>nicht</strong> statt.</p>
       </div>
     </section>
 
-    <!-- 10. ÄNDERUNGEN -->
+    <!-- 11. ÄNDERUNGEN -->
     <section class="legal-section">
-      <div class="legal-section-label"><span class="num">10</span> Änderungen</div>
+      <div class="legal-section-label"><span class="num">11</span> Änderungen</div>
       <div class="legal-card">
         <p>Ich passe diese Datenschutzerklärung an, wenn sich die Verarbeitung oder die Rechtslage ändert. Es gilt jeweils die auf hxroom.de veröffentlichte Fassung.</p>
       </div>
     </section>
 
-    <p class="legal-updated">Stand: 14. Mai 2026</p>
+    <p class="legal-updated">Stand: 21. Mai 2026</p>
   </div>
 </template>
 
