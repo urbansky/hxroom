@@ -28,7 +28,7 @@ export default defineNuxtConfig({
   css: ['@hxroom/ui/theme'],
 
   colorMode: {
-    preference: 'dark',
+    preference: 'system',
   },
 
   vite: {
