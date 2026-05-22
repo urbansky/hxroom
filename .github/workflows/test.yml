@@ -1,6 +1,16 @@
 name: Tests
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/test.yml"
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
