@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui', '@nuxtjs/plausible'],
+  modules: ['@nuxt/ui', '@nuxt/content', '@nuxtjs/plausible'],
 
   app: {
     head: {
@@ -39,7 +39,7 @@ export default defineNuxtConfig({
 
   nitro: {
     prerender: {
-      routes: ['/404.html'],
+      routes: ['/404.html', '/blog/rss.xml'],
     },
   },
 

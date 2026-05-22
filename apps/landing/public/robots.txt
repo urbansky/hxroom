@@ -5,12 +5,14 @@ Disallow: /old
 
 User-agent: GPTBot
 Allow: /
+Allow: /blog
 Disallow: /impressum
 Disallow: /datenschutz
 Disallow: /old
 
 User-agent: OAI-SearchBot
 Allow: /
+Allow: /blog
 Disallow: /impressum
 Disallow: /datenschutz
 Disallow: /old
