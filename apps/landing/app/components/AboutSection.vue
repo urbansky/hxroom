@@ -24,7 +24,7 @@ const content = {
 
       <!-- Body -->
       <div>
-        <div class="flex items-center gap-2.5 mb-3.5 text-[11px] text-sage-200 tracking-[0.14em] uppercase">
+        <div class="flex items-center gap-2.5 mb-3.5 text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.14em] uppercase">
           <span class="w-6 h-px bg-sage-400 shrink-0" />
           {{ content.label }}
         </div>
@@ -40,7 +40,7 @@ const content = {
             v-for="link in content.links"
             :key="link.label"
             :href="link.href"
-            class="text-[13px] text-sage-200 no-underline border-b border-sage-400/30 pb-0.5 transition-colors hover:border-sage-400"
+            class="text-[13px] text-sage-600 dark:text-sage-200 no-underline border-b border-sage-400/30 pb-0.5 transition-colors hover:border-sage-400"
           >
             {{ link.label }}
           </a>

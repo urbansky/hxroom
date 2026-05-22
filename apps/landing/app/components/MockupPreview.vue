@@ -37,17 +37,17 @@ const content = {
     <div class="max-w-[1100px] mx-auto">
       <!-- Header -->
       <div class="text-center mb-14">
-        <div class="flex items-center justify-center gap-2.5 mb-[18px] text-[11px] text-sage-200 tracking-[0.14em] uppercase">
+        <div class="flex items-center justify-center gap-2.5 mb-[18px] text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.14em] uppercase">
           {{ content.label }}
         </div>
         <h2 class="font-serif text-[clamp(36px,4.5vw,54px)] font-light leading-[1.1] text-(--color-cream) tracking-[-0.015em] mx-auto max-w-[760px]">
-          {{ content.headlineMain }} <em class="italic text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
+          {{ content.headlineMain }} <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
         </h2>
       </div>
 
       <!-- Main mockup -->
       <div class="relative max-w-[1040px] mx-auto">
-        <div class="mockup-frame bg-[#0D110D] rounded-2xl border border-white/8 overflow-hidden">
+        <div class="mockup-frame dark bg-[#0D110D] rounded-2xl border border-white/8 overflow-hidden">
           <!-- Browser bar -->
           <div class="h-9 bg-white/3 border-b border-white/6 flex items-center px-4 gap-2.5">
             <div class="flex gap-1.5">
@@ -84,8 +84,8 @@ const content = {
       <div class="mt-10 grid grid-cols-2 gap-5 max-sm:grid-cols-1">
         <!-- Booking -->
         <div class="bg-(--ui-bg-elevated) border border-(--ui-border) rounded-[12px] p-5">
-          <div class="text-[11px] text-sage-200 tracking-[0.1em] uppercase mb-3.5">{{ content.thumbs.booking.label }}</div>
-          <div class="bg-[#0D110D] rounded-lg p-5 min-h-[160px]">
+          <div class="text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.1em] uppercase mb-3.5">{{ content.thumbs.booking.label }}</div>
+          <div class="dark bg-[#0D110D] rounded-lg p-5 min-h-[160px]">
             <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-white/6">
               <div class="size-7 rounded-full overflow-hidden shrink-0">
                 <img src="/anna.jpg" alt="Anna Bergmann" class="w-full h-full object-cover object-top" />
@@ -109,8 +109,8 @@ const content = {
 
         <!-- Call view -->
         <div class="bg-(--ui-bg-elevated) border border-(--ui-border) rounded-[12px] p-5">
-          <div class="text-[11px] text-sage-200 tracking-[0.1em] uppercase mb-3.5">{{ content.thumbs.call.label }}</div>
-          <div class="bg-[#0D110D] rounded-lg p-5 min-h-[160px]">
+          <div class="text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.1em] uppercase mb-3.5">{{ content.thumbs.call.label }}</div>
+          <div class="dark bg-[#0D110D] rounded-lg p-5 min-h-[160px]">
             <div class="flex gap-2 h-[140px]">
               <div class="flex-[2] bg-gradient-to-br from-[#2A3329] to-[#1E231E] rounded-md relative">
                 <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">

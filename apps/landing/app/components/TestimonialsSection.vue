@@ -22,7 +22,7 @@ const testimonials = [
 </script>
 
 <template>
-  <div class="relative z-1 bg-white/[0.01] dark:bg-white/[0.01] border-y border-(--ui-border)" id="stimmen">
+  <div class="relative z-1 bg-(--ui-bg-muted) border-y border-(--ui-border)" id="stimmen">
     <section class="max-w-[1200px] mx-auto px-6 lg:px-12 py-16 lg:py-20">
       <!-- Eyebrow -->
       <div class="inline-flex items-center gap-2 mb-4">

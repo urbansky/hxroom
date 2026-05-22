@@ -95,6 +95,8 @@
 
 /* Light mode */
 :root {
+  --color-cream:        #2e3a2d;
+
   --ui-bg:              #faf8f4;
   --ui-bg-muted:        #f2efe8;
   --ui-bg-elevated:     #eae6de;
@@ -118,6 +120,8 @@
 
 /* Dark mode */
 .dark {
+  --color-cream:        #F5F0E8;
+
   --ui-bg:              #141814;
   --ui-bg-muted:        #1A1E1A;
   --ui-bg-elevated:     #1E231E;

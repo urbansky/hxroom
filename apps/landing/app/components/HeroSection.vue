@@ -15,12 +15,12 @@ const content = {
     <!-- Eyebrow -->
     <div class="a1 inline-flex items-center gap-2.5 bg-gold-400/8 border border-gold-400/22 rounded-full px-[18px] py-[7px] mb-9">
       <span class="size-1.5 rounded-full bg-gold-400 shrink-0" />
-      <span class="text-[11px] text-gold-300 tracking-[0.14em] uppercase">{{ content.eyebrow }}</span>
+      <span class="text-[11px] text-gold-700 dark:text-gold-300 tracking-[0.14em] uppercase">{{ content.eyebrow }}</span>
     </div>
 
     <!-- Headline -->
     <h1 class="a2 font-serif text-[clamp(48px,7vw,84px)] font-light leading-[1.04] text-(--color-cream) tracking-[-0.02em] max-w-[880px] mb-7">
-      {{ content.headlineMain }} <em class="italic text-gold-300">{{ content.headlineEm }}</em>
+      {{ content.headlineMain }} <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em>
     </h1>
 
     <!-- Sub -->

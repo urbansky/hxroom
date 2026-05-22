@@ -14,10 +14,10 @@ const content = {
 </script>
 
 <template>
-  <section class="relative z-1 py-[120px] px-12 bg-gradient-to-b from-transparent to-black/18 max-sm:py-20 max-sm:px-6">
+  <section class="relative z-1 py-[120px] px-12 dark:bg-gradient-to-b dark:from-transparent dark:to-black/18 max-sm:py-20 max-sm:px-6">
     <div class="max-w-[1100px] mx-auto">
       <!-- Label -->
-      <div class="flex items-center gap-2.5 mb-[18px] text-[11px] text-sage-200 tracking-[0.14em] uppercase">
+      <div class="flex items-center gap-2.5 mb-[18px] text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.14em] uppercase">
         <span class="w-6 h-px bg-sage-400 shrink-0" />
         {{ content.label }}
       </div>
@@ -25,7 +25,7 @@ const content = {
       <!-- Headline -->
       <h2 class="font-serif text-[clamp(36px,4.5vw,54px)] font-light leading-[1.1] text-(--color-cream) tracking-[-0.015em] max-w-[760px] mb-7">
         {{ content.headlineMain }}<br>
-        <em class="italic text-gold-300">{{ content.headlineEm }}</em>
+        <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em>
       </h2>
 
       <!-- Lede -->
@@ -46,7 +46,7 @@ const content = {
       </div>
 
       <!-- Conclusion -->
-      <p class="mt-14 text-center font-serif text-[clamp(26px,3vw,36px)] italic text-gold-300 font-light">
+      <p class="mt-14 text-center font-serif text-[clamp(26px,3vw,36px)] italic text-gold-700 dark:text-gold-300 font-light">
         {{ content.conclusion }}
       </p>
     </div>

@@ -89,8 +89,8 @@ const plans = [
         <span
           class="inline-block text-[9px] tracking-[0.1em] uppercase rounded px-2.5 py-0.5 border w-fit mb-5"
           :class="plan.gold
-            ? 'text-gold-300 bg-gold-500/10 border-gold-500/20'
-            : 'text-sage-200 bg-sage-400/12 border-sage-400/20'"
+            ? 'text-gold-700 dark:text-gold-300 bg-gold-500/10 border-gold-500/20'
+            : 'text-sage-700 dark:text-sage-200 bg-sage-400/12 border-sage-400/20'"
         >{{ plan.badge }}</span>
 
         <!-- Name -->
@@ -101,7 +101,7 @@ const plans = [
         <div class="flex items-baseline gap-1.5 mb-7">
           <span
             class="font-serif leading-none"
-            :class="plan.free ? 'text-4xl text-sage-300' : 'text-5xl text-sage-950 dark:text-cream font-light'"
+            :class="plan.free ? 'text-4xl text-sage-500 dark:text-sage-300' : 'text-5xl text-sage-950 dark:text-cream font-light'"
           >{{ plan.price }}</span>
           <span class="text-xs text-(--ui-text-dimmed)">{{ plan.period }}</span>
         </div>
@@ -120,7 +120,7 @@ const plans = [
             <UIcon
               name="i-lucide-check"
               class="size-3.5 shrink-0 mt-0.5"
-              :class="f.active ? 'text-sage-500' : 'text-white/15'"
+              :class="f.active ? 'text-sage-500' : 'text-black/20 dark:text-white/15'"
             />
             {{ f.text }}
           </div>

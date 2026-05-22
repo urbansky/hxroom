@@ -29,13 +29,13 @@ const content = {
   <section class="relative z-1 py-[120px] px-12 bg-gradient-to-b from-transparent via-gold-400/3 to-transparent max-sm:py-20 max-sm:px-6">
     <div class="max-w-[920px] mx-auto text-center">
       <!-- Count -->
-      <div class="font-serif text-[18px] text-gold-300 tracking-[0.1em] uppercase mb-[18px]">
+      <div class="font-serif text-[18px] text-gold-700 dark:text-gold-300 tracking-[0.1em] uppercase mb-[18px]">
         {{ content.count }}
       </div>
 
       <!-- Headline -->
       <h2 class="font-serif text-[clamp(40px,5vw,58px)] font-light leading-[1.1] text-(--color-cream) tracking-[-0.015em] mb-14">
-        {{ content.headlineMain }} <em class="italic text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
+        {{ content.headlineMain }} <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
       </h2>
 
       <!-- Cards -->

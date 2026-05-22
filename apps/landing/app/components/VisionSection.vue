@@ -30,14 +30,14 @@ const content = {
   <section class="relative z-1 pt-[100px] pb-[120px] px-12 max-sm:py-20 max-sm:px-6">
     <div class="max-w-[1100px] mx-auto">
       <!-- Label -->
-      <div class="flex items-center gap-2.5 mb-[18px] text-[11px] text-sage-200 tracking-[0.14em] uppercase">
+      <div class="flex items-center gap-2.5 mb-[18px] text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.14em] uppercase">
         <span class="w-6 h-px bg-sage-400 shrink-0" />
         {{ content.label }}
       </div>
 
       <!-- Headline -->
       <h2 class="font-serif text-[clamp(36px,4.5vw,54px)] font-light leading-[1.1] text-(--color-cream) tracking-[-0.015em] max-w-[760px] mb-7">
-        {{ content.headlineMain }} <em class="italic text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
+        {{ content.headlineMain }} <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
       </h2>
 
       <!-- Lede -->
@@ -55,11 +55,11 @@ const content = {
           <!-- Icon -->
           <div class="size-11 rounded-[11px] bg-sage-400/10 border border-sage-400/22 flex items-center justify-center mb-[22px]">
             <!-- Globe icon -->
-            <svg v-if="card.icon === 'globe'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-sage-200"><circle cx="12" cy="12" r="9" /><path d="M12 3v18M3 12h18" /></svg>
+            <svg v-if="card.icon === 'globe'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-sage-600 dark:text-sage-200"><circle cx="12" cy="12" r="9" /><path d="M12 3v18M3 12h18" /></svg>
             <!-- Calendar icon -->
-            <svg v-else-if="card.icon === 'calendar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-sage-200"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 10h18M8 2v4M16 2v4" /></svg>
+            <svg v-else-if="card.icon === 'calendar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-sage-600 dark:text-sage-200"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 10h18M8 2v4M16 2v4" /></svg>
             <!-- Shield icon -->
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-sage-200"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V7l8-4z" /><path d="M9 12l2 2 4-4" /></svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-sage-600 dark:text-sage-200"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V7l8-4z" /><path d="M9 12l2 2 4-4" /></svg>
           </div>
           <h3 class="font-serif text-[24px] text-(--color-cream) mb-3 leading-[1.2]">{{ card.title }}</h3>
           <p class="text-[14px] text-(--ui-text-muted) leading-[1.65]">{{ card.text }}</p>

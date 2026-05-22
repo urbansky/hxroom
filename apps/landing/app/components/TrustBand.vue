@@ -8,7 +8,7 @@ const pillars = [
 </script>
 
 <template>
-  <div class="relative z-1 bg-white/[0.015] dark:bg-white/[0.015] border-y border-(--ui-border) py-12 px-6 lg:px-12">
+  <div class="relative z-1 bg-(--ui-bg-muted) border-y border-(--ui-border) py-12 px-6 lg:px-12">
     <div class="max-w-[1200px] mx-auto flex flex-wrap items-center justify-center gap-8 lg:gap-16">
       <template v-for="(pillar, i) in pillars" :key="pillar.title">
         <div class="flex items-center gap-3.5">

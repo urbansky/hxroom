@@ -13,7 +13,7 @@ const content = {
     <div class="section-divider" />
 
     <h2 class="font-serif text-[clamp(34px,4.5vw,50px)] font-light text-(--color-cream) leading-[1.15] mb-5 max-w-[700px] mx-auto">
-      {{ content.headlineMain }} <em class="italic text-gold-300">{{ content.headlineEm }}</em>{{ content.headlineEnd }}
+      {{ content.headlineMain }} <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em>{{ content.headlineEnd }}
     </h2>
     <p class="text-[16px] text-(--ui-text-muted) max-w-[480px] mx-auto mb-10 leading-[1.6]">
       {{ content.sub }}

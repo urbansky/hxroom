@@ -5,6 +5,7 @@
       <NuxtLink to="/impressum" class="text-xs text-(--ui-text-dimmed) hover:text-(--ui-text-muted) transition-colors no-underline">Impressum</NuxtLink>
       <NuxtLink to="/datenschutz" class="text-xs text-(--ui-text-dimmed) hover:text-(--ui-text-muted) transition-colors no-underline">Datenschutz</NuxtLink>
       <a href="mailto:kontakt@hxroom.de" class="text-xs text-(--ui-text-dimmed) hover:text-(--ui-text-muted) transition-colors no-underline">Kontakt</a>
+      <UColorModeButton size="xs" />
     </div>
   </footer>
 </template>

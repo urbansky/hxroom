@@ -1,9 +1,6 @@
 <script setup lang="ts">
-const colorMode = useColorMode()
-colorMode.preference = 'dark'
-
 useHead({
-  htmlAttrs: { lang: 'de', class: 'dark' },
+  htmlAttrs: { lang: 'de' },
 })
 </script>
 

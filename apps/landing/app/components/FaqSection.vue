@@ -41,14 +41,14 @@ const content = {
   <section class="relative z-1 py-[120px] px-12 max-sm:py-20 max-sm:px-6">
     <div class="max-w-[1100px] mx-auto">
       <!-- Label -->
-      <div class="flex items-center gap-2.5 mb-[18px] text-[11px] text-sage-200 tracking-[0.14em] uppercase">
+      <div class="flex items-center gap-2.5 mb-[18px] text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.14em] uppercase">
         <span class="w-6 h-px bg-sage-400 shrink-0" />
         {{ content.label }}
       </div>
 
       <!-- Headline -->
       <h2 class="font-serif text-[clamp(36px,4.5vw,54px)] font-light leading-[1.1] text-(--color-cream) tracking-[-0.015em] max-w-[760px] mb-14">
-        {{ content.headlineMain }} <em class="italic text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
+        {{ content.headlineMain }} <em class="italic text-gold-700 dark:text-gold-300">{{ content.headlineEm }}</em> {{ content.headlineEnd }}
       </h2>
 
       <!-- FAQ list -->
@@ -70,8 +70,12 @@ const content = {
 </template>
 
 <style scoped>
-.faq-item[open] .faq-summary { color: var(--color-gold-300); }
+.faq-item[open] .faq-summary { color: var(--color-gold-700); }
 .faq-item[open] .faq-icon { transform: rotate(45deg); }
 .faq-summary::-webkit-details-marker { display: none; }
 .faq-icon { transition: transform 0.2s; display: inline-block; }
+</style>
+
+<style>
+.dark .faq-item[open] .faq-summary { color: var(--color-gold-300); }
 </style>

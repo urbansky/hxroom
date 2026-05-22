@@ -29,5 +29,11 @@ export default defineNuxtConfig({
     },
   },
 
+  nitro: {
+    prerender: {
+      routes: ['/404.html'],
+    },
+  },
+
   compatibilityDate: '2025-05-07',
 })
