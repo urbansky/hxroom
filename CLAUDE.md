@@ -69,14 +69,17 @@ hxroom/
 ## Videokonferenz
 Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/room/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.
 
-## Pre-Launch: noindex in `landing` und `room`
-Beide Apps führen aktuell einen Suchmaschinen-Ausschluss, solange HxRoom noch nicht öffentlich beworben wird:
-- `<meta name="robots" content="noindex, nofollow" />` in `apps/landing/index.html` und `apps/room/index.html`
-- `add_header X-Robots-Tag "noindex, nofollow, noarchive" always;` in `apps/landing/nginx.conf` und `apps/room/nginx.conf` (server-Block **und** `location /assets/`)
+## SEO & Crawler-Konfiguration (`landing`)
 
-**Vor dem öffentlichen Launch** müssen diese vier Einträge entfernt werden – `grep -rn noindex apps/landing apps/room` findet alle Stellen auf einen Schlag.
+`apps/landing` ist öffentlich indexierbar. Nur Rechtsseiten sind ausgeschlossen:
+- `impressum.vue` und `datenschutz.vue` haben `{ name: 'robots', content: 'noindex, follow' }` – das bleibt so.
+- `apps/room` hat weiterhin noindex (Pre-Launch) – dort nichts ändern.
 
-**Bei größeren Änderungen an `apps/landing/` oder `apps/room/`** (neue öffentliche Seiten, SEO-Arbeiten, Launch-Vorbereitung, Landingpage-Umbau, o. Ä.): vor dem Loslegen kurz nachfragen, ob der noindex-Status noch gelten soll. Kleine Bugfixes und interne Refactorings brauchen die Rückfrage nicht.
+**robots.txt** (`apps/landing/public/robots.txt`) und **llms.txt** (`apps/landing/public/llms.txt`) müssen bei inhaltlichen Änderungen an der Landing-Page aktuell gehalten werden:
+- Neue Seiten in `robots.txt` unter `Disallow` eintragen, wenn sie nicht indexiert werden sollen.
+- Neue Funktionen, Preisänderungen oder FAQ-Antworten in `llms.txt` nachziehen, damit KI-Crawler (OAI-SearchBot, GPTBot, Perplexity) korrekte Daten liefern.
+
+**noindex für `apps/room`:** `grep -rn noindex apps/room` findet alle Stellen. Vor dem öffentlichen Launch entfernen.
 
 ## Newsletter-Subscriber-Datenmodell (Referenz)
 
