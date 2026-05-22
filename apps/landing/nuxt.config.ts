@@ -1,6 +1,14 @@
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxtjs/plausible'],
 
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      ],
+    },
+  },
+
   plausible: {
     domain: 'hxroom.de',
   },
