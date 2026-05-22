@@ -1,0 +1,27 @@
+# HxRoom
+
+> HxRoom ist eine White-Label Videocall-Plattform für Coaches – DSGVO-konform, gebaut in Deutschland.
+
+HxRoom gibt Coaches einen eigenen, gebrandeten Videocall-Raum: eigenes Logo, eigene Farben, eigene Subdomain – kein Zoom-Link, kein fremdes Logo, kein Klienten-Account. Klienten klicken auf einen Link und landen direkt im Warteraum, ohne Download oder Registrierung.
+
+Die Plattform befindet sich in aktiver Entwicklung. Early Access läuft; öffentlicher Launch ist für Q4 2026 geplant. Server stehen in Deutschland (Hetzner), ein AVV ist Vertragsbestandteil, keine Weitergabe an US-Dienste.
+
+## Kernfunktionen
+
+- White-Label Branding: eigenes Logo, eigene Farben, eigene Coach-Subdomain
+- Integriertes Buchungssystem
+- Warteraum – Klienten kommen per Link, ohne Account
+- DSGVO-konform by Design, Server in Deutschland (Hetzner)
+- Preis: ab ca. 19 €/Monat; Early-Access-Coaches erhalten vergünstigten Einführungspreis auf Lebenszeit
+
+## Häufige Fragen
+
+- **Wann geht HxRoom live?** Öffentlicher Launch Q4 2026. Early-Access-Coaches erhalten vorher Zugang.
+- **Brauchen Klienten einen Account?** Nein. Link anklicken, direkt im Warteraum landen – kein Download, kein Passwort.
+- **Wo liegen die Daten?** Ausschließlich auf Servern in Deutschland (Hetzner). Kein US-Transfer, kein Drittland.
+- **Was kostet HxRoom?** Ab ca. 19 €/Monat. Endpreise stehen zum Launch fest.
+- **Was passiert bei Kündigung?** Vollständiger Datenexport, danach DSGVO-konforme Löschung.
+
+## Seiten
+
+- [Startseite](https://hxroom.de): Produktbeschreibung, Features und Early-Access-Anmeldung
