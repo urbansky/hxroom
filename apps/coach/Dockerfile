@@ -28,7 +28,7 @@ RUN pnpm --filter coach build
 
 # ---- Production ----
 FROM nginx:alpine
-COPY --from=build /app/apps/coach/dist /usr/share/nginx/html
+COPY --from=build /app/apps/coach/.output/public /usr/share/nginx/html
 COPY apps/coach/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
