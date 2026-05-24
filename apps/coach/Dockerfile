@@ -2,7 +2,7 @@
 FROM node:22-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+RUN corepack enable && apk add --no-cache python3 make g++
 
 # ---- Dependencies ----
 FROM base AS deps
@@ -19,11 +19,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM deps AS build
-COPY tsconfig.base.json ./
-COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
 COPY apps/coach/ apps/coach/
-RUN pnpm --filter @hxroom/shared build
 RUN pnpm --filter coach build
 
 # ---- Production ----

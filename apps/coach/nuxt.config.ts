@@ -31,5 +31,11 @@ export default defineNuxtConfig({
     port: 5173,
   },
 
+  nitro: {
+    prerender: {
+      crawlLinks: false,
+    },
+  },
+
   compatibilityDate: '2025-05-07',
 })
