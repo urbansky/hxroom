@@ -16,6 +16,7 @@ COPY apps/landing/package.json apps/landing/
 COPY packages/shared/package.json packages/shared/
 COPY packages/ui/package.json packages/ui/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm rebuild better-sqlite3
 
 # ---- Build ----
 FROM deps AS build
