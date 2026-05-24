@@ -23,10 +23,10 @@ api.hxroom.de {
 	reverse_proxy api:3000
 }
 
-#app.hxroom.de {
-#	import ionos-tls
-#	reverse_proxy coach:80
-#}
+app.hxroom.de {
+	import ionos-tls
+	reverse_proxy coach:80
+}
 
 #admin.hxroom.de {
 #	import ionos-tls

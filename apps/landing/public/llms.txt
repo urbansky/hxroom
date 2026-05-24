@@ -25,3 +25,5 @@ Die Plattform befindet sich in aktiver Entwicklung. Early Access läuft; öffent
 ## Seiten
 
 - [Startseite](https://hxroom.de): Produktbeschreibung, Features und Early-Access-Anmeldung
+- [Blog](https://hxroom.de/blog): Artikel zu Coaching, DSGVO-konformer Praxissoftware und der Entstehung von HxRoom
+- [RSS-Feed](https://hxroom.de/blog/rss.xml): Maschinenlesbare Artikelliste im RSS-Format

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-
 // -- Table: Beispieldaten Klienten --
 const clients = ref([
   { id: '1', name: 'Anna Bergmann', email: 'anna@example.de', nextSession: '2026-03-10 10:00', sessions: 12, status: 'active' },
@@ -67,7 +65,7 @@ const stats = [
   { label: 'Umsatz (Monat)', value: '4.260 €' },
 ];
 
-// -- Toast (auto-imported by Nuxt UI) --
+// -- Toast --
 const toast = useToast();
 function showToast() {
   toast.add({ title: 'Buchung bestätigt', description: 'Anna Bergmann – 10.03.2026, 10:00 Uhr', color: 'success' });

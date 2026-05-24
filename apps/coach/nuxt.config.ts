@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui', '@nuxt/content', '@nuxtjs/plausible'],
+  modules: ['@nuxt/ui'],
 
   app: {
     head: {
@@ -7,10 +7,6 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
     },
-  },
-
-  plausible: {
-    domain: 'hxroom.de',
   },
 
   runtimeConfig: {
@@ -31,16 +27,8 @@ export default defineNuxtConfig({
     preference: 'system',
   },
 
-  vite: {
-    optimizeDeps: {
-      exclude: ['@plausible-analytics/tracker'],
-    },
-  },
-
-  nitro: {
-    prerender: {
-      routes: ['/404.html', '/blog/rss.xml'],
-    },
+  devServer: {
+    port: 5173,
   },
 
   compatibilityDate: '2025-05-07',
