@@ -3,6 +3,7 @@ definePageMeta({ layout: 'blog' })
 
 const { data: articles } = await useAsyncData('blog-list', () =>
   queryCollection('blog')
+    .where('draft', '<>', true)
     .order('date', 'DESC')
     .all()
 )
@@ -48,13 +49,19 @@ useHead({
             <h2 class="font-serif text-2xl font-normal text-(--ui-text-highlighted) mb-2 group-hover:text-primary transition-colors">
               {{ article.title }}
             </h2>
-            <p class="text-(--ui-text-muted) text-sm leading-relaxed">
+            <p class="text-(--ui-text-muted) text-sm leading-relaxed mb-4">
               {{ article.description }}
             </p>
-            <span class="inline-flex items-center gap-1.5 mt-4 text-sm text-primary">
-              Weiterlesen
-              <UIcon name="lucide:arrow-right" class="size-3.5" />
-            </span>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <img src="/stefan.jpg" alt="Stefan Urbansky" class="size-6 rounded-full object-cover object-top" />
+                <span class="text-xs text-(--ui-text-dimmed)">Stefan Urbansky</span>
+              </div>
+              <span class="inline-flex items-center gap-1.5 text-sm text-primary">
+                Weiterlesen
+                <UIcon name="lucide:arrow-right" class="size-3.5" />
+              </span>
+            </div>
           </article>
         </NuxtLink>
       </li>

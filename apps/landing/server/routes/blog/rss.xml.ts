@@ -1,3 +1,5 @@
+import { queryCollection } from '@nuxt/content/server'
+
 export default defineEventHandler(async (event) => {
   const articles = await queryCollection(event, 'blog')
     .order('date', 'DESC')

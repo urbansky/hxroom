@@ -3,7 +3,10 @@ definePageMeta({ layout: 'blog' })
 
 const route = useRoute()
 const { data: article } = await useAsyncData(`blog-${route.params.slug}`, () =>
-  queryCollection('blog').path(`/blog/${route.params.slug}`).first()
+  queryCollection('blog')
+    .where('draft', '<>', true)
+    .path(`/blog/${route.params.slug}`)
+    .first()
 )
 
 if (!article.value) {
@@ -45,9 +48,17 @@ useHead({
         <h1 class="font-serif text-4xl lg:text-5xl font-normal text-(--ui-text-highlighted) mb-4 leading-tight">
           {{ article?.title }}
         </h1>
-        <p class="text-(--ui-text-muted) text-lg">
+        <p class="text-(--ui-text-muted) text-lg mb-6">
           {{ article?.description }}
         </p>
+
+        <div class="flex items-center gap-3 pt-6 border-t border-(--ui-border)">
+          <img src="/stefan.jpg" alt="Stefan Urbansky" class="size-10 rounded-full object-cover object-top" />
+          <div>
+            <p class="text-sm font-medium text-(--ui-text-highlighted)">Stefan Urbansky</p>
+            <p class="text-xs text-(--ui-text-dimmed)">Gründer, HxRoom</p>
+          </div>
+        </div>
       </header>
 
       <div class="prose prose-neutral dark:prose-invert max-w-none">

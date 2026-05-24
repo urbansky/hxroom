@@ -10,9 +10,9 @@
     <nav class="fixed top-0 left-0 right-0 z-100 flex items-center justify-between px-6 lg:px-12 h-17 bg-(--ui-bg)/70 backdrop-blur-xl border-b border-(--ui-border)">
       <SiteLogo />
       <div class="flex items-center gap-4">
-        <NuxtLink to="/blog" class="hidden md:inline text-sm text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">
+        <!-- <NuxtLink to="/blog" class="hidden md:inline text-sm text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">
           Blog
-        </NuxtLink>
+        </NuxtLink> -->
         <span class="hidden md:inline-flex items-center gap-2 text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.1em] uppercase px-3.5 py-1.5 border border-sage-400/20 bg-sage-400/6 rounded-full">
           <span class="size-1.5 rounded-full bg-sage-400 animate-pulse" />
           In Entstehung

@@ -11,6 +11,7 @@ export default defineContentConfig({
         date: z.string(),
         category: z.string().optional(),
         image: z.string().optional(),
+        draft: z.boolean().optional().default(false),
       }),
     }),
   },
