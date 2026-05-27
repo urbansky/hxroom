@@ -1,11 +1,28 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Inject, Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { sql } from 'drizzle-orm';
 
 export const DRIZZLE = Symbol('DRIZZLE');
 
 export type DrizzleDb = ReturnType<typeof drizzle>;
+
+@Injectable()
+class DbHealthService implements OnModuleInit {
+  private readonly logger = new Logger(DbHealthService.name);
+
+  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+
+  async onModuleInit() {
+    try {
+      await this.db.execute(sql`SELECT 1`);
+      this.logger.log('Datenbankverbindung erfolgreich');
+    } catch (err) {
+      this.logger.error('Datenbankverbindung fehlgeschlagen', err);
+    }
+  }
+}
 
 @Global()
 @Module({
@@ -23,6 +40,7 @@ export type DrizzleDb = ReturnType<typeof drizzle>;
         return drizzle(client);
       },
     },
+    DbHealthService,
   ],
   exports: [DRIZZLE],
 })
