@@ -59,7 +59,11 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       # Spätere Phasen ergänzen u.a.:
       # - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       # - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}

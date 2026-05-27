@@ -14,8 +14,12 @@ export type DrizzleDb = ReturnType<typeof drizzle>;
       provide: DRIZZLE,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const url = config.getOrThrow<string>('DATABASE_URL');
-        const client = postgres(url);
+        const host = config.getOrThrow<string>('POSTGRES_HOST');
+        const port = config.getOrThrow<string>('POSTGRES_PORT');
+        const db = config.getOrThrow<string>('POSTGRES_DB');
+        const user = config.getOrThrow<string>('POSTGRES_USER');
+        const password = config.getOrThrow<string>('POSTGRES_PASSWORD');
+        const client = postgres({ host, port: Number(port), database: db, user, password });
         return drizzle(client);
       },
     },
