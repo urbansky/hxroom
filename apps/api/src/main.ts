@@ -2,8 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { toNodeHandler } from 'better-auth/node';
 import { AUTH, type Auth } from './auth/auth.module';
+import { runMigrations } from './db/migrate';
 
 async function bootstrap() {
+  await runMigrations();
+
   const app = await NestFactory.create(AppModule);
 
   // better-auth läuft unter /api/auth/*, außerhalb des NestJS-Routings
