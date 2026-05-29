@@ -1,8 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { toNodeHandler } from 'better-auth/node';
+import { AUTH, type Auth } from './auth/auth.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // better-auth läuft unter /api/auth/*, außerhalb des NestJS-Routings
+  const auth = app.get<Auth>(AUTH);
+  app.use('/api/auth', toNodeHandler(auth));
 
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())

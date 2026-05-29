@@ -1,12 +1,14 @@
 import { Global, Inject, Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
+import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
 import postgres from 'postgres';
+import * as schema from './schema';
 
 export const DRIZZLE = Symbol('DRIZZLE');
 
-export type DrizzleDb = ReturnType<typeof drizzle>;
+export type DrizzleDb = PostgresJsDatabase<typeof schema>;
 
 @Injectable()
 class DbHealthService implements OnModuleInit {
@@ -37,7 +39,7 @@ class DbHealthService implements OnModuleInit {
         const user = config.getOrThrow<string>('POSTGRES_USER');
         const password = config.getOrThrow<string>('POSTGRES_PASSWORD');
         const client = postgres({ host, port: Number(port), database: db, user, password });
-        return drizzle(client);
+        return drizzle(client, { schema });
       },
     },
     DbHealthService,
