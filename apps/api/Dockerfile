@@ -39,6 +39,7 @@ COPY packages/ui/package.json packages/ui/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 COPY --from=build /app/packages/shared/dist packages/shared/dist/
 COPY --from=build /app/apps/api/dist apps/api/dist/
+COPY --from=build /app/apps/api/drizzle apps/api/drizzle/
 WORKDIR /app/apps/api
 
 EXPOSE 3000
