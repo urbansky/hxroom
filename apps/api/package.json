@@ -10,7 +10,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:prod": "dotenv -e .env.prod -- drizzle-kit studio"
   },
   "dependencies": {
     "@hxroom/shared": "workspace:*",
@@ -31,6 +33,7 @@
     "@swc/core": "^1.15.33",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.1.6",
+    "dotenv-cli": "^8.0.0",
     "drizzle-kit": "0.31.10",
     "typescript": "^5.7.0",
     "unplugin-swc": "^1.5.9",

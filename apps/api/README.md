@@ -61,6 +61,52 @@ curl http://localhost:3000/api/v1/health
 
 ---
 
+## Drizzle Studio
+
+### Lokal
+
+```bash
+pnpm --filter @hxroom/api db:studio
+```
+
+### Produktionsdatenbank
+
+Die Produktions-DB ist nur innerhalb des Docker-Netzwerks erreichbar. Der Zugriff erfolgt über einen SSH-Tunnel.
+
+**Voraussetzungen:**
+
+1. `~/.ssh/config` enthält einen Eintrag mit `LocalForward`:
+
+```
+Host hxroom
+    HostName 91.99.54.46
+    User root
+    LocalForward 5433 127.0.0.1:5432
+```
+
+2. `apps/api/.env.prod` anlegen (wird nicht eingecheckt):
+
+```
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5433
+POSTGRES_USER=<user>
+POSTGRES_PASSWORD=<passwort>
+POSTGRES_DB=<db>
+```
+
+**Studio starten:**
+
+```bash
+ssh hxroom          # SSH-Session öffnen – Tunnel ist damit aktiv
+
+# In einem zweiten Terminal:
+pnpm --filter @hxroom/api db:studio:prod
+```
+
+Studio öffnet sich unter **https://local.drizzle.studio**. Der Tunnel bleibt aktiv solange die SSH-Session läuft.
+
+---
+
 ## Docker
 
 Das Image wird per GitHub Actions gebaut und in die GitHub Container Registry gepusht (`ghcr.io/hxroom/hxroom-api`).
