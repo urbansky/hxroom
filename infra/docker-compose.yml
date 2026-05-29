@@ -48,6 +48,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -64,8 +66,9 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL}
       # Spätere Phasen ergänzen u.a.:
-      # - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       # - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       # - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
       # - S3_ENDPOINT=${S3_ENDPOINT}
