@@ -6,7 +6,7 @@ White-Label Videocall-Plattform für Coaches im DACH-Markt.
 
 - **Node.js** >= 20
 - **pnpm** >= 10 (`corepack enable && corepack prepare pnpm@10.10.0 --activate`)
-- **Docker & Docker Compose** (für PostgreSQL, Redis, LiveKit, Whisper)
+- **Docker & Docker Compose**
 
 ## Setup
 
@@ -18,43 +18,46 @@ git clone <repo-url> && cd hxroom
 pnpm install
 
 # Umgebungsvariablen anlegen
-cp .env.example .env
+cp apps/api/.env.example apps/api/.env
+# .env anpassen (DB-Passwort, Secrets etc.)
 
-# Infrastruktur starten (PostgreSQL, Redis, etc.)
+# Infrastruktur starten (PostgreSQL + Caddy)
 docker compose -f infra/docker-compose.dev.yml up -d
 
+# Infrastruktur stoppen
+docker compose -f infra/docker-compose.dev.yml down
+
 # Datenbank-Migrationen ausführen
-pnpm db:generate && pnpm db:migrate
+pnpm db:migrate
 ```
 
 ## Entwicklung starten
 
-### Alles gleichzeitig
-
 ```bash
+# Alle Apps gleichzeitig
 pnpm dev
+
+# Oder einzeln:
+pnpm --filter @hxroom/api dev       # Backend API (NestJS)     → http://localhost:3000
+pnpm --filter @hxroom/coach dev     # Coach-Backoffice         → http://localhost:5173
+pnpm --filter @hxroom/room dev      # Klienten-Subdomain       → http://localhost:5174
+pnpm --filter @hxroom/admin dev     # Betreiber-Backoffice     → http://localhost:5175
+pnpm --filter @hxroom/landing dev   # Landingpage              → http://localhost:5176
 ```
 
-Startet alle Apps parallel (API + alle Frontends).
+### Lokaler Reverse Proxy (Caddy)
 
-### Einzelne Apps starten
+Caddy läuft im Dev-Container und routet `*.hxroom.localhost` auf die lokalen Ports:
 
-```bash
-# Backend API (NestJS) – http://localhost:3000
-pnpm --filter api dev
+| URL | App |
+|-----|-----|
+| http://hxroom.localhost | Landingpage |
+| http://app.hxroom.localhost | Coach-Backoffice |
+| http://api.hxroom.localhost | Backend API |
+| http://admin.hxroom.localhost | Betreiber-Backoffice |
+| http://livekit.hxroom.localhost | LiveKit |
 
-# Coach-Backoffice – http://localhost:5173
-pnpm --filter web dev
-
-# Klienten-Subdomain – http://localhost:5174
-pnpm --filter client dev
-
-# Betreiber-Backoffice – http://localhost:5175
-pnpm --filter admin dev
-
-# Landingpage – http://localhost:5176
-pnpm --filter landing dev
-```
+`*.localhost`-Domains funktionieren auf macOS ohne `/etc/hosts`-Eintrag. Die Dev-Server müssen auf `0.0.0.0` lauschen (bereits in `nuxt.config.ts` konfiguriert).
 
 ### Shared Packages
 
@@ -68,17 +71,6 @@ pnpm --filter @hxroom/shared dev
 
 `@hxroom/ui` benötigt keinen Build-Schritt – Vite importiert die Quelldateien direkt aus dem Workspace.
 
-## Build
-
-```bash
-# Alles bauen
-pnpm build
-
-# Einzelne App bauen
-pnpm --filter api build
-pnpm --filter web build
-```
-
 ## Datenbank
 
 ```bash
@@ -87,26 +79,42 @@ pnpm db:generate
 
 # Migrationen ausführen
 pnpm db:migrate
+
+# Drizzle Studio (DB-Browser)
+pnpm db:studio
 ```
 
 Das Drizzle-Schema liegt in `apps/api/src/db/schema.ts`.
+
+## Build & Deployment
+
+```bash
+# Alles bauen
+pnpm build
+
+# Einzelne App bauen
+pnpm --filter @hxroom/api build
+pnpm --filter @hxroom/coach build
+```
+
+Deployment per Docker Compose auf Hetzner DE – siehe `infra/docker-compose.yml`.
 
 ## Projektstruktur
 
 ```
 hxroom/
 ├── apps/
-│   ├── api/            NestJS Backend          → api.hxroom.io
-│   ├── web/            Coach-Backoffice        → app.hxroom.io
-│   ├── client/         Klienten-Subdomain      → [slug].hxroom.io
-│   ├── admin/          Betreiber-Backoffice    → admin.hxroom.io
-│   └── landing/        Landingpage             → hxroom.io
+│   ├── api/            NestJS Backend          → api.hxroom.de
+│   ├── coach/          Coach-Backoffice        → app.hxroom.de
+│   ├── room/           Klienten-Subdomain      → [slug].hxroom.de
+│   ├── admin/          Betreiber-Backoffice    → admin.hxroom.de
+│   └── landing/        Landingpage             → hxroom.de
 ├── packages/
 │   ├── shared/         Gemeinsame Types & Zod-Schemas
 │   └── ui/             Shared Theme, Nuxt UI Config & Vue-Komponenten
 ├── infra/
 │   ├── docker-compose.yml        Produktion
-│   ├── docker-compose.dev.yml    Lokale Entwicklung
+│   ├── docker-compose.dev.yml    Lokale Entwicklung (PostgreSQL + Caddy)
 │   ├── livekit/                  LiveKit-Konfiguration
 │   ├── whisper/                  Whisper-Service
 │   └── caddy/                    Reverse Proxy
@@ -119,7 +127,7 @@ hxroom/
 |---|---|
 | Backend | NestJS, PostgreSQL, Drizzle ORM |
 | Auth | better-auth + Organization Plugin |
-| Frontend | Vue 3, Nuxt UI (Vue), Pinia |
+| Frontend | Vue 3, Nuxt 4, Nuxt UI v4, Pinia |
 | Video | LiveKit (self-hosted) |
 | Speech2Text | Whisper / faster-whisper (self-hosted) |
 | Monorepo | pnpm Workspaces |

@@ -1,12 +1,29 @@
 # HxRoom – Docker Compose (Lokale Entwicklung)
-# Startet PostgreSQL, Redis, LiveKit (dev), Whisper-Service.
-# Weitere Services werden in späteren Phasen ergänzt.
+# Startet Infrastruktur-Services; Apps werden per pnpm gestartet.
 services:
   caddy:
-    build: ./caddy
+    image: caddy:latest
     ports:
       - "80:80"
     volumes:
       - ./caddy/Caddyfile.dev:/etc/caddy/Caddyfile
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: hxroom
+      POSTGRES_USER: hxroom
+      POSTGRES_PASSWORD: hxroom
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hxroom"]
+      interval: 5s
+      retries: 5
+
+volumes:
+  postgres_dev_data:

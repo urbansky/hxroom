@@ -31,6 +31,8 @@ Wichtigste Regeln:
 - App mit `<UApp>` wrappen (wird für Toast, Tooltip etc. benötigt)
 
 ## Häufige Tasks
+- Lokale Infrastruktur starten: `docker compose -f infra/docker-compose.dev.yml up -d`
+- Apps starten: `pnpm dev` (alle) oder `pnpm --filter @hxroom/<app> dev`
 - Neues NestJS Modul: nest generate module <n>
 - DB-Schema ändern: pnpm db:generate && pnpm db:migrate
 - Typen generieren (shared): pnpm build:types
@@ -65,6 +67,12 @@ hxroom/
 - room: 5174
 - admin: 5175
 - landing: 5176
+
+Über Caddy (läuft in docker-compose.dev.yml) auch erreichbar als:
+- http://api.hxroom.localhost → api
+- http://app.hxroom.localhost → coach
+- http://hxroom.localhost → landing
+- http://admin.hxroom.localhost → admin
 
 ## Videokonferenz
 Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/room/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.

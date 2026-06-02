@@ -89,82 +89,40 @@ Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilt
 
 ## 4. Docker Compose Architektur
 
-Alle Services laufen in einem einzigen Docker Compose Stack. Produktion und Entwicklung teilen dieselbe Struktur, unterscheiden sich nur in Mounts und Umgebungsvariablen.
+Es gibt zwei Compose-Dateien in `infra/`:
+
+| Datei | Zweck |
+|---|---|
+| `docker-compose.yml` | Produktion – alle Services als Container (Apps, Infrastruktur) |
+| `docker-compose.dev.yml` | Lokale Entwicklung – nur Infrastruktur-Services |
+
+### Lokale Entwicklung (`docker-compose.dev.yml`)
+
+Die Apps (api, coach, room, admin, landing) laufen lokal per `pnpm dev`. Docker übernimmt nur die Infrastruktur:
+
+- **PostgreSQL** (Port 5433 auf dem Host, 5432 im Container)
+- **Caddy** als Reverse Proxy: routet `*.hxroom.localhost` auf die lokalen pnpm-Dev-Server
+
+Weitere Services (Redis, LiveKit, Whisper) werden ergänzt, wenn sie lokal benötigt werden.
+
+### Produktion (`docker-compose.yml`)
+
+Alle Services laufen als Container auf dem Hetzner-Host:
 
 ```yaml
-# infra/docker-compose.yml (vereinfacht)
 services:
-  api:
-    build: ./apps/api
-    depends_on: [postgres, redis]
-    environment:
-      - DATABASE_URL=postgres://...
-      - LIVEKIT_API_KEY=...
-      - WHISPER_API_URL=http://whisper:9000
-
-  coach:
-    build: ./apps/coach
-
-  postgres:
-    image: postgres:16-alpine
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-
-  livekit:
-    image: livekit/livekit-server:latest
-    volumes:
-      - ./infra/livekit/livekit.yaml:/etc/livekit.yaml
-    command: --config /etc/livekit.yaml
-
-  livekit-egress:
-    image: livekit/egress:latest
-    volumes:
-      - ./infra/livekit/egress.yaml:/etc/egress.yaml
-    environment:
-      - EGRESS_CONFIG_FILE=/etc/egress.yaml
-    depends_on: [livekit, redis]
-    # Egress benötigt Zugriff auf Redis (shared mit LiveKit) und S3-Credentials
-    # egress.yaml definiert: redis-Adresse, S3-Bucket, API-Keys
-
-  whisper:
-    build: ./infra/whisper       # faster-whisper HTTP-Wrapper
-    volumes:
-      - whisper-models:/app/models
-
-  # Object Storage: primär Hetzner Object Storage (extern), angebunden via
-  # S3_ENDPOINT / S3_ACCESS_KEY / S3_SECRET_KEY in der api-Umgebung.
-  # Der folgende minio-Service ist eine optionale Alternative für On-Premises-Deploys
-  # oder Migrationen – Client-Code und Key-Schema bleiben durch S3-Kompatibilität identisch.
-  # minio:
-  #   image: minio/minio:latest
-  #   command: server /data --console-address ":9001"
-  #   environment:
-  #     - MINIO_ROOT_USER=${S3_ACCESS_KEY}
-  #     - MINIO_ROOT_PASSWORD=${S3_SECRET_KEY}
-  #   volumes:
-  #     - minio-data:/data
-  #   ports:
-  #     - "9000:9000"   # S3 API (intern, nicht öffentlich)
-  #     - "9001:9001"   # MinIO Console (nur intern)
-
-  caddy:
-    image: caddy:latest
-    volumes:
-      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile
-    ports:
-      - "80:80"
-      - "443:443"
-
-volumes:
-  pgdata:
-  whisper-models:
-  # minio-data:   # nur aktivieren, wenn der optionale minio-Service oben genutzt wird
+  api, coach, room, admin, landing   # gebuildete App-Images
+  postgres:   image: postgres:17-alpine
+  redis:      image: redis:7-alpine
+  livekit:    image: livekit/livekit-server:latest
+  livekit-egress: image: livekit/egress:latest   # Recordings → S3
+  whisper:    build: ./infra/whisper             # faster-whisper HTTP-Wrapper
+  caddy:      build: ./infra/caddy               # mit IONOS-DNS-Plugin für Wildcard-TLS
 ```
 
-**Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können später ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
+Object Storage läuft extern (Hetzner Object Storage, S3-kompatibel). MinIO als self-hosted Alternative ist im Compose auskommentiert.
+
+**Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
 
 ---
 

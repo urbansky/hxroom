@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1',
+      authUrl: process.env.NUXT_PUBLIC_AUTH_URL ?? 'http://localhost:3000',
     },
   },
 
@@ -28,6 +29,7 @@ export default defineNuxtConfig({
   },
 
   devServer: {
+    host: '0.0.0.0',
     port: 5173,
   },
 
