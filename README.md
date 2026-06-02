@@ -19,7 +19,8 @@ pnpm install
 
 # Umgebungsvariablen anlegen
 cp apps/api/.env.example apps/api/.env
-# .env anpassen (DB-Passwort, Secrets etc.)
+cp apps/coach/.env.example apps/coach/.env
+# .env-Dateien anpassen – insb. Secrets und gewünschte URLs (localhost vs. Caddy)
 
 # Infrastruktur starten (PostgreSQL + Caddy)
 docker compose -f infra/docker-compose.dev.yml up -d

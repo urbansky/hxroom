@@ -19,9 +19,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM deps AS build
+COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
 COPY apps/coach/ apps/coach/
-RUN pnpm --filter coach build
+RUN pnpm --filter @hxroom/coach build
 
 # ---- Production ----
 FROM nginx:alpine

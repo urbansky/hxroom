@@ -9,9 +9,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // better-auth läuft unter /api/auth/*, außerhalb des NestJS-Routings
   const auth = app.get<Auth>(AUTH);
-  app.use('/api/auth', toNodeHandler(auth));
 
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
@@ -22,7 +20,9 @@ async function bootstrap() {
         'http://localhost:5176', // landing (dev)
       ];
 
+  // CORS muss vor better-auth registriert werden, da /api/auth den NestJS-Pipeline umgeht
   app.enableCors({ origin: allowedOrigins, credentials: true });
+  app.use('/api/auth', toNodeHandler(auth));
   app.setGlobalPrefix('api/v1');
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port).catch((err: NodeJS.ErrnoException) => {

@@ -68,5 +68,13 @@ export class MailService {
       this.logger.error(`Brevo mail send failed: ${response.status} ${body.slice(0, 200)}`);
       throw new InternalServerErrorException('E-Mail-Versand fehlgeschlagen.');
     }
+
+    const firstTo = Array.isArray(options.to) ? options.to[0] : options.to;
+    this.logger.log(`Mail sent: "${options.subject}" → ${this.maskEmail(firstTo.email)}`);
+  }
+
+  private maskEmail(email: string): string {
+    const [local, domain] = email.split('@');
+    return `${local[0]}***@${domain}`;
   }
 }
