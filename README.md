@@ -81,11 +81,34 @@ pnpm db:generate
 # Migrationen ausführen
 pnpm db:migrate
 
-# Drizzle Studio (DB-Browser)
+# Drizzle Studio (lokale DB)
 pnpm db:studio
 ```
 
 Das Drizzle-Schema liegt in `apps/api/src/db/schema.ts`.
+
+### Produktionsdatenbank (Drizzle Studio)
+
+Zugriff über SSH-Port-Forwarding. Einmalig in `~/.ssh/config` eintragen:
+
+```
+Host hxroom
+    HostName 91.99.54.46
+    User root
+    LocalForward 5433 127.0.0.1:5432
+```
+
+Dann:
+
+```bash
+# 1. SSH-Tunnel öffnen (Terminal offen lassen)
+ssh hxroom
+
+# 2. Drizzle Studio mit Produktions-Env starten (neues Terminal)
+pnpm --filter @hxroom/api db:studio:prod
+```
+
+Drizzle Studio öffnet sich unter `https://local.drizzle.studio` und verbindet sich über den Tunnel auf Port `5433` mit der Produktionsdatenbank. Das Produktionspasswort steht in `apps/api/.env.prod` (`POSTGRES_PASSWORD`).
 
 ## Build & Deployment
 
