@@ -1,8 +1,9 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { betterAuth } from 'better-auth';
+import { betterAuth, generateId } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { organization } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { MailModule } from '../mail/mail.module';
 import { MailService } from '../mail/mail.service';
@@ -24,7 +25,53 @@ export type Auth = ReturnType<typeof betterAuth>;
             provider: 'pg',
             schema: { ...schema },
           }),
-          plugins: [organization()],
+          plugins: [
+            organization({
+              allowUserToCreateOrganization: false,
+              creatorRole: 'owner',
+            }),
+          ],
+          databaseHooks: {
+            user: {
+              create: {
+                after: async (user) => {
+                  const baseSlug = generateSlug(user.name ?? user.email);
+                  const slug = await ensureUniqueSlug(baseSlug, db);
+                  const orgId = generateId();
+                  await db.insert(schema.organization).values({
+                    id: orgId,
+                    name: user.name ?? 'Mein Coaching',
+                    slug,
+                    createdAt: new Date(),
+                  });
+                  await db.insert(schema.member).values({
+                    id: generateId(),
+                    organizationId: orgId,
+                    userId: user.id,
+                    role: 'owner',
+                    createdAt: new Date(),
+                  });
+                },
+              },
+            },
+            session: {
+              create: {
+                after: async (session) => {
+                  const [membership] = await db
+                    .select({ organizationId: schema.member.organizationId })
+                    .from(schema.member)
+                    .where(eq(schema.member.userId, session.userId))
+                    .limit(1);
+                  if (membership) {
+                    await db
+                      .update(schema.session)
+                      .set({ activeOrganizationId: membership.organizationId })
+                      .where(eq(schema.session.id, session.id));
+                  }
+                },
+              },
+            },
+          },
           secret: config.getOrThrow<string>('BETTER_AUTH_SECRET'),
           baseURL: config.get<string>('BETTER_AUTH_URL', 'http://localhost:3000'),
           trustedOrigins: config.get<string>('CORS_ORIGINS')
@@ -49,6 +96,31 @@ export type Auth = ReturnType<typeof betterAuth>;
   exports: [AUTH],
 })
 export class AuthModule {}
+
+function generateSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+async function ensureUniqueSlug(base: string, db: DrizzleDb): Promise<string> {
+  let slug = base;
+  let counter = 2;
+  while (true) {
+    const [existing] = await db
+      .select({ id: schema.organization.id })
+      .from(schema.organization)
+      .where(eq(schema.organization.slug, slug))
+      .limit(1);
+    if (!existing) return slug;
+    slug = `${base}-${counter++}`;
+  }
+}
 
 function buildVerificationEmail(name: string, verifyUrl: string): string {
   return `<!DOCTYPE html>

@@ -23,6 +23,11 @@ export class AuthGuard implements CanActivate {
     }
 
     req.session = session;
+    const activeOrgId = (session.session as Record<string, unknown>)
+      .activeOrganizationId as string | undefined;
+    if (activeOrgId) {
+      req.organization = { id: activeOrgId };
+    }
     return true;
   }
 }
