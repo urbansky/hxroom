@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
-definePageMeta({ layout: false })
+definePageMeta({ layout: 'auth' })
 
 const { $authClient } = useNuxtApp()
 const route = useRoute()
@@ -49,8 +49,7 @@ function mapAuthError(msg?: string): string {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-(--ui-bg-muted) px-4">
-    <div class="w-full max-w-sm flex flex-col gap-4">
+  <div class="w-full max-w-sm flex flex-col gap-4">
       <UAlert
         v-if="verified"
         icon="i-lucide-check-circle"
@@ -101,6 +100,5 @@ function mapAuthError(msg?: string): string {
           </p>
         </template>
       </UAuthForm>
-    </div>
   </div>
 </template>

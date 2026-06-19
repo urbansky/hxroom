@@ -7,6 +7,8 @@
 - Monorepo: pnpm workspaces
 - Deployment: Docker Compose auf Hetzner DE
 
+Nutze die better-auth-Dokumentation: https://better-auth.com/llms.txt (Backend und Frontend)
+
 ## Konventionen
 - API-Endpunkte: REST, kebab-case, plural Ressourcen (/api/v1/bookings)
 - DB-Schema: Drizzle, in apps/api/src/db/schema.ts
@@ -17,7 +19,9 @@
 
 ## Nuxt UI (Frontend-Konventionen)
 
-Alle Frontend-Apps (`coach`, `room`, `admin`, `landing`) verwenden **Nuxt 4** mit **Nuxt UI v4**. Die vollständigen Guidelines sind unter https://ui.nuxt.com/llms-full.txt abrufbar – diese sind verbindlich beim Schreiben von Frontend-Code.
+Alle Frontend-Apps (`coach`, `room`, `admin`, `landing`) verwenden **Nuxt 4** mit **Nuxt UI v4**.
+Nutze die Nuxt-Dokumentation: https://nuxt.com/llms.txt
+Nutze die Nuxt-UI-Dokumentation: https://ui.nuxt.com/llms.txt
 
 Wichtigste Regeln:
 - Semantische Farb-Aliases verwenden: `primary`, `secondary`, `success`, `info`, `warning`, `error`, `neutral` – keine direkten Tailwind-Farben (z. B. `gray-500`) in Props

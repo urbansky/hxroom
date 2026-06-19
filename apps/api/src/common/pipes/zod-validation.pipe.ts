@@ -1,5 +1,5 @@
 import { BadRequestException, PipeTransform } from '@nestjs/common';
-import { ZodSchema } from 'zod';
+import { ZodType } from 'zod';
 
 /**
  * Validiert Request-Bodies gegen ein Zod-Schema.
@@ -17,12 +17,12 @@ import { ZodSchema } from 'zod';
  * (siehe Konvention in CLAUDE.md).
  */
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema: ZodSchema) {}
+  constructor(private readonly schema: ZodType) {}
 
   transform(value: unknown) {
     const result = this.schema.safeParse(value);
     if (!result.success) {
-      const errors = result.error.errors.map((e) => ({
+      const errors = result.error.issues.map((e) => ({
         path: e.path.join('.'),
         message: e.message,
       }));

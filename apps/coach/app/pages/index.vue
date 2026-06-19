@@ -1,38 +1,58 @@
 <script setup lang="ts">
-const { session, signOut } = useAuth()
+definePageMeta({ middleware: 'auth' })
+
+const { session } = useAuth()
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-8">
-    <UCard class="w-full max-w-sm">
-      <template #header>
-        <h1 class="text-xl font-semibold">HxRoom – Coach-Backoffice</h1>
-      </template>
+  <div class="p-4 sm:p-6 flex flex-col gap-6">
+    <div>
+      <h1 class="font-serif text-3xl text-(--ui-text-highlighted)">
+        Hallo, {{ session.data?.user?.name ?? '…' }}
+      </h1>
+      <p class="mt-1 text-sm text-(--ui-text-muted)">
+        Willkommen in deinem Coach-Backoffice.
+      </p>
+    </div>
 
-      <div v-if="session.isPending" class="flex justify-center py-4">
-        <UIcon name="i-lucide-loader-circle" class="animate-spin text-2xl text-muted" />
-      </div>
+    <UAlert
+      icon="i-lucide-construction"
+      color="info"
+      variant="soft"
+      title="Dashboard in Entwicklung"
+      description="Die Übersichtskacheln, der Kalender und die Klientenliste folgen in Phase 3 und 4."
+    />
 
-      <div v-else-if="session.data" class="space-y-4">
-        <div class="space-y-1">
-          <p class="text-sm text-muted">Angemeldet als</p>
-          <p class="font-medium">{{ session.data.user.name }}</p>
-          <p class="text-sm text-muted">{{ session.data.user.email }}</p>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <UCard>
+        <div class="flex items-center gap-3">
+          <UIcon name="i-lucide-calendar-check" class="size-8 text-primary shrink-0" />
+          <div>
+            <p class="text-xs text-(--ui-text-muted) uppercase tracking-wide">Nächster Termin</p>
+            <USkeleton class="mt-1 h-5 w-32 rounded" />
+          </div>
         </div>
-        <UButton block color="neutral" variant="outline" @click="signOut">
-          Abmelden
-        </UButton>
-      </div>
+      </UCard>
 
-      <div v-else class="space-y-3">
-        <p class="text-sm text-muted">Du bist nicht angemeldet.</p>
-        <UButton block to="/auth/login">
-          Anmelden
-        </UButton>
-        <UButton block color="neutral" variant="ghost" to="/auth/register">
-          Registrieren
-        </UButton>
-      </div>
-    </UCard>
+      <UCard>
+        <div class="flex items-center gap-3">
+          <UIcon name="i-lucide-users" class="size-8 text-primary shrink-0" />
+          <div>
+            <p class="text-xs text-(--ui-text-muted) uppercase tracking-wide">Klienten gesamt</p>
+            <USkeleton class="mt-1 h-5 w-16 rounded" />
+          </div>
+        </div>
+      </UCard>
+
+      <UCard>
+        <div class="flex items-center gap-3">
+          <UIcon name="i-lucide-video" class="size-8 text-primary shrink-0" />
+          <div>
+            <p class="text-xs text-(--ui-text-muted) uppercase tracking-wide">Sitzungen diesen Monat</p>
+            <USkeleton class="mt-1 h-5 w-16 rounded" />
+          </div>
+        </div>
+      </UCard>
+    </div>
   </div>
 </template>
