@@ -50,13 +50,14 @@ pnpm --filter @hxroom/landing dev   # Landingpage              → http://localh
 
 Caddy läuft im Dev-Container und routet `*.hxroom.localhost` auf die lokalen Ports:
 
-| URL | App |
-|-----|-----|
-| http://hxroom.localhost | Landingpage |
-| http://app.hxroom.localhost | Coach-Backoffice |
-| http://api.hxroom.localhost | Backend API |
-| http://admin.hxroom.localhost | Betreiber-Backoffice |
-| http://livekit.hxroom.localhost | LiveKit |
+| URL                             | App                  |
+|---------------------------------|----------------------|
+| http://hxroom.localhost         | Landingpage          |
+| http://app.hxroom.localhost     | Coach-Backoffice     |
+| http://anna.hxroom.localhost    | Coach-Landing (Room) |
+| http://api.hxroom.localhost     | Backend API          |
+| http://admin.hxroom.localhost   | Betreiber-Backoffice |
+| http://livekit.hxroom.localhost | LiveKit              |
 
 `*.localhost`-Domains funktionieren auf macOS ohne `/etc/hosts`-Eintrag. Die Dev-Server müssen auf `0.0.0.0` lauschen (bereits in `nuxt.config.ts` konfiguriert).
 
