@@ -1,7 +1,12 @@
 <script setup lang="ts">
-const coach = {
-  name: 'Anna Bergmann',
-  initial: 'A',
+import { inject, computed, type Ref } from 'vue';
+import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
+
+const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
+
+const coach = computed(() => ({
+  name: coachProfile?.value?.name ?? 'Coach',
+  initial: (coachProfile?.value?.name ?? 'C').charAt(0),
   title: 'Zertifizierte Life & Business Coach · 8 Jahre Erfahrung',
   eyebrow: 'Life Coaching · Berlin & online',
   bio: 'Ich arbeite mit Menschen, die an einem Wendepunkt stehen – beruflich oder persönlich – und Klarheit suchen, wo es gerade nur Nebel gibt.',
@@ -11,7 +16,7 @@ const coach = {
     { value: '8', label: 'Jahre' },
     { value: '4.9', label: 'Bewertung' },
   ],
-};
+}));
 
 const sessionTypes = [
   { name: 'Erstgespräch', duration: '30 Minuten · Kennenlernen', price: 'Kostenlos', free: true, featured: true },
@@ -61,7 +66,7 @@ const credentials = [
 
   <!-- Header -->
   <UHeader
-    title="Anna Bergmann"
+    :title="coach.name"
     :ui="{
       root: 'bg-(--ui-bg)/75 backdrop-blur-xl border-b border-(--ui-border)',
       container: 'max-w-[1200px] px-6 lg:px-10',
@@ -137,7 +142,7 @@ const credentials = [
       <!-- Coach Card -->
       <div class="coach-card bg-(--ui-bg-elevated) border border-(--ui-border) rounded-2xl overflow-hidden">
         <div class="coach-card-header relative h-[200px]">
-          <img src="/coach-example.jpg" alt="Anna Bergmann" class="absolute inset-0 size-full object-cover object-top" />
+          <img src="/coach-example.jpg" :alt="coach.name" class="absolute inset-0 size-full object-cover object-top" />
         </div>
         <div class="px-5 pb-6 pt-5 flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
