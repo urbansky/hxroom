@@ -13,14 +13,14 @@ declare module 'vue' {
   export interface GlobalComponents {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    UAvatar: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Avatar.vue')['default']
-    UBadge: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
-    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
-    UCard: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
-    UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
-    UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
-    UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
-    UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
-    USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.5.1_@tiptap+extensions@3.20.1_@tiptap+core@3.20.1_@tiptap+pm@3.20.1__@tiptap_1b0adad71e75a16afa4f2635bf844052/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
+    UAvatar: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Avatar.vue')['default']
+    UBadge: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
+    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UCard: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
+    UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
+    UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
+    UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
+    UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
+    USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_b8e413c903418fd73430c97a9cec7af3/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
   }
 }
