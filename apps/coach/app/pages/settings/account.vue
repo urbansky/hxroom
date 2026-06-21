@@ -35,19 +35,12 @@ const upcomingFeatures = [
     <h1 class="font-serif text-3xl text-(--ui-text-highlighted) mb-2">Account</h1>
     <p class="text-(--ui-text-muted) mb-8">Verwaltung deines Kontos und deiner Sicherheitseinstellungen.</p>
 
-    <div class="flex flex-col gap-3">
-      <div
+    <div class="flex flex-col gap-2">
+      <UpcomingFeature
         v-for="item in upcomingFeatures"
         :key="item.title"
-        class="flex items-start gap-3 p-4 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated) opacity-60"
-      >
-        <UIcon :name="item.icon" class="size-4 text-(--ui-text-dimmed) mt-0.5 shrink-0" />
-        <div>
-          <div class="text-sm text-(--ui-text-muted)">{{ item.title }}</div>
-          <div class="text-xs text-(--ui-text-dimmed) mt-0.5">{{ item.description }}</div>
-        </div>
-        <UBadge label="Demnächst" color="neutral" variant="subtle" size="xs" class="ml-auto shrink-0" />
-      </div>
+        v-bind="item"
+      />
     </div>
   </div>
 </template>
