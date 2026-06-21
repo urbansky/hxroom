@@ -2,6 +2,24 @@
 definePageMeta({ middleware: 'auth' })
 
 const { session } = useAuth()
+
+const features = [
+  {
+    icon: 'i-lucide-calendar-days',
+    title: 'Tagesübersicht',
+    description: 'Nächste Termine des Tages auf einen Blick – mit Klientenname und direktem Raumlink.',
+  },
+  {
+    icon: 'i-lucide-bell-ring',
+    title: '„Klient wartet"-Anzeige',
+    description: 'Echtzeit-Benachrichtigung, wenn ein Klient den Warteraum betritt.',
+  },
+  {
+    icon: 'i-lucide-list-checks',
+    title: 'Onboarding-Checkliste',
+    description: 'Schritt-für-Schritt-Anleitung zum Einrichten deines Accounts – verschwindet nach Abschluss.',
+  },
+]
 </script>
 
 <template>
@@ -53,6 +71,14 @@ const { session } = useAuth()
           </div>
         </div>
       </UCard>
+    </div>
+
+    <div class="flex flex-col gap-2 max-w-2xl">
+      <UpcomingFeature
+        v-for="item in features"
+        :key="item.title"
+        v-bind="item"
+      />
     </div>
   </div>
 </template>

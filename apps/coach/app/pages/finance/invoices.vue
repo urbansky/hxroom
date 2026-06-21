@@ -22,6 +22,11 @@ const features = [
     title: 'Stornierung & Rückerstattung',
     description: 'Regeln für Stornierungen und Rückerstattungen konfigurieren und im Buchungsprozess kommunizieren.',
   },
+  {
+    icon: 'i-lucide-settings-2',
+    title: 'Rechnungsvorlage anpassen',
+    description: 'Eigenes Logo, Steuernummer und Zahlungshinweise im Rechnungslayout hinterlegen.',
+  },
 ]
 </script>
 
