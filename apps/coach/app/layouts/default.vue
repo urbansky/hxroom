@@ -8,7 +8,11 @@ const navItems: NavigationMenuItem[][] = [
   [
     { type: 'label', label: 'Übersicht' },
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/' },
+  ],
+  [
+    { type: 'label', label: 'Buchungen' },
     { label: 'Kalender', icon: 'i-lucide-calendar', to: '/bookings' },
+    { label: 'Verfügbarkeit', icon: 'i-lucide-clock', to: '/bookings/availability' },
   ],
   [
     { type: 'label', label: 'Klienten' },
@@ -23,6 +27,9 @@ const navItems: NavigationMenuItem[][] = [
   [
     { type: 'label', label: 'Einstellungen' },
     { label: 'Branding', icon: 'i-lucide-sun', to: '/settings/branding' },
+    { label: 'Warteraum', icon: 'i-lucide-door-open', to: '/settings/waiting-room' },
+    { label: 'Benachrichtigungen', icon: 'i-lucide-bell', to: '/settings/notifications' },
+    { label: 'Plan & Abrechnung', icon: 'i-lucide-credit-card', to: '/settings/billing' },
     { label: 'Datenschutz', icon: 'i-lucide-shield', to: '/settings/privacy' },
   ],
 ]
@@ -48,11 +55,15 @@ const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/': 'Dashboard',
     '/bookings': 'Kalender',
+    '/bookings/availability': 'Verfügbarkeit',
     '/clients': 'Klientenliste',
     '/notes': 'Notizen',
     '/finance/revenue': 'Umsatz',
     '/finance/invoices': 'Rechnungen',
     '/settings/branding': 'Branding',
+    '/settings/waiting-room': 'Warteraum',
+    '/settings/notifications': 'Benachrichtigungen',
+    '/settings/billing': 'Plan & Abrechnung',
     '/settings/privacy': 'Datenschutz',
     '/settings/account': 'Account',
   }
