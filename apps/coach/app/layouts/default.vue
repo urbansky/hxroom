@@ -88,6 +88,7 @@ const pageTitle = computed(() => {
           :collapsed="collapsed"
           orientation="vertical"
           :items="navItems"
+          :tooltip="true"
           class="w-full"
         />
       </template>
