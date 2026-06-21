@@ -19,6 +19,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM deps AS build
+# VITE_* werden zur Build-Zeit ins SPA-Bundle eingebettet
+ARG VITE_API_URL=https://api.hxroom.de
+ENV VITE_API_URL=$VITE_API_URL
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
