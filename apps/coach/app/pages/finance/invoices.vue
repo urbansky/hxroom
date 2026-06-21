@@ -18,9 +18,9 @@ const features = [
     description: 'Alle Rechnungen eines Zeitraums als ZIP-Archiv herunterladen – für Steuerberater und Jahresabschluss.',
   },
   {
-    icon: 'i-lucide-settings-2',
-    title: 'Rechnungsvorlage anpassen',
-    description: 'Eigenes Logo, Steuernummer und Zahlungshinweise im Rechnungslayout hinterlegen.',
+    icon: 'i-lucide-x-circle',
+    title: 'Stornierung & Rückerstattung',
+    description: 'Regeln für Stornierungen und Rückerstattungen konfigurieren und im Buchungsprozess kommunizieren.',
   },
 ]
 </script>

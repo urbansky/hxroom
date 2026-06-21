@@ -18,11 +18,6 @@ const upcomingFeatures = [
     description: 'Konto mit einem zweiten Faktor absichern.',
   },
   {
-    icon: 'i-lucide-bell',
-    title: 'Benachrichtigungen',
-    description: 'E-Mail-Benachrichtigungen für Buchungen und Erinnerungen konfigurieren.',
-  },
-  {
     icon: 'i-lucide-trash-2',
     title: 'Konto löschen',
     description: 'Konto und alle zugehörigen Daten dauerhaft entfernen.',

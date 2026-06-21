@@ -12,11 +12,6 @@ const features = [
     title: 'Filter nach Klient und Sitzungstyp',
     description: 'Umsatz nach einzelnen Klienten oder Sitzungsarten (Erstgespräch, Standard, Intensiv) aufschlüsseln.',
   },
-  {
-    icon: 'i-lucide-download',
-    title: 'Export für die Buchhaltung',
-    description: 'Umsatzdaten als CSV exportieren – kompatibel mit gängigen Buchhaltungsprogrammen.',
-  },
 ]
 </script>
 
