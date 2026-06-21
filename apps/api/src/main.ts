@@ -22,7 +22,11 @@ async function bootstrap() {
 
   // CORS muss vor better-auth registriert werden, da /api/auth den NestJS-Pipeline umgeht
   app.enableCors({
-    origin: [...allowedOrigins, /^http:\/\/[a-z0-9-]+\.hxroom\.localhost$/],
+    origin: [
+      ...allowedOrigins,
+      /^http:\/\/[a-z0-9-]+\.hxroom\.localhost$/,
+      /^https:\/\/[a-z0-9-]+\.hxroom\.de$/,
+    ],
     credentials: true,
   });
   app.use('/api/auth', toNodeHandler(auth));
