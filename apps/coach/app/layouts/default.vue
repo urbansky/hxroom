@@ -8,31 +8,31 @@ const navItems: NavigationMenuItem[][] = [
   [
     { type: 'label', label: 'Übersicht' },
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/' },
-    { label: 'Kalender', icon: 'i-lucide-calendar', to: '/buchungen' },
+    { label: 'Kalender', icon: 'i-lucide-calendar', to: '/bookings' },
   ],
   [
     { type: 'label', label: 'Klienten' },
-    { label: 'Klientenliste', icon: 'i-lucide-users', to: '/klienten' },
-    { label: 'Notizen', icon: 'i-lucide-file-text', to: '/notizen' },
+    { label: 'Klientenliste', icon: 'i-lucide-users', to: '/clients' },
+    { label: 'Notizen', icon: 'i-lucide-file-text', to: '/notes' },
   ],
   [
     { type: 'label', label: 'Finanzen' },
-    { label: 'Umsatz', icon: 'i-lucide-circle-dollar-sign', to: '/finanzen/umsatz' },
-    { label: 'Rechnungen', icon: 'i-lucide-file', to: '/finanzen/rechnungen' },
+    { label: 'Umsatz', icon: 'i-lucide-circle-dollar-sign', to: '/finance/revenue' },
+    { label: 'Rechnungen', icon: 'i-lucide-file', to: '/finance/invoices' },
   ],
   [
     { type: 'label', label: 'Einstellungen' },
-    { label: 'Branding', icon: 'i-lucide-sun', to: '/einstellungen/branding' },
-    { label: 'Datenschutz', icon: 'i-lucide-shield', to: '/einstellungen/datenschutz' },
+    { label: 'Branding', icon: 'i-lucide-sun', to: '/settings/branding' },
+    { label: 'Datenschutz', icon: 'i-lucide-shield', to: '/settings/privacy' },
   ],
 ]
 
 const userMenuItems = computed(() => [
   [
     {
-      label: 'Mein Profil',
+      label: 'Account',
       icon: 'i-lucide-user-round',
-      to: '/einstellungen/branding',
+      to: '/settings/account',
     },
   ],
   [
@@ -47,13 +47,14 @@ const userMenuItems = computed(() => [
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/': 'Dashboard',
-    '/buchungen': 'Kalender',
-    '/klienten': 'Klientenliste',
-    '/notizen': 'Notizen',
-    '/finanzen/umsatz': 'Umsatz',
-    '/finanzen/rechnungen': 'Rechnungen',
-    '/einstellungen/branding': 'Branding',
-    '/einstellungen/datenschutz': 'Datenschutz',
+    '/bookings': 'Kalender',
+    '/clients': 'Klientenliste',
+    '/notes': 'Notizen',
+    '/finance/revenue': 'Umsatz',
+    '/finance/invoices': 'Rechnungen',
+    '/settings/branding': 'Branding',
+    '/settings/privacy': 'Datenschutz',
+    '/settings/account': 'Account',
   }
   return titles[route.path] ?? 'HxRoom'
 })
@@ -81,13 +82,21 @@ const pageTitle = computed(() => {
       </template>
 
       <template #footer="{ collapsed }">
-        <UDropdownMenu :items="userMenuItems" class="w-full">
+        <UDropdownMenu
+          :items="userMenuItems"
+          :content="{ align: 'center', collisionPadding: 12 }"
+          :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
+        >
           <UButton
             color="neutral"
             variant="ghost"
-            class="w-full"
+            block
+            :square="collapsed"
             :avatar="{ alt: session.data?.user?.name ?? '' }"
             :label="collapsed ? undefined : (session.data?.user?.name ?? '')"
+            :trailing-icon="collapsed ? undefined : 'i-lucide-chevrons-up-down'"
+            class="data-[state=open]:bg-elevated"
+            :ui="{ trailingIcon: 'text-dimmed' }"
           />
         </UDropdownMenu>
       </template>
