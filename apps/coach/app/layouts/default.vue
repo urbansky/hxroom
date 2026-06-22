@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import { useColorTheme } from '~/composables/useColorTheme'
 
 type NavItem = NavigationMenuItem & { description?: string }
 
 const { session, signOut } = useAuth()
 const route = useRoute()
+
+const { initTheme } = useColorTheme()
+onMounted(initTheme)
 
 const navItems: NavItem[][] = [
   [
@@ -28,7 +32,7 @@ const navItems: NavItem[][] = [
   ],
   [
     { type: 'label', label: 'Einstellungen' },
-    { label: 'Branding', icon: 'i-lucide-sun', to: '/settings/branding', description: 'Logo, Farbe und Profilseite' },
+    { label: 'Landingpage', icon: 'i-lucide-layout-template', to: '/settings/landingpage', description: 'Logo, Farbe und Profilseite' },
     { label: 'Warteraum', icon: 'i-lucide-door-open', to: '/settings/waiting-room', description: 'Digitalen Empfang für Klienten gestalten' },
     { label: 'Benachrichtigungen', icon: 'i-lucide-bell', to: '/settings/notifications', description: 'E-Mail-Einstellungen für Buchungen' },
     { label: 'Plan & Abrechnung', icon: 'i-lucide-credit-card', to: '/settings/billing', description: 'Abo und Zahlungsmethode verwalten' },
@@ -62,7 +66,7 @@ const pageTitle = computed(() => {
     '/notes': 'Notizen',
     '/finance/revenue': 'Umsatz',
     '/finance/invoices': 'Rechnungen',
-    '/settings/branding': 'Branding',
+    '/settings/landingpage': 'Landingpage',
     '/settings/waiting-room': 'Warteraum',
     '/settings/notifications': 'Benachrichtigungen',
     '/settings/billing': 'Plan & Abrechnung',
@@ -75,7 +79,7 @@ const pageTitle = computed(() => {
 
 <template>
   <UDashboardGroup storage-key="coach-sidebar" unit="px">
-    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360">
+    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar">
       <template #header="{ collapsed }">
         <NuxtLink to="/" class="flex items-center gap-2 py-1 overflow-hidden">
           <UIcon name="i-lucide-video" class="size-6 text-primary shrink-0" />
@@ -132,6 +136,7 @@ const pageTitle = computed(() => {
       <template #header>
         <UDashboardNavbar :title="pageTitle">
           <template #right>
+            <ColorThemePicker />
             <UColorModeButton />
           </template>
         </UDashboardNavbar>
