@@ -69,10 +69,9 @@ const features = [
     </div>
 
     <!-- Buchungs-URL -->
-    <UCard class="bg-elevated">
+    <SettingsSection title="Buchungs-URL">
       <div class="flex items-center gap-4 flex-wrap">
         <div class="flex-1 min-w-64">
-          <p class="text-xs text-muted uppercase tracking-wider mb-2">Deine Buchungs-URL</p>
           <div class="flex items-center">
             <span class="px-3 h-9 flex items-center text-sm text-muted bg-accented border border-default rounded-l-md border-r-0 whitespace-nowrap shrink-0">
               hxroom.com/
@@ -88,19 +87,16 @@ const features = [
           <span class="text-sm text-success-700 dark:text-success-400">Seite aktiv &amp; öffentlich</span>
         </div>
       </div>
-    </UCard>
+    </SettingsSection>
 
     <!-- Zweispaltiges Layout: Editor + Vorschau -->
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_900px] gap-5 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_900px] gap-12 items-start">
 
       <!-- Editor -->
       <div class="flex flex-col gap-4">
 
         <!-- Profil -->
-        <UCard class="bg-elevated">
-          <template #header>
-            <h2 class="font-serif text-lg text-highlighted">Profil</h2>
-          </template>
+        <SettingsSection title="Profil">
           <div class="flex flex-col gap-5">
             <div class="flex items-center gap-4">
               <div class="w-14 h-14 rounded-full bg-primary-500 flex items-center justify-center font-serif text-2xl text-white shrink-0">
@@ -130,13 +126,10 @@ const features = [
               <UTextarea v-model="bio" :rows="4" resize :ui="inputUi" />
             </div>
           </div>
-        </UCard>
+        </SettingsSection>
 
         <!-- Sitzungsformate -->
-        <UCard class="bg-elevated">
-          <template #header>
-            <h2 class="font-serif text-lg text-highlighted">Sitzungsformate</h2>
-          </template>
+        <SettingsSection title="Sitzungsformate">
           <div class="flex flex-col gap-3">
             <p class="text-sm text-muted">Wähle, welche Formate auf deiner Seite buchbar sind.</p>
             <div class="grid grid-cols-2 gap-2">
@@ -167,13 +160,10 @@ const features = [
               </button>
             </div>
           </div>
-        </UCard>
+        </SettingsSection>
 
         <!-- Call-to-Action -->
-        <UCard class="bg-elevated">
-          <template #header>
-            <h2 class="font-serif text-lg text-highlighted">Call-to-Action</h2>
-          </template>
+        <SettingsSection title="Call-to-Action">
           <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-xs text-muted uppercase tracking-wider">Button-Text</label>
@@ -184,29 +174,26 @@ const features = [
               <UInput v-model="ctaIntro" :ui="inputUi" />
             </div>
           </div>
-        </UCard>
+        </SettingsSection>
 
       </div>
 
       <!-- Vorschau-Panel -->
       <div class="sticky top-20">
-        <UCard class="bg-elevated">
-          <template #header>
-            <div class="flex items-center justify-between">
-              <span class="text-xs text-muted uppercase tracking-wider">Vorschau</span>
-              <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link">
-                In neuem Tab öffnen
-              </UButton>
-            </div>
+        <SettingsSection title="Vorschau">
+          <template #actions>
+            <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link">
+              In neuem Tab öffnen
+            </UButton>
           </template>
-          <div class="bg-neutral-950 rounded-lg p-4 flex flex-col gap-3">
+          <div class="bg-neutral-100 rounded-lg p-4 flex flex-col gap-3">
             <!-- Hero -->
-            <div class="text-center px-4 py-6 rounded-xl bg-neutral-900 border border-neutral-800">
+            <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
               <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
                 {{ nameInitial }}
               </div>
-              <p class="font-serif text-xl text-white mb-1">{{ profileName }}</p>
-              <p class="text-xs text-neutral-400 leading-relaxed max-w-[220px] mx-auto mb-4">{{ tagline }}</p>
+              <p class="font-serif text-xl text-neutral-900 mb-1">{{ profileName }}</p>
+              <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ tagline }}</p>
               <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
                 {{ ctaButton }}
               </span>
@@ -216,29 +203,31 @@ const features = [
               <div
                 v-for="format in selectedFormats"
                 :key="format.id"
-                class="flex items-center justify-between px-3 py-2.5 bg-neutral-900 border border-neutral-800 rounded-lg"
+                class="flex items-center justify-between px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
               >
                 <div>
-                  <p class="text-sm text-white">{{ format.previewName }}</p>
-                  <p class="text-xs text-neutral-500">{{ format.previewMeta }}</p>
+                  <p class="text-sm text-neutral-900">{{ format.previewName }}</p>
+                  <p class="text-xs text-neutral-400">{{ format.previewMeta }}</p>
                 </div>
-                <span class="font-serif text-base text-primary-400">{{ format.previewPrice }}</span>
+                <span class="font-serif text-base text-primary-600">{{ format.previewPrice }}</span>
               </div>
             </div>
           </div>
-        </UCard>
+        </SettingsSection>
       </div>
 
     </div>
 
-    <!-- Bestehende Feature-Liste -->
-    <div class="flex flex-col gap-2">
-      <UpcomingFeature
-        v-for="item in features"
-        :key="item.title"
-        v-bind="item"
-      />
-    </div>
+    <!-- Geplante Features -->
+    <SettingsSection title="Geplante Features" class="mt-94">
+      <div class="flex flex-col gap-2">
+        <UpcomingFeature
+          v-for="item in features"
+          :key="item.title"
+          v-bind="item"
+        />
+      </div>
+    </SettingsSection>
 
   </div>
 </template>
