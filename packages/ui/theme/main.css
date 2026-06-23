@@ -93,16 +93,20 @@
   --ui-radius: 0.5rem;
 }
 
-/* UDashboardSidebar-Hintergrund */
-.coach-sidebar {
-  background-color: var(--ui-sidebar-bg);
+/* UCard: Ring-Border entfernen */
+.divide-y.rounded-lg.overflow-hidden {
+  --tw-ring-shadow: 0 0 #0000;
+}
+
+/* UCard: Titel fetter */
+.divide-y.rounded-lg.overflow-hidden .font-semibold {
+  font-weight: 700;
 }
 
 /* Light mode */
 :root {
   --color-cream:        #2e3a2d;
 
-  --ui-sidebar-bg:      #ede9e0;
   --ui-bg:              #faf8f4;
   --ui-bg-muted:        #f2efe8;
   --ui-bg-elevated:     #eae6de;
@@ -128,7 +132,6 @@
 .dark {
   --color-cream:        #F5F0E8;
 
-  --ui-sidebar-bg:      #0f130f;
   --ui-bg:              #141814;
   --ui-bg-muted:        #1A1E1A;
   --ui-bg-elevated:     #1E231E;
