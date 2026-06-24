@@ -1,7 +1,9 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
+const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 const subdomain = ref('anna-bergmann')
+const previewUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${subdomain.value}.${rootDomain}`)
 const profileName = ref('Anna Bergmann')
 const tagline = ref('Business- & Life-Coach · Ich begleite dich auf dem Weg zu mehr Klarheit, Fokus und innerer Stärke.')
 const bio = ref('Mit über 10 Jahren Erfahrung in der Begleitung von Führungskräften und Privatpersonen helfe ich dir, Blockaden zu lösen und nachhaltige Veränderungen anzustoßen. Zertifizierter ICF-Coach (ACC).')
@@ -78,12 +80,12 @@ const features = [
                   :ui="{ base: 'bg-white dark:bg-neutral-800 text-right' }"
                   placeholder="dein-name"
                 />
-                <UBadge color="neutral" variant="outline" size="lg" label=".hxroom.de" class="bg-muted " />
+                <UBadge color="neutral" variant="outline" size="lg" :label="'.' + rootDomain" class="bg-muted " />
               </UFieldGroup>
               <UButton variant="outline" color="neutral">
                 Link kopieren
               </UButton>
-              <UButton variant="solid" color="primary" leading-icon="i-lucide-eye">
+              <UButton variant="solid" color="primary" leading-icon="i-lucide-eye" :to="previewUrl" target="_blank">
                 Vorschau öffnen
               </UButton>
             </div>
@@ -176,6 +178,11 @@ const features = [
       <!-- Vorschau-Panel -->
       <div class="sticky top-20">
         <SettingsSection title="Vorschau">
+          <template #actions>
+            <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link" :to="previewUrl" target="_blank">
+              In neuem Tab öffnen
+            </UButton>
+          </template>
           <!-- Browser-Mockup -->
           <div class="rounded-xl border border-neutral-200 overflow-hidden shadow-sm">
             <!-- Browser-Chrome -->
@@ -187,7 +194,7 @@ const features = [
               </div>
               <div class="flex-1 bg-white border border-neutral-200 rounded-md px-2.5 py-1 flex items-center gap-1.5">
                 <UIcon name="i-lucide-lock" class="w-3 h-3 text-neutral-400 shrink-0" />
-                <span class="text-xs text-neutral-500 truncate">{{ subdomain }}.hxroom.de</span>
+                <span class="text-xs text-neutral-500 truncate">{{ subdomain }}.{{ rootDomain }}</span>
               </div>
             </div>
             <!-- Seiten-Inhalt -->

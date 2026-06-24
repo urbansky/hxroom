@@ -20,13 +20,20 @@ async function bootstrap() {
         'http://localhost:5176', // landing (dev)
       ];
 
+  const corsPatterns: (string | RegExp)[] = [
+    ...allowedOrigins,
+    /^http:\/\/[a-z0-9-]+\.hxroom\.localhost$/,
+    /^https:\/\/[a-z0-9-]+\.hxroom\.de$/,
+  ];
+
   // CORS muss vor better-auth registriert werden, da /api/auth den NestJS-Pipeline umgeht
   app.enableCors({
-    origin: [
-      ...allowedOrigins,
-      /^http:\/\/[a-z0-9-]+\.hxroom\.localhost$/,
-      /^https:\/\/[a-z0-9-]+\.hxroom\.de$/,
-    ],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      const allowed = !origin || corsPatterns.some((p) =>
+        typeof p === 'string' ? p === origin : p.test(origin),
+      );
+      callback(null, allowed);
+    },
     credentials: true,
   });
   app.use('/api/auth', toNodeHandler(auth));

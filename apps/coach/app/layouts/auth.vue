@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const { public: { rootDomain } } = useRuntimeConfig()
+</script>
+
 <template>
   <div class="min-h-screen flex flex-col bg-(--ui-bg-muted)">
     <header class="flex flex-col items-center gap-2 pt-10 pb-2">
@@ -12,9 +16,9 @@
     </main>
 
     <footer class="py-6 text-center text-xs text-(--ui-text-muted)">
-      <NuxtLink to="https://hxroom.de/impressum" class="hover:underline">Impressum</NuxtLink>
+      <NuxtLink :to="`https://${rootDomain}/impressum`" class="hover:underline">Impressum</NuxtLink>
       <span class="mx-1.5">·</span>
-      <NuxtLink to="https://hxroom.de/datenschutz" class="hover:underline">Datenschutz</NuxtLink>
+      <NuxtLink :to="`https://${rootDomain}/datenschutz`" class="hover:underline">Datenschutz</NuxtLink>
     </footer>
   </div>
 </template>
