@@ -22,7 +22,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ['@hxroom/ui/theme'],
+  css: ['@hxroom/ui/theme', '~/assets/main.css'],
 
   colorMode: {
     preference: 'system',

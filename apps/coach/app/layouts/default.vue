@@ -75,7 +75,7 @@ const pageTitle = computed(() => {
 
 <template>
   <UDashboardGroup storage-key="coach-sidebar" unit="px">
-    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360">
+    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar">
       <template #header="{ collapsed }">
         <NuxtLink to="/" class="flex items-center gap-2 py-1 overflow-hidden">
           <UIcon name="i-lucide-video" class="size-6 text-primary shrink-0" />
@@ -129,13 +129,13 @@ const pageTitle = computed(() => {
     </UDashboardSidebar>
 
     <UDashboardPanel>
-      <template #header>
-        <UDashboardNavbar :title="pageTitle">
-          <template #right>
-            <UColorModeButton />
-          </template>
-        </UDashboardNavbar>
-      </template>
+<!--      <template #header>-->
+<!--        <UDashboardNavbar :title="pageTitle">-->
+<!--          <template #right>-->
+<!--            <UColorModeButton />-->
+<!--          </template>-->
+<!--        </UDashboardNavbar>-->
+<!--      </template>-->
 
       <template #body>
         <slot />
