@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'auth' })
 
-const slug = ref('anna-bergmann')
+const subdomain = ref('anna-bergmann')
 const profileName = ref('Anna Bergmann')
 const tagline = ref('Business- & Life-Coach · Ich begleite dich auf dem Weg zu mehr Klarheit, Fokus und innerer Stärke.')
 const bio = ref('Mit über 10 Jahren Erfahrung in der Begleitung von Führungskräften und Privatpersonen helfe ich dir, Blockaden zu lösen und nachhaltige Veränderungen anzustoßen. Zertifizierter ICF-Coach (ACC).')
@@ -58,42 +58,37 @@ const features = [
         <h1 class="font-serif text-3xl text-highlighted mb-1">Deine Coach-Landingpage</h1>
         <p class="text-sm text-muted">So sehen dich potenzielle Klienten – passe Profil, Angebot und Buchungs-CTA an.</p>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <UButton variant="outline" color="neutral" leading-icon="i-lucide-eye">
-          Vorschau öffnen
-        </UButton>
-        <UButton variant="solid" color="primary" leading-icon="i-lucide-check">
-          Speichern &amp; veröffentlichen
-        </UButton>
-      </div>
     </div>
 
-    <!-- Buchungs-URL -->
-    <SettingsSection title="Buchungs-URL">
-      <div class="flex items-center gap-4 flex-wrap">
-        <div class="flex-1 min-w-64">
-          <div class="flex items-center">
-            <span class="px-3 h-9 flex items-center text-sm text-muted bg-accented border border-default rounded-l-md border-r-0 whitespace-nowrap shrink-0">
-              hxroom.com/
-            </span>
-            <UInput v-model="slug" :ui="inputUi" class="flex-1 [&_input]:rounded-l-none" />
-            <UButton variant="soft" color="primary" leading-icon="i-lucide-copy" class="ml-2 shrink-0">
-              Link kopieren
-            </UButton>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 px-3 py-2 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800/50 rounded-lg">
-          <span class="w-2 h-2 rounded-full bg-success-500 shrink-0" />
-          <span class="text-sm text-success-700 dark:text-success-400">Seite aktiv &amp; öffentlich</span>
-        </div>
-      </div>
-    </SettingsSection>
 
     <!-- Zweispaltiges Layout: Editor + Vorschau -->
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_900px] gap-12 items-start">
 
       <!-- Editor -->
       <div class="flex flex-col gap-4">
+
+        <!-- Buchungs-URL -->
+        <SettingsSection title="Adresse">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-muted uppercase tracking-wider">Subdomain</label>
+            <div class="flex items-center gap-4 flex-wrap">
+              <UFieldGroup class="flex-1 min-w-64">
+                <UInput
+                  v-model="subdomain"
+                  :ui="{ base: 'bg-white dark:bg-neutral-800 text-right' }"
+                  placeholder="dein-name"
+                />
+                <UBadge color="neutral" variant="outline" size="lg" label=".hxroom.de" class="bg-muted " />
+              </UFieldGroup>
+              <UButton variant="outline" color="neutral">
+                Link kopieren
+              </UButton>
+              <UButton variant="solid" color="primary" leading-icon="i-lucide-eye">
+                Vorschau öffnen
+              </UButton>
+            </div>
+          </div>
+        </SettingsSection>
 
         <!-- Profil -->
         <SettingsSection title="Profil">
@@ -181,35 +176,46 @@ const features = [
       <!-- Vorschau-Panel -->
       <div class="sticky top-20">
         <SettingsSection title="Vorschau">
-          <template #actions>
-            <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link">
-              In neuem Tab öffnen
-            </UButton>
-          </template>
-          <div class="bg-neutral-100 rounded-lg p-4 flex flex-col gap-3">
-            <!-- Hero -->
-            <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
-              <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
-                {{ nameInitial }}
+          <!-- Browser-Mockup -->
+          <div class="rounded-xl border border-neutral-200 overflow-hidden shadow-sm">
+            <!-- Browser-Chrome -->
+            <div class="bg-neutral-100 border-b border-neutral-200 px-3 py-2.5 flex items-center gap-3">
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="w-3 h-3 rounded-full bg-neutral-300" />
+                <span class="w-3 h-3 rounded-full bg-neutral-300" />
+                <span class="w-3 h-3 rounded-full bg-neutral-300" />
               </div>
-              <p class="font-serif text-xl text-neutral-900 mb-1">{{ profileName }}</p>
-              <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ tagline }}</p>
-              <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
-                {{ ctaButton }}
-              </span>
+              <div class="flex-1 bg-white border border-neutral-200 rounded-md px-2.5 py-1 flex items-center gap-1.5">
+                <UIcon name="i-lucide-lock" class="w-3 h-3 text-neutral-400 shrink-0" />
+                <span class="text-xs text-neutral-500 truncate">{{ subdomain }}.hxroom.de</span>
+              </div>
             </div>
-            <!-- Format-Liste -->
-            <div class="flex flex-col gap-2">
-              <div
-                v-for="format in selectedFormats"
-                :key="format.id"
-                class="flex items-center justify-between px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
-              >
-                <div>
-                  <p class="text-sm text-neutral-900">{{ format.previewName }}</p>
-                  <p class="text-xs text-neutral-400">{{ format.previewMeta }}</p>
+            <!-- Seiten-Inhalt -->
+            <div class="bg-neutral-50 p-4 flex flex-col gap-3">
+              <!-- Hero -->
+              <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
+                <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
+                  {{ nameInitial }}
                 </div>
-                <span class="font-serif text-base text-primary-600">{{ format.previewPrice }}</span>
+                <p class="font-serif text-xl text-neutral-900 mb-1">{{ profileName }}</p>
+                <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ tagline }}</p>
+                <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
+                  {{ ctaButton }}
+                </span>
+              </div>
+              <!-- Format-Liste -->
+              <div class="flex flex-col gap-2">
+                <div
+                  v-for="format in selectedFormats"
+                  :key="format.id"
+                  class="flex items-center justify-between px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
+                >
+                  <div>
+                    <p class="text-sm text-neutral-900">{{ format.previewName }}</p>
+                    <p class="text-xs text-neutral-400">{{ format.previewMeta }}</p>
+                  </div>
+                  <span class="font-serif text-base text-primary-600">{{ format.previewPrice }}</span>
+                </div>
               </div>
             </div>
           </div>
