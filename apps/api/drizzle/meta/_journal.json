@@ -8,6 +8,13 @@
       "when": 1780035543447,
       "tag": "0000_cool_paibok",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782366904340,
+      "tag": "0001_strange_celestials",
+      "breakpoints": true
     }
   ]
 }

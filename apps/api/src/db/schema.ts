@@ -75,3 +75,14 @@ export const invitation = pgTable('invitation', {
   expiresAt: timestamp('expires_at').notNull(),
   inviterId: text('inviter_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
 });
+
+export const landingPage = pgTable('landing_page', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull().unique().references(() => organization.id, { onDelete: 'cascade' }),
+  tagline:        text('tagline'),
+  bio:            text('bio'),
+  ctaButton:      text('cta_button'),
+  ctaIntro:       text('cta_intro'),
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+  updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+});

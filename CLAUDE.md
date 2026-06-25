@@ -14,7 +14,7 @@ Nutze die better-auth-Dokumentation: https://better-auth.com/llms.txt (Backend u
 - DB-Schema: Drizzle, in apps/api/src/db/schema.ts
 - DB-Migrations: pnpm db:generate && pnpm db:migrate
 - Auth: better-auth Session, Guard via @UseGuards(AuthGuard)
-- Fehlerbehandlung: NestJS HttpException mit deutschen Fehlertexten
+- Fehlerbehandlung: NestJS HttpException mit englischen Fehlertexten
 - DSGVO: Kein Logging von personenbezogenen Daten ohne explizite Kennzeichnung
 - URL-Pfade: Immer Englisch (auch in der Coach-App). Anzeigetexte/Labels dürfen Deutsch sein, Routen nie (z. B. `/settings/account`, nicht `/einstellungen/account`)
 
