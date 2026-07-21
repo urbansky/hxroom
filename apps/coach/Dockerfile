@@ -24,6 +24,7 @@ ARG NUXT_PUBLIC_API_URL=https://api.hxroom.de/api/v1
 ARG NUXT_PUBLIC_AUTH_URL=https://api.hxroom.de
 ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 ENV NUXT_PUBLIC_AUTH_URL=$NUXT_PUBLIC_AUTH_URL
+COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
 COPY apps/coach/ apps/coach/
