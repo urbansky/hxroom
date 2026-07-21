@@ -27,6 +27,7 @@ ENV NUXT_PUBLIC_AUTH_URL=$NUXT_PUBLIC_AUTH_URL
 COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
 COPY apps/coach/ apps/coach/
+RUN pnpm --filter @hxroom/shared build
 RUN pnpm --filter @hxroom/coach build
 
 # ---- Production ----
