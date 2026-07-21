@@ -1,5 +1,7 @@
 # HxRoom – Docker Compose (Lokale Entwicklung)
 # Startet Infrastruktur-Services; Apps werden per pnpm gestartet.
+name: hxroom-dev
+
 services:
   caddy:
     image: caddy:latest

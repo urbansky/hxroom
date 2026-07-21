@@ -1,6 +1,8 @@
 # HxRoom – Docker Compose (Produktion)
 # Images werden von GitHub Actions gebaut und auf ghcr.io gepusht.
 # Auf Hetzner: docker compose pull && docker compose up -d
+name: hxroom
+
 services:
   caddy:
     build: ./caddy
