@@ -6,7 +6,8 @@ definePageMeta({ middleware: 'auth' })
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 const { $api } = useApi()
 
-interface LandingPageSettings {
+// API-Shape: DB-Spalten sind nullable
+interface LandingPageResponse {
   subdomain:   string | null
   profileName: string | null
   tagline:     string | null
@@ -15,22 +16,51 @@ interface LandingPageSettings {
   ctaIntro:    string | null
 }
 
-const form = reactive<LandingPageSettings>({
-  subdomain:   null,
-  profileName: null,
-  tagline:     null,
-  bio:         null,
-  ctaButton:   null,
-  ctaIntro:    null,
-})
+// Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`
+interface LandingPageForm {
+  subdomain:   string | undefined
+  profileName: string | undefined
+  tagline:     string | undefined
+  bio:         string | undefined
+  ctaButton:   string | undefined
+  ctaIntro:    string | undefined
+}
+
+function emptyForm(): LandingPageForm {
+  return {
+    subdomain:   undefined,
+    profileName: undefined,
+    tagline:     undefined,
+    bio:         undefined,
+    ctaButton:   undefined,
+    ctaIntro:    undefined,
+  }
+}
+
+function toForm(data: LandingPageResponse): LandingPageForm {
+  return {
+    subdomain:   data.subdomain   ?? undefined,
+    profileName: data.profileName ?? undefined,
+    tagline:     data.tagline     ?? undefined,
+    bio:         data.bio         ?? undefined,
+    ctaButton:   data.ctaButton   ?? undefined,
+    ctaIntro:    data.ctaIntro    ?? undefined,
+  }
+}
+
+const form = reactive<LandingPageForm>(emptyForm())
 
 const previewUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${form.subdomain}.${rootDomain}`)
 const nameInitial = computed(() => form.profileName?.charAt(0).toUpperCase() || 'A')
 
-await useFetch<LandingPageSettings>('/landing-page', {
+// Snapshot der zuletzt gespeicherten Werte, um unveränderte Felder beim Blur zu erkennen
+const lastSaved = reactive<LandingPageForm>(emptyForm())
+
+await useFetch<LandingPageResponse>('/landing-page', {
   $fetch: $api,
   onResponse({ response }) {
-    Object.assign(form, response._data as LandingPageSettings)
+    Object.assign(form, toForm(response._data as LandingPageResponse))
+    Object.assign(lastSaved, toForm(response._data as LandingPageResponse))
   },
 })
 
@@ -50,10 +80,19 @@ const visibleErrors = computed(() =>
 // Autosave-Status
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 const saveStatus = ref<SaveStatus>('idle')
+const activeField = ref<string | null>(null)
 let savedTimer: ReturnType<typeof setTimeout> | null = null
 
+function fieldStatus(field: string): Exclude<SaveStatus, 'idle'> | null {
+  if (activeField.value !== field || saveStatus.value === 'idle') return null
+  return saveStatus.value
+}
+
 async function save() {
-  if (Object.keys(errors.value).length) return
+  if (Object.keys(errors.value).length) {
+    saveStatus.value = 'idle'
+    return
+  }
   if (savedTimer) clearTimeout(savedTimer)
   saveStatus.value = 'saving'
   try {
@@ -69,14 +108,17 @@ async function save() {
       },
     })
     saveStatus.value = 'saved'
+    Object.assign(lastSaved, form)
     savedTimer = setTimeout(() => { saveStatus.value = 'idle' }, 3000)
   } catch (err: any) {
     saveStatus.value = 'error'
   }
 }
 
-function onBlur(field: string) {
+function onBlur(field: keyof LandingPageForm) {
   touched[field] = true
+  if (form[field] === lastSaved[field]) return
+  activeField.value = field
   save()
 }
 
@@ -124,25 +166,9 @@ const features = [
   <div class="p-4 sm:p-6 flex flex-col gap-6 max-w-[1600px] mx-auto w-full">
 
     <!-- Seitenheader -->
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <h1 class="font-serif text-3xl text-highlighted mb-1">Deine Coach-Landingpage</h1>
-        <p class="text-sm text-muted">So sehen dich potenzielle Klienten – passe Profil, Angebot und Buchungs-CTA an.</p>
-      </div>
-      <div class="flex items-center gap-1.5 text-sm h-8">
-        <template v-if="saveStatus === 'saving'">
-          <UIcon name="i-lucide-loader" class="animate-spin text-muted" />
-          <span class="text-muted">Wird gespeichert…</span>
-        </template>
-        <template v-else-if="saveStatus === 'saved'">
-          <UIcon name="i-lucide-check" class="text-success" />
-          <span class="text-muted">Gespeichert</span>
-        </template>
-        <template v-else-if="saveStatus === 'error'">
-          <UIcon name="i-lucide-alert-circle" class="text-error" />
-          <span class="text-error">Fehler beim Speichern</span>
-        </template>
-      </div>
+    <div>
+      <h1 class="font-serif text-3xl text-highlighted mb-1">Deine Coach-Landingpage</h1>
+      <p class="text-sm text-muted">So sehen dich potenzielle Klienten – passe Profil, Angebot und Buchungs-CTA an.</p>
     </div>
 
     <!-- Zweispaltiges Layout: Editor + Vorschau -->
@@ -154,11 +180,14 @@ const features = [
         <!-- Buchungs-URL -->
         <SettingsSection title="Adresse">
           <UFormField label="Subdomain" :error="visibleErrors.subdomain">
+            <template v-if="fieldStatus('subdomain')" #hint>
+              <SaveStatusHint :status="fieldStatus('subdomain')" />
+            </template>
             <div class="flex items-center gap-4 flex-wrap">
               <UFieldGroup class="flex-1 min-w-64">
                 <UInput
                   v-model="form.subdomain"
-                  :ui="{ base: 'bg-white dark:bg-neutral-800 text-right' }"
+                  :ui="{ base: `${inputUi.base} text-right` }"
                   placeholder="dein-name"
                   @blur="onBlur('subdomain')"
                 />
@@ -190,15 +219,24 @@ const features = [
             </div>
 
             <UFormField label="Name" :error="visibleErrors.profileName">
-              <UInput v-model="form.profileName" :ui="inputUi" @blur="onBlur('profileName')" />
+              <template v-if="fieldStatus('profileName')" #hint>
+                <SaveStatusHint :status="fieldStatus('profileName')" />
+              </template>
+              <UInput v-model="form.profileName" class="w-full" :ui="inputUi" @blur="onBlur('profileName')" />
             </UFormField>
 
             <UFormField label="Tagline" :error="visibleErrors.tagline" help="Wird direkt unter deinem Namen angezeigt. Max. 160 Zeichen.">
-              <UInput v-model="form.tagline" :ui="inputUi" @blur="onBlur('tagline')" />
+              <template v-if="fieldStatus('tagline')" #hint>
+                <SaveStatusHint :status="fieldStatus('tagline')" />
+              </template>
+              <UInput v-model="form.tagline" class="w-full" :ui="inputUi" @blur="onBlur('tagline')" />
             </UFormField>
 
             <UFormField label="Über mich" :error="visibleErrors.bio">
-              <UTextarea v-model="form.bio" :rows="4" resize :ui="inputUi" @blur="onBlur('bio')" />
+              <template v-if="fieldStatus('bio')" #hint>
+                <SaveStatusHint :status="fieldStatus('bio')" />
+              </template>
+              <UTextarea v-model="form.bio" :rows="4" resize class="w-full" :ui="inputUi" @blur="onBlur('bio')" />
             </UFormField>
           </div>
         </SettingsSection>
@@ -241,10 +279,16 @@ const features = [
         <SettingsSection title="Call-to-Action">
           <div class="flex flex-col gap-4">
             <UFormField label="Button-Text" :error="visibleErrors.ctaButton">
-              <UInput v-model="form.ctaButton" :ui="inputUi" @blur="onBlur('ctaButton')" />
+              <template v-if="fieldStatus('ctaButton')" #hint>
+                <SaveStatusHint :status="fieldStatus('ctaButton')" />
+              </template>
+              <UInput v-model="form.ctaButton" class="w-full" :ui="inputUi" @blur="onBlur('ctaButton')" />
             </UFormField>
             <UFormField label="Einleitungstext über dem Buchungs-Button" :error="visibleErrors.ctaIntro">
-              <UInput v-model="form.ctaIntro" :ui="inputUi" @blur="onBlur('ctaIntro')" />
+              <template v-if="fieldStatus('ctaIntro')" #hint>
+                <SaveStatusHint :status="fieldStatus('ctaIntro')" />
+              </template>
+              <UInput v-model="form.ctaIntro" class="w-full" :ui="inputUi" @blur="onBlur('ctaIntro')" />
             </UFormField>
           </div>
         </SettingsSection>
