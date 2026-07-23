@@ -11,6 +11,7 @@
   "dependencies": {
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
+    "@iconify-json/tabler": "^1.2.37",
     "@nuxt/ui": "^4.9.0",
     "better-auth": "^1.6.19",
     "nuxt": "^4.4.8",

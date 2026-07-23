@@ -75,13 +75,13 @@ const pageTitle = computed(() => {
 
 <template>
   <UDashboardGroup storage-key="coach-sidebar" unit="px">
-    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar">
+    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar" :ui="{ root: 'border-e-0', header: 'border-b border-default', footer: 'border-t border-default' }">
       <template #header="{ collapsed }">
-        <NuxtLink to="/" class="flex items-center gap-2 py-1 overflow-hidden">
-          <UIcon name="i-lucide-video" class="size-6 text-primary shrink-0" />
-          <span v-if="!collapsed" class="font-serif text-xl text-(--ui-text-highlighted) truncate">
-            Hx<span class="text-primary">Room</span>
-          </span>
+        <NuxtLink to="/" class="flex items-center gap-2.5 py-1 overflow-hidden">
+          <div class="size-9 rounded-full bg-gradient-to-br from-sage-400 to-sage-600 flex items-center justify-center shrink-0">
+            <UIcon name="i-tabler-video" class="size-5 text-white/92" />
+          </div>
+          <span v-if="!collapsed" class="text-[22px] text-gold-700 dark:text-gold-200 tracking-wide truncate">HxRoom</span>
         </NuxtLink>
       </template>
 
@@ -91,7 +91,8 @@ const pageTitle = computed(() => {
           orientation="vertical"
           :items="navItems"
           :tooltip="true"
-          class="w-full"
+          :ui="{ separator: 'h-0.5 bg-transparent' }"
+          class="w-full sidebar-nav"
         >
           <template #item-label="{ item }">
             <UTooltip
@@ -118,11 +119,11 @@ const pageTitle = computed(() => {
             variant="ghost"
             block
             :square="collapsed"
-            :avatar="{ alt: session.data?.user?.name ?? '' }"
+            :avatar="{ alt: session.data?.user?.name ?? '', size: 'md' }"
             :label="collapsed ? undefined : (session.data?.user?.name ?? '')"
             :trailing-icon="collapsed ? undefined : 'i-lucide-chevrons-up-down'"
             class="data-[state=open]:bg-elevated"
-            :ui="{ trailingIcon: 'text-dimmed' }"
+            :ui="{ base: 'text-highlighted', trailingIcon: 'text-dimmed' }"
           />
         </UDropdownMenu>
       </template>

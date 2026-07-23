@@ -5,3 +5,32 @@
 .coach-sidebar {
   background-color: #faf8f4;
 }
+
+.coach-sidebar .sidebar-nav [data-slot="label"] {
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ui-text-highlighted);
+  opacity: 0.5;
+}
+
+.coach-sidebar .sidebar-nav [data-slot="link"] {
+  color: var(--ui-text-highlighted);
+}
+
+.coach-sidebar .sidebar-nav [data-slot="link"].text-primary {
+  color: var(--ui-primary);
+}
+
+.coach-sidebar .sidebar-nav [data-slot="link"].text-primary [data-slot="linkLabel"] {
+  color: var(--ui-text-highlighted);
+}
+
+.coach-sidebar .sidebar-nav [data-slot="linkLeadingIcon"] {
+  color: var(--ui-text-muted);
+}
+
+.coach-sidebar .sidebar-nav [data-slot="linkLeadingIcon"].text-primary {
+  color: var(--ui-primary);
+}

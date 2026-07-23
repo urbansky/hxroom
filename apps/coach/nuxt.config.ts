@@ -3,6 +3,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      title: 'HxRoom - Verwaltung',
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
