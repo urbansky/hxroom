@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* Damit Tailwind Klassen aus geteilten Komponenten (z. B. Logo.vue) auch in
+   Apps generiert, die dieses Theme importieren, aber packages/ui nicht selbst scannen */
+@source "../components";
+
 /* Cormorant Garamond – local fonts */
 @font-face {
   font-family: 'Cormorant Garamond';

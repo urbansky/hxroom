@@ -196,9 +196,6 @@ const features = [
               <UButton variant="outline" color="neutral">
                 Link kopieren
               </UButton>
-              <UButton variant="solid" color="primary" leading-icon="i-lucide-eye" :to="previewUrl" target="_blank">
-                Vorschau öffnen
-              </UButton>
             </div>
           </UFormField>
         </SettingsSection>
@@ -222,7 +219,7 @@ const features = [
               <template v-if="fieldStatus('profileName')" #hint>
                 <SaveStatusHint :status="fieldStatus('profileName')" />
               </template>
-              <UInput v-model="form.profileName" class="w-full" :ui="inputUi" @blur="onBlur('profileName')" />
+              <UInput v-model="form.profileName" class="w-52" :ui="inputUi" @blur="onBlur('profileName')" />
             </UFormField>
 
             <UFormField label="Tagline" :error="visibleErrors.tagline" help="Wird direkt unter deinem Namen angezeigt. Max. 160 Zeichen.">
@@ -250,7 +247,7 @@ const features = [
                 v-for="format in formats"
                 :key="format.id"
                 type="button"
-                class="flex items-center gap-2.5 p-3 rounded-lg border text-left transition-colors cursor-pointer"
+                class="flex items-center gap-2.5 p-3 rounded-lg border text-left transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
                 :class="format.selected
                   ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700'
                   : 'bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'"
@@ -282,7 +279,7 @@ const features = [
               <template v-if="fieldStatus('ctaButton')" #hint>
                 <SaveStatusHint :status="fieldStatus('ctaButton')" />
               </template>
-              <UInput v-model="form.ctaButton" class="w-full" :ui="inputUi" @blur="onBlur('ctaButton')" />
+              <UInput v-model="form.ctaButton" class="w-52" :ui="inputUi" @blur="onBlur('ctaButton')" />
             </UFormField>
             <UFormField label="Einleitungstext über dem Buchungs-Button" :error="visibleErrors.ctaIntro">
               <template v-if="fieldStatus('ctaIntro')" #hint>
@@ -297,56 +294,54 @@ const features = [
 
       <!-- Vorschau-Panel -->
       <div class="sticky top-20">
-        <SettingsSection title="Vorschau">
-          <template #actions>
-            <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link" :to="previewUrl" target="_blank">
-              In neuem Tab öffnen
-            </UButton>
-          </template>
-          <!-- Browser-Mockup -->
-          <div class="rounded-xl border border-neutral-200 overflow-hidden shadow-sm">
-            <!-- Browser-Chrome -->
-            <div class="bg-neutral-100 border-b border-neutral-200 px-3 py-2.5 flex items-center gap-3">
-              <div class="flex items-center gap-1.5 shrink-0">
-                <span class="w-3 h-3 rounded-full bg-neutral-300" />
-                <span class="w-3 h-3 rounded-full bg-neutral-300" />
-                <span class="w-3 h-3 rounded-full bg-neutral-300" />
-              </div>
-              <div class="flex-1 bg-white border border-neutral-200 rounded-md px-2.5 py-1 flex items-center gap-1.5">
-                <UIcon name="i-lucide-lock" class="w-3 h-3 text-neutral-400 shrink-0" />
-                <span class="text-xs text-neutral-500 truncate">{{ form.subdomain }}.{{ rootDomain }}</span>
-              </div>
+        <div class="flex justify-end mb-2">
+          <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link" :to="previewUrl" target="_blank">
+            In neuem Tab öffnen
+          </UButton>
+        </div>
+        <!-- Browser-Mockup -->
+        <div class="rounded-xl border border-neutral-200 overflow-hidden shadow-xl">
+          <!-- Browser-Chrome -->
+          <div class="bg-neutral-100 border-b border-neutral-200 px-3 py-2.5 flex items-center gap-3">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="w-3 h-3 rounded-full bg-neutral-300" />
+              <span class="w-3 h-3 rounded-full bg-neutral-300" />
+              <span class="w-3 h-3 rounded-full bg-neutral-300" />
             </div>
-            <!-- Seiten-Inhalt -->
-            <div class="bg-neutral-50 p-4 flex flex-col gap-3">
-              <!-- Hero -->
-              <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
-                <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
-                  {{ nameInitial }}
-                </div>
-                <p class="font-serif text-xl text-neutral-900 mb-1">{{ form.profileName }}</p>
-                <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ form.tagline }}</p>
-                <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
-                  {{ form.ctaButton }}
-                </span>
+            <div class="flex-1 bg-white border border-neutral-200 rounded-md px-2.5 py-1 flex items-center gap-1.5">
+              <UIcon name="i-lucide-lock" class="w-3 h-3 text-neutral-400 shrink-0" />
+              <span class="text-xs text-neutral-500 truncate">{{ form.subdomain }}.{{ rootDomain }}</span>
+            </div>
+          </div>
+          <!-- Seiten-Inhalt -->
+          <div class="bg-neutral-50 p-4 flex flex-col gap-3">
+            <!-- Hero -->
+            <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
+              <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
+                {{ nameInitial }}
               </div>
-              <!-- Format-Liste -->
-              <div class="flex flex-col gap-2">
-                <div
-                  v-for="format in selectedFormats"
-                  :key="format.id"
-                  class="flex items-center justify-between px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
-                >
-                  <div>
-                    <p class="text-sm text-neutral-900">{{ format.previewName }}</p>
-                    <p class="text-xs text-neutral-400">{{ format.previewMeta }}</p>
-                  </div>
-                  <span class="font-serif text-base text-primary-600">{{ format.previewPrice }}</span>
+              <p class="font-serif text-xl text-neutral-900 mb-1">{{ form.profileName }}</p>
+              <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ form.tagline }}</p>
+              <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
+                {{ form.ctaButton }}
+              </span>
+            </div>
+            <!-- Format-Liste -->
+            <div class="flex flex-col gap-2">
+              <div
+                v-for="format in selectedFormats"
+                :key="format.id"
+                class="flex items-center justify-between px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
+              >
+                <div>
+                  <p class="text-sm text-neutral-900">{{ format.previewName }}</p>
+                  <p class="text-xs text-neutral-400">{{ format.previewMeta }}</p>
                 </div>
+                <span class="font-serif text-base text-primary-600">{{ format.previewPrice }}</span>
               </div>
             </div>
           </div>
-        </SettingsSection>
+        </div>
       </div>
 
     </div>

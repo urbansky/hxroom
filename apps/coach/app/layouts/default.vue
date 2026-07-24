@@ -105,7 +105,7 @@ const pageTitle = computed(() => {
 
 <template>
   <UDashboardGroup storage-key="coach-sidebar" unit="px">
-    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar" :ui="{ root: 'border-e-0', header: 'border-b border-default', footer: 'border-t border-default' }">
+    <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar" :ui="{ header: 'border-b border-default', footer: 'border-t border-default' }">
       <template #header="{ collapsed }">
         <Logo :collapsed="collapsed" />
       </template>
