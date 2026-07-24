@@ -29,6 +29,7 @@ export class OffersService {
         name: dto.name,
         durationMinutes: dto.durationMinutes,
         priceCents: dto.priceCents ?? null,
+        description: dto.description ?? null,
         isActive: dto.isActive ?? true,
         sortOrder: (maxSortOrder ?? -1) + 1,
       })
@@ -46,6 +47,7 @@ export class OffersService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.durationMinutes !== undefined && { durationMinutes: dto.durationMinutes }),
         ...(dto.priceCents !== undefined && { priceCents: dto.priceCents }),
+        ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       })
       .where(eq(offers.id, id))

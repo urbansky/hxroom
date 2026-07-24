@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -96,6 +96,7 @@ export const offers = pgTable('offers', {
   name:            text('name').notNull(),
   durationMinutes: integer('duration_minutes').notNull(),
   priceCents:      integer('price_cents'),          // optional, in Cent; null = kein Preis hinterlegt
+  description:     jsonb('description'),            // Tiptap/ProseMirror-Dokument (JSON), null = keine Beschreibung
   isActive:        boolean('is_active').notNull().default(true),
   sortOrder:       integer('sort_order').notNull().default(0),
   createdAt:       timestamp('created_at').notNull().defaultNow(),
