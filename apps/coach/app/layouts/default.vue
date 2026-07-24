@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
+import { Logo } from '@hxroom/ui'
 
 type NavItem = NavigationMenuItem & { description?: string }
 
 const { session, signOut } = useAuth()
 const route = useRoute()
+const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
+
+const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`)
 
 const navItems: NavItem[][] = [
   [
@@ -36,12 +40,38 @@ const navItems: NavItem[][] = [
   ],
 ]
 
-const userMenuItems = computed(() => [
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: 'Account',
       icon: 'i-lucide-user-round',
       to: '/settings/account',
+    },
+  ],
+  [
+    {
+      label: 'Über',
+      icon: 'i-lucide-info',
+      children: [
+        {
+          label: 'HxRoom-Website',
+          icon: 'i-lucide-globe',
+          to: landingUrl.value,
+          target: '_blank',
+        },
+        {
+          label: 'Impressum',
+          icon: 'i-lucide-file-text',
+          to: `${landingUrl.value}/impressum`,
+          target: '_blank',
+        },
+        {
+          label: 'Datenschutz',
+          icon: 'i-lucide-shield',
+          to: `${landingUrl.value}/datenschutz`,
+          target: '_blank',
+        },
+      ],
     },
   ],
   [
@@ -77,12 +107,7 @@ const pageTitle = computed(() => {
   <UDashboardGroup storage-key="coach-sidebar" unit="px">
     <UDashboardSidebar collapsible resizable :default-size="220" :min-size="160" :max-size="360" class="coach-sidebar" :ui="{ root: 'border-e-0', header: 'border-b border-default', footer: 'border-t border-default' }">
       <template #header="{ collapsed }">
-        <NuxtLink to="/" class="flex items-center gap-2.5 py-1 overflow-hidden">
-          <div class="size-9 rounded-full bg-gradient-to-br from-sage-400 to-sage-600 flex items-center justify-center shrink-0">
-            <UIcon name="i-tabler-video" class="size-5 text-white/92" />
-          </div>
-          <span v-if="!collapsed" class="text-[22px] text-gold-700 dark:text-gold-200 tracking-wide truncate">HxRoom</span>
-        </NuxtLink>
+        <Logo :collapsed="collapsed" />
       </template>
 
       <template #default="{ collapsed }">

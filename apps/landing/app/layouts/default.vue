@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { Logo } from '@hxroom/ui'
+</script>
+
 <template>
   <div class="bg-(--ui-bg) text-(--ui-text) min-h-screen antialiased">
     <!-- Noise overlay -->
@@ -8,7 +12,7 @@
 
     <!-- Nav -->
     <nav class="fixed top-0 left-0 right-0 z-100 flex items-center justify-between px-6 lg:px-12 h-17 bg-(--ui-bg)/70 backdrop-blur-xl border-b border-(--ui-border)">
-      <SiteLogo />
+      <Logo />
       <div class="flex items-center gap-4">
         <!-- <NuxtLink to="/blog" class="hidden md:inline text-sm text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">
           Blog

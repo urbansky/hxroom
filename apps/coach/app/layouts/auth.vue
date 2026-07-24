@@ -1,14 +1,13 @@
 <script setup lang="ts">
+import { Logo } from '@hxroom/ui'
+
 const { public: { rootDomain } } = useRuntimeConfig()
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col bg-(--ui-bg-muted)">
-    <header class="flex flex-col items-center gap-2 pt-10 pb-2">
-      <UIcon name="i-lucide-video" class="size-8 text-primary" />
-      <span class="font-serif text-2xl text-(--ui-text-highlighted)">
-        Hx<span class="text-primary">Room</span>
-      </span>
+    <header class="flex flex-col items-center pt-10 pb-2">
+      <Logo />
     </header>
 
     <main class="flex flex-1 items-center justify-center px-4 pb-12">

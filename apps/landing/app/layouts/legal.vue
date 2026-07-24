@@ -1,10 +1,14 @@
+<script setup lang="ts">
+import { Logo } from '@hxroom/ui'
+</script>
+
 <template>
   <div class="bg-(--ui-bg) text-(--ui-text) min-h-screen antialiased flex flex-col">
     <div class="noise" />
 
     <!-- Nav: Brand-Logo + "Zurück"-Link, kein CTA -->
     <nav class="sticky top-0 z-100 flex items-center justify-between px-6 lg:px-12 h-17 bg-(--ui-bg)/70 backdrop-blur-xl border-b border-(--ui-border)">
-      <SiteLogo />
+      <Logo />
       <NuxtLink
         to="/"
         class="inline-flex items-center gap-1.5 text-[13px] text-(--ui-text-muted) hover:text-(--ui-text-highlighted) hover:bg-(--ui-bg-muted) px-3.5 py-2 rounded-lg transition-colors no-underline"
