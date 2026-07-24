@@ -8,30 +8,30 @@ const { $api } = useApi()
 // `description` bindet an UEditor (Tiptap) und wird serverseitig gegen
 // richTextDocSchema (@hxroom/shared) validiert – hier bewusst locker typisiert,
 // da Tiptaps eigener Content-Typ nicht mit unserem Zod-Typ deckungsgleich ist.
-interface OfferRow {
-  id: string
+interface OfferDraft {
+  id: string | null
   name: string
   durationMinutes: number
   priceEuro: string
+  isFree: boolean
   description: any
   isActive: boolean
 }
 
-function toRow(offer: OfferResponse): OfferRow {
+function emptyDraft(): OfferDraft {
+  return { id: null, name: '', durationMinutes: 60, priceEuro: '', isFree: false, description: null, isActive: true }
+}
+
+function toDraft(offer: OfferResponse): OfferDraft {
   return {
     id: offer.id,
     name: offer.name,
     durationMinutes: offer.durationMinutes,
     priceEuro: offer.priceCents != null ? (offer.priceCents / 100).toFixed(2) : '',
+    isFree: offer.priceCents == null,
     description: offer.description,
     isActive: offer.isActive,
   }
-}
-
-function cloneDoc(doc: any): any {
-  // JSON-Roundtrip statt structuredClone: row.description kann ein reaktives
-  // Vue-Proxy-Objekt sein, das structuredClone mit DataCloneError ablehnt.
-  return doc ? JSON.parse(JSON.stringify(doc)) : null
 }
 
 function parsePriceCents(priceEuro: string): number | null {
@@ -42,105 +42,84 @@ function parsePriceCents(priceEuro: string): number | null {
   return Math.round(value * 100)
 }
 
-const rows = ref<OfferRow[]>([])
-const savedRows = ref<Record<string, OfferRow>>({})
+function formatPrice(priceCents: number | null): string {
+  if (priceCents == null) return 'Kostenlos'
+  return `${(priceCents / 100).toFixed(2).replace('.', ',')} €`
+}
+
+const rows = ref<OfferResponse[]>([])
 
 await useFetch<OfferResponse[]>('/offers', {
   $fetch: $api,
   onResponse({ response }) {
-    const data = (response._data as OfferResponse[]).map(toRow)
-    rows.value = data
-    savedRows.value = Object.fromEntries(data.map(row => [row.id, { ...row, description: cloneDoc(row.description) }]))
+    rows.value = response._data as OfferResponse[]
   },
 })
 
-const saveStatus = ref<Record<string, 'saving' | 'saved' | 'error' | null>>({})
-const savedTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+const isDrawerOpen = ref(false)
+const confirmingDelete = ref(false)
+const saving = ref(false)
+const saveError = ref<string | null>(null)
+const draft = reactive<OfferDraft>(emptyDraft())
 
-function diffChanges(row: OfferRow) {
-  const saved = savedRows.value[row.id]
-  const changes: Record<string, unknown> = {}
-  if (!saved || saved.name !== row.name) changes.name = row.name.trim()
-  if (!saved || saved.durationMinutes !== row.durationMinutes) changes.durationMinutes = row.durationMinutes
-  if (!saved || saved.priceEuro !== row.priceEuro) changes.priceCents = parsePriceCents(row.priceEuro)
-  if (!saved || JSON.stringify(saved.description) !== JSON.stringify(row.description)) changes.description = row.description
-  return changes
-}
-
-async function saveRow(row: OfferRow) {
-  if (!row.name.trim() || !row.durationMinutes) return
-  const changes = diffChanges(row)
-  if (!Object.keys(changes).length) return
-
-  if (savedTimers[row.id]) clearTimeout(savedTimers[row.id])
-  saveStatus.value[row.id] = 'saving'
-  try {
-    await $api(`/offers/${row.id}`, { method: 'PATCH', body: changes })
-    savedRows.value[row.id] = { ...row, description: cloneDoc(row.description) }
-    saveStatus.value[row.id] = 'saved'
-    savedTimers[row.id] = setTimeout(() => { saveStatus.value[row.id] = null }, 2500)
-  } catch {
-    saveStatus.value[row.id] = 'error'
+watch(isDrawerOpen, (open) => {
+  if (!open) {
+    confirmingDelete.value = false
+    saveError.value = null
   }
+})
+
+watch(() => draft.isFree, (free) => {
+  if (free) draft.priceEuro = ''
+})
+
+function openCreate() {
+  Object.assign(draft, emptyDraft())
+  isDrawerOpen.value = true
 }
 
-async function toggleActive(row: OfferRow) {
-  if (savedTimers[row.id]) clearTimeout(savedTimers[row.id])
-  saveStatus.value[row.id] = 'saving'
-  try {
-    await $api(`/offers/${row.id}`, { method: 'PATCH', body: { isActive: row.isActive } })
-    savedRows.value[row.id] = { ...row, description: cloneDoc(row.description) }
-    saveStatus.value[row.id] = 'saved'
-    savedTimers[row.id] = setTimeout(() => { saveStatus.value[row.id] = null }, 2500)
-  } catch {
-    row.isActive = !row.isActive
-    saveStatus.value[row.id] = 'error'
+function openEdit(offer: OfferResponse) {
+  Object.assign(draft, toDraft(offer))
+  isDrawerOpen.value = true
+}
+
+async function saveDraft() {
+  if (!draft.name.trim() || !draft.durationMinutes) return
+  saveError.value = null
+  saving.value = true
+  const body = {
+    name: draft.name.trim(),
+    durationMinutes: draft.durationMinutes,
+    priceCents: draft.isFree ? null : parsePriceCents(draft.priceEuro),
+    description: draft.description,
+    isActive: draft.isActive,
   }
-}
-
-const newOffer = reactive({ name: '', durationMinutes: 60, priceEuro: '' })
-const creating = ref(false)
-const createError = ref<string | null>(null)
-
-async function addOffer() {
-  createError.value = null
-  if (!newOffer.name.trim() || !newOffer.durationMinutes) return
-  creating.value = true
   try {
-    const created = await $api<OfferResponse>('/offers', {
-      method: 'POST',
-      body: {
-        name: newOffer.name.trim(),
-        durationMinutes: newOffer.durationMinutes,
-        priceCents: parsePriceCents(newOffer.priceEuro),
-      },
-    })
-    const row = toRow(created)
-    rows.value.push(row)
-    savedRows.value[row.id] = { ...row, description: cloneDoc(row.description) }
-    newOffer.name = ''
-    newOffer.durationMinutes = 60
-    newOffer.priceEuro = ''
+    if (draft.id) {
+      const updated = await $api<OfferResponse>(`/offers/${draft.id}`, { method: 'PATCH', body })
+      const idx = rows.value.findIndex(r => r.id === draft.id)
+      if (idx !== -1) rows.value[idx] = updated
+    } else {
+      const created = await $api<OfferResponse>('/offers', { method: 'POST', body })
+      rows.value.push(created)
+    }
+    isDrawerOpen.value = false
   } catch {
-    createError.value = 'Angebot konnte nicht angelegt werden.'
+    saveError.value = 'Angebot konnte nicht gespeichert werden.'
   } finally {
-    creating.value = false
+    saving.value = false
   }
 }
 
-const confirmingDeleteId = ref<string | null>(null)
-
-async function removeOffer(row: OfferRow) {
-  await $api(`/offers/${row.id}`, { method: 'DELETE' })
-  rows.value = rows.value.filter(r => r.id !== row.id)
-  delete savedRows.value[row.id]
-  confirmingDeleteId.value = null
+async function deleteDraft() {
+  if (!draft.id) return
+  await $api(`/offers/${draft.id}`, { method: 'DELETE' })
+  rows.value = rows.value.filter(r => r.id !== draft.id)
+  isDrawerOpen.value = false
 }
 
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
-// Locker typisiert: die generischen Toolbar-Item-Types von Nuxt UI sind hier
-// nicht der Mühe wert, exakt nachzubilden – reine statische UI-Konfiguration.
 const editorToolbarItems: any[] = [
   { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Fett' } },
   { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Kursiv' } },
@@ -186,105 +165,37 @@ const plannedFeatures = [
     <h1 class="font-serif text-3xl text-highlighted mb-2">Sitzungsangebote</h1>
     <p class="text-muted mb-8">Lege fest, welche Sitzungsformate deine Klienten buchen können – mit Name, Dauer, Preis und einer ausführlichen Beschreibung.</p>
 
-    <div class="flex flex-col gap-5">
+    <div class="flex flex-col gap-3">
       <p v-if="!rows.length" class="text-sm text-muted">Noch keine Angebote angelegt.</p>
 
-      <div
-        v-for="row in rows"
-        :key="row.id"
-        class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 flex flex-col gap-5"
+      <button
+        v-for="offer in rows"
+        :key="offer.id"
+        type="button"
+        class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 flex items-center justify-between gap-4 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
+        @click="openEdit(offer)"
       >
-        <!-- Name + Status/Aktionen -->
-        <div class="flex items-start justify-between gap-4">
-          <UInput
-            v-model="row.name"
-            placeholder="Name"
-            size="xl"
-            class="flex-1 min-w-40"
-            :ui="{ base: 'text-lg font-medium bg-white dark:bg-neutral-800' }"
-            @blur="saveRow(row)"
-          />
-          <div class="flex items-center gap-3 shrink-0 pt-1.5">
-            <SaveStatusHint :status="saveStatus[row.id] ?? null" />
-            <USwitch v-model="row.isActive" @update:model-value="toggleActive(row)" />
-            <UButton
-              v-if="confirmingDeleteId !== row.id"
-              icon="i-lucide-trash-2"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              aria-label="Angebot löschen"
-              @click="confirmingDeleteId = row.id"
-            />
-            <template v-else>
-              <UButton label="Löschen" color="error" variant="soft" size="sm" @click="removeOffer(row)" />
-              <UButton label="Abbrechen" color="neutral" variant="ghost" size="sm" @click="confirmingDeleteId = null" />
-            </template>
-          </div>
-        </div>
+        <span class="min-w-0 flex flex-col">
+          <span class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-highlighted truncate">{{ offer.name }}</span>
+            <UBadge v-if="!offer.isActive" label="Inaktiv" color="neutral" variant="subtle" size="sm" />
+          </span>
+          <span class="text-sm text-muted mt-0.5">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</span>
+        </span>
+        <UIcon name="i-lucide-chevron-right" class="size-4 text-muted shrink-0" />
+      </button>
 
-        <!-- Dauer & Preis -->
-        <div class="flex items-center gap-6 flex-wrap">
-          <UFormField label="Dauer" class="w-32">
-            <UInput v-model.number="row.durationMinutes" type="number" min="5" max="480" :ui="inputUi" @blur="saveRow(row)">
-              <template #trailing>
-                <span class="text-xs text-muted">min</span>
-              </template>
-            </UInput>
-          </UFormField>
-          <UFormField label="Preis" class="w-36">
-            <UInput v-model="row.priceEuro" placeholder="kostenlos" :ui="inputUi" @blur="saveRow(row)">
-              <template #trailing>
-                <span class="text-xs text-muted">€</span>
-              </template>
-            </UInput>
-          </UFormField>
-        </div>
-
-        <!-- Beschreibung -->
-        <div>
-          <label class="text-sm font-medium text-highlighted mb-2 block">Beschreibung</label>
-          <div class="rounded-lg border border-default overflow-hidden bg-white dark:bg-neutral-800">
-            <UEditor
-              v-model="row.description"
-              content-type="json"
-              :image="false"
-              :mention="false"
-              :starter-kit="{ heading: { levels: [2, 3] } }"
-              placeholder="Was Klient:innen erwartet, für wen dieses Angebot geeignet ist …"
-              :ui="{ base: 'min-h-32 sm:px-4' }"
-              @blur="saveRow(row)"
-            >
-              <template #default="{ editor }">
-                <UEditorToolbar :editor="editor" :items="editorToolbarItems" class="border-b border-default px-2 py-1.5" />
-              </template>
-            </UEditor>
-          </div>
-        </div>
-      </div>
-
-      <!-- Neues Angebot -->
-      <div class="rounded-xl border border-dashed border-default p-5 flex flex-col gap-3">
-        <p class="text-sm font-medium text-highlighted">Neues Angebot</p>
-        <div class="flex items-center gap-2 flex-wrap">
-          <UInput v-model="newOffer.name" placeholder="Name, z. B. Coaching-Sitzung" class="flex-1 min-w-40" :ui="inputUi" @keyup.enter="addOffer" />
-          <UInput v-model.number="newOffer.durationMinutes" type="number" min="5" max="480" class="w-24" :ui="inputUi" @keyup.enter="addOffer">
-            <template #trailing>
-              <span class="text-xs text-muted">min</span>
-            </template>
-          </UInput>
-          <UInput v-model="newOffer.priceEuro" placeholder="kostenlos" class="w-32" :ui="inputUi" @keyup.enter="addOffer">
-            <template #trailing>
-              <span class="text-xs text-muted">€</span>
-            </template>
-          </UInput>
-          <UButton label="Hinzufügen" icon="i-lucide-plus" :loading="creating" @click="addOffer" />
-        </div>
-        <p v-if="createError" class="text-sm text-error">{{ createError }}</p>
-      </div>
+      <button
+        type="button"
+        class="rounded-xl border border-dashed border-default p-5 flex items-center justify-center gap-2 text-sm text-muted hover:text-highlighted hover:border-accented transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+        @click="openCreate"
+      >
+        <UIcon name="i-lucide-plus" class="size-4" />
+        Neues Angebot
+      </button>
     </div>
 
-    <SettingsSection title="Geplante Features" description="Das kommt als Nächstes für deine Sitzungsangebote." class="mt-6">
+    <SettingsSection title="Geplante Features" description="Das kommt als Nächstes für deine Sitzungsangebote." class="mt-6 hidden">
       <div class="flex flex-col gap-2">
         <UpcomingFeature
           v-for="item in plannedFeatures"
@@ -293,5 +204,82 @@ const plannedFeatures = [
         />
       </div>
     </SettingsSection>
+
+    <!-- Bearbeiten-/Anlegen-Drawer -->
+    <USlideover v-model:open="isDrawerOpen" :title="draft.id ? 'Angebot bearbeiten' : 'Neues Angebot'">
+      <template #body>
+        <div class="flex flex-col gap-6">
+          <div class="flex items-center justify-between gap-4 rounded-lg border border-default bg-neutral-50 dark:bg-neutral-800/50 p-4">
+            <div>
+              <p class="text-sm font-medium text-highlighted">Auf Buchungsseite sichtbar</p>
+              <p class="text-sm text-muted">Klienten können dieses Format buchen.</p>
+            </div>
+            <USwitch v-model="draft.isActive" />
+          </div>
+
+          <UFormField label="Name">
+            <UInput v-model="draft.name" placeholder="z. B. Coaching-Sitzung" class="w-full" :ui="inputUi" />
+          </UFormField>
+
+          <div class="flex items-end gap-4 flex-wrap">
+            <UFormField label="Dauer" class="w-32">
+              <UInput v-model.number="draft.durationMinutes" type="number" min="5" max="480" :ui="inputUi">
+                <template #trailing>
+                  <span class="text-xs text-muted">min</span>
+                </template>
+              </UInput>
+            </UFormField>
+            <UFormField label="Preis" class="w-32">
+              <UInput v-model="draft.priceEuro" placeholder="0" :disabled="draft.isFree" :ui="inputUi">
+                <template #trailing>
+                  <span class="text-xs text-muted">€</span>
+                </template>
+              </UInput>
+            </UFormField>
+            <UCheckbox v-model="draft.isFree" label="Kostenlos" class="pb-2.5" />
+          </div>
+
+          <div>
+            <label class="text-sm font-medium text-highlighted block">Beschreibung</label>
+            <p class="text-sm text-muted mb-2">Erscheint als Angebotstext auf deiner Buchungsseite.</p>
+            <div class="rounded-lg border border-default overflow-hidden bg-white dark:bg-neutral-800">
+              <UEditor
+                v-model="draft.description"
+                content-type="json"
+                :image="false"
+                :mention="false"
+                :starter-kit="{ heading: { levels: [2, 3] } }"
+                placeholder="Was Klient:innen erwartet, für wen dieses Angebot geeignet ist …"
+                :ui="{ base: 'min-h-32 sm:px-4' }"
+              >
+                <template #default="{ editor }">
+                  <UEditorToolbar :editor="editor" :items="editorToolbarItems" class="border-b border-default px-2 py-1.5" />
+                </template>
+              </UEditor>
+            </div>
+          </div>
+
+          <p v-if="saveError" class="text-sm text-error">{{ saveError }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <div v-if="confirmingDelete" class="flex items-center justify-between w-full">
+          <span class="text-sm text-muted">Angebot wirklich löschen?</span>
+          <div class="flex items-center gap-2">
+            <UButton label="Abbrechen" color="neutral" variant="ghost" size="sm" @click="confirmingDelete = false" />
+            <UButton label="Löschen" color="error" variant="solid" size="sm" @click="deleteDraft" />
+          </div>
+        </div>
+        <div v-else class="flex items-center justify-between w-full">
+          <UButton v-if="draft.id" label="Löschen" icon="i-lucide-trash-2" color="error" variant="ghost" @click="confirmingDelete = true" />
+          <div v-else />
+          <div class="flex items-center gap-2">
+            <UButton label="Abbrechen" color="neutral" variant="ghost" @click="isDrawerOpen = false" />
+            <UButton :label="draft.id ? 'Speichern' : 'Anlegen'" color="primary" :loading="saving" @click="saveDraft" />
+          </div>
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
