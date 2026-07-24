@@ -18,11 +18,6 @@ const features = [
     description: 'Mindestzeit vor einem Termin, die Klienten zur Buchung benötigen (z. B. 24 Stunden).',
   },
   {
-    icon: 'i-lucide-layers',
-    title: 'Sitzungstypen & Dauer',
-    description: 'Erstgespräch (30 min, kostenlos), Standard-Sitzung (60 min) und Intensiv-Session (90 min) konfigurieren.',
-  },
-  {
     icon: 'i-lucide-calendar-sync',
     title: 'iCal-Feed',
     description: 'Private Feed-URL zum Abonnieren deines HxRoom-Kalenders in externen Apps (Apple Calendar, Outlook).',
@@ -43,7 +38,7 @@ const features = [
 <template>
   <div class="p-4 sm:p-6 max-w-2xl">
     <h1 class="font-serif text-3xl text-highlighted mb-2">Verfügbarkeit</h1>
-    <p class="text-muted mb-8">Konfiguriere deine buchbaren Zeiten, Pausen und Sitzungstypen.</p>
+    <p class="text-muted mb-8">Konfiguriere deine buchbaren Zeiten und Pausen.</p>
 
     <div class="flex flex-col gap-2">
       <UpcomingFeature

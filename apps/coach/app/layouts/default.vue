@@ -18,7 +18,8 @@ const navItems: NavItem[][] = [
   [
     { type: 'label', label: 'Buchungen' },
     { label: 'Kalender', icon: 'i-lucide-calendar', to: '/bookings', description: 'Alle gebuchten Termine im Überblick' },
-    { label: 'Verfügbarkeit', icon: 'i-lucide-clock', to: '/bookings/availability', description: 'Buchbare Zeiten und Sitzungstypen' },
+    { label: 'Sitzungsangebote', icon: 'i-lucide-layers', to: '/bookings/offers', description: 'Buchbare Angebote mit Name, Dauer und Preis' },
+    { label: 'Verfügbarkeit', icon: 'i-lucide-clock', to: '/bookings/availability', description: 'Buchbare Zeiten für deine Angebote' },
   ],
   [
     { type: 'label', label: 'Klienten' },
@@ -87,6 +88,7 @@ const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/': 'Dashboard',
     '/bookings': 'Kalender',
+    '/bookings/offers': 'Sitzungsangebote',
     '/bookings/availability': 'Verfügbarkeit',
     '/clients': 'Klientenliste',
     '/notes': 'Notizen',

@@ -26,3 +26,25 @@ export const landingPageSchema = z.object({
   ctaIntro:    z.string().max(160).nullish(),
 });
 export type LandingPageDto = z.infer<typeof landingPageSchema>;
+
+// Sitzungsangebote (Einzelsitzungen)
+export const createOfferSchema = z.object({
+  name:             z.string().min(1, 'Name ist erforderlich').max(160),
+  durationMinutes:  z.number().int().min(5, 'Mindestens 5 Minuten').max(480, 'Maximal 480 Minuten'),
+  priceCents:       z.number().int().min(0, 'Preis darf nicht negativ sein').nullish(),
+  isActive:         z.boolean().optional(),
+});
+export type CreateOfferDto = z.infer<typeof createOfferSchema>;
+
+export const updateOfferSchema = createOfferSchema.partial();
+export type UpdateOfferDto = z.infer<typeof updateOfferSchema>;
+
+export const offerResponseSchema = z.object({
+  id:              z.string(),
+  name:            z.string(),
+  durationMinutes: z.number(),
+  priceCents:      z.number().nullable(),
+  isActive:        z.boolean(),
+  sortOrder:       z.number(),
+});
+export type OfferResponse = z.infer<typeof offerResponseSchema>;

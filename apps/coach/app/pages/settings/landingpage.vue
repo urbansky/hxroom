@@ -191,7 +191,7 @@ const features = [
                   placeholder="dein-name"
                   @blur="onBlur('subdomain')"
                 />
-                <UBadge color="neutral" variant="outline" size="lg" :label="'.' + rootDomain" class="bg-muted" />
+                <UBadge color="neutral" variant="outline" size="lg" :label="'.' + rootDomain" class="text-muted" />
               </UFieldGroup>
               <UButton variant="outline" color="neutral">
                 Link kopieren

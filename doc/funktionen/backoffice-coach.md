@@ -31,7 +31,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | 07 | **iCal-Abo (Kalender-Feed)** | Eindeutige, private iCal-URL pro Coach – einmalig in Google, Apple oder Outlook eintragen. Gebuchte Termine erscheinen im externen Kalender. Einseitiger Sync (HxRoom → Kalender). | Basic |
 | 08 | **Google Calendar API Sync** | Bidirektionaler Echtzeit-Sync via Google Calendar API: gebuchte Termine werden sofort übertragen, externe Termine blockieren Slots in HxRoom automatisch – keine Doppelbuchungen möglich. | Pro |
 | 09 | **Wiederkehrende Termine** | Regelmäßige Sitzungsserien (z.B. wöchentlich für 8 Wochen) mit einmaliger Buchung anlegen. | Später |
-| 10 | **Sitzungstypen & Dauer** | Verschiedene buchbare Formate definieren: Erstgespräch (30 min, kostenlos), Standardsitzung (60 min), Intensiv (90 min). | Später |
+| 10 | **Angebote verwalten** | Einzelsitzungs-Angebote mit Name, Dauer und optionalem Preis anlegen (z.B. Erstgespräch 30 min kostenlos, Coaching-Sitzung 60 min, Intensiv-Session 90 min). Preis ist in dieser Phase rein informativ – Zahlungsabwicklung siehe „Bezahlung bei Buchung" (Pro). Jedes Angebot ist standardmäßig in der gesamten Verfügbarkeit buchbar; optional kann pro Angebot eine eigene Teilmenge der Verfügbarkeitsslots festgelegt werden. Details: [angebote-verfuegbarkeiten.md](angebote-verfuegbarkeiten.md). | MVP |
 
 ---
 
@@ -68,7 +68,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
 | 01 | **Bezahlung bei Buchung (Stripe)** | Klient bezahlt direkt beim Buchen – Termin wird erst nach Zahlung bestätigt. Stripe-Integration, keine Zahlungsdaten bei HxRoom. | Pro |
-| 02 | **Honorar konfigurieren** | Preis pro Sitzungstyp festlegen, Währung (EUR), optionale Pakete (z.B. 5 Sitzungen zum Paketpreis). | Pro |
+| 02 | **Paketpreise konfigurieren** | Mehrfachsitzungen zum Paketpreis anbieten (z.B. 5 Sitzungen). Preis pro Einzelangebot wird bereits in „Angebote verwalten" (MVP) gepflegt – dieser Punkt betrifft nur Pakete. | Später |
 | 03 | **Automatische Rechnungsstellung** | Nach jeder bezahlten Sitzung erhält der Klient automatisch eine DSGVO-konforme Rechnung per E-Mail. | Pro |
 | 04 | **Umsatzübersicht** | Monatliche und jährliche Übersicht der Einnahmen, filterbar nach Klient und Sitzungstyp. | Pro |
 | 05 | **Rechnungen exportieren** | Alle Rechnungen als ZIP (PDF) herunterladen – für Steuerberater und Jahresabschluss. | Später |

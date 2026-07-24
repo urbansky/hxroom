@@ -546,6 +546,8 @@ Claude Code kann das `StorageModule` inkl. Service und Typen vollständig aus ei
 
 ## 11. Datenbankmodell mit Drizzle ORM
 
+> **Angebote & Verfügbarkeiten:** Die Verknüpfung von `offers` und `availabilitySlots` (Zwei-Stufen-Modell: Standard-Verfügbarkeit für alle Angebote, optionale Ausnahme pro Angebot) ist im Detail beschrieben in [`funktionen/angebote-verfuegbarkeiten.md`](funktionen/angebote-verfuegbarkeiten.md). Hier nur der Schema-Auszug.
+
 ```typescript
 // apps/api/src/db/schema.ts (Auszug)
 
@@ -583,8 +585,10 @@ export const bookings = pgTable('bookings', {
   organizationId: text('organization_id').notNull(), // für org-weite Kalenderansicht im Studio-Plan
   coachId: text('coach_id').notNull(),               // der Coach, der die Sitzung hält
   clientId: uuid('client_id').references(() => clients.id),
+  offerId: uuid('offer_id').references(() => offers.id), // nullable – manuell angelegte Termine ohne Angebotsbezug
+  offerName: text('offer_name'),                     // Snapshot des Angebotsnamens zum Buchungszeitpunkt
   scheduledAt: timestamp('scheduled_at').notNull(),
-  durationMinutes: integer('duration_minutes').notNull().default(60),
+  durationMinutes: integer('duration_minutes').notNull().default(60), // Snapshot aus offer.durationMinutes
   status: text('status')
     .$type<'pending' | 'confirmed' | 'completed' | 'cancelled'>()
     .default('pending'),
@@ -617,6 +621,32 @@ export const availabilitySlots = pgTable('availability_slots', {
   endTime: text('end_time').notNull(),     // "17:00"
 });
 
+// Einzelsitzungs-Angebote (Pakete/Mehrfachsitzungen bewusst nicht Teil von v1,
+// siehe funktionen/angebote-verfuegbarkeiten.md Abschnitt 2 & 7)
+export const offers = pgTable('offers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: text('organization_id').notNull(),
+  coachId: text('coach_id').notNull(),          // better-auth userId
+  name: text('name').notNull(),                 // z.B. "Coaching-Sitzung"
+  durationMinutes: integer('duration_minutes').notNull(),
+  price: integer('price_cents'),                // optional, in Cent; null = kein Preis hinterlegt
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  // Zwei-Stufen-Modell: false (Default) = Angebot gilt in der gesamten
+  // allgemeinen Verfügbarkeit; true = nur in den unten zugeordneten Slots.
+  useCustomAvailability: boolean('use_custom_availability').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Stufe 2 des Zwei-Stufen-Modells: Teilmenge der availabilitySlots, die für
+// ein Angebot mit useCustomAvailability = true gilt. Bei false ungenutzt.
+export const offerAvailabilitySlots = pgTable('offer_availability_slots', {
+  offerId: uuid('offer_id').notNull().references(() => offers.id, { onDelete: 'cascade' }),
+  slotId: uuid('slot_id').notNull().references(() => availabilitySlots.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.offerId, table.slotId] }),
+}));
+
 export const reminderJobs = pgTable('reminder_jobs', {
   id: uuid('id').primaryKey().defaultRandom(),
   bookingId: uuid('booking_id').references(() => bookings.id, { onDelete: 'cascade' }),
@@ -635,6 +665,7 @@ packages/shared/src/schemas/
   booking.ts       # createBookingSchema, updateBookingSchema, BookingResponseSchema
   client.ts        # createClientSchema, ClientResponseSchema
   availability.ts  # availabilitySlotSchema
+  offer.ts         # createOfferSchema, updateOfferSchema, OfferResponseSchema
   profile.ts       # updateCoachProfileSchema, CoachProfileResponseSchema
   newsletter.ts    # subscribeSchema
 ```
@@ -785,7 +816,7 @@ export const organizationBilling = pgTable('organization_billing', {
 |---|---|---|
 | **1 – Fundament** | Docker Compose Setup, DB-Schema, Basis-Auth | Monorepo-Setup, Drizzle-Schema, Docker-Config |
 | **2 – Auth & Profil** | Registrierung, Login, Subdomain-Setup, Branding | better-auth Integration, Coach-Modul |
-| **3 – Buchung** | Verfügbarkeiten, Buchungsseite, E-Mail-Bestätigung | Booking-Modul, Availability-Logik, E-Mail-Templates |
+| **3 – Buchung** | Angebote (Einzelsitzungen), Verfügbarkeiten inkl. Zwei-Stufen-Modell, Buchungsseite, E-Mail-Bestätigung | Offer-Modul, Booking-Modul, Availability-Logik, E-Mail-Templates |
 | **4 – Videocall** | Warteraum, LiveKit-Integration, Call-UI | LiveKit-Service, Token-Generierung, Vue-Composable |
 | **5 – Nachbereitung** | Notizen, Session-Abschluss, Klienten-Weiterleitung | Notes-Modul, Session-State |
 | **6 – Speech2Text** | Whisper-Transkription, Klienten-Einwilligung, Transkript-Ansicht | Whisper-Service, BullMQ-Job, Consent-Flow, Transkript-UI |

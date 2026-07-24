@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -85,4 +85,19 @@ export const landingPage = pgTable('landing_page', {
   ctaIntro:       text('cta_intro'),
   createdAt:      timestamp('created_at').notNull().defaultNow(),
   updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+});
+
+// Sitzungsangebote (Einzelsitzungen). Details: doc/funktionen/angebote-verfuegbarkeiten.md
+// Pakete/Mehrfachsitzungen sowie die Verknüpfung mit Verfügbarkeitsslots (Zwei-Stufen-Modell)
+// sind dort als spätere Ausbaustufe beschrieben und bewusst noch nicht Teil dieser Tabelle.
+export const offers = pgTable('offers', {
+  id:              text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:  text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  name:            text('name').notNull(),
+  durationMinutes: integer('duration_minutes').notNull(),
+  priceCents:      integer('price_cents'),          // optional, in Cent; null = kein Preis hinterlegt
+  isActive:        boolean('is_active').notNull().default(true),
+  sortOrder:       integer('sort_order').notNull().default(0),
+  createdAt:       timestamp('created_at').notNull().defaultNow(),
+  updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
