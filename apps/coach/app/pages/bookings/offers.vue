@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { OfferResponse } from '@hxroom/shared'
+import { generateHTML } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -47,7 +49,48 @@ function formatPrice(priceCents: number | null): string {
   return `${(priceCents / 100).toFixed(2).replace('.', ',')} €`
 }
 
+function descriptionPreview(doc: any): string {
+  if (!doc?.content) return ''
+  const parts: string[] = []
+  const walk = (nodes: any[]) => {
+    for (const node of nodes) {
+      if (node.type === 'text' && node.text) parts.push(node.text)
+      if (node.content) walk(node.content)
+    }
+  }
+  walk(doc.content)
+  return parts.join(' ')
+}
+
+// Rendert die gespeicherte Beschreibung mit Tiptaps eigenem generateHTML –
+// mit derselben eingeschränkten Extension-Konfiguration wie im UEditor
+// (siehe unten). generateHTML baut den ProseMirror-Dokumentbaum aus dem JSON
+// über dieses Schema auf; Textinhalte werden dabei automatisch escaped, es
+// gibt keinen Pfad für rohes HTML/Skript aus den gespeicherten Daten.
+// `as any`: @tiptap/starter-kit wird an anderer Stelle im Workspace gegen eine
+// andere @tiptap/pm-Peer-Version aufgelöst, wodurch pnpm zwei strukturell
+// unterschiedliche @tiptap/core-Typinstanzen erzeugt – rein ein TS-Artefakt,
+// zur Laufzeit dieselbe Bibliothek.
+const descriptionExtensions = [StarterKit.configure({ heading: { levels: [2, 3] } })] as any
+
+function renderDescription(doc: any): string {
+  if (!doc?.content) return ''
+  try {
+    return generateHTML(doc, descriptionExtensions)
+  } catch {
+    return ''
+  }
+}
+
 const rows = ref<OfferResponse[]>([])
+
+const expandedIds = ref<Set<string>>(new Set())
+
+function toggleExpanded(id: string) {
+  if (expandedIds.value.has(id)) expandedIds.value.delete(id)
+  else expandedIds.value.add(id)
+  expandedIds.value = new Set(expandedIds.value)
+}
 
 await useFetch<OfferResponse[]>('/offers', {
   $fetch: $api,
@@ -168,22 +211,45 @@ const plannedFeatures = [
     <div class="flex flex-col gap-3">
       <p v-if="!rows.length" class="text-sm text-muted">Noch keine Angebote angelegt.</p>
 
-      <button
+      <div
         v-for="offer in rows"
         :key="offer.id"
-        type="button"
-        class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 flex items-center justify-between gap-4 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
+        role="button"
+        tabindex="0"
+        class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
+        :class="{ 'opacity-50': !offer.isActive }"
         @click="openEdit(offer)"
+        @keydown.enter="openEdit(offer)"
+        @keydown.space.prevent="openEdit(offer)"
       >
-        <span class="min-w-0 flex flex-col">
-          <span class="flex items-center gap-2 flex-wrap">
-            <span class="font-medium text-highlighted truncate">{{ offer.name }}</span>
+        <div class="min-w-0 flex flex-col gap-0.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-bold text-highlighted truncate">{{ offer.name }}</span>
             <UBadge v-if="!offer.isActive" label="Inaktiv" color="neutral" variant="subtle" size="sm" />
-          </span>
-          <span class="text-sm text-muted mt-0.5">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</span>
-        </span>
-        <UIcon name="i-lucide-chevron-right" class="size-4 text-muted shrink-0" />
-      </button>
+          </div>
+          <p class="text-sm text-muted">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</p>
+
+          <div class="mt-2 min-h-15">
+            <div
+              v-if="descriptionPreview(offer.description)"
+              class="text-sm text-muted offer-description [&_p]:my-0 [&_ul]:my-0 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:my-0 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0 [&_h2]:text-highlighted [&_h2]:font-medium [&_h2]:text-sm [&_h3]:text-highlighted [&_h3]:font-medium [&_h3]:text-sm [&_strong]:text-highlighted [&_strong]:font-medium [&_a]:text-primary [&_a]:underline"
+              :class="expandedIds.has(offer.id) ? '' : 'line-clamp-3'"
+              v-html="renderDescription(offer.description)"
+            />
+            <p v-else class="text-sm text-muted italic">Beschreibung hinzufügen …</p>
+          </div>
+
+          <button
+            v-if="descriptionPreview(offer.description)"
+            type="button"
+            class="self-start flex items-center gap-1 text-xs text-muted hover:text-highlighted cursor-pointer mt-1"
+            @click.stop="toggleExpanded(offer.id)"
+          >
+            {{ expandedIds.has(offer.id) ? 'Weniger anzeigen' : 'Mehr anzeigen' }}
+            <UIcon :name="expandedIds.has(offer.id) ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5" />
+          </button>
+        </div>
+      </div>
 
       <button
         type="button"
@@ -209,12 +275,15 @@ const plannedFeatures = [
     <USlideover v-model:open="isDrawerOpen" :title="draft.id ? 'Angebot bearbeiten' : 'Neues Angebot'">
       <template #body>
         <div class="flex flex-col gap-6">
-          <div class="flex items-center justify-between gap-4 rounded-lg border border-default bg-neutral-50 dark:bg-neutral-800/50 p-4">
+          <div
+            class="flex items-center justify-between gap-4 rounded-lg border border-default bg-neutral-50 dark:bg-neutral-800/50 p-4 cursor-pointer"
+            @click="draft.isActive = !draft.isActive"
+          >
             <div>
               <p class="text-sm font-medium text-highlighted">Auf Buchungsseite sichtbar</p>
               <p class="text-sm text-muted">Klienten können dieses Format buchen.</p>
             </div>
-            <USwitch v-model="draft.isActive" />
+            <USwitch v-model="draft.isActive" @click.stop />
           </div>
 
           <UFormField label="Name">
@@ -236,7 +305,11 @@ const plannedFeatures = [
                 </template>
               </UInput>
             </UFormField>
-            <UCheckbox v-model="draft.isFree" label="Kostenlos" class="pb-2.5" />
+            <UFormField label="" class="shrink-0">
+              <div class="h-8 flex items-center">
+                <UCheckbox v-model="draft.isFree" label="Kostenlos" :ui="{ base: 'rounded-[4px]' }" />
+              </div>
+            </UFormField>
           </div>
 
           <div>
