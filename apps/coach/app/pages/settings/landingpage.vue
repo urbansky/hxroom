@@ -178,7 +178,7 @@ const features = [
       <div class="flex flex-col gap-4">
 
         <!-- Buchungs-URL -->
-        <SettingsSection title="Adresse">
+        <SettingsSection title="Adresse" description="Unter dieser Subdomain erreichen dich deine Klienten.">
           <UFormField label="Subdomain" :error="visibleErrors.subdomain">
             <template v-if="fieldStatus('subdomain')" #hint>
               <SaveStatusHint :status="fieldStatus('subdomain')" />
@@ -201,7 +201,7 @@ const features = [
         </SettingsSection>
 
         <!-- Profil -->
-        <SettingsSection title="Profil">
+        <SettingsSection title="Profil" description="So stellst du dich auf deiner Buchungsseite vor.">
           <div class="flex flex-col gap-5">
             <div class="flex items-center gap-4">
               <div class="w-14 h-14 rounded-full bg-primary-500 flex items-center justify-center font-serif text-2xl text-white shrink-0">
@@ -219,10 +219,10 @@ const features = [
               <template v-if="fieldStatus('profileName')" #hint>
                 <SaveStatusHint :status="fieldStatus('profileName')" />
               </template>
-              <UInput v-model="form.profileName" class="w-52" :ui="inputUi" @blur="onBlur('profileName')" />
+              <UInput v-model="form.profileName" class="w-1/2" :ui="inputUi" @blur="onBlur('profileName')" />
             </UFormField>
 
-            <UFormField label="Tagline" :error="visibleErrors.tagline" help="Wird direkt unter deinem Namen angezeigt. Max. 160 Zeichen.">
+            <UFormField label="Tagline" :error="visibleErrors.tagline">
               <template v-if="fieldStatus('tagline')" #hint>
                 <SaveStatusHint :status="fieldStatus('tagline')" />
               </template>
@@ -239,9 +239,8 @@ const features = [
         </SettingsSection>
 
         <!-- Sitzungsformate -->
-        <SettingsSection title="Sitzungsformate">
+        <SettingsSection title="Sitzungsformate" description="Wähle, welche Formate auf deiner Seite buchbar sind.">
           <div class="flex flex-col gap-3">
-            <p class="text-sm text-muted">Wähle, welche Formate auf deiner Seite buchbar sind.</p>
             <div class="grid grid-cols-2 gap-2">
               <button
                 v-for="format in formats"
@@ -273,13 +272,13 @@ const features = [
         </SettingsSection>
 
         <!-- Call-to-Action -->
-        <SettingsSection title="Call-to-Action">
+        <SettingsSection title="Call-to-Action" description="Text und Beschriftung des Buchungs-Buttons auf deiner Seite.">
           <div class="flex flex-col gap-4">
             <UFormField label="Button-Text" :error="visibleErrors.ctaButton">
               <template v-if="fieldStatus('ctaButton')" #hint>
                 <SaveStatusHint :status="fieldStatus('ctaButton')" />
               </template>
-              <UInput v-model="form.ctaButton" class="w-52" :ui="inputUi" @blur="onBlur('ctaButton')" />
+              <UInput v-model="form.ctaButton" class="w-1/2" :ui="inputUi" @blur="onBlur('ctaButton')" />
             </UFormField>
             <UFormField label="Einleitungstext über dem Buchungs-Button" :error="visibleErrors.ctaIntro">
               <template v-if="fieldStatus('ctaIntro')" #hint>
@@ -294,11 +293,6 @@ const features = [
 
       <!-- Vorschau-Panel -->
       <div class="sticky top-20">
-        <div class="flex justify-end mb-2">
-          <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link" :to="previewUrl" target="_blank">
-            In neuem Tab öffnen
-          </UButton>
-        </div>
         <!-- Browser-Mockup -->
         <div class="rounded-xl border border-neutral-200 overflow-hidden shadow-xl">
           <!-- Browser-Chrome -->
@@ -342,12 +336,17 @@ const features = [
             </div>
           </div>
         </div>
+        <div class="flex justify-end mt-4">
+          <UButton variant="link" color="primary" size="xs" trailing-icon="i-lucide-external-link" :to="previewUrl" target="_blank">
+            In neuem Tab öffnen
+          </UButton>
+        </div>
       </div>
 
     </div>
 
     <!-- Geplante Features -->
-    <SettingsSection title="Geplante Features" class="mt-94">
+    <SettingsSection title="Geplante Features" description="Das kommt als Nächstes für deine Landingpage." class="mt-94">
       <div class="flex flex-col gap-2">
         <UpcomingFeature
           v-for="item in features"
