@@ -5,13 +5,9 @@
       <stop offset="100%" stop-color="#5C6E5B"/>
     </linearGradient>
   </defs>
-  <rect width="36" height="36" rx="10" fill="url(#g)"/>
-  <text
-    x="18" y="25"
-    text-anchor="middle"
-    font-family="system-ui, -apple-system, sans-serif"
-    font-size="17"
-    font-weight="600"
-    fill="rgba(255,255,255,0.92)"
-  >Hx</text>
+  <circle cx="18" cy="18" r="18" fill="url(#g)"/>
+  <g transform="translate(8 8) scale(0.8333)" fill="none" stroke="rgba(255,255,255,0.92)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+    <path d="m16 13l5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
+    <rect width="14" height="12" x="2" y="6" rx="2"/>
+  </g>
 </svg>
