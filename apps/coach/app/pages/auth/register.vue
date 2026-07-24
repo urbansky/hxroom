@@ -57,52 +57,54 @@ function mapAuthError(msg?: string): string {
           variant="soft"
           :description="errorMessage"
         />
-        <UAuthForm
-          title="Konto erstellen"
-          description="Starte dein kostenloses HxRoom-Konto"
-          icon="i-lucide-user-round-plus"
-          :fields="[
-            {
-              name: 'name',
-              type: 'text',
-              label: 'Name',
-              placeholder: 'Max Mustermann',
-              required: true,
-              autocomplete: 'name',
-            },
-            {
-              name: 'email',
-              type: 'email',
-              label: 'E-Mail-Adresse',
-              placeholder: 'coach@example.de',
-              required: true,
-              autocomplete: 'email',
-            },
-            {
-              name: 'password',
-              type: 'password',
-              label: 'Passwort',
-              placeholder: 'Mindestens 8 Zeichen',
-              required: true,
-              autocomplete: 'new-password',
-            },
-          ]"
-          :schema="schema"
-          :submit="{ label: 'Konto erstellen', loading: pending }"
-          @submit="onSubmit"
-        >
-          <template #footer>
-            <p class="text-center text-sm text-(--ui-text-muted)">
-              Bereits registriert?
-              <NuxtLink to="/auth/login" class="text-primary font-medium hover:underline">
-                Anmelden
-              </NuxtLink>
-            </p>
-          </template>
-        </UAuthForm>
+        <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
+          <UAuthForm
+            title="Konto erstellen"
+            description="Starte dein kostenloses HxRoom-Konto"
+            icon="i-lucide-user-round-plus"
+            :fields="[
+              {
+                name: 'name',
+                type: 'text',
+                label: 'Name',
+                placeholder: 'Max Mustermann',
+                required: true,
+                autocomplete: 'name',
+              },
+              {
+                name: 'email',
+                type: 'email',
+                label: 'E-Mail-Adresse',
+                placeholder: 'coach@example.de',
+                required: true,
+                autocomplete: 'email',
+              },
+              {
+                name: 'password',
+                type: 'password',
+                label: 'Passwort',
+                placeholder: 'Mindestens 8 Zeichen',
+                required: true,
+                autocomplete: 'new-password',
+              },
+            ]"
+            :schema="schema"
+            :submit="{ label: 'Konto erstellen', loading: pending }"
+            @submit="onSubmit"
+          >
+            <template #footer>
+              <p class="text-center text-sm text-(--ui-text-muted)">
+                Bereits registriert?
+                <NuxtLink to="/auth/login" class="text-primary font-medium hover:underline">
+                  Anmelden
+                </NuxtLink>
+              </p>
+            </template>
+          </UAuthForm>
+        </div>
       </template>
 
-      <UCard v-else>
+      <div v-else class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
         <div class="flex flex-col items-center gap-4 py-4 text-center">
           <UIcon name="i-lucide-mail-check" class="size-12 text-primary" />
           <div>
@@ -118,6 +120,6 @@ function mapAuthError(msg?: string): string {
             Zurück zur Anmeldung
           </NuxtLink>
         </div>
-      </UCard>
+      </div>
   </div>
 </template>

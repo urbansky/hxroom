@@ -65,40 +65,42 @@ function mapAuthError(msg?: string): string {
         variant="soft"
         :description="errorMessage"
       />
-      <UAuthForm
-        title="Anmelden"
-        description="Melde dich bei deinem HxRoom-Konto an"
-        icon="i-lucide-lock"
-        :fields="[
-          {
-            name: 'email',
-            type: 'email',
-            label: 'E-Mail-Adresse',
-            placeholder: 'coach@example.de',
-            required: true,
-            autocomplete: 'email',
-          },
-          {
-            name: 'password',
-            type: 'password',
-            label: 'Passwort',
-            placeholder: '••••••••',
-            required: true,
-            autocomplete: 'current-password',
-          },
-        ]"
-        :schema="schema"
-        :submit="{ label: 'Anmelden', loading: pending }"
-        @submit="onSubmit"
-      >
-        <template #footer>
-          <p class="text-center text-sm text-(--ui-text-muted)">
-            Noch kein Konto?
-            <NuxtLink to="/auth/register" class="text-primary font-medium hover:underline">
-              Registrieren
-            </NuxtLink>
-          </p>
-        </template>
-      </UAuthForm>
+      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
+        <UAuthForm
+          title="Anmelden"
+          description="Melde dich bei deinem HxRoom-Konto an"
+          icon="i-lucide-lock"
+          :fields="[
+            {
+              name: 'email',
+              type: 'email',
+              label: 'E-Mail-Adresse',
+              placeholder: 'coach@example.de',
+              required: true,
+              autocomplete: 'email',
+            },
+            {
+              name: 'password',
+              type: 'password',
+              label: 'Passwort',
+              placeholder: '••••••••',
+              required: true,
+              autocomplete: 'current-password',
+            },
+          ]"
+          :schema="schema"
+          :submit="{ label: 'Anmelden', loading: pending }"
+          @submit="onSubmit"
+        >
+          <template #footer>
+            <p class="text-center text-sm text-(--ui-text-muted)">
+              Noch kein Konto?
+              <NuxtLink to="/auth/register" class="text-primary font-medium hover:underline">
+                Registrieren
+              </NuxtLink>
+            </p>
+          </template>
+        </UAuthForm>
+      </div>
   </div>
 </template>
