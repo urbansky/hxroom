@@ -86,6 +86,54 @@ const rows = ref<OfferResponse[]>([])
 
 const showDescriptions = ref(true)
 
+// Reihenfolge per Drag & Drop – vorerst rein lokal, kein Persistieren über
+// die API (sortOrder wird nicht mitgeschickt).
+const draggedId = ref<string | null>(null)
+const dragOverId = ref<string | null>(null)
+const dragOverPosition = ref<'before' | 'after' | null>(null)
+
+function onDragStart(offer: OfferResponse, event: DragEvent) {
+  draggedId.value = offer.id
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', offer.id)
+  }
+}
+
+function onDragOver(offer: OfferResponse, event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  if (offer.id === draggedId.value) {
+    dragOverId.value = null
+    dragOverPosition.value = null
+    return
+  }
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const isBefore = event.clientY < rect.top + rect.height / 2
+  dragOverId.value = offer.id
+  dragOverPosition.value = isBefore ? 'before' : 'after'
+}
+
+function onDrop(targetOffer: OfferResponse) {
+  const fromIndex = rows.value.findIndex(r => r.id === draggedId.value)
+  let toIndex = rows.value.findIndex(r => r.id === targetOffer.id)
+  if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+    if (dragOverPosition.value === 'after') toIndex += 1
+    const moved = rows.value.splice(fromIndex, 1)[0]!
+    const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
+    rows.value.splice(adjustedIndex, 0, moved)
+  }
+  draggedId.value = null
+  dragOverId.value = null
+  dragOverPosition.value = null
+}
+
+function onDragEnd() {
+  draggedId.value = null
+  dragOverId.value = null
+  dragOverPosition.value = null
+}
+
 await useFetch<OfferResponse[]>('/offers', {
   $fetch: $api,
   onResponse({ response }) {
@@ -228,35 +276,58 @@ const plannedFeatures = [
     <div class="flex flex-col gap-3">
       <p v-if="!rows.length" class="text-sm text-muted">Noch keine Angebote angelegt.</p>
 
-      <div
-        v-for="offer in rows"
-        :key="offer.id"
-        role="button"
-        tabindex="0"
-        class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
-        :class="{ 'opacity-50': !offer.isActive }"
-        @click="openEdit(offer)"
-        @keydown.enter="openEdit(offer)"
-        @keydown.space.prevent="openEdit(offer)"
-      >
-        <div class="min-w-0 flex flex-col gap-0.5">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-bold text-highlighted truncate">{{ offer.name }}</span>
-            <UBadge v-if="!offer.isActive" label="Inaktiv" color="neutral" variant="subtle" size="sm" />
-          </div>
-          <p class="text-sm text-muted">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</p>
+      <template v-for="offer in rows" :key="offer.id">
+        <div
+          v-if="dragOverId === offer.id && dragOverPosition === 'before'"
+          class="h-0.5 rounded-full bg-primary mx-1"
+        />
 
-          <div v-if="showDescriptions" class="mt-2">
-            <div
-              v-if="descriptionPreview(offer.description)"
-              class="text-muted [&_h2]:text-highlighted [&_h3]:text-highlighted"
-              :class="descriptionProseClasses"
-              v-html="renderDescription(offer.description)"
-            />
-            <p v-else class="text-sm text-muted italic">Beschreibung hinzufügen …</p>
+        <div
+          role="button"
+          tabindex="0"
+          draggable="true"
+          class="group flex items-start gap-2 rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
+          :class="[
+            !offer.isActive && 'opacity-50',
+            draggedId === offer.id && 'opacity-30',
+          ]"
+          @click="openEdit(offer)"
+          @keydown.enter="openEdit(offer)"
+          @keydown.space.prevent="openEdit(offer)"
+          @dragstart="onDragStart(offer, $event)"
+          @dragover="onDragOver(offer, $event)"
+          @drop="onDrop(offer)"
+          @dragend="onDragEnd"
+        >
+          <UIcon
+            name="i-lucide-grip-vertical"
+            class="size-4 text-muted shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          />
+
+          <div class="min-w-0 flex-1 flex flex-col gap-0.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-highlighted truncate">{{ offer.name }}</span>
+              <UBadge v-if="!offer.isActive" label="Inaktiv" color="neutral" variant="subtle" size="sm" />
+            </div>
+            <p class="text-sm text-muted">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</p>
+
+            <div v-if="showDescriptions" class="mt-2">
+              <div
+                v-if="descriptionPreview(offer.description)"
+                class="text-muted [&_h2]:text-highlighted [&_h3]:text-highlighted"
+                :class="descriptionProseClasses"
+                v-html="renderDescription(offer.description)"
+              />
+              <p v-else class="text-sm text-muted italic">Beschreibung hinzufügen …</p>
+            </div>
           </div>
         </div>
-      </div>
+
+        <div
+          v-if="dragOverId === offer.id && dragOverPosition === 'after'"
+          class="h-0.5 rounded-full bg-primary mx-1"
+        />
+      </template>
 
       <button
         type="button"
