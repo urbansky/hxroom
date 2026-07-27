@@ -84,13 +84,7 @@ function renderDescription(doc: any): string {
 
 const rows = ref<OfferResponse[]>([])
 
-const expandedIds = ref<Set<string>>(new Set())
-
-function toggleExpanded(id: string) {
-  if (expandedIds.value.has(id)) expandedIds.value.delete(id)
-  else expandedIds.value.add(id)
-  expandedIds.value = new Set(expandedIds.value)
-}
+const showDescriptions = ref(true)
 
 await useFetch<OfferResponse[]>('/offers', {
   $fetch: $api,
@@ -219,6 +213,18 @@ const plannedFeatures = [
     <h1 class="font-serif text-3xl text-highlighted mb-2">Sitzungsangebote</h1>
     <p class="text-muted mb-8">Lege fest, welche Sitzungsformate deine Klienten buchen können – mit Name, Dauer, Preis und einer ausführlichen Beschreibung.</p>
 
+    <div class="flex items-center justify-between gap-4 mb-3">
+      <p class="text-sm text-muted">{{ rows.length }} {{ rows.length === 1 ? 'Angebot' : 'Angebote' }}</p>
+      <UButton
+        :label="showDescriptions ? 'Beschreibungen ausblenden' : 'Beschreibungen anzeigen'"
+        :icon="showDescriptions ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        @click="showDescriptions = !showDescriptions"
+      />
+    </div>
+
     <div class="flex flex-col gap-3">
       <p v-if="!rows.length" class="text-sm text-muted">Noch keine Angebote angelegt.</p>
 
@@ -240,25 +246,15 @@ const plannedFeatures = [
           </div>
           <p class="text-sm text-muted">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</p>
 
-          <div class="mt-2 min-h-15">
+          <div v-if="showDescriptions" class="mt-2">
             <div
               v-if="descriptionPreview(offer.description)"
               class="text-muted [&_h2]:text-highlighted [&_h3]:text-highlighted"
-              :class="[descriptionProseClasses, expandedIds.has(offer.id) ? '' : 'line-clamp-3']"
+              :class="descriptionProseClasses"
               v-html="renderDescription(offer.description)"
             />
             <p v-else class="text-sm text-muted italic">Beschreibung hinzufügen …</p>
           </div>
-
-          <button
-            v-if="descriptionPreview(offer.description)"
-            type="button"
-            class="self-start flex items-center gap-1 text-xs text-muted hover:text-highlighted cursor-pointer mt-1"
-            @click.stop="toggleExpanded(offer.id)"
-          >
-            {{ expandedIds.has(offer.id) ? 'Weniger anzeigen' : 'Mehr anzeigen' }}
-            <UIcon :name="expandedIds.has(offer.id) ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5" />
-          </button>
         </div>
       </div>
 
