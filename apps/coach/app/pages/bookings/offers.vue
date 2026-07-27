@@ -88,9 +88,10 @@ const showDescriptions = ref(true)
 
 // Reihenfolge per Drag & Drop – vorerst rein lokal, kein Persistieren über
 // die API (sortOrder wird nicht mitgeschickt).
+// Die Liste wird bereits während des Ziehens live umsortiert (onDragOver),
+// nicht erst beim Drop – die TransitionGroup im Template animiert den
+// Positionswechsel der übrigen Kacheln.
 const draggedId = ref<string | null>(null)
-const dragOverId = ref<string | null>(null)
-const dragOverPosition = ref<'before' | 'after' | null>(null)
 
 function onDragStart(offer: OfferResponse, event: DragEvent) {
   draggedId.value = offer.id
@@ -103,35 +104,28 @@ function onDragStart(offer: OfferResponse, event: DragEvent) {
 function onDragOver(offer: OfferResponse, event: DragEvent) {
   event.preventDefault()
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-  if (offer.id === draggedId.value) {
-    dragOverId.value = null
-    dragOverPosition.value = null
-    return
-  }
+  if (offer.id === draggedId.value) return
+
+  const fromIndex = rows.value.findIndex(r => r.id === draggedId.value)
+  const overIndex = rows.value.findIndex(r => r.id === offer.id)
+  if (fromIndex === -1 || overIndex === -1) return
+
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
   const isBefore = event.clientY < rect.top + rect.height / 2
-  dragOverId.value = offer.id
-  dragOverPosition.value = isBefore ? 'before' : 'after'
+  const targetIndex = isBefore ? overIndex : overIndex + 1
+  const adjustedIndex = fromIndex < targetIndex ? targetIndex - 1 : targetIndex
+  if (adjustedIndex === fromIndex) return
+
+  const moved = rows.value.splice(fromIndex, 1)[0]!
+  rows.value.splice(adjustedIndex, 0, moved)
 }
 
-function onDrop(targetOffer: OfferResponse) {
-  const fromIndex = rows.value.findIndex(r => r.id === draggedId.value)
-  let toIndex = rows.value.findIndex(r => r.id === targetOffer.id)
-  if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
-    if (dragOverPosition.value === 'after') toIndex += 1
-    const moved = rows.value.splice(fromIndex, 1)[0]!
-    const adjustedIndex = fromIndex < toIndex ? toIndex - 1 : toIndex
-    rows.value.splice(adjustedIndex, 0, moved)
-  }
-  draggedId.value = null
-  dragOverId.value = null
-  dragOverPosition.value = null
+function onDrop(event: DragEvent) {
+  event.preventDefault()
 }
 
 function onDragEnd() {
   draggedId.value = null
-  dragOverId.value = null
-  dragOverPosition.value = null
 }
 
 await useFetch<OfferResponse[]>('/offers', {
@@ -276,13 +270,10 @@ const plannedFeatures = [
     <div class="flex flex-col gap-3">
       <p v-if="!rows.length" class="text-sm text-muted">Noch keine Angebote angelegt.</p>
 
-      <template v-for="offer in rows" :key="offer.id">
+      <TransitionGroup tag="div" name="offer-reorder" class="contents">
         <div
-          v-if="dragOverId === offer.id && dragOverPosition === 'before'"
-          class="h-0.5 rounded-full bg-primary mx-1"
-        />
-
-        <div
+          v-for="offer in rows"
+          :key="offer.id"
           role="button"
           tabindex="0"
           draggable="true"
@@ -296,7 +287,7 @@ const plannedFeatures = [
           @keydown.space.prevent="openEdit(offer)"
           @dragstart="onDragStart(offer, $event)"
           @dragover="onDragOver(offer, $event)"
-          @drop="onDrop(offer)"
+          @drop="onDrop($event)"
           @dragend="onDragEnd"
         >
           <UIcon
@@ -322,12 +313,7 @@ const plannedFeatures = [
             </div>
           </div>
         </div>
-
-        <div
-          v-if="dragOverId === offer.id && dragOverPosition === 'after'"
-          class="h-0.5 rounded-full bg-primary mx-1"
-        />
-      </template>
+      </TransitionGroup>
 
       <button
         type="button"
@@ -434,3 +420,9 @@ const plannedFeatures = [
     </USlideover>
   </div>
 </template>
+
+<style scoped>
+.offer-reorder-move {
+  transition: transform 0.25s ease;
+}
+</style>
