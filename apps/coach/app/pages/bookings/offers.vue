@@ -84,7 +84,8 @@ function renderDescription(doc: any): string {
 
 const rows = ref<OfferResponse[]>([])
 
-const showDescriptions = ref(true)
+// Cookie statt ref, damit die Einstellung Reloads und Seitenwechsel übersteht.
+const showDescriptions = useCookie<boolean>('offers-show-descriptions', { default: () => true })
 
 // Reihenfolge per Drag & Drop. Die Liste wird bereits während des Ziehens
 // live umsortiert (onDragOver), nicht erst beim Drop – die TransitionGroup
