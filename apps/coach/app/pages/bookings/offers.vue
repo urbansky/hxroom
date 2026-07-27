@@ -166,7 +166,7 @@ const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 // Gemeinsame Typografie für Rich-Text-Beschreibungen – identisch für die
 // Kachel-Vorschau und den Editor im Drawer, damit das Erscheinungsbild
 // (Schriftgröße, Abstände, Listenstil) an beiden Stellen übereinstimmt.
-const descriptionProseClasses = 'text-sm leading-6 [&_p]:my-0 [&_p]:leading-6 [&_ul]:my-0 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:my-0 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0 [&_li]:leading-6 [&_h2]:font-medium [&_h2]:text-sm [&_h2]:leading-6 [&_h3]:font-medium [&_h3]:text-sm [&_h3]:leading-6 [&_strong]:font-bold [&_strong]:text-highlighted [&_a]:text-primary [&_a]:underline'
+const descriptionProseClasses = 'text-sm leading-6 [&_p]:my-0 [&_p]:leading-6 [&_ul]:my-0 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:my-0 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0 [&_li]:leading-6 [&_h2]:font-bold [&_h2]:text-base [&_h2]:leading-7 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:leading-6 [&_strong]:font-bold [&_strong]:text-highlighted [&_a]:text-primary [&_a]:underline'
 
 // Array von Arrays = Gruppen; UEditorToolbar fügt den Trenner automatisch
 // zwischen den Gruppen ein (kein eigenes "separator"-Item nötig/vorgesehen).
