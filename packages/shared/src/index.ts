@@ -75,6 +75,11 @@ export type CreateOfferDto = z.infer<typeof createOfferSchema>;
 export const updateOfferSchema = createOfferSchema.partial();
 export type UpdateOfferDto = z.infer<typeof updateOfferSchema>;
 
+export const reorderOffersSchema = z.object({
+  ids: z.array(z.string()).min(1),
+});
+export type ReorderOffersDto = z.infer<typeof reorderOffersSchema>;
+
 export const offerResponseSchema = z.object({
   id:              z.string(),
   name:            z.string(),

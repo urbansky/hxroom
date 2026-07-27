@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, UnauthorizedExceptio
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { createOfferSchema, updateOfferSchema, type CreateOfferDto, type UpdateOfferDto } from '@hxroom/shared';
+import { createOfferSchema, updateOfferSchema, reorderOffersSchema, type CreateOfferDto, type UpdateOfferDto, type ReorderOffersDto } from '@hxroom/shared';
 import { OffersService } from './offers.service';
 
 @Controller('offers')
@@ -23,6 +23,15 @@ export class OffersController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.offersService.create(org.id, dto);
+  }
+
+  @Patch('reorder')
+  reorder(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Body(new ZodValidationPipe(reorderOffersSchema)) dto: ReorderOffersDto,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.offersService.reorder(org.id, dto.ids);
   }
 
   @Patch(':id')

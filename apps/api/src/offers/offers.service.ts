@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, eq, max } from 'drizzle-orm';
+import { and, asc, eq, inArray, max } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { offers } from '../db/schema';
 import type { CreateOfferDto, UpdateOfferDto } from '@hxroom/shared';
@@ -54,6 +54,25 @@ export class OffersService {
       .returning();
 
     return row;
+  }
+
+  async reorder(organizationId: string, ids: string[]) {
+    return this.db.transaction(async (tx) => {
+      const owned = await tx
+        .select({ id: offers.id })
+        .from(offers)
+        .where(and(eq(offers.organizationId, organizationId), inArray(offers.id, ids)));
+
+      if (owned.length !== ids.length) {
+        throw new NotFoundException('One or more offers not found');
+      }
+
+      await Promise.all(
+        ids.map((id, index) =>
+          tx.update(offers).set({ sortOrder: index }).where(eq(offers.id, id)),
+        ),
+      );
+    });
   }
 
   async remove(organizationId: string, id: string) {

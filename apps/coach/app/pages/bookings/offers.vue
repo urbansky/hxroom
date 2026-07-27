@@ -86,15 +86,18 @@ const rows = ref<OfferResponse[]>([])
 
 const showDescriptions = ref(true)
 
-// Reihenfolge per Drag & Drop – vorerst rein lokal, kein Persistieren über
-// die API (sortOrder wird nicht mitgeschickt).
-// Die Liste wird bereits während des Ziehens live umsortiert (onDragOver),
-// nicht erst beim Drop – die TransitionGroup im Template animiert den
-// Positionswechsel der übrigen Kacheln.
+// Reihenfolge per Drag & Drop. Die Liste wird bereits während des Ziehens
+// live umsortiert (onDragOver), nicht erst beim Drop – die TransitionGroup
+// im Template animiert den Positionswechsel der übrigen Kacheln. Persistiert
+// wird erst beim Loslassen (onDragEnd), per Bulk-Endpoint mit der
+// vollständigen neuen Reihenfolge statt einzelner Patches pro Kachel.
 const draggedId = ref<string | null>(null)
+let orderBeforeDrag: string[] = []
+const toast = useToast()
 
 function onDragStart(offer: OfferResponse, event: DragEvent) {
   draggedId.value = offer.id
+  orderBeforeDrag = rows.value.map(r => r.id)
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', offer.id)
@@ -124,8 +127,17 @@ function onDrop(event: DragEvent) {
   event.preventDefault()
 }
 
-function onDragEnd() {
+async function onDragEnd() {
   draggedId.value = null
+  const newOrder = rows.value.map(r => r.id)
+  if (newOrder.join() === orderBeforeDrag.join()) return
+
+  try {
+    await $api('/offers/reorder', { method: 'PATCH', body: { ids: newOrder } })
+  } catch {
+    rows.value.sort((a, b) => orderBeforeDrag.indexOf(a.id) - orderBeforeDrag.indexOf(b.id))
+    toast.add({ title: 'Reihenfolge konnte nicht gespeichert werden.', color: 'error' })
+  }
 }
 
 await useFetch<OfferResponse[]>('/offers', {
