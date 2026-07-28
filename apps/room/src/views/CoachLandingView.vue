@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { inject, computed, type Ref } from 'vue';
 import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
+import { useOffers } from '../composables/useOffers';
 
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
+const { offers } = useOffers();
 
 const coach = computed(() => ({
   name: coachProfile?.value?.name ?? 'Coach',
@@ -18,11 +20,20 @@ const coach = computed(() => ({
   ],
 }));
 
-const sessionTypes = [
-  { name: 'Erstgespräch', duration: '30 Minuten · Kennenlernen', price: 'Kostenlos', free: true, featured: true },
-  { name: 'Coaching-Sitzung', duration: '60 Minuten', price: '150 €', free: false, featured: false },
-  { name: 'Intensiv-Session', duration: '90 Minuten', price: '210 €', free: false, featured: false },
-];
+function formatOfferPrice(cents: number | null): string {
+  if (cents === null) return 'Kostenlos';
+  return (cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+const sessionTypes = computed(() =>
+  offers.value.map((offer, index) => ({
+    name: offer.name,
+    duration: `${offer.durationMinutes} Minuten`,
+    price: formatOfferPrice(offer.priceCents),
+    free: offer.priceCents === null,
+    featured: index === 0,
+  })),
+);
 
 const nextSlots = [
   { day: 'Montag', date: '10. März', time: '10:00 – 10:30 Uhr', type: 'Erstgespräch · 30 min', soon: true },

@@ -9,4 +9,9 @@ export class OrganizationController {
   findBySlug(@Param('slug') slug: string) {
     return this.organizationService.findBySlug(slug);
   }
+
+  @Get(':slug/offers')
+  findActiveOffers(@Param('slug') slug: string) {
+    return this.organizationService.findActiveOffersBySlug(slug);
+  }
 }

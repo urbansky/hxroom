@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { organization } from '../db/schema';
+import { organization, offers } from '../db/schema';
 
 @Injectable()
 export class OrganizationService {
@@ -24,5 +24,23 @@ export class OrganizationService {
     }
 
     return org;
+  }
+
+  async findActiveOffersBySlug(slug: string) {
+    const org = await this.findBySlug(slug);
+
+    return this.db
+      .select({
+        id: offers.id,
+        name: offers.name,
+        durationMinutes: offers.durationMinutes,
+        priceCents: offers.priceCents,
+        description: offers.description,
+        isActive: offers.isActive,
+        sortOrder: offers.sortOrder,
+      })
+      .from(offers)
+      .where(and(eq(offers.organizationId, org.id), eq(offers.isActive, true)))
+      .orderBy(asc(offers.sortOrder), asc(offers.createdAt));
   }
 }
