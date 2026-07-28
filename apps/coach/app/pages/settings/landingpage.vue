@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { OfferResponse } from '@hxroom/shared'
 import { landingPageSchema } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
@@ -122,14 +123,18 @@ function onBlur(field: keyof LandingPageForm) {
   save()
 }
 
-const formats = ref([
-  { id: 'erstgespraech', label: 'Erstgespräch (30 min · kostenlos)', previewName: 'Erstgespräch', previewMeta: '30 min · Video', previewPrice: 'Kostenlos', selected: true },
-  { id: 'coaching', label: 'Coaching-Sitzung (60 min · 120 €)', previewName: 'Coaching-Sitzung', previewMeta: '60 min · Video', previewPrice: '120 €', selected: true },
-  { id: 'intensiv', label: 'Intensiv-Session (90 min · 150 €)', previewName: 'Intensiv-Session', previewMeta: '90 min · Video', previewPrice: '150 €', selected: true },
-  { id: 'paket', label: '5er-Paket (5 × 60 min · 550 €)', previewName: '5er-Paket', previewMeta: '5 × 60 min · Video', previewPrice: '550 €', selected: false },
-])
+const offers = ref<OfferResponse[]>([])
+const activeOffers = computed(() => offers.value.filter(o => o.isActive))
 
-const selectedFormats = computed(() => formats.value.filter(f => f.selected))
+await useFetch<OfferResponse[]>('/offers', {
+  $fetch: $api,
+  onResponse({ response }) {
+    offers.value = response._data as OfferResponse[]
+  },
+})
+
+// Cookie statt ref, damit die Einstellung Reloads und Seitenwechsel übersteht.
+const showOfferDescriptions = useCookie<boolean>('landingpage-show-offer-descriptions', { default: () => true })
 
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
@@ -238,39 +243,6 @@ const features = [
           </div>
         </SettingsSection>
 
-        <!-- Sitzungsformate -->
-        <SettingsSection title="Sitzungsformate" description="Wähle, welche Formate auf deiner Seite buchbar sind.">
-          <div class="flex flex-col gap-3">
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                v-for="format in formats"
-                :key="format.id"
-                type="button"
-                class="flex items-center gap-2.5 p-3 rounded-lg border text-left transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
-                :class="format.selected
-                  ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700'
-                  : 'bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'"
-                @click="format.selected = !format.selected"
-              >
-                <span
-                  class="flex items-center justify-center w-4 h-4 rounded shrink-0 border transition-colors"
-                  :class="format.selected
-                    ? 'bg-primary-500 border-primary-500'
-                    : 'border-neutral-300 dark:border-neutral-600'"
-                >
-                  <UIcon v-if="format.selected" name="i-lucide-check" class="w-2.5 h-2.5 text-white" />
-                </span>
-                <span
-                  class="text-xs leading-snug"
-                  :class="format.selected ? 'text-primary-700 dark:text-primary-300' : 'text-muted'"
-                >
-                  {{ format.label }}
-                </span>
-              </button>
-            </div>
-          </div>
-        </SettingsSection>
-
         <!-- Call-to-Action -->
         <SettingsSection title="Call-to-Action" description="Text und Beschriftung des Buchungs-Buttons auf deiner Seite.">
           <div class="flex flex-col gap-4">
@@ -322,16 +294,32 @@ const features = [
             </div>
             <!-- Format-Liste -->
             <div class="flex flex-col gap-2">
+              <div class="flex justify-end -mb-1">
+                <button
+                  type="button"
+                  class="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+                  @click="showOfferDescriptions = !showOfferDescriptions"
+                >
+                  <UIcon :name="showOfferDescriptions ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="w-3 h-3" />
+                  {{ showOfferDescriptions ? 'Beschreibungen ausblenden' : 'Beschreibungen anzeigen' }}
+                </button>
+              </div>
               <div
-                v-for="format in selectedFormats"
-                :key="format.id"
-                class="flex items-center justify-between px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
+                v-for="offer in activeOffers"
+                :key="offer.id"
+                class="flex items-center justify-between gap-3 px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
               >
-                <div>
-                  <p class="text-sm text-neutral-900">{{ format.previewName }}</p>
-                  <p class="text-xs text-neutral-400">{{ format.previewMeta }}</p>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold text-neutral-900">{{ offer.name }}</p>
+                  <p class="text-xs text-neutral-400">{{ offer.durationMinutes }} min · Video</p>
+                  <div
+                    v-if="showOfferDescriptions && descriptionPreview(offer.description)"
+                    class="mt-1 text-neutral-500 [&_h2]:text-neutral-900 [&_h3]:text-neutral-900 [&_strong]:text-neutral-900"
+                    :class="descriptionProseClasses"
+                    v-html="renderDescription(offer.description)"
+                  />
                 </div>
-                <span class="font-serif text-base text-primary-600">{{ format.previewPrice }}</span>
+                <span class="font-serif text-base text-primary-600 shrink-0">{{ formatPrice(offer.priceCents) }}</span>
               </div>
             </div>
           </div>

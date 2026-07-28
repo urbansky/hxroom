@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import type { OfferResponse } from '@hxroom/shared'
-import { generateHTML } from '@tiptap/core'
-import StarterKit from '@tiptap/starter-kit'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -44,45 +42,10 @@ function parsePriceCents(priceEuro: string): number | null {
   return Math.round(value * 100)
 }
 
-function formatPrice(priceCents: number | null): string {
-  if (priceCents == null) return 'Kostenlos'
-  return `${(priceCents / 100).toFixed(2).replace('.', ',')} €`
-}
-
-function descriptionPreview(doc: any): string {
-  if (!doc?.content) return ''
-  const parts: string[] = []
-  const walk = (nodes: any[]) => {
-    for (const node of nodes) {
-      if (node.type === 'text' && node.text) parts.push(node.text)
-      if (node.content) walk(node.content)
-    }
-  }
-  walk(doc.content)
-  return parts.join(' ')
-}
-
-// Rendert die gespeicherte Beschreibung mit Tiptaps eigenem generateHTML –
-// mit derselben eingeschränkten Extension-Konfiguration wie im UEditor
-// (siehe unten). generateHTML baut den ProseMirror-Dokumentbaum aus dem JSON
-// über dieses Schema auf; Textinhalte werden dabei automatisch escaped, es
-// gibt keinen Pfad für rohes HTML/Skript aus den gespeicherten Daten.
-// `as any`: @tiptap/starter-kit wird an anderer Stelle im Workspace gegen eine
-// andere @tiptap/pm-Peer-Version aufgelöst, wodurch pnpm zwei strukturell
-// unterschiedliche @tiptap/core-Typinstanzen erzeugt – rein ein TS-Artefakt,
-// zur Laufzeit dieselbe Bibliothek.
-const descriptionExtensions = [StarterKit.configure({ heading: { levels: [2, 3] } })] as any
-
-function renderDescription(doc: any): string {
-  if (!doc?.content) return ''
-  try {
-    return generateHTML(doc, descriptionExtensions)
-  } catch {
-    return ''
-  }
-}
-
 const rows = ref<OfferResponse[]>([])
+
+const activeCount = computed(() => rows.value.filter(r => r.isActive).length)
+const inactiveCount = computed(() => rows.value.length - activeCount.value)
 
 // Cookie statt ref, damit die Einstellung Reloads und Seitenwechsel übersteht.
 const showDescriptions = useCookie<boolean>('offers-show-descriptions', { default: () => true })
@@ -212,11 +175,6 @@ async function deleteDraft() {
 
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
-// Gemeinsame Typografie für Rich-Text-Beschreibungen – identisch für die
-// Kachel-Vorschau und den Editor im Drawer, damit das Erscheinungsbild
-// (Schriftgröße, Abstände, Listenstil) an beiden Stellen übereinstimmt.
-const descriptionProseClasses = 'text-sm leading-6 [&_p]:my-0 [&_p]:leading-6 [&_ul]:my-0 [&_ul]:pl-4 [&_ul]:list-disc [&_ol]:my-0 [&_ol]:pl-4 [&_ol]:list-decimal [&_li]:my-0 [&_li]:leading-6 [&_h2]:font-bold [&_h2]:text-base [&_h2]:leading-7 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:leading-6 [&_strong]:font-bold [&_strong]:text-highlighted [&_a]:text-primary [&_a]:underline'
-
 // Array von Arrays = Gruppen; UEditorToolbar fügt den Trenner automatisch
 // zwischen den Gruppen ein (kein eigenes "separator"-Item nötig/vorgesehen).
 const editorToolbarItems: any[] = [
@@ -269,7 +227,10 @@ const plannedFeatures = [
     <p class="text-muted mb-8">Lege fest, welche Sitzungsformate deine Klienten buchen können – mit Name, Dauer, Preis und einer ausführlichen Beschreibung.</p>
 
     <div class="flex items-center justify-between gap-4 mb-3">
-      <p class="text-sm text-muted">{{ rows.length }} {{ rows.length === 1 ? 'Angebot' : 'Angebote' }}</p>
+      <p class="text-sm text-muted">
+        <template v-if="inactiveCount > 0">{{ activeCount }} aktive Angebote ({{ inactiveCount }} inaktive)</template>
+        <template v-else>{{ rows.length }} {{ rows.length === 1 ? 'Angebot' : 'Angebote' }}</template>
+      </p>
       <UButton
         :label="showDescriptions ? 'Beschreibungen ausblenden' : 'Beschreibungen anzeigen'"
         :icon="showDescriptions ? 'i-lucide-eye-off' : 'i-lucide-eye'"
