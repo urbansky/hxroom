@@ -27,5 +27,54 @@ services:
       interval: 5s
       retries: 5
 
+  # RustFS – S3-kompatibler Object Store (siehe doc/s3-verzeichnisschema.md)
+  # Setzt zuerst die Berechtigungen des Datenvolumes, da RustFS als User 10001 läuft
+  rustfs-perms:
+    image: alpine
+    user: root
+    volumes:
+      - rustfs_dev_data:/data
+    command: chown -R 10001:10001 /data
+    restart: "no"
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:9000:9000" # S3-API
+      - "127.0.0.1:9001:9001" # Web-Console
+    environment:
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: hxroom_dev
+      RUSTFS_SECRET_KEY: hxroom_dev_secret
+    volumes:
+      - rustfs_dev_data:/data
+    command: /data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Legt einmalig den HxRoom-Bucket an (idempotent) und setzt ihn auf privat
+  rustfs-createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set hxroom http://rustfs:9000 hxroom_dev hxroom_dev_secret &&
+      mc mb --ignore-existing hxroom/hxroom-files &&
+      mc anonymous set none hxroom/hxroom-files
+      "
+    restart: "no"
+
 volumes:
   postgres_dev_data:
+  rustfs_dev_data:

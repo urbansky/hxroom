@@ -24,7 +24,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **Whisper (faster-whisper)** | Speech-to-Text – self-hosted, kein externer API-Aufruf |
 | **Brevo** | Transaktionale E-Mails **und** Newsletter/Marketing – ein Anbieter für den gesamten Versand (französisch, Server in der EU) |
 | **BullMQ + Redis** | Job-Queue für Erinnerungen, Transkription & Async-Tasks |
-| **Hetzner Object Storage** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos (EU-Frankfurt). Alternative: MinIO self-hosted. |
+| **Object Storage** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos. Phasenweise: **RustFS** self-hosted (Entwicklung & Pre-Launch) → **Hetzner Object Storage** (EU-Frankfurt, ab Produktiv-Launch). |
 | **Stripe** | Zahlungsabwicklung & Subscription-Management (Billing Portal, Webhooks) – EU-Entities, SCCs |
 
 ### Frontend
@@ -43,7 +43,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **LiveKit Server** | Self-hosted Docker-Container auf Hetzner |
 | **Whisper Service** | Self-hosted Docker-Container auf Hetzner |
 | **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.hxroom.de`) |
-| **Object Storage** | Hetzner Object Storage (S3-kompatibel, EU-Frankfurt). Alternative: MinIO self-hosted als Docker-Container. |
+| **Object Storage** | **RustFS** self-hosted als Docker-Container (Entwicklung & Pre-Launch) → Wechsel auf **Hetzner Object Storage** (S3-kompatibel, EU-Frankfurt) zum Produktiv-Launch |
 | **Deployment** | Docker Compose (Entwicklung & Produktion) |
 
 ### Externe Dienste – EU-Übersicht
@@ -56,7 +56,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | Zertifikate | Let's Encrypt via Caddy | – | Kein Datentransfer |
 | Video / Audio | LiveKit self-hosted | Hetzner DE | Vollständig EU |
 | Transkription | Whisper self-hosted | Hetzner DE | Vollständig EU |
-| Datei-Speicher | Hetzner Object Storage | Hetzner DE (Frankfurt) | S3-kompatibel, vollständig EU; MinIO self-hosted als Alternative |
+| Datei-Speicher | RustFS (Dev/Pre-Launch) → Hetzner Object Storage (ab Launch) | Hetzner DE (Frankfurt), RustFS zunächst self-hosted | S3-kompatibel, vollständig EU in beiden Phasen |
 | Web-Analytics | Plausible Cloud | EU (Estland/Deutschland) | Cookie-frei, kein Consent-Banner; AVV via Plausible-Dashboard |
 
 ---
@@ -101,6 +101,7 @@ Es gibt zwei Compose-Dateien in `infra/`:
 Die Apps (api, coach, room, admin, landing) laufen lokal per `pnpm dev`. Docker übernimmt nur die Infrastruktur:
 
 - **PostgreSQL** (Port 5433 auf dem Host, 5432 im Container)
+- **RustFS** als S3-kompatibler Object Store (siehe `docker-compose-test-rustfs.yml`), Console auf Port 9001, S3-API auf Port 9000
 - **Caddy** als Reverse Proxy: routet `*.hxroom.localhost` auf die lokalen pnpm-Dev-Server
 
 Weitere Services (Redis, LiveKit, Whisper) werden ergänzt, wenn sie lokal benötigt werden.
@@ -120,7 +121,7 @@ services:
   caddy:      build: ./infra/caddy               # mit IONOS-DNS-Plugin für Wildcard-TLS
 ```
 
-Object Storage läuft extern (Hetzner Object Storage, S3-kompatibel). MinIO als self-hosted Alternative ist im Compose auskommentiert.
+**Object Storage – phasenweiser Ansatz:** Bis zum Produktiv-Launch läuft **RustFS** self-hosted im Compose-Stack (Entwicklung und Pre-Launch-Server identisch konfiguriert). Zum Launch erfolgt der Wechsel auf **Hetzner Object Storage** (extern, S3-kompatibel) – da der S3-Client-Code identisch bleibt, ändern sich nur `S3_ENDPOINT`, `S3_REGION` und `S3_FORCE_PATH_STYLE` in der Umgebungskonfiguration; RustFS entfällt dann aus dem Compose-Stack.
 
 **Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
 
@@ -423,22 +424,25 @@ Das Modell `small` liefert für deutschsprachige Coaching-Gespräche sehr gute E
 
 ### Überblick
 
-Primärer Speicher ist **Hetzner Object Storage** (S3-kompatibel, EU-Frankfurt). Die Anbindung erfolgt über AWS SDK v3 (`@aws-sdk/client-s3`); Endpoint und Credentials kommen aus Umgebungsvariablen. Damit bleiben Uploads, Recordings und Exports vollständig in der EU, ohne dass ein zusätzlicher Service im Compose-Stack laufen muss.
+Der Objektspeicher wird phasenweise betrieben:
 
-**Alternative MinIO (self-hosted):** Für On-Premises-Deploys oder Migrationen kann stattdessen MinIO als Docker-Container im selben Compose-Stack betrieben werden. MinIO ist vollständig S3-kompatibel – Client-Code, Bucket-Struktur und Key-Schema bleiben identisch; es ändern sich nur `S3_ENDPOINT` und ggf. `forcePathStyle`.
+- **Entwicklung & Pre-Launch-Server:** **RustFS**, self-hosted als Docker-Container (siehe `docker-compose-test-rustfs.yml`). S3-kompatibel, kein externer Vertrag nötig, identisches Client- und Bucket-Schema wie später produktiv.
+- **Produktiv-Launch:** Wechsel auf **Hetzner Object Storage** (S3-kompatibel, EU-Frankfurt). Da beide Dienste dieselbe S3-API sprechen, bleiben Client-Code, Bucket-Struktur und Key-Schema unverändert – es ändern sich nur `S3_ENDPOINT`, `S3_REGION` und `S3_FORCE_PATH_STYLE` in der Umgebungskonfiguration.
+
+Die Anbindung erfolgt in beiden Phasen über AWS SDK v3 (`@aws-sdk/client-s3`); Endpoint und Credentials kommen aus Umgebungsvariablen.
 
 ```typescript
 // apps/api/src/storage/s3.client.ts
 import { S3Client } from '@aws-sdk/client-s3';
 
 export const s3 = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,                // z.B. https://fsn1.your-objectstorage.com
-  region: process.env.S3_REGION ?? 'eu-central',    // Hetzner-Region; bei MinIO: 'us-east-1'
+  endpoint: process.env.S3_ENDPOINT,                // Dev/Pre-Launch: http://rustfs:9000; Produktion: z.B. https://fsn1.your-objectstorage.com
+  region: process.env.S3_REGION ?? 'eu-central',    // Hetzner-Region; bei RustFS: 'us-east-1'
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY,
     secretAccessKey: process.env.S3_SECRET_KEY,
   },
-  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // true für MinIO, optional bei Hetzner
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // true für RustFS, optional bei Hetzner
 });
 ```
 
@@ -473,9 +477,9 @@ s3:
   access_key: ${S3_ACCESS_KEY}
   secret: ${S3_SECRET_KEY}
   region: ${S3_REGION}                 # Hetzner-Region, z.B. eu-central
-  endpoint: ${S3_ENDPOINT}             # Hetzner Object Storage; bei MinIO: http://minio:9000
+  endpoint: ${S3_ENDPOINT}             # Dev/Pre-Launch: http://rustfs:9000; Produktion: Hetzner Object Storage
   bucket: hxroom-recordings
-  force_path_style: ${S3_FORCE_PATH_STYLE}   # true für MinIO
+  force_path_style: ${S3_FORCE_PATH_STYLE}   # true für RustFS
 ```
 
 **PDF-Rechnungen & Datenexporte** (`hxroom-exports`)
@@ -788,8 +792,8 @@ export const organizationBilling = pgTable('organization_billing', {
 - Restore-Test monatlich in Staging-Umgebung
 
 **Object Storage**
-- **Primär Hetzner Object Storage**: Hetzner verantwortet Redundanz und Replikation innerhalb Frankfurts. Zusätzlich läuft täglich ein `rclone sync` in einen zweiten Bucket (separates Hetzner-Projekt) als Off-Site-Kopie.
-- **Alternative MinIO (self-hosted)**: Wenn MinIO eingesetzt wird, liegen die Daten im Docker Volume `minio-data`. Dann greift das **Hetzner Server Backup** (täglich, letzte 7 Snapshots) und zusätzlich ein `rclone sync` auf einen Zweitserver.
+- **Entwicklung & Pre-Launch (RustFS, self-hosted)**: Daten liegen im Docker Volume `rustfs_data`. Es greift das **Hetzner Server Backup** (täglich, letzte 7 Snapshots) und zusätzlich ein `rclone sync` auf einen Zweitserver.
+- **Ab Produktiv-Launch (Hetzner Object Storage)**: Hetzner verantwortet Redundanz und Replikation innerhalb Frankfurts. Zusätzlich läuft täglich ein `rclone sync` in einen zweiten Bucket (separates Hetzner-Projekt) als Off-Site-Kopie.
 
 ```bash
 # Beispiel rclone Cron (täglich 03:00) – gilt für beide Varianten
@@ -860,7 +864,7 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 - **Server ausschließlich Hetzner Deutschland** (Nürnberg / Falkenstein)
 - **LiveKit self-hosted** auf demselben Hetzner-Projekt → Mediendaten verlassen nie Deutschland
 - **Whisper self-hosted** → Audiodaten und Transkripte bleiben auf Hetzner
-- **Hetzner Object Storage** (EU-Frankfurt) → alle Dateien (Logos, Recordings, Exports) in der EU, S3-kompatibel. Alternative MinIO self-hosted möglich, gleiches Key-Schema.
+- **Object Storage** → alle Dateien (Logos, Recordings, Exports) in der EU, S3-kompatibel. Entwicklung & Pre-Launch: **RustFS** self-hosted auf Hetzner; ab Produktiv-Launch: **Hetzner Object Storage** (EU-Frankfurt). Gleiches Key-Schema in beiden Phasen.
 - **Brevo (französisch, EU-Server)** → E-Mail-Versand (transaktional + Newsletter) vollständig in der EU, AVV abgeschlossen
 - **Ionos Mail Business (Deutschland)** → E-Mail-Empfang / Postfächer für `kontakt@hxroom.de` etc., vollständig EU
 - **Stripe** mit EU-Entities und SCCs → DSGVO-konform für Zahlungsdaten

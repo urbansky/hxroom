@@ -1,5 +1,5 @@
 # HxRoom – S3-Verzeichnisschema
-*Version 1.1 · Stand: April 2026 · S3-kompatibel; primär Hetzner Object Storage, alternativ MinIO self-hosted*
+*Version 1.2 · Stand: Juli 2026 · S3-kompatibel; Entwicklung & Pre-Launch-Server: RustFS self-hosted, ab Produktiv-Launch: Hetzner Object Storage*
 
 ---
 
@@ -193,7 +193,7 @@ export const StoragePaths = {
 Beim Löschen eines einzelnen Coachs reicht ein einziger API-Aufruf:
 
 ```typescript
-await minioClient.removeObjects(
+await s3Client.removeObjects(
   BUCKET_NAME,
   listObjectsStream(`${coachId}/`)
 );
@@ -204,14 +204,14 @@ Bei Auflösung eines Studios werden zwei separate Löschvorgänge ausgeführt:
 
 ```typescript
 // 1. Studio-eigene Assets löschen
-await minioClient.removeObjects(
+await s3Client.removeObjects(
   BUCKET_NAME,
   listObjectsStream(`studios/${studioId}/`)
 );
 
 // 2. Jeden Coach des Studios einzeln löschen
 for (const coachId of studioCoachIds) {
-  await minioClient.removeObjects(
+  await s3Client.removeObjects(
     BUCKET_NAME,
     listObjectsStream(`${coachId}/`)
   );
@@ -238,9 +238,14 @@ Alle Dateien sind **nicht öffentlich**. Zugriff erfolgt ausschließlich über *
 
 ---
 
-## Bucket-Konfiguration (MinIO)
+## Bucket-Konfiguration
 
 - **Ein Bucket** für alle Daten: `hxroom-files`
 - Bucket-Policy: **private** (kein öffentlicher Lesezugriff)
 - Versioning: **deaktiviert** (Überschreiben bei Profilbildern gewünscht)
 - Lifecycle-Regeln: noch offen – ggf. automatisches Löschen alter Aufzeichnungen nach X Monaten
+
+### Phasenmodell
+
+- **Entwicklung & Pre-Launch-Server:** RustFS, self-hosted als Docker-Container (siehe `docker-compose-test-rustfs.yml`). Bucket `hxroom-files` wird beim Start automatisch angelegt.
+- **Ab Produktiv-Launch:** Wechsel auf Hetzner Object Storage (S3-kompatibel, EU-Frankfurt). Verzeichnisschema, Bucket-Name und Zugriffskonzept bleiben unverändert – Migration erfolgt über einen einmaligen Objekt-Sync (z. B. `rclone`) von RustFS nach Hetzner, anschließend Umstellung von `S3_ENDPOINT`/`S3_REGION`/`S3_FORCE_PATH_STYLE`.
