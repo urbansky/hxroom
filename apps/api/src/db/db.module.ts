@@ -19,9 +19,9 @@ class DbHealthService implements OnModuleInit {
   async onModuleInit() {
     try {
       await this.db.execute(sql`SELECT 1`);
-      this.logger.log('Datenbankverbindung erfolgreich');
+      this.logger.log('✅ Datenbankverbindung erfolgreich');
     } catch (err) {
-      this.logger.error('Datenbankverbindung fehlgeschlagen', err);
+      this.logger.error('❌ Datenbankverbindung fehlgeschlagen', err);
     }
   }
 }
