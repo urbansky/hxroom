@@ -20,7 +20,7 @@ Nutze die better-auth-Dokumentation: https://better-auth.com/llms.txt (Backend u
 
 ## Nuxt UI (Frontend-Konventionen)
 
-Alle Frontend-Apps (`coach`, `room`, `admin`, `landing`) verwenden **Nuxt 4** mit **Nuxt UI v4**.
+Alle Frontend-Apps außer `bookingpage` (`coach`, `admin`, `landing`) verwenden **Nuxt 4** mit **Nuxt UI v4**. `bookingpage` ist eine eigenständige Vue-3/Vite-SPA, nutzt aber ebenfalls Nuxt UI v4.
 Nutze die Nuxt-Dokumentation: https://nuxt.com/llms.txt
 Nutze die Nuxt-UI-Dokumentation: https://ui.nuxt.com/llms.txt
 
@@ -41,7 +41,7 @@ Wichtigste Regeln:
 - Shared Komponente hinzufügen: in packages/ui/components/ anlegen, aus packages/ui/index.ts exportieren
 
 ## Videokonferenz
-Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/room/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.
+Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/bookingpage/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.
 
 ## Dokumentation im Ordner `doc/`
 

@@ -19,7 +19,7 @@ services:
     depends_on:
       - landing
       - coach
-      - room
+      - bookingpage
       - api
     restart: unless-stopped
 
@@ -37,11 +37,11 @@ services:
       dockerfile: apps/coach/Dockerfile
     restart: unless-stopped
 
-  room:
-    image: ghcr.io/urbansky/hxroom/room:latest
+  bookingpage:
+    image: ghcr.io/urbansky/hxroom/bookingpage:latest
     build:
       context: ..
-      dockerfile: apps/room/Dockerfile
+      dockerfile: apps/bookingpage/Dockerfile
     restart: unless-stopped
 
   postgres:

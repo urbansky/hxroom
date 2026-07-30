@@ -28,6 +28,7 @@
 		reverse_proxy host.docker.internal:7880
 	}
 
+	# Fallback: alle anderen Subdomains ([slug].hxroom.localhost) -> bookingpage
 	handle {
 		reverse_proxy host.docker.internal:5174
 	}

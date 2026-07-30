@@ -40,7 +40,7 @@ app.hxroom.de {
 
 *.hxroom.de {
 	import ionos-tls
-	reverse_proxy room:80
+	reverse_proxy bookingpage:80
 }
 
 # ---------------------------------------------------------------------------

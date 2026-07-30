@@ -41,7 +41,7 @@ pnpm dev
 # Oder einzeln:
 pnpm --filter @hxroom/api dev       # Backend API (NestJS)     → http://localhost:3000
 pnpm --filter @hxroom/coach dev     # Coach-Backoffice         → http://localhost:5173
-pnpm --filter @hxroom/room dev      # Klienten-Subdomain       → http://localhost:5174
+pnpm --filter @hxroom/bookingpage dev # Klienten-Subdomain     → http://localhost:5174
 pnpm --filter @hxroom/admin dev     # Betreiber-Backoffice     → http://localhost:5175
 pnpm --filter @hxroom/landing dev   # Landingpage              → http://localhost:5176
 ```
@@ -54,7 +54,7 @@ Caddy läuft im Dev-Container und routet `*.hxroom.localhost` auf die lokalen Po
 |---------------------------------|----------------------|
 | http://hxroom.localhost         | Landingpage          |
 | http://app.hxroom.localhost     | Coach-Backoffice     |
-| http://anna.hxroom.localhost    | Coach-Landing (Room) |
+| http://anna.hxroom.localhost    | Buchungsseite        |
 | http://api.hxroom.localhost     | Backend API          |
 | http://admin.hxroom.localhost   | Betreiber-Backoffice |
 | http://livekit.hxroom.localhost | LiveKit              |
@@ -139,7 +139,7 @@ hxroom/
 ├── apps/
 │   ├── api/            NestJS Backend          → api.hxroom.de
 │   ├── coach/          Coach-Backoffice        → app.hxroom.de
-│   ├── room/           Klienten-Subdomain      → [slug].hxroom.de
+│   ├── bookingpage/    Klienten-Subdomain      → [slug].hxroom.de
 │   ├── admin/          Betreiber-Backoffice    → admin.hxroom.de
 │   └── landing/        Landingpage             → hxroom.de
 ├── packages/
