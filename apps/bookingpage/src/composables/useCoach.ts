@@ -18,7 +18,7 @@ function getApiUrl(): string {
 // doc/s3-verzeichnisschema.md. `null`, solange der Coach kein Profilbild hochgeladen hat.
 export function getAvatarUrl(coach: CoachProfile): string | null {
   if (!coach.avatarUpdatedAt) return null;
-  return `${getApiUrl()}/api/v1/landing-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;
+  return `${getApiUrl()}/api/v1/booking-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;
 }
 
 export function useCoach() {

@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
 COPY apps/coach/package.json apps/coach/
-COPY apps/room/package.json apps/room/
+COPY apps/bookingpage/package.json apps/bookingpage/
 COPY apps/admin/package.json apps/admin/
 COPY apps/landing/package.json apps/landing/
 COPY packages/shared/package.json packages/shared/
@@ -25,14 +25,14 @@ ENV VITE_API_URL=$VITE_API_URL
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
-COPY apps/room/ apps/room/
+COPY apps/bookingpage/ apps/bookingpage/
 RUN pnpm --filter @hxroom/shared build
-RUN pnpm --filter room build
+RUN pnpm --filter bookingpage build
 
 # ---- Production ----
 FROM nginx:alpine
-COPY --from=build /app/apps/room/dist /usr/share/nginx/html
-COPY apps/room/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/apps/bookingpage/dist /usr/share/nginx/html
+COPY apps/bookingpage/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

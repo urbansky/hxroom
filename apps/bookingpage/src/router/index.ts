@@ -5,7 +5,7 @@ export const router = createRouter({
   routes: [
     {
       path: '/',
-      component: () => import('../views/CoachLandingView.vue'),
+      component: () => import('../views/BookingPageView.vue'),
     },
   ],
   scrollBehavior(to) {
