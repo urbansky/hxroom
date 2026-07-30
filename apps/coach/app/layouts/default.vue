@@ -20,6 +20,7 @@ const navItems: NavItem[][] = [
     { label: 'Kalender', icon: 'i-lucide-calendar', to: '/bookings', description: 'Alle gebuchten Termine im Überblick' },
     { label: 'Sitzungsangebote', icon: 'i-lucide-layers', to: '/bookings/offers', description: 'Buchbare Angebote mit Name, Dauer und Preis' },
     { label: 'Verfügbarkeit', icon: 'i-lucide-clock', to: '/bookings/availability', description: 'Buchbare Zeiten für deine Angebote' },
+    { label: 'Buchungsseite', icon: 'i-lucide-layout-template', to: '/settings/bookingpage', description: 'Logo, Farbe und Profilseite' },
   ],
   [
     { type: 'label', label: 'Klienten' },
@@ -33,7 +34,6 @@ const navItems: NavItem[][] = [
   ],
   [
     { type: 'label', label: 'Einstellungen' },
-    { label: 'Buchungsseite', icon: 'i-lucide-layout-template', to: '/settings/bookingpage', description: 'Logo, Farbe und Profilseite' },
     { label: 'Warteraum', icon: 'i-lucide-door-open', to: '/settings/waiting-room', description: 'Digitalen Empfang für Klienten gestalten' },
     { label: 'Benachrichtigungen', icon: 'i-lucide-bell', to: '/settings/notifications', description: 'E-Mail-Einstellungen für Buchungen' },
     { label: 'Plan & Abrechnung', icon: 'i-lucide-credit-card', to: '/settings/billing', description: 'Abo und Zahlungsmethode verwalten' },
