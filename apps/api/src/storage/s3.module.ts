@@ -1,9 +1,10 @@
 import { Global, Inject, Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HeadBucketCommand, S3Client } from '@aws-sdk/client-s3';
+import { S3Service } from './s3.service';
+import { S3, S3_BUCKET } from './s3.tokens';
 
-export const S3 = Symbol('S3');
-export const S3_BUCKET = Symbol('S3_BUCKET');
+export { S3, S3_BUCKET };
 
 @Injectable()
 class S3HealthService implements OnModuleInit {
@@ -47,7 +48,8 @@ class S3HealthService implements OnModuleInit {
         }),
     },
     S3HealthService,
+    S3Service,
   ],
-  exports: [S3, S3_BUCKET],
+  exports: [S3, S3_BUCKET, S3Service],
 })
 export class S3Module {}

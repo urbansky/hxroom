@@ -4,17 +4,19 @@ import { landingPageSchema } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
-const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
+const { public: { rootDomain, rootDomainHttps, apiUrl } } = useRuntimeConfig()
 const { $api } = useApi()
 
 // API-Shape: DB-Spalten sind nullable
 interface LandingPageResponse {
-  subdomain:   string | null
-  profileName: string | null
-  tagline:     string | null
-  bio:         string | null
-  ctaButton:   string | null
-  ctaIntro:    string | null
+  organizationId:  string
+  subdomain:       string | null
+  profileName:     string | null
+  tagline:         string | null
+  bio:             string | null
+  ctaButton:       string | null
+  ctaIntro:        string | null
+  avatarUpdatedAt: string | null
 }
 
 // Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`
@@ -57,13 +59,66 @@ const nameInitial = computed(() => form.profileName?.charAt(0).toUpperCase() || 
 // Snapshot der zuletzt gespeicherten Werte, um unveränderte Felder beim Blur zu erkennen
 const lastSaved = reactive<LandingPageForm>(emptyForm())
 
+const organizationId = ref<string | null>(null)
+const avatarUpdatedAt = ref<string | null>(null)
+const avatarUrl = computed(() =>
+  avatarUpdatedAt.value && organizationId.value
+    ? `${apiUrl}/landing-page/avatar/${organizationId.value}?v=${new Date(avatarUpdatedAt.value).getTime()}`
+    : null,
+)
+
 await useFetch<LandingPageResponse>('/landing-page', {
   $fetch: $api,
   onResponse({ response }) {
     Object.assign(form, toForm(response._data as LandingPageResponse))
     Object.assign(lastSaved, toForm(response._data as LandingPageResponse))
+    organizationId.value = response._data?.organizationId ?? null
+    avatarUpdatedAt.value = response._data?.avatarUpdatedAt ?? null
   },
 })
+
+type AvatarStatus = 'idle' | 'uploading' | 'saved' | 'error'
+const avatarStatus = ref<AvatarStatus>('idle')
+const avatarError = ref<string | null>(null)
+const fileInput = ref<HTMLInputElement>()
+let avatarSavedTimer: ReturnType<typeof setTimeout> | null = null
+
+function triggerFileSelect() {
+  fileInput.value?.click()
+}
+
+async function onFileSelected(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  if (avatarSavedTimer) clearTimeout(avatarSavedTimer)
+  avatarStatus.value = 'uploading'
+  avatarError.value = null
+
+  const body = new FormData()
+  body.append('file', file)
+
+  try {
+    const res = await $api<{ avatarUpdatedAt: string }>('/landing-page/avatar', {
+      method: 'POST',
+      body,
+    })
+    avatarUpdatedAt.value = res.avatarUpdatedAt
+    avatarStatus.value = 'saved'
+    avatarSavedTimer = setTimeout(() => { avatarStatus.value = 'idle' }, 3000)
+  } catch (err: any) {
+    avatarStatus.value = 'error'
+    avatarError.value = err?.data?.message ?? 'Upload fehlgeschlagen'
+  } finally {
+    input.value = ''
+  }
+}
+
+async function deleteAvatar() {
+  await $api('/landing-page/avatar', { method: 'DELETE' })
+  avatarUpdatedAt.value = null
+}
 
 // Validierung: Fehler nur für Felder anzeigen, die bereits verlassen wurden
 const errors = computed(() => {
@@ -156,8 +211,8 @@ const features = [
   },
   {
     icon: 'i-lucide-user-circle',
-    title: 'Profilseite: Biografie & Schwerpunkte',
-    description: 'Kurzbeschreibung, Profilfoto und Coaching-Schwerpunkte – Grundlage für deine öffentliche Buchungsseite.',
+    title: 'Profilseite: Coaching-Schwerpunkte',
+    description: 'Deine Coaching-Schwerpunkte als Tags – Grundlage für deine öffentliche Buchungsseite.',
   },
   {
     icon: 'i-lucide-globe',
@@ -209,14 +264,40 @@ const features = [
         <SettingsSection title="Profil" description="So stellst du dich auf deiner Buchungsseite vor.">
           <div class="flex flex-col gap-5">
             <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-full bg-primary-500 flex items-center justify-center font-serif text-2xl text-white shrink-0">
-                {{ nameInitial }}
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="hidden"
+                @change="onFileSelected"
+              >
+              <div class="w-14 h-14 rounded-full overflow-hidden bg-primary-500 flex items-center justify-center font-serif text-2xl text-white shrink-0">
+                <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" alt="">
+                <template v-else>{{ nameInitial }}</template>
               </div>
               <div>
-                <UButton variant="outline" color="neutral" leading-icon="i-lucide-upload" size="sm">
-                  Foto hochladen
-                </UButton>
-                <p class="text-xs text-muted mt-1.5">JPG oder PNG, mind. 400×400 px</p>
+                <div class="flex items-center gap-2">
+                  <UButton
+                    variant="outline"
+                    color="neutral"
+                    leading-icon="i-lucide-upload"
+                    size="sm"
+                    :loading="avatarStatus === 'uploading'"
+                    @click="triggerFileSelect"
+                  >
+                    Foto hochladen
+                  </UButton>
+                  <UButton
+                    v-if="avatarUrl"
+                    variant="ghost"
+                    color="error"
+                    icon="i-lucide-trash-2"
+                    size="sm"
+                    @click="deleteAvatar"
+                  />
+                </div>
+                <p class="text-xs text-muted mt-1.5">JPG, PNG oder WebP, max. 8 MB</p>
+                <p v-if="avatarStatus === 'error'" class="text-xs text-error mt-1">{{ avatarError }}</p>
               </div>
             </div>
 
@@ -283,8 +364,9 @@ const features = [
           <div class="bg-neutral-50 p-4 flex flex-col gap-3">
             <!-- Hero -->
             <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
-              <div class="w-16 h-16 rounded-full bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
-                {{ nameInitial }}
+              <div class="w-16 h-16 rounded-full overflow-hidden bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
+                <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" alt="">
+                <template v-else>{{ nameInitial }}</template>
               </div>
               <p class="font-serif text-xl text-neutral-900 mb-1">{{ form.profileName }}</p>
               <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ form.tagline }}</p>

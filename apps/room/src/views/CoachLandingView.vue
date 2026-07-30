@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { inject, computed, type Ref } from 'vue';
-import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
+import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
 import { useOffers } from '../composables/useOffers';
 
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 const { offers } = useOffers();
+
+const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
 
 const coach = computed(() => ({
   name: coachProfile?.value?.name ?? 'Coach',
@@ -85,8 +87,9 @@ const credentials = [
   >
     <template #left>
       <a href="/" class="flex items-center gap-2.5 no-underline">
-        <div class="size-[34px] rounded-[9px] bg-gradient-to-br from-sage-400 to-sage-600 flex items-center justify-center font-serif text-[17px] text-white/92 font-semibold shrink-0">
-          {{ coach.initial }}
+        <div class="size-[34px] rounded-[9px] overflow-hidden bg-gradient-to-br from-sage-400 to-sage-600 flex items-center justify-center font-serif text-[17px] text-white/92 font-semibold shrink-0">
+          <img v-if="avatarUrl" :src="avatarUrl" class="size-full object-cover" alt="">
+          <template v-else>{{ coach.initial }}</template>
         </div>
         <span class="font-serif text-xl font-semibold text-gold-700 dark:text-gold-200 tracking-wide">{{ coach.name }}</span>
       </a>
@@ -153,7 +156,7 @@ const credentials = [
       <!-- Coach Card -->
       <div class="coach-card bg-(--ui-bg-elevated) border border-(--ui-border) rounded-2xl overflow-hidden">
         <div class="coach-card-header relative h-[200px]">
-          <img src="/coach-example.jpg" :alt="coach.name" class="absolute inset-0 size-full object-cover object-top" />
+          <img :src="avatarUrl ?? '/coach-example.jpg'" :alt="coach.name" class="absolute inset-0 size-full object-cover object-top" />
         </div>
         <div class="px-5 pb-6 pt-5 flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">

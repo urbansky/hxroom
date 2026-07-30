@@ -1,0 +1,1 @@
+ALTER TABLE "landing_page" ADD COLUMN "avatar_updated_at" timestamp;

@@ -77,14 +77,17 @@ export const invitation = pgTable('invitation', {
 });
 
 export const landingPage = pgTable('landing_page', {
-  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  organizationId: text('organization_id').notNull().unique().references(() => organization.id, { onDelete: 'cascade' }),
-  tagline:        text('tagline'),
-  bio:            text('bio'),
-  ctaButton:      text('cta_button'),
-  ctaIntro:       text('cta_intro'),
-  createdAt:      timestamp('created_at').notNull().defaultNow(),
-  updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+  id:              text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:  text('organization_id').notNull().unique().references(() => organization.id, { onDelete: 'cascade' }),
+  tagline:         text('tagline'),
+  bio:             text('bio'),
+  ctaButton:       text('cta_button'),
+  ctaIntro:        text('cta_intro'),
+  // Separat von `updatedAt`, da Text-Autosave sonst unnötig den Avatar-Cache invalidiert.
+  // NULL = kein Avatar gesetzt (Existenz-Flag), sonst Cache-Busting-Version für die Avatar-URL.
+  avatarUpdatedAt: timestamp('avatar_updated_at'),
+  createdAt:       timestamp('created_at').notNull().defaultNow(),
+  updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
 
 // Sitzungsangebote (Einzelsitzungen). Details: doc/funktionen/angebote-verfuegbarkeiten.md

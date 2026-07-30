@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { organization, offers } from '../db/schema';
+import { organization, offers, landingPage } from '../db/schema';
 
 @Injectable()
 export class OrganizationService {
@@ -10,12 +10,14 @@ export class OrganizationService {
   async findBySlug(slug: string) {
     const [org] = await this.db
       .select({
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-        logo: organization.logo,
+        id:              organization.id,
+        name:            organization.name,
+        slug:            organization.slug,
+        logo:            organization.logo,
+        avatarUpdatedAt: landingPage.avatarUpdatedAt,
       })
       .from(organization)
+      .leftJoin(landingPage, eq(landingPage.organizationId, organization.id))
       .where(eq(organization.slug, slug))
       .limit(1);
 

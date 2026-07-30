@@ -61,10 +61,12 @@ Enthält die öffentlich sichtbaren Assets des Coachs. Wird beim Anlegen des Coa
 
 | Datei | Beschreibung | Zugriff |
 |---|---|---|
-| `avatar.{ext}` | Rundes Profilbild (jpg/webp) | Presigned URL (lesend) |
+| `avatar.webp` | Rundes Profilbild, serverseitig auf 512×512 WebP transkodiert | Öffentlich, Proxy-Read über NestJS-API |
 | `logo.{ext}` | Logo für White-Label-Header | Presigned URL (lesend) |
 
 Ein Überschreiben ersetzt die Datei unter demselben Pfad – kein Versioning nötig.
+
+> **Avatar-Zugriff (implementiert):** Coach-Profilbilder werden bewusst **nicht** per Presigned URL ausgeliefert, sondern über einen dedizierten öffentlichen Endpoint der NestJS-API (`GET /api/v1/landing-page/avatar/:organizationId`), der das Objekt intern von S3 liest und streamt. Gründe: (1) diese Assets müssen auf der öffentlichen Buchungsseite für anonyme Besucher und für Social-Preview-Crawler sichtbar sein, wofür ablaufende Presigned URLs ungeeignet sind; (2) RustFS ist in Produktion nur an `127.0.0.1:9000` gebunden, ein Presigned-URL-Ansatz würde einen zusätzlichen öffentlichen Reverse-Proxy auf das Storage-Backend erfordern. Cache-Busting erfolgt über einen `?v=`-Query-Parameter (Zeitstempel des letzten Uploads), nicht über URL-Ablauf.
 
 ---
 
@@ -138,8 +140,10 @@ Wenn ein Klient innerhalb eines Studios von Coach A zu Coach B übergeben wird, 
 
 ## Pfad-Konstanten im Code (NestJS)
 
+> **Stand:** In dieser Monorepo-Struktur gibt es kein `libs/`-Verzeichnis. Tatsächlich implementiert ist bisher nur `coachAvatar`, in `apps/api/src/storage/paths.ts` (als einzelne `coachAvatarKey(organizationId)`-Funktion, da das Zielformat immer `webp` ist und kein `ext`-Parameter aus User-Input mehr nötig ist). Der Rest dieses Blocks (Klienten-Assets, Sitzungs-Assets, Studio-Assets) ist weiterhin **geplantes Schema**, noch nicht implementiert.
+
 ```typescript
-// libs/storage/paths.ts
+// libs/storage/paths.ts (geplant – aktueller Stand: apps/api/src/storage/paths.ts, nur coachAvatar)
 
 export const StoragePaths = {
   // Coach-Assets
@@ -224,11 +228,11 @@ for (const coachId of studioCoachIds) {
 
 ## Zugriffskonzept
 
-Alle Dateien sind **nicht öffentlich**. Zugriff erfolgt ausschließlich über **Presigned URLs**, die das NestJS-Backend auf Anfrage ausstellt.
+Alle Dateien im Bucket sind **nicht öffentlich**. Zugriff erfolgt über **Presigned URLs**, die das NestJS-Backend auf Anfrage ausstellt – **Ausnahme: Coach-Profilbilder** (siehe unten), die dauerhaft öffentlich sichtbar sein müssen und daher über einen Proxy-Read-Endpoint statt Presigned URL ausgeliefert werden.
 
 | Dateityp | URL-Gültigkeit | Berechtigung |
 |---|---|---|
-| Coach-Profilbilder | 1 Stunde | Coach + zugeordneter Klient |
+| Coach-Profilbilder | – (kein Presigned-URL-Mechanismus) | Öffentlich, Proxy-Read über `GET /api/v1/landing-page/avatar/:organizationId` |
 | Klienten-Dokumente | 1 Stunde | zuständiger Coach + Klient selbst |
 | Sitzungs-Anhänge | 15 Minuten | Coach + zugeordneter Klient |
 | Aufzeichnungen / Transkripte | 1 Stunde | Coach only (Klient nur wenn Coach freigegeben) |
