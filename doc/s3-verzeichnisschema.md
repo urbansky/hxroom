@@ -66,7 +66,7 @@ Enthält die öffentlich sichtbaren Assets des Coachs. Wird beim Anlegen des Coa
 
 Ein Überschreiben ersetzt die Datei unter demselben Pfad – kein Versioning nötig.
 
-> **Avatar-Zugriff (implementiert):** Coach-Profilbilder werden bewusst **nicht** per Presigned URL ausgeliefert, sondern über einen dedizierten öffentlichen Endpoint der NestJS-API (`GET /api/v1/landing-page/avatar/:organizationId`), der das Objekt intern von S3 liest und streamt. Gründe: (1) diese Assets müssen auf der öffentlichen Buchungsseite für anonyme Besucher und für Social-Preview-Crawler sichtbar sein, wofür ablaufende Presigned URLs ungeeignet sind; (2) RustFS ist in Produktion nur an `127.0.0.1:9000` gebunden, ein Presigned-URL-Ansatz würde einen zusätzlichen öffentlichen Reverse-Proxy auf das Storage-Backend erfordern. Cache-Busting erfolgt über einen `?v=`-Query-Parameter (Zeitstempel des letzten Uploads), nicht über URL-Ablauf.
+> **Avatar-Zugriff (implementiert):** Coach-Profilbilder werden bewusst **nicht** per Presigned URL ausgeliefert, sondern über einen dedizierten öffentlichen Endpoint der NestJS-API (`GET /api/v1/booking-page/avatar/:organizationId`), der das Objekt intern von S3 liest und streamt. Gründe: (1) diese Assets müssen auf der öffentlichen Buchungsseite für anonyme Besucher und für Social-Preview-Crawler sichtbar sein, wofür ablaufende Presigned URLs ungeeignet sind; (2) RustFS ist in Produktion nur an `127.0.0.1:9000` gebunden, ein Presigned-URL-Ansatz würde einen zusätzlichen öffentlichen Reverse-Proxy auf das Storage-Backend erfordern. Cache-Busting erfolgt über einen `?v=`-Query-Parameter (Zeitstempel des letzten Uploads), nicht über URL-Ablauf.
 
 ---
 
@@ -232,7 +232,7 @@ Alle Dateien im Bucket sind **nicht öffentlich**. Zugriff erfolgt über **Presi
 
 | Dateityp | URL-Gültigkeit | Berechtigung |
 |---|---|---|
-| Coach-Profilbilder | – (kein Presigned-URL-Mechanismus) | Öffentlich, Proxy-Read über `GET /api/v1/landing-page/avatar/:organizationId` |
+| Coach-Profilbilder | – (kein Presigned-URL-Mechanismus) | Öffentlich, Proxy-Read über `GET /api/v1/booking-page/avatar/:organizationId` |
 | Klienten-Dokumente | 1 Stunde | zuständiger Coach + Klient selbst |
 | Sitzungs-Anhänge | 15 Minuten | Coach + zugeordneter Klient |
 | Aufzeichnungen / Transkripte | 1 Stunde | Coach only (Klient nur wenn Coach freigegeben) |

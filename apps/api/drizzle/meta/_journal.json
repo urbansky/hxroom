@@ -36,6 +36,13 @@
       "when": 1785349008978,
       "tag": "0004_brainy_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785388947993,
+      "tag": "0005_rename_landing_page_to_booking_page",
+      "breakpoints": true
     }
   ]
 }

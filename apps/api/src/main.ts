@@ -15,7 +15,7 @@ async function bootstrap() {
     ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
     : [
         'http://localhost:5173', // coach (dev)
-        'http://localhost:5174', // room (dev)
+        'http://localhost:5174', // bookingpage (dev)
         'http://localhost:5175', // admin (dev)
         'http://localhost:5176', // landing (dev)
       ];

@@ -5,7 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
 import { OrganizationModule } from './organization/organization.module';
-import { LandingPageModule } from './landing-page/landing-page.module';
+import { BookingPageModule } from './booking-page/booking-page.module';
 import { OffersModule } from './offers/offers.module';
 import { S3Module } from './storage/s3.module';
 
@@ -18,7 +18,7 @@ import { S3Module } from './storage/s3.module';
     HealthModule,
     MailModule,
     OrganizationModule,
-    LandingPageModule,
+    BookingPageModule,
     OffersModule,
   ],
 })

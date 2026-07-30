@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { organization, offers, landingPage } from '../db/schema';
+import { organization, offers, bookingPage } from '../db/schema';
 
 @Injectable()
 export class OrganizationService {
@@ -14,10 +14,10 @@ export class OrganizationService {
         name:            organization.name,
         slug:            organization.slug,
         logo:            organization.logo,
-        avatarUpdatedAt: landingPage.avatarUpdatedAt,
+        avatarUpdatedAt: bookingPage.avatarUpdatedAt,
       })
       .from(organization)
-      .leftJoin(landingPage, eq(landingPage.organizationId, organization.id))
+      .leftJoin(bookingPage, eq(bookingPage.organizationId, organization.id))
       .where(eq(organization.slug, slug))
       .limit(1);
 

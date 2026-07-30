@@ -15,30 +15,30 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { landingPageSchema, type LandingPageDto } from '@hxroom/shared';
-import { LandingPageService } from './landing-page.service';
+import { bookingPageSchema, type BookingPageDto } from '@hxroom/shared';
+import { BookingPageService } from './booking-page.service';
 
 const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_AVATAR_FILE_SIZE = 8 * 1024 * 1024;
 
-@Controller('landing-page')
+@Controller('booking-page')
 @UseGuards(AuthGuard)
-export class LandingPageController {
-  constructor(private readonly landingPageService: LandingPageService) {}
+export class BookingPageController {
+  constructor(private readonly bookingPageService: BookingPageService) {}
 
   @Get()
   get(@CurrentOrganization() org: { id: string } | undefined) {
     if (!org) throw new UnauthorizedException('No active organization');
-    return this.landingPageService.get(org.id);
+    return this.bookingPageService.get(org.id);
   }
 
   @Patch()
   update(
     @CurrentOrganization() org: { id: string } | undefined,
-    @Body(new ZodValidationPipe(landingPageSchema)) dto: LandingPageDto,
+    @Body(new ZodValidationPipe(bookingPageSchema)) dto: BookingPageDto,
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
-    return this.landingPageService.update(org.id, dto);
+    return this.bookingPageService.update(org.id, dto);
   }
 
   @Post('avatar')
@@ -58,12 +58,12 @@ export class LandingPageController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     if (!file) throw new BadRequestException('No file provided');
-    return this.landingPageService.uploadAvatar(org.id, file.buffer);
+    return this.bookingPageService.uploadAvatar(org.id, file.buffer);
   }
 
   @Delete('avatar')
   deleteAvatar(@CurrentOrganization() org: { id: string } | undefined) {
     if (!org) throw new UnauthorizedException('No active organization');
-    return this.landingPageService.deleteAvatar(org.id);
+    return this.bookingPageService.deleteAvatar(org.id);
   }
 }

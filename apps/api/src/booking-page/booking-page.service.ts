@@ -1,14 +1,14 @@
 import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { and, eq, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { organization, landingPage } from '../db/schema';
-import type { LandingPageDto } from '@hxroom/shared';
+import { organization, bookingPage } from '../db/schema';
+import type { BookingPageDto } from '@hxroom/shared';
 import { S3Service, isNoSuchKeyError, type S3Object } from '../storage/s3.service';
 import { coachAvatarKey } from '../storage/paths';
 import { transcodeAvatar } from '../storage/image-transcode.util';
 
 @Injectable()
-export class LandingPageService {
+export class BookingPageService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly s3: S3Service,
@@ -20,14 +20,14 @@ export class LandingPageService {
         organizationId:  organization.id,
         subdomain:       organization.slug,
         profileName:     organization.name,
-        tagline:         landingPage.tagline,
-        bio:             landingPage.bio,
-        ctaButton:       landingPage.ctaButton,
-        ctaIntro:        landingPage.ctaIntro,
-        avatarUpdatedAt: landingPage.avatarUpdatedAt,
+        tagline:         bookingPage.tagline,
+        bio:             bookingPage.bio,
+        ctaButton:       bookingPage.ctaButton,
+        ctaIntro:        bookingPage.ctaIntro,
+        avatarUpdatedAt: bookingPage.avatarUpdatedAt,
       })
       .from(organization)
-      .leftJoin(landingPage, eq(landingPage.organizationId, organization.id))
+      .leftJoin(bookingPage, eq(bookingPage.organizationId, organization.id))
       .where(eq(organization.id, organizationId))
       .limit(1);
 
@@ -38,7 +38,7 @@ export class LandingPageService {
     return row;
   }
 
-  async update(organizationId: string, dto: LandingPageDto) {
+  async update(organizationId: string, dto: BookingPageDto) {
     if (dto.subdomain !== undefined) {
       const [conflict] = await this.db
         .select({ id: organization.id })
@@ -63,7 +63,7 @@ export class LandingPageService {
       }
 
       await tx
-        .insert(landingPage)
+        .insert(bookingPage)
         .values({
           organizationId,
           tagline:   dto.tagline ?? null,
@@ -72,7 +72,7 @@ export class LandingPageService {
           ctaIntro:  dto.ctaIntro ?? null,
         })
         .onConflictDoUpdate({
-          target: landingPage.organizationId,
+          target: bookingPage.organizationId,
           set: {
             ...(dto.tagline   !== undefined && { tagline:   dto.tagline ?? null }),
             ...(dto.bio       !== undefined && { bio:       dto.bio ?? null }),
@@ -97,10 +97,10 @@ export class LandingPageService {
 
     const avatarUpdatedAt = new Date();
     await this.db
-      .insert(landingPage)
+      .insert(bookingPage)
       .values({ organizationId, avatarUpdatedAt })
       .onConflictDoUpdate({
-        target: landingPage.organizationId,
+        target: bookingPage.organizationId,
         set: { avatarUpdatedAt },
       });
 
@@ -110,16 +110,16 @@ export class LandingPageService {
   async deleteAvatar(organizationId: string): Promise<void> {
     await this.s3.deleteObject(coachAvatarKey(organizationId));
     await this.db
-      .update(landingPage)
+      .update(bookingPage)
       .set({ avatarUpdatedAt: null })
-      .where(eq(landingPage.organizationId, organizationId));
+      .where(eq(bookingPage.organizationId, organizationId));
   }
 
   async getAvatarStream(organizationId: string): Promise<S3Object | null> {
     const [row] = await this.db
-      .select({ avatarUpdatedAt: landingPage.avatarUpdatedAt })
-      .from(landingPage)
-      .where(eq(landingPage.organizationId, organizationId))
+      .select({ avatarUpdatedAt: bookingPage.avatarUpdatedAt })
+      .from(bookingPage)
+      .where(eq(bookingPage.organizationId, organizationId))
       .limit(1);
 
     if (!row?.avatarUpdatedAt) {

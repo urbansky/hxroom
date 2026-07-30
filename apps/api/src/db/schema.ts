@@ -76,7 +76,7 @@ export const invitation = pgTable('invitation', {
   inviterId: text('inviter_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
 });
 
-export const landingPage = pgTable('landing_page', {
+export const bookingPage = pgTable('booking_page', {
   id:              text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   organizationId:  text('organization_id').notNull().unique().references(() => organization.id, { onDelete: 'cascade' }),
   tagline:         text('tagline'),
