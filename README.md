@@ -39,11 +39,11 @@ pnpm db:migrate
 pnpm dev
 
 # Oder einzeln:
-pnpm --filter @hxroom/api dev       # Backend API (NestJS)     → http://localhost:3000
-pnpm --filter @hxroom/coach dev     # Coach-Backoffice         → http://localhost:5173
-pnpm --filter @hxroom/bookingpage dev # Klienten-Subdomain     → http://localhost:5174
-pnpm --filter @hxroom/admin dev     # Betreiber-Backoffice     → http://localhost:5175
-pnpm --filter @hxroom/landing dev   # Landingpage              → http://localhost:5176
+pnpm --filter @hxroom/api dev         # Backend API (NestJS)     → http://localhost:3000
+pnpm --filter @hxroom/coach dev       # Coach-Backoffice         → http://localhost:5173
+pnpm --filter @hxroom/bookingpage dev # Buchungsseite            → http://localhost:5174
+pnpm --filter @hxroom/admin dev       # Betreiber-Backoffice     → http://localhost:5175
+pnpm --filter @hxroom/landing dev     # Landingpage              → http://localhost:5176
 ```
 
 ### Lokaler Reverse Proxy (Caddy)
