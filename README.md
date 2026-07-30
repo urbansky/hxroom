@@ -22,7 +22,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/coach/.env.example apps/coach/.env
 # .env-Dateien anpassen – insb. Secrets und gewünschte URLs (localhost vs. Caddy)
 
-# Infrastruktur starten (PostgreSQL + Caddy)
+# Infrastruktur starten (PostgreSQL, Caddy, RustFS)
 docker compose -f infra/docker-compose.dev.yml up -d
 
 # Infrastruktur stoppen
@@ -60,6 +60,14 @@ Caddy läuft im Dev-Container und routet `*.hxroom.localhost` auf die lokalen Po
 | http://livekit.hxroom.localhost | LiveKit              |
 
 `*.localhost`-Domains funktionieren auf macOS ohne `/etc/hosts`-Eintrag. Die Dev-Server müssen auf `0.0.0.0` lauschen (bereits in `nuxt.config.ts` konfiguriert).
+
+### Objekt-Storage (RustFS)
+
+RustFS ist der S3-kompatible Object Store für die lokale Entwicklung (siehe `doc/s3-verzeichnisschema.md`). Der Bucket `hxroom-files` wird beim Hochfahren automatisch angelegt.
+
+- **Web-UI:** http://127.0.0.1:9001
+- **Zugangsdaten:** `hxroom_dev` / `hxroom_dev_secret` (aus `infra/docker-compose.dev.yml`)
+- **S3-API:** http://127.0.0.1:9000 (`S3_ENDPOINT` in `apps/api/.env`)
 
 ### Shared Packages
 
