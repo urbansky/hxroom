@@ -901,18 +901,18 @@ body::before {
 .content > *:nth-child(4) { animation-delay: 0.20s; }
 .content > *:nth-child(5) { animation-delay: 0.25s; }
 
-/* ─── LANDINGPAGE SECTION ─── */
-.lp-section { display: none; }
-.lp-section.active { display: flex; flex-direction: column; gap: 24px; }
+/* ─── BOOKING PAGE SECTION ─── */
+.bp-section { display: none; }
+.bp-section.active { display: flex; flex-direction: column; gap: 24px; }
 
-.lp-grid {
+.bp-grid {
   display: grid;
   grid-template-columns: 1fr 360px;
   gap: 20px;
   align-items: start;
 }
 
-.lp-editor { display: flex; flex-direction: column; gap: 16px; }
+.bp-editor { display: flex; flex-direction: column; gap: 16px; }
 
 .form-group { display: flex; flex-direction: column; gap: 7px; }
 .form-label {
@@ -1023,7 +1023,7 @@ body::before {
 .format-label { font-size: 12px; color: var(--text-secondary); }
 .format-chip.selected .format-label { color: var(--sage-light); }
 
-.lp-actions {
+.bp-actions {
   display: flex; align-items: center; gap: 10px;
   padding-top: 4px;
 }
@@ -1064,7 +1064,7 @@ body::before {
 }
 
 /* Preview panel */
-.lp-preview-panel {
+.bp-preview-panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -1072,18 +1072,18 @@ body::before {
   position: sticky;
   top: 72px;
 }
-.lp-preview-header {
+.bp-preview-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 18px;
   border-bottom: 1px solid var(--border);
 }
-.lp-preview-title {
+.bp-preview-title {
   font-size: 12px;
   color: var(--text-muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.lp-preview-link {
+.bp-preview-link {
   font-size: 11px;
   color: var(--sage);
   display: flex; align-items: center; gap: 4px;
@@ -1091,13 +1091,13 @@ body::before {
   text-decoration: none;
   transition: opacity 0.15s;
 }
-.lp-preview-link:hover { opacity: 0.7; }
-.lp-preview-link svg {
+.bp-preview-link:hover { opacity: 0.7; }
+.bp-preview-link svg {
   width: 11px; height: 11px;
   stroke: var(--sage); fill: none;
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
-.lp-preview-body {
+.bp-preview-body {
   padding: 20px;
   background: #0f1310;
 }
@@ -1209,9 +1209,9 @@ body::before {
 
     <span class="nav-section-label">Einstellungen</span>
 
-    <a class="nav-item" href="#" onclick="showSection('landingpage'); return false;">
+    <a class="nav-item" href="#" onclick="showSection('bookingPage'); return false;">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></span>
-      <span class="nav-item-text">Landingpage</span>
+      <span class="nav-item-text">Buchungsseite</span>
     </a>
 
     <a class="nav-item" href="#">
@@ -1625,13 +1625,13 @@ body::before {
 
   </div>
 
-  <!-- ── LANDINGPAGE SECTION ── -->
-  <div class="content lp-section" id="section-landingpage">
+  <!-- ── BOOKING PAGE SECTION ── -->
+  <div class="content bp-section" id="section-booking-page">
 
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--cream);margin-bottom:4px;">Deine Coach-Landingpage</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--cream);margin-bottom:4px;">Deine Buchungsseite</div>
         <div style="font-size:13px;color:var(--text-muted);">So sehen dich potenzielle Klienten – passe Profil, Angebot und Buchungs-CTA an.</div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -1668,10 +1668,10 @@ body::before {
     </div>
 
     <!-- Editor + Vorschau -->
-    <div class="lp-grid">
+    <div class="bp-grid">
 
       <!-- Editor -->
-      <div class="lp-editor">
+      <div class="bp-editor">
 
         <!-- Profil -->
         <div class="card">
@@ -1751,15 +1751,15 @@ body::before {
       </div>
 
       <!-- Vorschau -->
-      <div class="lp-preview-panel">
-        <div class="lp-preview-header">
-          <span class="lp-preview-title">Vorschau</span>
-          <a class="lp-preview-link" href="#">
+      <div class="bp-preview-panel">
+        <div class="bp-preview-header">
+          <span class="bp-preview-title">Vorschau</span>
+          <a class="bp-preview-link" href="#">
             In neuem Tab öffnen
             <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         </div>
-        <div class="lp-preview-body">
+        <div class="bp-preview-body">
           <div class="preview-hero">
             <div class="preview-avatar-ring">A</div>
             <div class="preview-name">Anna Bergmann</div>
@@ -1805,19 +1805,19 @@ function showSection(name) {
   event.currentTarget.classList.add('active');
 
   // Update topbar title
-  const titles = { dashboard: 'Guten Morgen, Anna', landingpage: 'Landingpage' };
+  const titles = { dashboard: 'Guten Morgen, Anna', bookingPage: 'Buchungsseite' };
   document.querySelector('.page-title').textContent = titles[name] || '';
 
   // Show/hide content
-  const dashboard = document.querySelector('.content:not(.lp-section)');
-  const lp = document.getElementById('section-landingpage');
+  const dashboard = document.querySelector('.content:not(.bp-section)');
+  const bp = document.getElementById('section-booking-page');
 
-  if (name === 'landingpage') {
+  if (name === 'bookingPage') {
     dashboard.style.display = 'none';
-    lp.classList.add('active');
+    bp.classList.add('active');
   } else {
     dashboard.style.display = '';
-    lp.classList.remove('active');
+    bp.classList.remove('active');
   }
 }
 </script>
