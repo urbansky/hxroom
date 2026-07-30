@@ -33,7 +33,7 @@ const navItems: NavItem[][] = [
   ],
   [
     { type: 'label', label: 'Einstellungen' },
-    { label: 'Landingpage', icon: 'i-lucide-layout-template', to: '/settings/landingpage', description: 'Logo, Farbe und Profilseite' },
+    { label: 'Buchungsseite', icon: 'i-lucide-layout-template', to: '/settings/bookingpage', description: 'Logo, Farbe und Profilseite' },
     { label: 'Warteraum', icon: 'i-lucide-door-open', to: '/settings/waiting-room', description: 'Digitalen Empfang für Klienten gestalten' },
     { label: 'Benachrichtigungen', icon: 'i-lucide-bell', to: '/settings/notifications', description: 'E-Mail-Einstellungen für Buchungen' },
     { label: 'Plan & Abrechnung', icon: 'i-lucide-credit-card', to: '/settings/billing', description: 'Abo und Zahlungsmethode verwalten' },
@@ -94,7 +94,7 @@ const pageTitle = computed(() => {
     '/notes': 'Notizen',
     '/finance/revenue': 'Umsatz',
     '/finance/invoices': 'Rechnungen',
-    '/settings/landingpage': 'Landingpage',
+    '/settings/bookingpage': 'Buchungsseite',
     '/settings/waiting-room': 'Warteraum',
     '/settings/notifications': 'Benachrichtigungen',
     '/settings/billing': 'Plan & Abrechnung',

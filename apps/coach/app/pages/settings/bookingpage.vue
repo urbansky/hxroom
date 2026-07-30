@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { OfferResponse } from '@hxroom/shared'
-import { landingPageSchema } from '@hxroom/shared'
+import { bookingPageSchema } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -8,7 +8,7 @@ const { public: { rootDomain, rootDomainHttps, apiUrl } } = useRuntimeConfig()
 const { $api } = useApi()
 
 // API-Shape: DB-Spalten sind nullable
-interface LandingPageResponse {
+interface BookingPageResponse {
   organizationId:  string
   subdomain:       string | null
   profileName:     string | null
@@ -20,7 +20,7 @@ interface LandingPageResponse {
 }
 
 // Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`
-interface LandingPageForm {
+interface BookingPageForm {
   subdomain:   string | undefined
   profileName: string | undefined
   tagline:     string | undefined
@@ -29,7 +29,7 @@ interface LandingPageForm {
   ctaIntro:    string | undefined
 }
 
-function emptyForm(): LandingPageForm {
+function emptyForm(): BookingPageForm {
   return {
     subdomain:   undefined,
     profileName: undefined,
@@ -40,7 +40,7 @@ function emptyForm(): LandingPageForm {
   }
 }
 
-function toForm(data: LandingPageResponse): LandingPageForm {
+function toForm(data: BookingPageResponse): BookingPageForm {
   return {
     subdomain:   data.subdomain   ?? undefined,
     profileName: data.profileName ?? undefined,
@@ -51,27 +51,27 @@ function toForm(data: LandingPageResponse): LandingPageForm {
   }
 }
 
-const form = reactive<LandingPageForm>(emptyForm())
+const form = reactive<BookingPageForm>(emptyForm())
 
 const previewUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${form.subdomain}.${rootDomain}`)
 const nameInitial = computed(() => form.profileName?.charAt(0).toUpperCase() || 'A')
 
 // Snapshot der zuletzt gespeicherten Werte, um unveränderte Felder beim Blur zu erkennen
-const lastSaved = reactive<LandingPageForm>(emptyForm())
+const lastSaved = reactive<BookingPageForm>(emptyForm())
 
 const organizationId = ref<string | null>(null)
 const avatarUpdatedAt = ref<string | null>(null)
 const avatarUrl = computed(() =>
   avatarUpdatedAt.value && organizationId.value
-    ? `${apiUrl}/landing-page/avatar/${organizationId.value}?v=${new Date(avatarUpdatedAt.value).getTime()}`
+    ? `${apiUrl}/booking-page/avatar/${organizationId.value}?v=${new Date(avatarUpdatedAt.value).getTime()}`
     : null,
 )
 
-await useFetch<LandingPageResponse>('/landing-page', {
+await useFetch<BookingPageResponse>('/booking-page', {
   $fetch: $api,
   onResponse({ response }) {
-    Object.assign(form, toForm(response._data as LandingPageResponse))
-    Object.assign(lastSaved, toForm(response._data as LandingPageResponse))
+    Object.assign(form, toForm(response._data as BookingPageResponse))
+    Object.assign(lastSaved, toForm(response._data as BookingPageResponse))
     organizationId.value = response._data?.organizationId ?? null
     avatarUpdatedAt.value = response._data?.avatarUpdatedAt ?? null
   },
@@ -100,7 +100,7 @@ async function onFileSelected(e: Event) {
   body.append('file', file)
 
   try {
-    const res = await $api<{ avatarUpdatedAt: string }>('/landing-page/avatar', {
+    const res = await $api<{ avatarUpdatedAt: string }>('/booking-page/avatar', {
       method: 'POST',
       body,
     })
@@ -116,13 +116,13 @@ async function onFileSelected(e: Event) {
 }
 
 async function deleteAvatar() {
-  await $api('/landing-page/avatar', { method: 'DELETE' })
+  await $api('/booking-page/avatar', { method: 'DELETE' })
   avatarUpdatedAt.value = null
 }
 
 // Validierung: Fehler nur für Felder anzeigen, die bereits verlassen wurden
 const errors = computed(() => {
-  const r = landingPageSchema.safeParse(form)
+  const r = bookingPageSchema.safeParse(form)
   if (r.success) return {} as Record<string, string>
   return Object.fromEntries(r.error.issues.map(i => [String(i.path[0]), i.message]))
 })
@@ -152,7 +152,7 @@ async function save() {
   if (savedTimer) clearTimeout(savedTimer)
   saveStatus.value = 'saving'
   try {
-    await $api('/landing-page', {
+    await $api('/booking-page', {
       method: 'PATCH',
       body: {
         subdomain:   form.subdomain   || undefined,
@@ -171,7 +171,7 @@ async function save() {
   }
 }
 
-function onBlur(field: keyof LandingPageForm) {
+function onBlur(field: keyof BookingPageForm) {
   touched[field] = true
   if (form[field] === lastSaved[field]) return
   activeField.value = field
@@ -227,7 +227,7 @@ const features = [
 
     <!-- Seitenheader -->
     <div>
-      <h1 class="font-serif text-3xl text-highlighted mb-1">Deine Coach-Landingpage</h1>
+      <h1 class="font-serif text-3xl text-highlighted mb-1">Deine Buchungsseite</h1>
       <p class="text-sm text-muted">So sehen dich potenzielle Klienten – passe Profil, Angebot und Buchungs-CTA an.</p>
     </div>
 
