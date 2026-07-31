@@ -90,3 +90,34 @@ export const offerResponseSchema = z.object({
   sortOrder:       z.number(),
 });
 export type OfferResponse = z.infer<typeof offerResponseSchema>;
+
+// Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells)
+const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Uhrzeit muss im Format HH:MM angegeben werden');
+
+export const createAvailabilitySlotSchema = z.object({
+  weekday:   z.number().int().min(0, 'Wochentag muss zwischen 0 und 6 liegen').max(6, 'Wochentag muss zwischen 0 und 6 liegen'),
+  startTime: timeOfDaySchema,
+  endTime:   timeOfDaySchema,
+}).refine((slot) => slot.startTime < slot.endTime, {
+  message: 'Startzeit muss vor der Endzeit liegen',
+  path: ['endTime'],
+});
+export type CreateAvailabilitySlotDto = z.infer<typeof createAvailabilitySlotSchema>;
+
+export const updateAvailabilitySlotSchema = z.object({
+  weekday:   z.number().int().min(0, 'Wochentag muss zwischen 0 und 6 liegen').max(6, 'Wochentag muss zwischen 0 und 6 liegen').optional(),
+  startTime: timeOfDaySchema.optional(),
+  endTime:   timeOfDaySchema.optional(),
+}).refine((slot) => !slot.startTime || !slot.endTime || slot.startTime < slot.endTime, {
+  message: 'Startzeit muss vor der Endzeit liegen',
+  path: ['endTime'],
+});
+export type UpdateAvailabilitySlotDto = z.infer<typeof updateAvailabilitySlotSchema>;
+
+export const availabilitySlotResponseSchema = z.object({
+  id:        z.string(),
+  weekday:   z.number(),
+  startTime: z.string(),
+  endTime:   z.string(),
+});
+export type AvailabilitySlotResponse = z.infer<typeof availabilitySlotResponseSchema>;

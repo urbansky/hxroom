@@ -105,3 +105,17 @@ export const offers = pgTable('offers', {
   createdAt:       timestamp('created_at').notNull().defaultNow(),
   updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
+
+// Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
+// doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit
+// bestimmten Angeboten (Stufe 2, offer_availability_slots) ist bewusst noch nicht
+// Teil dieser Tabelle.
+export const availabilitySlots = pgTable('availability_slots', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  weekday:        integer('weekday').notNull(), // 0 = Montag … 6 = Sonntag
+  startTime:      text('start_time').notNull(), // "09:00"
+  endTime:        text('end_time').notNull(),   // "17:00"
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+  updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+});

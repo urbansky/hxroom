@@ -7,6 +7,7 @@ import { MailModule } from './mail/mail.module';
 import { OrganizationModule } from './organization/organization.module';
 import { BookingPageModule } from './booking-page/booking-page.module';
 import { OffersModule } from './offers/offers.module';
+import { AvailabilityModule } from './availability/availability.module';
 import { S3Module } from './storage/s3.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { S3Module } from './storage/s3.module';
     OrganizationModule,
     BookingPageModule,
     OffersModule,
+    AvailabilityModule,
   ],
 })
 export class AppModule {}
