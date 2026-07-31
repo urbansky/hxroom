@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { provide } from 'vue';
 import { useCoach, COACH_KEY } from './composables/useCoach';
+import { useOffers, OFFERS_KEY } from './composables/useOffers';
 import NotFoundView from './views/NotFoundView.vue';
 
 const { coach, loading, notFound } = useCoach();
 provide(COACH_KEY, coach);
+
+provide(OFFERS_KEY, useOffers());
 </script>
 
 <template>

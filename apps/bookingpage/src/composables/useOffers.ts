@@ -1,6 +1,9 @@
 import { ref, onMounted } from 'vue';
 import type { OfferResponse } from '@hxroom/shared';
 
+export const OFFERS_KEY = Symbol('offers');
+export type UseOffersReturn = ReturnType<typeof useOffers>;
+
 export function useOffers() {
   const offers = ref<OfferResponse[]>([]);
   const loading = ref(true);

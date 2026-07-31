@@ -7,6 +7,11 @@ export const router = createRouter({
       path: '/',
       component: () => import('../views/BookingPageView.vue'),
     },
+    {
+      path: '/offers/:id',
+      component: () => import('../views/OfferDetailView.vue'),
+      props: true,
+    },
   ],
   scrollBehavior(to) {
     if (to.hash) {
