@@ -119,3 +119,16 @@ export const availabilitySlots = pgTable('availability_slots', {
   createdAt:      timestamp('created_at').notNull().defaultNow(),
   updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
+
+// Coach-weite Einstellungen zur Slot-Berechnung (Stufe 1 des Zwei-Stufen-Modells,
+// siehe doc/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7: bewusst global pro
+// Coach, nicht pro Angebot). Wird aktuell nur gespeichert/editiert – die eigentliche
+// Slot-Berechnung, die diese Werte konsumiert, folgt in einem späteren Schritt.
+export const availabilitySettings = pgTable('availability_settings', {
+  id:               text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:   text('organization_id').notNull().unique().references(() => organization.id, { onDelete: 'cascade' }),
+  bufferMinutes:    integer('buffer_minutes').notNull().default(0),
+  minLeadTimeHours: integer('min_lead_time_hours').notNull().default(0),
+  createdAt:        timestamp('created_at').notNull().defaultNow(),
+  updatedAt:        timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+});

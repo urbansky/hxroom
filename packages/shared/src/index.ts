@@ -121,3 +121,17 @@ export const availabilitySlotResponseSchema = z.object({
   endTime:   z.string(),
 });
 export type AvailabilitySlotResponse = z.infer<typeof availabilitySlotResponseSchema>;
+
+// Coach-weite Zeitslot-Einstellungen (Pufferzeit, Buchungsvorlaufzeit) – global pro
+// Coach, nicht pro Angebot (siehe doc/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
+export const availabilitySettingsSchema = z.object({
+  bufferMinutes:    z.number().int().min(0, 'Pufferzeit darf nicht negativ sein').max(120, 'Pufferzeit darf maximal 120 Minuten betragen').optional(),
+  minLeadTimeHours: z.number().int().min(0, 'Buchungsvorlaufzeit darf nicht negativ sein').max(168, 'Buchungsvorlaufzeit darf maximal 168 Stunden betragen').optional(),
+});
+export type AvailabilitySettingsDto = z.infer<typeof availabilitySettingsSchema>;
+
+export const availabilitySettingsResponseSchema = z.object({
+  bufferMinutes:    z.number(),
+  minLeadTimeHours: z.number(),
+});
+export type AvailabilitySettingsResponse = z.infer<typeof availabilitySettingsResponseSchema>;

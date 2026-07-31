@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilitySlotResponse } from '@hxroom/shared'
+import type { AvailabilitySlotResponse, AvailabilitySettingsResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -16,6 +16,10 @@ const WEEKDAYS = [
 ] as const
 
 const weekdaySelectItems = WEEKDAYS.map(day => ({ label: day.label, value: day.value }))
+
+// --ui-bg ist im Hauptbereich bewusst transluzent (siehe assets/main.css), macht
+// aber das aufgeklappte Select-Dropdown schwer lesbar – hier deckend erzwingen.
+const opaqueSelectContentUi = { content: 'bg-[#faf8f4] dark:bg-[#141814]' }
 
 const tabItems = [
   { label: 'Verfügbarkeit', value: 'availability' },
@@ -41,6 +45,48 @@ await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
     rows.value = response._data as AvailabilitySlotResponse[]
   },
 })
+
+// --- Einstellungen-Tab: Pufferzeit & Buchungsvorlaufzeit ---
+const BUFFER_OPTIONS = [0, 5, 10, 15, 30].map(v => ({ label: v === 0 ? 'Kein Puffer' : `${v} Min.`, value: v }))
+const LEAD_TIME_OPTIONS = [0, 1, 2, 4, 24, 48].map(v => ({
+  label: v === 0 ? 'Sofort buchbar' : v < 24 ? `${v} Std.` : `${v / 24} Tag${v > 24 ? 'e' : ''}`,
+  value: v,
+}))
+
+const settings = reactive({ bufferMinutes: 0, minLeadTimeHours: 0 })
+
+type SettingsSaveStatus = 'saving' | 'saved' | 'error'
+const settingsSaveStatus = ref<SettingsSaveStatus | null>(null)
+const activeSettingsField = ref<keyof typeof settings | null>(null)
+let settingsSavedTimer: ReturnType<typeof setTimeout> | null = null
+
+function settingsFieldStatus(field: keyof typeof settings): SettingsSaveStatus | null {
+  if (activeSettingsField.value !== field) return null
+  return settingsSaveStatus.value
+}
+
+await useFetch<AvailabilitySettingsResponse>('/availability-settings', {
+  $fetch: $api,
+  onResponse({ response }) {
+    Object.assign(settings, response._data)
+  },
+})
+
+async function saveSettings(field: keyof typeof settings) {
+  if (settingsSavedTimer) clearTimeout(settingsSavedTimer)
+  activeSettingsField.value = field
+  settingsSaveStatus.value = 'saving'
+  try {
+    await $api('/availability-settings', {
+      method: 'PATCH',
+      body: { bufferMinutes: settings.bufferMinutes, minLeadTimeHours: settings.minLeadTimeHours },
+    })
+    settingsSaveStatus.value = 'saved'
+    settingsSavedTimer = setTimeout(() => { settingsSaveStatus.value = null }, 3000)
+  } catch {
+    settingsSaveStatus.value = 'error'
+  }
+}
 
 // --- Anlegen/Bearbeiten-Drawer ---
 interface SlotDraft {
@@ -279,10 +325,35 @@ function goToday() {
     </template>
 
     <template v-else-if="activeTab === 'settings'">
-      <div class="rounded-xl border border-dashed border-default p-10 flex flex-col items-center justify-center gap-2 text-center">
-        <UIcon name="i-lucide-settings-2" class="size-6 text-muted" />
-        <p class="text-sm text-muted">Einstellungen wie Pufferzeit und Buchungsvorlaufzeit folgen hier in einer späteren Version.</p>
-      </div>
+      <SettingsSection title="Zeitslot-Einstellungen" description="Diese Einstellungen gelten global für alle deine Angebote.">
+        <div class="flex flex-col gap-5 max-w-sm my-4">
+          <UFormField label="Pufferzeit zwischen Terminen" description="Z.B. für Vorbereitungen oder als Puffer, falls ein Termin länger dauert.">
+            <template v-if="settingsFieldStatus('bufferMinutes')" #hint>
+              <SaveStatusHint :status="settingsFieldStatus('bufferMinutes')" />
+            </template>
+            <USelect
+              v-model="settings.bufferMinutes"
+              :items="BUFFER_OPTIONS"
+              :ui="opaqueSelectContentUi"
+              class="w-full"
+              @update:model-value="saveSettings('bufferMinutes')"
+            />
+          </UFormField>
+
+          <UFormField label="Buchungsvorlaufzeit" description="Mindestabstand zwischen Buchung und Termin – verhindert zu kurzfristige Buchungen.">
+            <template v-if="settingsFieldStatus('minLeadTimeHours')" #hint>
+              <SaveStatusHint :status="settingsFieldStatus('minLeadTimeHours')" />
+            </template>
+            <USelect
+              v-model="settings.minLeadTimeHours"
+              :items="LEAD_TIME_OPTIONS"
+              :ui="opaqueSelectContentUi"
+              class="w-full"
+              @update:model-value="saveSettings('minLeadTimeHours')"
+            />
+          </UFormField>
+        </div>
+      </SettingsSection>
     </template>
 
     <template v-else-if="activeTab === 'sync'">
@@ -297,7 +368,7 @@ function goToday() {
       <template #body>
         <div class="flex flex-col gap-6">
           <UFormField label="Wochentag">
-            <USelect v-model="draft.weekday" :items="weekdaySelectItems" class="w-full" />
+            <USelect v-model="draft.weekday" :items="weekdaySelectItems" :ui="opaqueSelectContentUi" class="w-full" />
           </UFormField>
 
           <div class="flex items-end gap-4">
