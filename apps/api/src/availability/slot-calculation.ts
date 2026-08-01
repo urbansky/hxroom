@@ -3,7 +3,12 @@ import { fromZonedTime } from 'date-fns-tz';
 // Fallback, falls von außen kein daysAhead übergeben wird.
 export const AVAILABLE_SLOTS_WINDOW_DAYS = 14;
 // Sicherheitscap gegen sehr große Antworten bei sehr weiten Verfügbarkeitsfenstern.
-export const AVAILABLE_SLOTS_MAX_COUNT = 60;
+// Muss das realistische Maximum komfortabel abdecken, sonst wird das Buchungsfenster
+// bei dichter Verfügbarkeit + kurzer Angebotsdauer still auf wenige Tage verkürzt (Bug,
+// beobachtet bei bookingWindowWeeks=4 + 15-Min-Angebot + mehreren täglichen Zeitfenstern:
+// ~66 Slots/Woche > alter Cap von 60 → Fenster wirkte nach ~1 Woche abgeschnitten).
+// 12 Wochen (Maximum von bookingWindowWeeks) × realistisch dichte ~90 Slots/Woche ≈ 1080.
+export const AVAILABLE_SLOTS_MAX_COUNT = 1000;
 // Fallback für availabilitySettings.bookingWindowWeeks, falls noch keine Zeile
 // existiert – entspricht dem DB-Default und dem bisherigen AVAILABLE_SLOTS_WINDOW_DAYS-Verhalten.
 export const DEFAULT_BOOKING_WINDOW_WEEKS = 2;

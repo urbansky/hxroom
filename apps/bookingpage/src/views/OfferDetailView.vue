@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { inject, computed, type Ref } from 'vue';
+import { inject, computed, ref, watch, type Ref } from 'vue';
 import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
 import { OFFERS_KEY, type UseOffersReturn } from '../composables/useOffers';
 import { useAvailableSlots } from '../composables/useAvailableSlots';
 import { formatOfferPrice, renderDescription, descriptionProseClasses } from '../utils/offers';
+import type { AvailableSlotResponse } from '@hxroom/shared';
 
 const props = defineProps<{ id: string }>();
 
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 const { offers, loading } = inject(OFFERS_KEY) as UseOffersReturn;
-const { slots: availableSlots, loading: slotsLoading } = useAvailableSlots(props.id);
+// Getter statt Wert übergeben: /offers/:id nutzt dieselbe Routen-Komponente für
+// jedes Angebot (kein Neu-Mount bei ID-Wechsel über "Andere Sitzungsarten"), daher
+// muss das Composable selbst reaktiv auf props.id reagieren und neu fetchen.
+const { slots: availableSlots, loading: slotsLoading } = useAvailableSlots(() => props.id);
 
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
@@ -21,31 +25,135 @@ const descriptionHtml = computed(() => offer.value ? renderDescription(offer.val
 
 const otherOffers = computed(() => offers.value.filter((o) => o.id !== props.id));
 
-const MAX_DISPLAYED_SLOTS = 8;
 const TIME_ZONE = 'Europe/Berlin';
 
 const dayFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, weekday: 'long' });
 const dateFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, day: 'numeric', month: 'long' });
 const timeFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' });
+// 'en-CA' liefert direkt "YYYY-MM-DD" – als zeitzonenkorrekter Gruppierungsschlüssel (Europe/Berlin, nicht Browser-Lokalzeit)
+const dateKeyFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' })
 
-const nextSlots = computed(() => {
-  if (!offer.value) return [];
-  const type = `${offer.value.name} · ${offer.value.durationMinutes} min`;
+function parseDateKey(key: string) {
+  const [year, month, day] = key.split('-').map(Number)
+  return { year, month, day }
+}
 
-  return availableSlots.value.slice(0, MAX_DISPLAYED_SLOTS).map((slot, i) => {
-    const start = new Date(slot.start);
-    const end = new Date(slot.end);
-    return {
-      day: dayFormatter.format(start),
-      date: dateFormatter.format(start),
-      time: `${timeFormatter.format(start)} – ${timeFormatter.format(end)} Uhr`,
-      type,
-      soon: i === 0,
-    };
-  });
-});
+// Montag-first Wochentag rein aus Kalenderdatum (Y/M/D) – bewusst ohne Zeitzonen-Konvertierung,
+// da "welcher Wochentag ist der 3.8.2026" unabhängig von der Zeitzone ist.
+function weekdayOfDateKey(key: string) {
+  const { year, month, day } = parseDateKey(key)
+  return (new Date(year, month - 1, day).getDay() + 6) % 7
+}
 
-const noSlotsAvailable = computed(() => !slotsLoading.value && nextSlots.value.length === 0);
+const todayKey = dateKeyFormatter.format(new Date())
+
+const slotsByDay = computed(() => {
+  const map = new Map<string, AvailableSlotResponse[]>()
+  for (const slot of availableSlots.value) {
+    const key = dateKeyFormatter.format(new Date(slot.start))
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(slot)
+  }
+  return map
+})
+
+const monthsWithData = computed(() =>
+  [...new Set([...slotsByDay.value.keys()].map(key => key.slice(0, 7)))].sort()
+)
+
+const monthIndex = ref(0)
+const currentMonthKey = computed(() => monthsWithData.value[monthIndex.value] ?? null)
+
+// Mittag UTC statt lokaler Mitternacht, damit die anschließende Formatierung mit
+// timeZone: 'Europe/Berlin' unabhängig von der Browser-Zeitzone den korrekten
+// Kalendertag zeigt (keine Verschiebung nahe der Tagesgrenze).
+function dateKeyToUtcNoon(key: string) {
+  const { year, month, day } = parseDateKey(key)
+  return new Date(Date.UTC(year, month - 1, day, 12))
+}
+
+const monthLabel = computed(() => {
+  if (!currentMonthKey.value) return ''
+  const label = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, month: 'long', year: 'numeric' }).format(dateKeyToUtcNoon(`${currentMonthKey.value}-01`))
+  return label.charAt(0).toUpperCase() + label.slice(1)
+})
+
+const calendarDays = computed(() => {
+  if (!currentMonthKey.value) return []
+  const [year, month] = currentMonthKey.value.split('-').map(Number)
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const firstWeekday = weekdayOfDateKey(`${year}-${String(month).padStart(2, '0')}-01`)
+
+  const cells: { dateKey: string; day: number; inMonth: boolean; isToday: boolean; hasSlots: boolean }[] = []
+  for (let i = 0; i < firstWeekday; i++) {
+    cells.push({ dateKey: `pad-${i}`, day: 0, inMonth: false, isToday: false, hasSlots: false })
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    cells.push({
+      dateKey,
+      day,
+      inMonth: true,
+      isToday: dateKey === todayKey,
+      hasSlots: slotsByDay.value.has(dateKey),
+    })
+  }
+  return cells
+})
+
+const canGoPrevMonth = computed(() => monthIndex.value > 0)
+const canGoNextMonth = computed(() => monthIndex.value < monthsWithData.value.length - 1)
+
+const selectedDayKey = ref<string | null>(null)
+const selectedSlot = ref<AvailableSlotResponse | null>(null)
+const bookingRequested = ref(false)
+
+// Angebotswechsel über "Andere Sitzungsarten" (gleiche Routen-Komponente, kein Neu-Mount):
+// Kalender-/Zeitauswahl gehört zum vorherigen Angebot und muss zurückgesetzt werden.
+watch(() => props.id, () => {
+  monthIndex.value = 0
+  selectedDayKey.value = null
+  selectedSlot.value = null
+  bookingRequested.value = false
+})
+
+function selectDay(dateKey: string) {
+  if (!slotsByDay.value.has(dateKey)) return
+  selectedDayKey.value = dateKey
+  selectedSlot.value = null
+  bookingRequested.value = false
+}
+
+function selectSlot(slot: AvailableSlotResponse) {
+  selectedSlot.value = slot
+  bookingRequested.value = false
+}
+
+function prevMonth() {
+  if (!canGoPrevMonth.value) return
+  monthIndex.value--
+  selectedDayKey.value = null
+  selectedSlot.value = null
+  bookingRequested.value = false
+}
+
+function nextMonth() {
+  if (!canGoNextMonth.value) return
+  monthIndex.value++
+  selectedDayKey.value = null
+  selectedSlot.value = null
+  bookingRequested.value = false
+}
+
+const selectedDaySlots = computed(() => selectedDayKey.value ? slotsByDay.value.get(selectedDayKey.value) ?? [] : [])
+
+const selectedDayLabel = computed(() => {
+  if (!selectedDayKey.value) return ''
+  const date = dateKeyToUtcNoon(selectedDayKey.value)
+  return `${dayFormatter.format(date)}, ${dateFormatter.format(date)}`
+})
+
+const noSlotsAvailable = computed(() => !slotsLoading.value && availableSlots.value.length === 0)
 
 const credentials = [
   { icon: 'i-lucide-graduation-cap', text: 'ICF-zertifiziert (ACC) · International Coaching Federation' },
@@ -155,22 +263,80 @@ const credentials = [
           Aktuell keine freien Termine – schau bald wieder vorbei.
         </p>
 
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div
-            v-for="(slot, i) in nextSlots"
-            :key="i"
-            class="bg-(--ui-bg) border rounded-[14px] p-[18px] flex flex-col gap-2.5 cursor-pointer transition-all hover:border-sage-400/30 hover:bg-(--ui-bg-accented) hover:-translate-y-0.5 relative overflow-hidden"
-            :class="slot.soon ? 'border-sage-400/20' : 'border-(--ui-border)'"
-          >
-            <div v-if="slot.soon" class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-sage-600 to-sage-400" />
-            <div class="text-[10px] text-(--ui-text-dimmed) uppercase tracking-[0.1em]">{{ slot.day }}</div>
-            <div class="font-serif text-[22px] text-sage-950 dark:text-cream font-light leading-none">{{ slot.date }}</div>
-            <div class="text-[13px] text-(--ui-text-muted)">{{ slot.time }}</div>
-            <div class="text-[11px] text-(--ui-text-dimmed) tracking-wide">{{ slot.type }}</div>
-            <div class="flex items-center gap-1 mt-1 text-xs text-sage-700 dark:text-sage-200">
-              <UIcon name="i-lucide-calendar" class="size-[11px] text-sage-400" />
-              Buchen
+        <div v-else-if="slotsLoading" class="flex justify-center py-10">
+          <UIcon name="i-lucide-loader-2" class="size-5 animate-spin text-(--ui-text-dimmed)" />
+        </div>
+
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Kalender-Panel -->
+          <div class="bg-(--ui-bg) border border-(--ui-border) rounded-[14px] p-4">
+            <div class="flex items-center justify-between mb-3">
+              <UButton icon="i-lucide-chevron-left" size="xs" color="neutral" variant="ghost" :disabled="!canGoPrevMonth" @click="prevMonth" />
+              <div class="font-serif text-sm text-sage-950 dark:text-cream">{{ monthLabel }}</div>
+              <UButton icon="i-lucide-chevron-right" size="xs" color="neutral" variant="ghost" :disabled="!canGoNextMonth" @click="nextMonth" />
             </div>
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-(--ui-text-dimmed) uppercase tracking-wide mb-1">
+              <span v-for="d in ['Mo','Di','Mi','Do','Fr','Sa','So']" :key="d">{{ d }}</span>
+            </div>
+            <div class="grid grid-cols-7 gap-1">
+              <button
+                v-for="cell in calendarDays"
+                :key="cell.dateKey"
+                type="button"
+                :disabled="!cell.hasSlots"
+                :class="[
+                  'aspect-square rounded-full text-[12px] flex items-center justify-center transition-colors',
+                  !cell.inMonth && 'invisible',
+                  cell.hasSlots ? 'cursor-pointer bg-sage-400/15 text-sage-950 dark:text-cream hover:bg-sage-400/25' : 'text-(--ui-text-dimmed) cursor-default',
+                  cell.dateKey === selectedDayKey && 'bg-gradient-to-br from-sage-600 to-sage-400 text-white hover:bg-none',
+                  cell.isToday && cell.dateKey !== selectedDayKey && 'ring-1 ring-sage-400',
+                ]"
+                @click="selectDay(cell.dateKey)"
+              >{{ cell.day }}</button>
+            </div>
+            <div class="flex items-center gap-1.5 mt-3 text-[11px] text-(--ui-text-dimmed)">
+              <span class="size-1.5 rounded-full bg-sage-400" /> Freie Termine verfügbar
+            </div>
+          </div>
+
+          <!-- Zeiten-Panel -->
+          <div class="bg-(--ui-bg) border border-(--ui-border) rounded-[14px] p-4 min-h-[260px] flex flex-col">
+            <div v-if="!selectedDayKey" class="m-auto text-center flex flex-col items-center gap-2 max-w-[200px]">
+              <UIcon name="i-lucide-calendar" class="size-6 text-(--ui-text-dimmed)" />
+              <p class="text-xs text-(--ui-text-dimmed)">Wähle einen markierten Tag im Kalender, um verfügbare Uhrzeiten zu sehen.</p>
+            </div>
+            <template v-else>
+              <div class="mb-3">
+                <div class="font-serif text-lg text-sage-950 dark:text-cream">{{ selectedDayLabel }}</div>
+                <div class="text-xs text-(--ui-text-dimmed)">Alle Zeiten in MEZ</div>
+              </div>
+              <div class="flex flex-col gap-2 overflow-y-auto max-h-[260px]">
+                <button
+                  v-for="slot in selectedDaySlots"
+                  :key="slot.start"
+                  type="button"
+                  class="flex items-center justify-between px-3.5 py-2.5 rounded-[10px] border transition-colors"
+                  :class="selectedSlot?.start === slot.start ? 'border-sage-400/40 bg-sage-400/10' : 'border-(--ui-border) hover:border-sage-400/30 hover:bg-sage-400/5'"
+                  @click="selectSlot(slot)"
+                >
+                  <span class="text-[13px] text-(--ui-text)">{{ timeFormatter.format(new Date(slot.start)) }} – {{ timeFormatter.format(new Date(slot.end)) }} Uhr</span>
+                  <span class="text-[11px] text-sage-600 dark:text-sage-200">{{ selectedSlot?.start === slot.start ? 'Ausgewählt' : 'Auswählen' }}</span>
+                </button>
+              </div>
+
+              <div v-if="selectedSlot" class="mt-3 pt-3 border-t border-(--ui-border) flex flex-col gap-2.5">
+                <p v-if="!bookingRequested" class="text-sm text-(--ui-text)">
+                  Ausgewählt: <strong>{{ timeFormatter.format(new Date(selectedSlot.start)) }} – {{ timeFormatter.format(new Date(selectedSlot.end)) }} Uhr</strong>
+                </p>
+                <UButton v-if="!bookingRequested" color="primary" size="sm" class="self-start" @click="bookingRequested = true">
+                  Termin anfragen
+                </UButton>
+                <p v-else class="text-sm text-sage-700 dark:text-sage-200 flex items-center gap-1.5">
+                  <UIcon name="i-lucide-info" class="size-4 shrink-0" />
+                  Die Online-Buchung folgt in Kürze – bitte kontaktiere {{ coachName }} bis dahin direkt.
+                </p>
+              </div>
+            </template>
           </div>
         </div>
       </div>

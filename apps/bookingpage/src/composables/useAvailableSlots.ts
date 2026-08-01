@@ -1,14 +1,19 @@
-import { ref, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import type { AvailableSlotResponse } from '@hxroom/shared';
 
-export function useAvailableSlots(offerId: string) {
+export function useAvailableSlots(offerId: () => string) {
   const slots = ref<AvailableSlotResponse[]>([]);
   const loading = ref(true);
 
-  onMounted(async () => {
+  watch(offerId, async (id) => {
+    // Zurücksetzen, bevor der Fetch startet – sonst zeigt die UI kurzzeitig
+    // (oder bei Fehlschlag dauerhaft) noch die Slots des vorherigen Angebots.
+    slots.value = [];
+    loading.value = true;
+
     const slug = window.location.hostname.split('.')[0];
     const apiUrl = import.meta.env.VITE_API_URL ?? 'http://api.hxroom.localhost';
-    const url = `${apiUrl}/api/v1/organizations/${slug}/offers/${offerId}/available-slots`;
+    const url = `${apiUrl}/api/v1/organizations/${slug}/offers/${id}/available-slots`;
 
     try {
       const res = await fetch(url);
@@ -20,7 +25,7 @@ export function useAvailableSlots(offerId: string) {
     } finally {
       loading.value = false;
     }
-  });
+  }, { immediate: true });
 
   return { slots, loading };
 }
