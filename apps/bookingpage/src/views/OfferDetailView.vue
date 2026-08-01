@@ -196,7 +196,7 @@ const credentials = [
   </UHeader>
 
   <template v-if="loading">
-    <div class="max-w-[640px] mx-auto px-6 pt-40 pb-20 flex justify-center">
+    <div class="max-w-[720px] mx-auto px-6 pt-40 pb-20 flex justify-center">
       <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-(--ui-text-dimmed)" />
     </div>
   </template>
@@ -220,7 +220,7 @@ const credentials = [
 
   <template v-else-if="offer">
     <!-- Angebot + Termine -->
-    <section class="relative z-1 max-w-[640px] mx-auto px-6 pb-20" style="padding-top: 120px;">
+    <section class="relative z-1 max-w-[720px] mx-auto px-6 pb-20" style="padding-top: 120px;">
       <RouterLink to="/#offers" class="inline-flex items-center gap-1.5 text-[13px] text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline mb-5">
         <UIcon name="i-lucide-chevron-left" class="size-3.5" />
         Alle Sitzungsarten
@@ -345,7 +345,7 @@ const credentials = [
     <!-- Andere Sitzungsarten -->
     <template v-if="otherOffers.length">
       <div class="section-divider" />
-      <section class="relative z-1 max-w-[640px] mx-auto px-6 py-10">
+      <section class="relative z-1 max-w-[720px] mx-auto px-6 py-10">
         <div class="flex items-baseline gap-4 mb-7">
           <h2 class="font-serif text-[28px] font-light text-sage-950 dark:text-cream">Andere Sitzungsarten</h2>
           <span class="text-xs text-(--ui-text-dimmed) tracking-wide">Passt doch nicht ganz?</span>
@@ -382,7 +382,7 @@ const credentials = [
 
     <!-- About -->
     <div class="section-divider" />
-    <section class="relative z-1 max-w-[640px] mx-auto px-6 py-10 flex flex-col gap-12" id="about">
+    <section class="relative z-1 max-w-[720px] mx-auto px-6 py-10 flex flex-col gap-12" id="about">
       <h2 class="font-serif text-[28px] font-light text-sage-950 dark:text-cream mb-5">Über mich</h2>
 
       <blockquote class="border-l-2 border-sage-600 pl-5 py-3 -mt-6 mb-0">
@@ -460,7 +460,7 @@ const credentials = [
 .section-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--ui-border), transparent);
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
 }
 </style>

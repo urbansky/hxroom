@@ -77,7 +77,7 @@ const credentials = [
   </UHeader>
 
   <!-- Hero -->
-  <section class="relative z-1 max-w-[640px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-32 pb-10">
+  <section class="relative z-1 max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-32 pb-10">
     <!-- Text -->
     <div class="flex flex-col items-center text-center gap-8">
       <div class="inline-flex items-center gap-2 bg-sage-400/10 border border-sage-400/20 rounded-full px-3.5 py-1.5 w-fit">
@@ -160,7 +160,7 @@ const credentials = [
 
   <!-- Sitzungsarten wählen -->
   <div class="section-divider" />
-  <section class="relative z-1 max-w-[640px] mx-auto px-6 py-10" id="offers">
+  <section class="relative z-1 max-w-[720px] mx-auto px-6 py-10" id="offers">
     <div class="flex items-baseline gap-4 mb-7">
       <h2 class="font-serif text-[28px] font-light text-sage-950 dark:text-cream">Sitzungsarten</h2>
       <span class="text-xs text-(--ui-text-dimmed) tracking-wide">Schritt 1 · Angebot wählen</span>
@@ -199,7 +199,7 @@ const credentials = [
 
   <!-- About -->
   <div class="section-divider" />
-  <section class="relative z-1 max-w-[640px] mx-auto px-6 py-10 flex flex-col gap-12" id="about">
+  <section class="relative z-1 max-w-[720px] mx-auto px-6 py-10 flex flex-col gap-12" id="about">
     <h2 class="font-serif text-[28px] font-light text-sage-950 dark:text-cream mb-5">Über mich</h2>
 
     <blockquote class="border-l-2 border-sage-600 pl-5 py-3 -mt-6 mb-0">
@@ -298,7 +298,7 @@ const credentials = [
 .section-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--ui-border), transparent);
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
 }
 </style>
