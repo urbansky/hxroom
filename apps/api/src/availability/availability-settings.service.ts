@@ -2,6 +2,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, availabilitySettings } from '../db/schema';
+import { DEFAULT_BOOKING_WINDOW_WEEKS } from './slot-calculation';
 import type { AvailabilitySettingsDto } from '@hxroom/shared';
 
 @Injectable()
@@ -11,8 +12,9 @@ export class AvailabilitySettingsService {
   async get(organizationId: string) {
     const [row] = await this.db
       .select({
-        bufferMinutes:    availabilitySettings.bufferMinutes,
-        minLeadTimeHours: availabilitySettings.minLeadTimeHours,
+        bufferMinutes:      availabilitySettings.bufferMinutes,
+        minLeadTimeHours:   availabilitySettings.minLeadTimeHours,
+        bookingWindowWeeks: availabilitySettings.bookingWindowWeeks,
       })
       .from(organization)
       .leftJoin(availabilitySettings, eq(availabilitySettings.organizationId, organization.id))
@@ -24,8 +26,9 @@ export class AvailabilitySettingsService {
     }
 
     return {
-      bufferMinutes:    row.bufferMinutes ?? 0,
-      minLeadTimeHours: row.minLeadTimeHours ?? 0,
+      bufferMinutes:      row.bufferMinutes ?? 0,
+      minLeadTimeHours:   row.minLeadTimeHours ?? 0,
+      bookingWindowWeeks: row.bookingWindowWeeks ?? DEFAULT_BOOKING_WINDOW_WEEKS,
     };
   }
 
@@ -34,14 +37,16 @@ export class AvailabilitySettingsService {
       .insert(availabilitySettings)
       .values({
         organizationId,
-        bufferMinutes:    dto.bufferMinutes ?? 0,
-        minLeadTimeHours: dto.minLeadTimeHours ?? 0,
+        bufferMinutes:      dto.bufferMinutes ?? 0,
+        minLeadTimeHours:   dto.minLeadTimeHours ?? 0,
+        bookingWindowWeeks: dto.bookingWindowWeeks ?? DEFAULT_BOOKING_WINDOW_WEEKS,
       })
       .onConflictDoUpdate({
         target: availabilitySettings.organizationId,
         set: {
-          ...(dto.bufferMinutes    !== undefined && { bufferMinutes:    dto.bufferMinutes }),
-          ...(dto.minLeadTimeHours !== undefined && { minLeadTimeHours: dto.minLeadTimeHours }),
+          ...(dto.bufferMinutes      !== undefined && { bufferMinutes:      dto.bufferMinutes }),
+          ...(dto.minLeadTimeHours   !== undefined && { minLeadTimeHours:   dto.minLeadTimeHours }),
+          ...(dto.bookingWindowWeeks !== undefined && { bookingWindowWeeks: dto.bookingWindowWeeks }),
         },
       });
 

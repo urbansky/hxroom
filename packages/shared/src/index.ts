@@ -125,13 +125,23 @@ export type AvailabilitySlotResponse = z.infer<typeof availabilitySlotResponseSc
 // Coach-weite Zeitslot-Einstellungen (Pufferzeit, Buchungsvorlaufzeit) – global pro
 // Coach, nicht pro Angebot (siehe doc/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
 export const availabilitySettingsSchema = z.object({
-  bufferMinutes:    z.number().int().min(0, 'Pufferzeit darf nicht negativ sein').max(120, 'Pufferzeit darf maximal 120 Minuten betragen').optional(),
-  minLeadTimeHours: z.number().int().min(0, 'Buchungsvorlaufzeit darf nicht negativ sein').max(168, 'Buchungsvorlaufzeit darf maximal 168 Stunden betragen').optional(),
+  bufferMinutes:      z.number().int().min(0, 'Pufferzeit darf nicht negativ sein').max(120, 'Pufferzeit darf maximal 120 Minuten betragen').optional(),
+  minLeadTimeHours:   z.number().int().min(0, 'Buchungsvorlaufzeit darf nicht negativ sein').max(168, 'Buchungsvorlaufzeit darf maximal 168 Stunden betragen').optional(),
+  bookingWindowWeeks: z.number().int().min(1, 'Buchungsfenster muss mindestens 1 Woche betragen').max(12, 'Buchungsfenster darf maximal 12 Wochen betragen').optional(),
 });
 export type AvailabilitySettingsDto = z.infer<typeof availabilitySettingsSchema>;
 
 export const availabilitySettingsResponseSchema = z.object({
-  bufferMinutes:    z.number(),
-  minLeadTimeHours: z.number(),
+  bufferMinutes:      z.number(),
+  minLeadTimeHours:   z.number(),
+  bookingWindowWeeks: z.number(),
 });
 export type AvailabilitySettingsResponse = z.infer<typeof availabilitySettingsResponseSchema>;
+
+// Konkret buchbares Zeitfenster für ein Angebot (berechnet aus availabilitySlots +
+// availabilitySettings), öffentlich auf der Klienten-Buchungsseite angezeigt.
+export const availableSlotResponseSchema = z.object({
+  start: z.string(), // ISO 8601
+  end:   z.string(),
+});
+export type AvailableSlotResponse = z.infer<typeof availableSlotResponseSchema>;

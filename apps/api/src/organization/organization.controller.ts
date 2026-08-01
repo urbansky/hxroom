@@ -14,4 +14,9 @@ export class OrganizationController {
   findActiveOffers(@Param('slug') slug: string) {
     return this.organizationService.findActiveOffersBySlug(slug);
   }
+
+  @Get(':slug/offers/:offerId/available-slots')
+  findAvailableSlots(@Param('slug') slug: string, @Param('offerId') offerId: string) {
+    return this.organizationService.findAvailableSlots(slug, offerId);
+  }
 }

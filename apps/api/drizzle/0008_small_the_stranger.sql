@@ -1,0 +1,1 @@
+ALTER TABLE "availability_settings" ADD COLUMN "booking_window_weeks" integer DEFAULT 2 NOT NULL;

@@ -2,12 +2,14 @@
 import { inject, computed, type Ref } from 'vue';
 import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
 import { OFFERS_KEY, type UseOffersReturn } from '../composables/useOffers';
+import { useAvailableSlots } from '../composables/useAvailableSlots';
 import { formatOfferPrice, renderDescription, descriptionProseClasses } from '../utils/offers';
 
 const props = defineProps<{ id: string }>();
 
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 const { offers, loading } = inject(OFFERS_KEY) as UseOffersReturn;
+const { slots: availableSlots, loading: slotsLoading } = useAvailableSlots(props.id);
 
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
@@ -19,17 +21,31 @@ const descriptionHtml = computed(() => offer.value ? renderDescription(offer.val
 
 const otherOffers = computed(() => offers.value.filter((o) => o.id !== props.id));
 
-// Platzhalter-Slots bis die Terminverwaltung angebunden ist – dieselben Beispieldaten wie im POC (doc/poc/buchungsseite-coach-*.html)
+const MAX_DISPLAYED_SLOTS = 8;
+const TIME_ZONE = 'Europe/Berlin';
+
+const dayFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, weekday: 'long' });
+const dateFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, day: 'numeric', month: 'long' });
+const timeFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' });
+
 const nextSlots = computed(() => {
   if (!offer.value) return [];
   const type = `${offer.value.name} · ${offer.value.durationMinutes} min`;
-  return [
-    { day: 'Montag', date: '10. März', time: '10:00 – 10:30 Uhr', type, soon: true },
-    { day: 'Dienstag', date: '11. März', time: '09:00 – 09:30 Uhr', type, soon: false },
-    { day: 'Mittwoch', date: '12. März', time: '16:00 – 16:30 Uhr', type, soon: false },
-    { day: 'Freitag', date: '14. März', time: '08:30 – 09:00 Uhr', type, soon: false },
-  ];
+
+  return availableSlots.value.slice(0, MAX_DISPLAYED_SLOTS).map((slot, i) => {
+    const start = new Date(slot.start);
+    const end = new Date(slot.end);
+    return {
+      day: dayFormatter.format(start),
+      date: dateFormatter.format(start),
+      time: `${timeFormatter.format(start)} – ${timeFormatter.format(end)} Uhr`,
+      type,
+      soon: i === 0,
+    };
+  });
 });
+
+const noSlotsAvailable = computed(() => !slotsLoading.value && nextSlots.value.length === 0);
 
 const credentials = [
   { icon: 'i-lucide-graduation-cap', text: 'ICF-zertifiziert (ACC) · International Coaching Federation' },
@@ -135,7 +151,11 @@ const credentials = [
           <span class="text-xs text-(--ui-text-dimmed) tracking-wide">Alle Zeiten in MEZ</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <p v-if="noSlotsAvailable" class="text-sm text-(--ui-text-muted)">
+          Aktuell keine freien Termine – schau bald wieder vorbei.
+        </p>
+
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div
             v-for="(slot, i) in nextSlots"
             :key="i"

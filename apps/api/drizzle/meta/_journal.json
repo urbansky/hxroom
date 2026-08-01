@@ -57,6 +57,13 @@
       "when": 1785507414089,
       "tag": "0007_bouncy_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785587536623,
+      "tag": "0008_small_the_stranger",
+      "breakpoints": true
     }
   ]
 }

@@ -46,14 +46,15 @@ await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
   },
 })
 
-// --- Einstellungen-Tab: Pufferzeit & Buchungsvorlaufzeit ---
+// --- Einstellungen-Tab: Pufferzeit, Buchungsvorlaufzeit & Buchungsfenster ---
 const BUFFER_OPTIONS = [0, 5, 10, 15, 30].map(v => ({ label: v === 0 ? 'Kein Puffer' : `${v} Min.`, value: v }))
 const LEAD_TIME_OPTIONS = [0, 1, 2, 4, 24, 48].map(v => ({
   label: v === 0 ? 'Sofort buchbar' : v < 24 ? `${v} Std.` : `${v / 24} Tag${v > 24 ? 'e' : ''}`,
   value: v,
 }))
+const BOOKING_WINDOW_OPTIONS = [1, 2, 3, 4, 6, 8].map(v => ({ label: v === 1 ? '1 Woche' : `${v} Wochen`, value: v }))
 
-const settings = reactive({ bufferMinutes: 0, minLeadTimeHours: 0 })
+const settings = reactive({ bufferMinutes: 0, minLeadTimeHours: 0, bookingWindowWeeks: 2 })
 
 type SettingsSaveStatus = 'saving' | 'saved' | 'error'
 const settingsSaveStatus = ref<SettingsSaveStatus | null>(null)
@@ -79,7 +80,7 @@ async function saveSettings(field: keyof typeof settings) {
   try {
     await $api('/availability-settings', {
       method: 'PATCH',
-      body: { bufferMinutes: settings.bufferMinutes, minLeadTimeHours: settings.minLeadTimeHours },
+      body: { bufferMinutes: settings.bufferMinutes, minLeadTimeHours: settings.minLeadTimeHours, bookingWindowWeeks: settings.bookingWindowWeeks },
     })
     settingsSaveStatus.value = 'saved'
     settingsSavedTimer = setTimeout(() => { settingsSaveStatus.value = null }, 3000)
@@ -183,7 +184,11 @@ const monthGrid = computed(() => {
   gridEnd.setDate(gridEnd.getDate() + (6 - toMondayFirstWeekday(last)))
 
   const today = new Date()
-  const days: { date: Date; inCurrentMonth: boolean; weekday: number; isToday: boolean }[] = []
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const bookingWindowEnd = new Date(todayMidnight)
+  bookingWindowEnd.setDate(bookingWindowEnd.getDate() + settings.bookingWindowWeeks * 7)
+
+  const days: { date: Date; inCurrentMonth: boolean; weekday: number; isToday: boolean; inBookingWindow: boolean }[] = []
   const cursor = new Date(gridStart)
   while (cursor <= gridEnd) {
     days.push({
@@ -191,6 +196,7 @@ const monthGrid = computed(() => {
       inCurrentMonth: cursor.getMonth() === month,
       weekday: toMondayFirstWeekday(cursor),
       isToday: cursor.toDateString() === today.toDateString(),
+      inBookingWindow: cursor >= todayMidnight && cursor < bookingWindowEnd,
     })
     cursor.setDate(cursor.getDate() + 1)
   }
@@ -304,7 +310,7 @@ function goToday() {
             @keydown.enter="openCreate(cell.weekday)"
           >
             <span class="text-xs" :class="cell.isToday ? 'font-bold text-primary' : 'text-muted'">{{ cell.date.getDate() }}</span>
-            <div class="flex flex-col gap-0.5">
+            <div v-if="cell.inBookingWindow" class="flex flex-col gap-0.5">
               <button
                 v-for="slot in groupedByWeekday.get(cell.weekday)"
                 :key="slot.id"
@@ -319,7 +325,7 @@ function goToday() {
         </div>
 
         <p class="text-xs text-muted mt-4">
-          Zeigt deine wöchentlichen Verfügbarkeiten, projiziert auf den Monat. Ausnahmen für einzelne Tage (z. B. Urlaub) sind noch nicht möglich.
+          Zeigt deine wöchentlichen Verfügbarkeiten, projiziert auf den Monat – nur innerhalb deines aktuellen Buchungsfensters ({{ settings.bookingWindowWeeks === 1 ? '1 Woche' : `${settings.bookingWindowWeeks} Wochen` }} ab heute). Ausnahmen für einzelne Tage (z. B. Urlaub) sind noch nicht möglich.
         </p>
       </div>
     </template>
@@ -350,6 +356,19 @@ function goToday() {
               :ui="opaqueSelectContentUi"
               class="w-full"
               @update:model-value="saveSettings('minLeadTimeHours')"
+            />
+          </UFormField>
+
+          <UFormField label="Buchungsfenster" description="Wie weit im Voraus können Klienten einen Termin buchen?">
+            <template v-if="settingsFieldStatus('bookingWindowWeeks')" #hint>
+              <SaveStatusHint :status="settingsFieldStatus('bookingWindowWeeks')" />
+            </template>
+            <USelect
+              v-model="settings.bookingWindowWeeks"
+              :items="BOOKING_WINDOW_OPTIONS"
+              :ui="opaqueSelectContentUi"
+              class="w-full"
+              @update:model-value="saveSettings('bookingWindowWeeks')"
             />
           </UFormField>
         </div>
