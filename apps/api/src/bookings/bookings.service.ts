@@ -1,13 +1,23 @@
-import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomBytes, timingSafeEqual } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookings, clients } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
+import { MailService } from '../mail/mail.service';
+import { buildBookingConfirmationEmail } from './booking-confirmation-email';
 import type { CreateBookingDto, BookingResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
 type BookingRow = typeof bookingsTable.$inferSelect;
+
+const dayDateFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', weekday: 'long', day: 'numeric', month: 'long' });
+const timeFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+
+function formatDayTimeLabel(booking: BookingRow): string {
+  return `${dayDateFormatter.format(booking.startTime)}, ${timeFormatter.format(booking.startTime)}–${timeFormatter.format(booking.endTime)} Uhr`;
+}
 
 // Nie das komplette DB-Row zurückgeben: clientAccessToken darf ausschließlich per
 // E-Mail an den Klienten gehen, niemals in einer Browser-lesbaren API-Antwort landen
@@ -34,16 +44,20 @@ function normalizeEmail(email: string): string {
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly organizationService: OrganizationService,
+    private readonly mailService: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async create(slug: string, offerId: string, dto: CreateBookingDto) {
     const org = await this.organizationService.findBySlug(slug);
     const requestedStart = new Date(dto.start);
 
-    return this.db.transaction(async (tx) => {
+    const booking = await this.db.transaction(async (tx) => {
       // Sperrt die Organisation-Zeile für die Dauer der Transaktion: eine zweite,
       // gleichzeitige Buchungserstellung für dieselbe Organisation wartet hier, bis
       // diese Transaktion committet (oder zurückgerollt wird). Dadurch sieht die
@@ -60,7 +74,7 @@ export class BookingsService {
       }
 
       try {
-        const [booking] = await tx
+        const [inserted] = await tx
           .insert(bookings)
           .values({
             organizationId: org.id,
@@ -77,7 +91,7 @@ export class BookingsService {
           })
           .returning();
 
-        return toBookingResponse(booking);
+        return inserted;
       } catch (err) {
         // Letzte Absicherung durch den partiellen Unique-Index (bookings_org_start_active_unique) –
         // sollte dank des Row-Locks oben im Normalfall nicht erreicht werden.
@@ -87,6 +101,32 @@ export class BookingsService {
         throw err;
       }
     });
+
+    // Erst nach dem Commit der Transaktion versenden: die Buchung existiert bereits
+    // (der Klient sieht im UI die "Termin vorgemerkt"-Ansicht) – ein Mail-Fehler soll
+    // den Request nicht als 500 enden lassen, nur geloggt werden.
+    if (org.slug) {
+      const confirmUrl = this.buildConfirmUrl(org.slug, booking.id, booking.clientAccessToken);
+      try {
+        await this.mailService.send({
+          to: { email: booking.clientEmail, name: booking.clientName },
+          subject: 'Bitte bestätige deinen Termin – HxRoom',
+          htmlContent: buildBookingConfirmationEmail(booking.clientName, booking.offerName, formatDayTimeLabel(booking), confirmUrl),
+        });
+      } catch (err) {
+        this.logger.error(`Failed to send booking confirmation email for booking ${booking.id}`, err instanceof Error ? err.stack : err);
+      }
+    } else {
+      this.logger.warn(`Organization ${org.id} has no slug – skipped booking confirmation email for booking ${booking.id}`);
+    }
+
+    return toBookingResponse(booking);
+  }
+
+  private buildConfirmUrl(slug: string, bookingId: string, token: string): string {
+    const rootDomain = this.config.getOrThrow<string>('ROOT_DOMAIN');
+    const https = this.config.get<string>('ROOT_DOMAIN_HTTPS') === 'true';
+    return `${https ? 'https' : 'http'}://${slug}.${rootDomain}/confirm/${bookingId}?token=${token}`;
   }
 
   async confirm(bookingId: string, token: string) {
