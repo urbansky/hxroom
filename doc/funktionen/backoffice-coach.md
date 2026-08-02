@@ -23,7 +23,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
 | 01 | **Verfügbarkeitszeiten konfigurieren** | Wochentage und Uhrzeiten freigeben, Pufferzeit zwischen Terminen, Buchungsvorlaufzeit (mind. X Stunden). | MVP |
-| 02 | **Öffentliche Buchungsseite** | Gebrandete Seite mit Zeitauswahl, Klientenformular und automatischer Bestätigung per E-Mail inklusive Raumlink. | MVP |
+| 02 | **Öffentliche Buchungsseite** | Gebrandete Seite mit Zeitauswahl und Klientenformular. Buchung wird erst final, wenn der Klient den Bestätigungslink in der Buchungsmail anklickt (schützt vor Tippfehlern in der E-Mail-Adresse); derselbe Link dient später als Raumlink. Ohne Bestätigung verfällt die Buchung automatisch und der Slot wird frei. | MVP |
 | 03 | **Terminübersicht (Dashboard-Kalender)** | Tages- und Wochenansicht aller gebuchten Sitzungen mit Klientenname, Dauer und direktem Link zum Raum. | MVP |
 | 04 | **Termin manuell anlegen / einladen** | Coach kann Termin direkt erstellen und Einladungslink an Klienten per E-Mail schicken – ohne öffentliche Buchung. | MVP |
 | 05 | **Automatische Erinnerungen** | E-Mail-Erinnerung 24h und 1h vor der Sitzung an Klient (und optional Coach), anpassbare Texte. | MVP |
@@ -43,9 +43,10 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | 01 | **Klientenliste** | Tabellarische Übersicht aller Klienten mit letzter Sitzung, Anzahl Sitzungen, nächstem Termin. | MVP |
 | 02 | **Klientenprofil** | Kontaktdaten, Notiz-Historie, alle vergangenen Sitzungen auf einen Blick, persönliche Anmerkungen des Coaches. | MVP |
 | 03 | **Klient manuell anlegen** | Coach kann Klienten direkt erfassen ohne vorherige Online-Buchung – für Bestandskunden aus anderen Systemen. | MVP |
-| 04 | **Coaching-Ziele & Themen** | Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe – sichtbar nur für den Coach. | MVP |
-| 05 | **Klienten-Suche & Filter** | Volltext-Suche, filterbar nach Status (aktiv, inaktiv), Datum letzter Sitzung. | Später |
-| 06 | **Klient archivieren / deaktivieren** | Beendete Coaching-Beziehungen archivieren, Daten bleiben erhalten, Klient taucht nicht mehr aktiv auf. | Später |
+| 04 | **Buchung manuell einem Klienten zuordnen** | Coach kann in der Terminübersicht jede Buchung – ob automatisch per E-Mail gematcht oder nicht – jederzeit einem bestehenden Klienten zuordnen/umhängen, per Suche im Klientenstamm. Korrigiert falsches automatisches Matching (z.B. Klient bucht mit neuer E-Mail-Adresse) und verknüpft manuell angelegte Termine direkt mit einem bestehenden Klienten. Der Coach hat immer das letzte Wort über die Zuordnung. | MVP |
+| 05 | **Coaching-Ziele & Themen** | Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe – sichtbar nur für den Coach. | MVP |
+| 06 | **Klienten-Suche & Filter** | Volltext-Suche, filterbar nach Status (aktiv, inaktiv), Datum letzter Sitzung. | Später |
+| 07 | **Klient archivieren / deaktivieren** | Beendete Coaching-Beziehungen archivieren, Daten bleiben erhalten, Klient taucht nicht mehr aktiv auf. | Später |
 
 ---
 

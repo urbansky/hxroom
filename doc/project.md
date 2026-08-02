@@ -301,3 +301,19 @@ Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarke
 > **Reserviert für Internationalisierung:** hxroom.io  
 > **Dachmarke:** hxcode.io  
 > *(Ursprünglicher Arbeitstitel: Sitzraum)*
+
+---
+
+## 14. Wettbewerb
+
+| Anbieter | Kategorie | Stärke | Schwäche ggü. HxRoom |
+|---|---|---|---|
+| **Zoom / Google Meet** | Generisches Videocall-Tool | Bekannt, kostenlos/günstig | Kein Branding, kein Klienten-Login-Verzicht, keine Buchung/Zahlung integriert, US-Server |
+| **Calendly + Zoom** | Buchungstool + Videocall-Kombination | Weit verbreitet, gute UX beim Buchen | Zwei getrennte Tools, kein einheitliches Branding, keine Zahlung/DSGVO-Server |
+| **CoachAccountable** | Coaching-Praxismanagement-Software | Umfangreiches CRM für Coaches | Kein eigener Videocall-Raum, kein deutsches Hosting, nicht DACH-fokussiert, ~40 $/Monat |
+| **Zeeg.me** | Terminbuchung + KI-Telefonassistent (DE, DSGVO-konform) | Aus Deutschland, DSGVO-Hosting, eigene Coaching-Vertical, White-Label-Branding ab Business-Plan | Kein eigener Videocall-Raum (bindet Zoom/Meet/Teams extern ein), Fokus auf Terminbuchung/Lead-Qualifizierung statt Gesprächserlebnis, kein Sitzungsnotizen-Feature |
+| **HxRoom** | White-Label-Videocall-Plattform für Coaches | Branding, kein Klienten-Login, Buchung + Zahlung + Videocall in einem, DSGVO/DE-Server, KI-Sitzungsnotizen | – |
+
+**Einordnung:** Zeeg.me ist der relevanteste Wettbewerber im DACH-Raum, da es DSGVO-Hosting und eine eigene Coaching-Zielgruppen-Seite hat – konkurriert aber primär auf der Buchungs-/Terminebene, nicht auf dem eigentlichen Gesprächsraum. HxRoom bleibt differenziert durch den kompletten, gebrandeten Empfangsraum (Warteraum → Call → Notizen) ohne Klienten-Account.
+
+→ Vollständiger visueller Wettbewerbsvergleich: [pitchdeck.html – Slide 5](pitchdeck.html)

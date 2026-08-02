@@ -289,11 +289,12 @@ Coach registriert sich → better-auth Session → JWT in HttpOnly Cookie
 Klient → kein Account, kein Login → Zugang nur via signiertem Token im Buchungslink
 ```
 
-**Klienten-Zugang** funktioniert über einen kurzlebigen, signierten Token (HMAC-SHA256), der beim Anlegen eines Termins generiert und per E-Mail verschickt wird. Dieser Token berechtigt:
-- Betreten des Warteraums (`apps/videocall`)
-- Generierung eines LiveKit-Access-Tokens für den Call
+**Klienten-Zugang** funktioniert über einen signierten Token (HMAC-SHA256), der beim Anlegen eines Termins generiert und per E-Mail verschickt wird. Derselbe Link erfüllt zwei Aufgaben nacheinander, keine zweite Mail nötig:
 
-Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist einmalig verwendbar (Invalidierung nach Join in DB gespeichert).
+1. **Bestätigung der Buchung** – Klick auf den Link direkt nach der Buchung setzt `bookings.status` von `pending` auf `confirmed` und `confirmedAt`. Erst dadurch wird der Klienten-Datensatz final angelegt/verknüpft (siehe `clients`-Schema in §11 sowie `idee-klienten-matching.md`). Ohne Klick innerhalb der TTL verfällt die Buchung automatisch.
+2. **Zugang zum Warteraum** – am Tag der Sitzung berechtigt derselbe Link zum Betreten des Warteraums (`apps/videocall`) und zur Generierung eines LiveKit-Access-Tokens für den Call.
+
+Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist für den Warteraum-Zugang einmalig verwendbar (Invalidierung nach Join, gespeichert in `clientTokenUsedAt`). Die Bestätigung (`confirmedAt`) ist ein separates, frühes Ereignis und invalidiert den Link nicht – er bleibt bis zum Sitzungstag für den Warteraum-Zugang gültig.
 
 ---
 
@@ -591,6 +592,18 @@ export const coachProfiles = pgTable('coach_profiles', {
 // Bucht dieselbe Person bei einem Coach einer anderen Organization, entsteht
 // ein neuer, vollständig unabhängiger Client-Datensatz. Keine organisationsübergreifende
 // Zusammenführung von Klientendaten. Unique-Constraint auf (organizationId + email).
+//
+// KLIENTEN-MATCHING (siehe idee-klienten-matching.md für Herleitung):
+// - email wird im Service-Layer vor jedem Lookup/Insert normalisiert (lowercase + trim),
+//   damit z.B. "Anna@Firma.de" und "anna@firma.de" denselben Client treffen. Der
+//   Unique-Constraint allein reicht dafür nicht (case-sensitive).
+// - Ein Client-Datensatz wird NICHT bei Buchungseingang angelegt, sondern erst bei
+//   Bestätigung der Buchung (siehe bookings.confirmedAt) – vermeidet "Geister-Klienten"
+//   durch nie bestätigte Buchungen.
+// - Automatisches Matching ist die Grundlage, nicht die einzige Quelle der Wahrheit:
+//   der Coach kann jede Buchung manuell einem bestehenden Client zuordnen/umhängen
+//   (bookings.clientId ist jederzeit im Backoffice änderbar), unabhängig vom
+//   automatischen Ergebnis. Der Coach hat das letzte Wort.
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: text('organization_id').notNull(),
@@ -598,15 +611,22 @@ export const clients = pgTable('clients', {
   email: text('email').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
 }, (table) => ({
-  // Stellt sicher: pro Organization ist jede E-Mail-Adresse nur einmal vorhanden
+  // Stellt sicher: pro Organization ist jede E-Mail-Adresse (normalisiert) nur einmal vorhanden
   uniqueEmailPerOrg: unique().on(table.organizationId, table.email),
 }));
 
+// BESTÄTIGUNGSPFLICHT (siehe idee-klienten-matching.md): Jede Buchung – ob online
+// gebucht oder vom Coach manuell angelegt – startet als 'pending' und wird erst durch
+// Klick auf den signierten Link in der Bestätigungsmail zu 'confirmed'. Das schützt vor
+// Tippfehlern in der E-Mail-Adresse (nur eine erreichbare Inbox kann den Link klicken)
+// und verhindert, dass falsch getippte Adressen unbemerkt einen neuen Client anlegen.
+// Ohne Bestätigung innerhalb der TTL wird die Buchung automatisch 'cancelled' und der
+// Slot freigegeben (siehe §12, Job expire-unconfirmed-booking).
 export const bookings = pgTable('bookings', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: text('organization_id').notNull(), // für org-weite Kalenderansicht im Studio-Plan
   coachId: text('coach_id').notNull(),               // der Coach, der die Sitzung hält
-  clientId: uuid('client_id').references(() => clients.id),
+  clientId: uuid('client_id').references(() => clients.id), // manuell durch den Coach jederzeit änderbar
   offerId: uuid('offer_id').references(() => offers.id), // nullable – manuell angelegte Termine ohne Angebotsbezug
   offerName: text('offer_name'),                     // Snapshot des Angebotsnamens zum Buchungszeitpunkt
   scheduledAt: timestamp('scheduled_at').notNull(),
@@ -614,8 +634,9 @@ export const bookings = pgTable('bookings', {
   status: text('status')
     .$type<'pending' | 'confirmed' | 'completed' | 'cancelled'>()
     .default('pending'),
-  clientAccessToken: text('client_access_token'),
-  clientTokenUsedAt: timestamp('client_token_used_at'),
+  confirmedAt: timestamp('confirmed_at'), // gesetzt beim Klick auf den Bestätigungslink; erst dann wird clients-Matching final vollzogen
+  clientAccessToken: text('client_access_token'), // derselbe Token dient zuerst der Bestätigung, später dem Warteraum-Zugang
+  clientTokenUsedAt: timestamp('client_token_used_at'), // Zeitpunkt des Warteraum-Eintritts (separat von confirmedAt)
   roomName: text('room_name'),
   createdAt: timestamp('created_at').defaultNow(),
 });
@@ -729,7 +750,8 @@ Rein API-interne Schemas (z.B. Webhook-Payloads, interne Job-DTOs) können lokal
 
 **BullMQ** (Redis-backed) verwaltet alle zeitbasierten und asynchronen Tasks:
 
-- Nach Buchung: Jobs einplanen (`reminder-24h`, `reminder-1h`)
+- Nach Buchung: Job `expire-unconfirmed-booking` einplanen (delay = TTL, z.B. 30 Minuten) – prüft bei Ausführung, ob `bookings.status` noch `pending` ist; falls ja: `status = 'cancelled'`, Slot wird freigegeben. Wurde die Buchung zwischenzeitlich bestätigt, ist der Job ein No-op. Bei kurzfristigen Buchungen (Sitzungsbeginn näher als die TTL) wird die TTL auf die verbleibende Vorlaufzeit gekappt – offene Detailfrage, siehe `idee-klienten-matching.md`.
+- Nach Bestätigung: Jobs einplanen (`reminder-24h`, `reminder-1h`)
 - Nach Sitzungsende: Job `transcribe-session` (wenn Einwilligung vorhanden)
 - Job-Worker in NestJS (`@Processor`-Decorator)
 - E-Mail-Versand via **Brevo** (französischer Anbieter, EU-Server, zuverlässige Zustellraten). Brevo deckt sowohl transaktionale Mails (Buchungsbestätigung, Erinnerung, Passwort-Reset) als auch Newsletter ab. Getrennte Sender-Adressen für Transaktional (`noreply@hxroom.de`) und Marketing (`newsletter@hxroom.de`) schützen die Zustellbarkeit. Setup-Details siehe `newsletter-brevo.md`.

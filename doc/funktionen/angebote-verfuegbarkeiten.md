@@ -94,7 +94,8 @@ export const bookings = pgTable('bookings', {
 1. Klient öffnet die Buchungsseite und sieht zunächst die Liste der aktiven Angebote (Name, Dauer, Preis).
 2. Nach Auswahl eines Angebots wird serverseitig ermittelt: `useCustomAvailability = false` → alle Verfügbarkeitsslots des Coaches gelten; `= true` → nur die über `offer_availability_slots` zugeordneten Slots.
 3. Innerhalb der ermittelten Slots werden buchbare Zeitfenster in der Länge `offer.durationMinutes` generiert – unter Berücksichtigung von Pufferzeit und bereits belegten Terminen (bestehende Logik bleibt gleich, nur die Dauer kommt jetzt vom Angebot statt fix vorgegeben).
-4. Bei Buchung wird `offerId` gesetzt und `offerName`/`durationMinutes` als Snapshot übernommen.
+4. Bei Buchung wird `offerId` gesetzt und `offerName`/`durationMinutes` als Snapshot übernommen, die Buchung entsteht mit Status `pending` und der Slot ist vorläufig reserviert.
+5. **Bestätigungspflicht:** Der Klient erhält eine Mail mit einem signierten Bestätigungslink. Erst der Klick macht die Buchung final (`confirmed`) und legt den Klienten-Datensatz an bzw. verknüpft ihn mit einem bestehenden (E-Mail-Matching, siehe `idee-klienten-matching.md`). Ohne Klick innerhalb einer TTL verfällt die Buchung automatisch, der Slot wird wieder frei.
 
 ## 6. Migration Bestandsdaten
 
@@ -121,3 +122,5 @@ So bleibt die Buchungsseite für Bestandscoaches ohne manuellen Eingriff funktio
 | 3 | Schaltet ein Coach `useCustomAvailability` nachträglich von `true` zurück auf `false`, sollen die Einträge in `offer_availability_slots` gelöscht oder nur ignoriert werden? | Empfehlung: löschen, um verwaiste Daten zu vermeiden – zu bestätigen |
 | 4 | Braucht das kostenlose Erstgespräch eine Begrenzung „einmal pro Klient"? | Nicht Teil dieses Konzepts, aber real genannter Bedarf – ggf. eigenes Ticket |
 | 5 | Reicht die Teilmengen-Auswahl bestehender Slots (Stufe 2) in der Praxis, oder brauchen einzelne Coaches doch ein komplett unabhängiges Zeitraster pro Angebot? | Erst nach Nutzerfeedback zu Stufe 2 entscheiden |
+| 6 | TTL für die Bestätigungspflicht bei sehr kurzfristigen Buchungen (Termin in wenigen Minuten) – Zeitfenster kappen oder Bestätigung direkt im Buchungsprozess verlangen? | Siehe `idee-klienten-matching.md`, zu entscheiden vor Umsetzung |
+| 7 | Gilt die Bestätigungspflicht auch für vom Coach manuell angelegte/eingeladene Termine? | Für Konsistenz spricht Ja, für persönlich abgesprochene Termine ggf. unnötige Reibung – siehe `idee-klienten-matching.md` |

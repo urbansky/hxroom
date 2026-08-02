@@ -207,7 +207,7 @@ nav {
 .offer-detail {
   position: relative;
   z-index: 1;
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 40px 80px;
 }
@@ -215,10 +215,10 @@ nav {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 32px;
+  padding: 40px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 .offer-detail-title {
   font-family: 'Cormorant Garamond', serif;
@@ -270,7 +270,7 @@ nav {
   display: flex;
   align-items: baseline;
   gap: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 .section-title {
   font-family: 'Cormorant Garamond', serif;
@@ -284,96 +284,230 @@ nav {
   letter-spacing: 0.04em;
 }
 
-.slots-grid {
+.booking-calendar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
 }
-.slot-card {
-  background: var(--bg-light);
-  border: 1px solid var(--border);
+@media (max-width: 640px) {
+  .booking-calendar { grid-template-columns: 1fr; }
+}
+
+.calendar-panel {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
-  padding: 18px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
+  gap: 18px;
 }
-.slot-card:hover {
-  border-color: rgba(139,158,138,0.3);
-  background: var(--surface2);
-  transform: translateY(-2px);
-}
-.slot-card.soon {
-  border-color: rgba(139,158,138,0.2);
-}
-.slot-card.soon::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--sage-dark), var(--sage));
-}
-.slot-day {
-  font-size: 10px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-.slot-date {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
-  color: var(--cream);
-  font-weight: 300;
-  line-height: 1;
-}
-.slot-time {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.slot-type {
-  font-size: 11px;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-}
-.slot-cta {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--sage-light);
+.calendar-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
 }
-.slot-cta svg {
-  width: 11px; height: 11px;
-  stroke: var(--sage);
+.calendar-month-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  color: var(--cream);
+  font-weight: 400;
+}
+.calendar-nav-btn {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.calendar-nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+.calendar-nav-btn:disabled { opacity: 0.25; cursor: default; }
+.calendar-nav-btn svg {
+  width: 12px; height: 12px;
+  stroke: var(--text-secondary);
   fill: none;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  font-family: 'DM Sans', sans-serif;
+  cursor: default;
+}
+.cal-day--empty { visibility: hidden; }
+.cal-day--unavailable { color: var(--text-muted); }
+.cal-day--available {
+  color: var(--text-primary);
+  cursor: pointer;
+  background: rgba(139,158,138,0.14);
+}
+.cal-day--available:hover {
+  background: rgba(139,158,138,0.24);
+}
+.cal-day--selected {
+  background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 100%) !important;
+  color: rgba(255,255,255,0.95) !important;
+}
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.legend-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--sage);
+}
+
+.times-panel {
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+.times-panel-empty {
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+.times-panel-empty svg { width: 24px; height: 24px; stroke: var(--text-muted); fill: none; stroke-width: 1.5; }
+.times-panel-empty p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 200px;
+}
+.times-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.times-panel-day {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  color: var(--cream);
+}
+.times-panel-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.times-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.time-slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.time-slot:hover { border-color: rgba(139,158,138,0.3); background: rgba(139,158,138,0.06); }
+.time-slot-cta {
+  font-size: 11px;
+  color: var(--sage-light);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.time-slot:hover .time-slot-cta,
+.time-slot--selected .time-slot-cta { opacity: 1; }
+.time-slot--selected {
+  border-color: rgba(139,158,138,0.4);
+  background: rgba(139,158,138,0.1);
+}
+.time-confirm {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.time-confirm-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.time-confirm-summary strong { color: var(--cream); font-weight: 500; }
+.time-confirm-btn {
+  align-self: flex-start;
+  padding: 10px 20px;
+  font-size: 13px;
+}
+.time-confirm-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--sage-light);
+}
+.time-confirm-success svg { stroke: var(--sage); flex-shrink: 0; }
 
 /* ─── ANDERE SITZUNGSARTEN ─── */
 .offers-section {
   position: relative;
   z-index: 1;
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 40px 20px;
 }
 .session-preview {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .session-type-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: rgba(255,255,255,0.025);
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -437,12 +571,12 @@ a.session-type-row { text-decoration: none; color: inherit; }
 .about-section {
   position: relative;
   z-index: 1;
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 40px 100px;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 56px;
 }
 
 .about-section .section-title {
@@ -474,13 +608,13 @@ a.session-type-row { text-decoration: none; color: inherit; }
 .credentials {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .credential-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: rgba(255,255,255,0.025);
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -547,7 +681,7 @@ footer {
 .section-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--border), transparent);
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto 60px;
 }
 
@@ -622,45 +756,35 @@ footer {
       <span class="section-hint">Alle Zeiten in MEZ</span>
     </div>
 
-    <div class="slots-grid">
-      <div class="slot-card soon">
-        <div class="slot-day">Freitag</div>
-        <div class="slot-date">14. März</div>
-        <div class="slot-time">11:00 – 12:30 Uhr</div>
-        <div class="slot-type">Intensiv-Session · 90 min</div>
-        <div class="slot-cta">
-          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Buchen
+    <div class="booking-calendar">
+      <div class="calendar-panel">
+        <div class="calendar-nav">
+          <button type="button" class="calendar-nav-btn" id="cal-prev" aria-label="Vorheriger Monat">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="calendar-month-label" id="cal-month-label">März 2025</div>
+          <button type="button" class="calendar-nav-btn" id="cal-next" aria-label="Nächster Monat">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
-      </div>
-      <div class="slot-card">
-        <div class="slot-day">Montag</div>
-        <div class="slot-date">17. März</div>
-        <div class="slot-time">09:00 – 10:30 Uhr</div>
-        <div class="slot-type">Intensiv-Session · 90 min</div>
-        <div class="slot-cta">
-          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Buchen
+        <div class="calendar-weekdays">
+          <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
         </div>
+        <div class="calendar-days" id="cal-days"></div>
+        <div class="calendar-legend"><span class="legend-dot"></span> Freie Termine verfügbar</div>
       </div>
-      <div class="slot-card">
-        <div class="slot-day">Mittwoch</div>
-        <div class="slot-date">19. März</div>
-        <div class="slot-time">13:00 – 14:30 Uhr</div>
-        <div class="slot-type">Intensiv-Session · 90 min</div>
-        <div class="slot-cta">
+
+      <div class="times-panel">
+        <div class="times-panel-empty" id="times-empty">
           <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Buchen
+          <p>Wähle einen markierten Tag im Kalender, um verfügbare Uhrzeiten zu sehen.</p>
         </div>
-      </div>
-      <div class="slot-card">
-        <div class="slot-day">Freitag</div>
-        <div class="slot-date">21. März</div>
-        <div class="slot-time">11:00 – 12:30 Uhr</div>
-        <div class="slot-type">Intensiv-Session · 90 min</div>
-        <div class="slot-cta">
-          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Buchen
+        <div class="times-panel-content" id="times-content" style="display:none;">
+          <div>
+            <div class="times-panel-day" id="times-day-label"></div>
+            <div class="times-panel-sub">Alle Zeiten in MEZ</div>
+          </div>
+          <div class="times-list" id="times-list"></div>
         </div>
       </div>
     </div>
@@ -754,5 +878,119 @@ footer {
   </div>
 </footer>
 
+<script>
+(function () {
+  var availability = {
+    '2025-03-14': ['11:00 – 12:30 Uhr'],
+    '2025-03-17': ['09:00 – 10:30 Uhr', '13:00 – 14:30 Uhr'],
+    '2025-03-19': ['13:00 – 14:30 Uhr'],
+    '2025-03-21': ['11:00 – 12:30 Uhr', '15:00 – 16:30 Uhr']
+  };
+
+  var monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var weekdayNames = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var months = Object.keys(availability).map(function (k) { return k.slice(0, 7); })
+    .filter(function (v, i, a) { return a.indexOf(v) === i; }).sort();
+  var monthIndex = 0;
+
+  var monthLabelEl = document.getElementById('cal-month-label');
+  var daysEl = document.getElementById('cal-days');
+  var prevBtn = document.getElementById('cal-prev');
+  var nextBtn = document.getElementById('cal-next');
+  var timesEmpty = document.getElementById('times-empty');
+  var timesContent = document.getElementById('times-content');
+  var timesDayLabel = document.getElementById('times-day-label');
+  var timesList = document.getElementById('times-list');
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function renderCalendar() {
+    var parts = months[monthIndex].split('-').map(Number);
+    var year = parts[0], month = parts[1];
+    monthLabelEl.textContent = monthNames[month - 1] + ' ' + year;
+    prevBtn.disabled = monthIndex === 0;
+    nextBtn.disabled = monthIndex === months.length - 1;
+
+    daysEl.innerHTML = '';
+    var firstOfMonth = new Date(year, month - 1, 1);
+    var startOffset = (firstOfMonth.getDay() + 6) % 7;
+    var daysInMonth = new Date(year, month, 0).getDate();
+
+    for (var i = 0; i < startOffset; i++) {
+      var empty = document.createElement('div');
+      empty.className = 'cal-day cal-day--empty';
+      daysEl.appendChild(empty);
+    }
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var key = year + '-' + pad(month) + '-' + pad(d);
+      var hasSlots = !!availability[key];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cal-day ' + (hasSlots ? 'cal-day--available' : 'cal-day--unavailable');
+      btn.textContent = d;
+      btn.disabled = !hasSlots;
+      if (hasSlots) {
+        btn.addEventListener('click', (function (k, b) {
+          return function () { selectDay(k, b); };
+        })(key, btn));
+      }
+      daysEl.appendChild(btn);
+    }
+  }
+
+  function selectDay(key, btn) {
+    var prevSelected = daysEl.querySelector('.cal-day--selected');
+    if (prevSelected) prevSelected.classList.remove('cal-day--selected');
+    btn.classList.add('cal-day--selected');
+
+    var parts = key.split('-').map(Number);
+    var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+    timesDayLabel.textContent = weekdayNames[dateObj.getDay()] + ', ' + parts[2] + '. ' + monthNames[parts[1] - 1];
+
+    timesList.innerHTML = '';
+    availability[key].forEach(function (slot) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'time-slot';
+      item.innerHTML = '<span>' + slot + '</span><span class="time-slot-cta">Auswählen</span>';
+      item.addEventListener('click', function () { selectTime(item, slot); });
+      timesList.appendChild(item);
+    });
+
+    var oldConfirm = document.getElementById('time-confirm');
+    if (oldConfirm) oldConfirm.remove();
+
+    timesEmpty.style.display = 'none';
+    timesContent.style.display = 'flex';
+  }
+
+  function selectTime(el, slot) {
+    var prevSelected = timesList.querySelector('.time-slot--selected');
+    if (prevSelected) prevSelected.classList.remove('time-slot--selected');
+    el.classList.add('time-slot--selected');
+
+    var confirm = document.getElementById('time-confirm');
+    if (!confirm) {
+      confirm = document.createElement('div');
+      confirm.id = 'time-confirm';
+      confirm.className = 'time-confirm';
+      timesContent.appendChild(confirm);
+    }
+    confirm.innerHTML =
+      '<div class="time-confirm-summary">Ausgewählt: <strong>' + slot + '</strong></div>' +
+      '<button type="button" class="btn-hero time-confirm-btn">Termin bestätigen</button>';
+    confirm.querySelector('.time-confirm-btn').addEventListener('click', function () {
+      confirm.innerHTML =
+        '<div class="time-confirm-success"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Termin reserviert – Bestätigung folgt per E-Mail.</div>';
+    });
+  }
+
+  prevBtn.addEventListener('click', function () { if (monthIndex > 0) { monthIndex--; renderCalendar(); } });
+  nextBtn.addEventListener('click', function () { if (monthIndex < months.length - 1) { monthIndex++; renderCalendar(); } });
+
+  renderCalendar();
+})();
+</script>
 </body>
 </html>
