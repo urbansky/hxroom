@@ -1,4 +1,6 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import type { BookingStatus } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -105,6 +107,55 @@ export const offers = pgTable('offers', {
   createdAt:       timestamp('created_at').notNull().defaultNow(),
   updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
+
+// Klienten-Matching über mehrere Buchungen hinweg (siehe doc/idee-klienten-matching.md).
+// Ein Datensatz pro (Organisation, E-Mail). Wird erst bei Bestätigung einer Buchung
+// angelegt/verknüpft (nicht schon bei der Erstellung) – vermeidet "Geister-Klienten"
+// durch nie bestätigte Buchungen. `email` wird vom Service normalisiert
+// (lowercase, getrimmt) vor jedem Insert/Lookup, der Unique-Constraint allein ist
+// case-sensitive und reicht dafür nicht aus.
+export const clients = pgTable('clients', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  name:           text('name').notNull(),
+  email:          text('email').notNull(),
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueEmailPerOrg: unique().on(table.organizationId, table.email),
+}));
+
+// Buchungen durchlaufen einen Bestätigungsschritt per E-Mail-Link (siehe
+// doc/idee-klienten-matching.md): Status startet als 'pending', wird erst durch
+// Bestätigung mit korrektem clientAccessToken zu 'confirmed' – dabei wird auch
+// erst der Klient gematcht/angelegt (clientId gesetzt). offerName/durationMinutes
+// sind Snapshots zum Buchungszeitpunkt, unabhängig von späteren Angebotsänderungen.
+export const bookings = pgTable('bookings', {
+  id:                text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:    text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  clientId:          text('client_id').references(() => clients.id, { onDelete: 'set null' }),
+  offerId:           text('offer_id').references(() => offers.id, { onDelete: 'set null' }),
+  offerName:         text('offer_name').notNull(),
+  durationMinutes:   integer('duration_minutes').notNull(),
+  startTime:         timestamp('start_time').notNull(),
+  endTime:           timestamp('end_time').notNull(),
+  status:            text('status').$type<BookingStatus>().notNull().default('pending'),
+  clientName:        text('client_name').notNull(),
+  clientEmail:       text('client_email').notNull(),
+  clientPhone:       text('client_phone'),
+  clientNote:        text('client_note'),
+  clientAccessToken: text('client_access_token').notNull(),
+  clientTokenUsedAt: timestamp('client_token_used_at'),
+  confirmedAt:       timestamp('confirmed_at'),
+  createdAt:         timestamp('created_at').notNull().defaultNow(),
+  updatedAt:         timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+}, (table) => ({
+  uniqueAccessToken: unique().on(table.clientAccessToken),
+  // Partieller Index: eine stornierte/verfallene Buchung blockiert den Zeitpunkt
+  // nicht dauerhaft für neue Buchungen.
+  noDoubleBookingAtSameStart: uniqueIndex('bookings_org_start_active_unique')
+    .on(table.organizationId, table.startTime)
+    .where(sql`status != 'cancelled'`),
+}));
 
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
 // doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit

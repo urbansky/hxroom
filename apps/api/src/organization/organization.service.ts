@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { organization, offers, bookingPage, availabilitySlots, availabilitySettings } from '../db/schema';
-import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS } from '../availability/slot-calculation';
+import { organization, offers, bookingPage, availabilitySlots, availabilitySettings, bookings } from '../db/schema';
+import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS, type DateRange } from '../availability/slot-calculation';
 
 @Injectable()
 export class OrganizationService {
@@ -49,9 +49,17 @@ export class OrganizationService {
 
   async findAvailableSlots(slug: string, offerId: string) {
     const org = await this.findBySlug(slug);
+    const { slots } = await this.resolveOfferAndSlots(org, offerId);
 
+    return slots.map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString() }));
+  }
+
+  // Gemeinsame Grundlage für die öffentliche Slot-Anzeige (findAvailableSlots) und die
+  // Buchungserstellung (BookingsService.create) – beide brauchen dieselbe "Angebot laden
+  // → Regeln/Settings laden → Slots berechnen"-Logik inkl. Ausschluss bereits belegter Zeiten.
+  async resolveOfferAndSlots(org: { id: string }, offerId: string): Promise<{ offer: { name: string; durationMinutes: number }; slots: DateRange[] }> {
     const [offer] = await this.db
-      .select({ durationMinutes: offers.durationMinutes })
+      .select({ name: offers.name, durationMinutes: offers.durationMinutes })
       .from(offers)
       .where(and(eq(offers.id, offerId), eq(offers.organizationId, org.id), eq(offers.isActive, true)))
       .limit(1);
@@ -75,6 +83,13 @@ export class OrganizationService {
       .where(eq(availabilitySettings.organizationId, org.id))
       .limit(1);
 
+    // 'cancelled'/verfallene Buchungen geben ihren Zeitpunkt wieder frei, alle anderen
+    // (auch 'pending' – noch offene Bestätigung) blockieren ihn weiterhin.
+    const existingBookings = await this.db
+      .select({ startTime: bookings.startTime, endTime: bookings.endTime })
+      .from(bookings)
+      .where(and(eq(bookings.organizationId, org.id), ne(bookings.status, 'cancelled')));
+
     const slots = computeAvailableSlots({
       rules,
       settings: {
@@ -85,8 +100,9 @@ export class OrganizationService {
       now: new Date(),
       timeZone: 'Europe/Berlin',
       daysAhead: (settingsRow?.bookingWindowWeeks ?? DEFAULT_BOOKING_WINDOW_WEEKS) * 7,
+      excludeRanges: existingBookings.map((b) => ({ start: b.startTime, end: b.endTime })),
     });
 
-    return slots.map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString() }));
+    return { offer, slots };
   }
 }

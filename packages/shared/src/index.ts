@@ -145,3 +145,30 @@ export const availableSlotResponseSchema = z.object({
   end:   z.string(),
 });
 export type AvailableSlotResponse = z.infer<typeof availableSlotResponseSchema>;
+
+// Buchungserstellung durch den Klienten. offerId kommt aus dem URL-Pfad, nicht aus
+// dem Body. Buchung entsteht als 'pending' – siehe doc/idee-klienten-matching.md.
+export const createBookingSchema = z.object({
+  start:       z.string().datetime({ message: 'Ungültiger Zeitpunkt' }),
+  clientName:  z.string().min(1, 'Name ist erforderlich').max(160),
+  clientEmail: z.string().email('Ungültige E-Mail-Adresse'),
+  clientPhone: z.string().max(40).optional(),
+  clientNote:  z.string().max(2000).optional(),
+});
+export type CreateBookingDto = z.infer<typeof createBookingSchema>;
+
+// Bestätigung einer Buchung per Token aus dem E-Mail-Link (Mail-Versand selbst
+// noch nicht Teil dieser Runde).
+export const confirmBookingSchema = z.object({
+  token: z.string().min(1, 'Token ist erforderlich'),
+});
+export type ConfirmBookingDto = z.infer<typeof confirmBookingSchema>;
+
+export const bookingResponseSchema = z.object({
+  id:        z.string(),
+  start:     z.string(),
+  end:       z.string(),
+  offerName: z.string(),
+  status:    BookingStatus,
+});
+export type BookingResponse = z.infer<typeof bookingResponseSchema>;
