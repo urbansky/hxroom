@@ -6,7 +6,7 @@ import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookings, clients } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
-import { buildBookingConfirmationEmail } from './booking-confirmation-email';
+import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
 import type { CreateBookingDto, BookingResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
@@ -111,7 +111,12 @@ export class BookingsService {
         await this.mailService.send({
           to: { email: booking.clientEmail, name: booking.clientName },
           subject: 'Bitte bestätige deinen Termin – HxRoom',
-          htmlContent: buildBookingConfirmationEmail(booking.clientName, booking.offerName, formatDayTimeLabel(booking), confirmUrl),
+          htmlContent: await renderBookingConfirmationEmail({
+            clientName: booking.clientName,
+            offerName: booking.offerName,
+            dayTimeLabel: formatDayTimeLabel(booking),
+            confirmUrl,
+          }),
         });
       } catch (err) {
         this.logger.error(`Failed to send booking confirmation email for booking ${booking.id}`, err instanceof Error ? err.stack : err);
