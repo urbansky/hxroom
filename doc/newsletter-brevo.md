@@ -297,6 +297,15 @@ From:     HxRoom <noreply@hxroom.de>
 Reply-To: HxRoom <kontakt@hxroom.de>
 ```
 
+**Ausnahme: Buchungsmails an Klienten und Coachs.** Bei diesen Mails vermittelt HxRoom nur zwischen Coach und Klient – inhaltlich zuständig ist immer die jeweils andere Seite, nicht der Betreiber. `BookingsService` setzt Reply-To deshalb abweichend:
+
+| Mail | Reply-To |
+|---|---|
+| Terminbestätigung an den Klienten | E-Mail des Coachs (Owner-Member der Organisation) |
+| Buchungsbenachrichtigung an den Coach | E-Mail des Klienten aus der Buchung |
+
+Antworten landen so direkt beim richtigen Gegenüber statt in `kontakt@hxroom.de`, wo sie manuell weitergeleitet werden müssten.
+
 ### 9.4 SPF beachten
 
 Da Replys aus Apple Mail über Ionos-SMTP gehen (und nicht über Brevo), muss der SPF-Record beide Versender umfassen:

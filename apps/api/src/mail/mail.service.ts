@@ -6,6 +6,13 @@ export interface MailAddress {
   name?: string;
 }
 
+export interface MailAttachment {
+  /** Dateiname inkl. Endung, z. B. "termin.ics" – Brevo leitet den MIME-Typ daraus ab. */
+  name: string;
+  /** Dateiinhalt base64-kodiert. */
+  content: string;
+}
+
 export interface SendMailOptions {
   to: MailAddress | MailAddress[];
   subject: string;
@@ -18,6 +25,7 @@ export interface SendMailOptions {
   cc?: MailAddress[];
   bcc?: MailAddress[];
   tags?: string[];
+  attachment?: MailAttachment[];
 }
 
 /**
@@ -52,6 +60,7 @@ export class MailService {
     if (options.cc) payload.cc = options.cc;
     if (options.bcc) payload.bcc = options.bcc;
     if (options.tags) payload.tags = options.tags;
+    if (options.attachment) payload.attachment = options.attachment;
 
     const response = await fetch(`${this.apiUrl}/smtp/email`, {
       method: 'POST',

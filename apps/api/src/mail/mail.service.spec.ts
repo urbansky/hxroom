@@ -170,6 +170,17 @@ describe('MailService', () => {
       expect(body.tags).toEqual(['early-access', 'doi']);
     });
 
+    it('reicht Attachments durch (base64-Inhalt, z. B. termin.ics)', async () => {
+      await service.send({
+        to: { email: 'a@b.de' },
+        subject: 'Hi',
+        attachment: [{ name: 'termin.ics', content: 'QkVHSU46VkNBTEVOREFS' }],
+      });
+      expect(parseSentBody(fetchSpy).attachment).toEqual([
+        { name: 'termin.ics', content: 'QkVHSU46VkNBTEVOREFS' },
+      ]);
+    });
+
     it('lässt optionale Felder weg, wenn nicht gesetzt', async () => {
       await service.send({ to: { email: 'a@b.de' }, subject: 'Hi' });
       const body = parseSentBody(fetchSpy);
@@ -179,6 +190,7 @@ describe('MailService', () => {
       expect(body).not.toHaveProperty('tags');
       expect(body).not.toHaveProperty('templateId');
       expect(body).not.toHaveProperty('params');
+      expect(body).not.toHaveProperty('attachment');
     });
   });
 
@@ -235,6 +247,24 @@ describe('MailService', () => {
       expect(logged).not.toContain('vertrauliche Daten');
       // Statuscode darf drin sein, das ist kein PII.
       expect(logged).toContain('500');
+    });
+
+    it('loggt keine Attachment-Inhalte', async () => {
+      const errSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+      const logSpy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+      fetchSpy.mockResolvedValueOnce(new Response('Internal Server Error', { status: 500 }));
+
+      const secret = Buffer.from('SUMMARY:Coaching mit Anna', 'utf8').toString('base64');
+      await service
+        .send({
+          to: { email: 'pii@hxroom.de' },
+          subject: 'Hi',
+          attachment: [{ name: 'termin.ics', content: secret }],
+        })
+        .catch(() => {});
+
+      const allLogged = [...errSpy.mock.calls, ...logSpy.mock.calls].flat().map(String).join(' ');
+      expect(allLogged).not.toContain(secret);
     });
   });
 });

@@ -6,7 +6,10 @@ import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookings, clients } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
+import { buildBookingIcs } from '../mail/ics';
 import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
+import { renderBookingConfirmedEmail } from '../mail/templates/client/booking-confirmed';
+import { renderBookingNotificationEmail } from '../mail/templates/coach/booking-notification';
 import type { CreateBookingDto, BookingResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
@@ -17,6 +20,11 @@ const timeFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berli
 
 function formatDayTimeLabel(booking: BookingRow): string {
   return `${dayDateFormatter.format(booking.startTime)}, ${timeFormatter.format(booking.startTime)}–${timeFormatter.format(booking.endTime)} Uhr`;
+}
+
+// Kurzform ohne Uhrzeit – für Betreffzeilen, die schon den Klientennamen tragen.
+function formatDayLabel(booking: BookingRow): string {
+  return dayDateFormatter.format(booking.startTime);
 }
 
 // Nie das komplette DB-Row zurückgeben: clientAccessToken darf ausschließlich per
@@ -188,6 +196,83 @@ export class BookingsService {
     if (result.expired) {
       throw new ConflictException('Confirmation window has expired');
     }
+
+    // Äußeres Netz für alles, was vor dem eigentlichen Versand schiefgehen kann
+    // (Coach-Lookup, Konfiguration): Der Klient hat bestätigt, das ist der Erfolgsfall.
+    try {
+      await this.sendBookingConfirmedMails(result.booking);
+    } catch (err) {
+      this.logger.error(`Failed to prepare confirmation mails for booking ${result.booking.id}`, err instanceof Error ? err.stack : err);
+    }
+
     return toBookingResponse(result.booking);
+  }
+
+  // Wird erst nach dem Commit aufgerufen: die Buchung steht bereits fest, ein Ausfall des
+  // Mail-Providers (MailService.send wirft) darf die Bestätigung nicht zurückrollen und den
+  // Klienten nicht auf eine Fehlerseite schicken. Beide Mails laufen in getrennten
+  // try/catch, damit die eine nicht an der anderen scheitert. Logs enthalten laut
+  // doc/technisches-konzept.md §17 ausschließlich IDs, keine Namen oder Adressen.
+  private async sendBookingConfirmedMails(booking: BookingRow): Promise<void> {
+    const org = await this.organizationService.findById(booking.organizationId);
+    const coach = await this.organizationService.findOwnerContact(booking.organizationId);
+
+    if (!coach) {
+      this.logger.warn(`Organization ${org.id} has no owner member – skipped coach notification for booking ${booking.id}`);
+    }
+
+    const dayTimeLabel = formatDayTimeLabel(booking);
+    const coachDisplayName = coach?.name ?? org.name;
+
+    const ics = buildBookingIcs({
+      uid: booking.id,
+      start: booking.startTime,
+      end: booking.endTime,
+      summary: `${booking.offerName} mit ${coachDisplayName}`,
+      organizer: coach ? { name: coach.name, email: coach.email } : undefined,
+      attendee: { name: booking.clientName, email: booking.clientEmail },
+    });
+
+    try {
+      await this.mailService.send({
+        to: { email: booking.clientEmail, name: booking.clientName },
+        subject: 'Dein Termin ist bestätigt – HxRoom',
+        // Antworten des Klienten sollen beim Coach landen, nicht beim Betreiber –
+        // inhaltlich zuständig für den Termin ist der Coach.
+        replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
+        htmlContent: await renderBookingConfirmedEmail({
+          clientName: booking.clientName,
+          coachName: coachDisplayName,
+          offerName: booking.offerName,
+          dayTimeLabel,
+          durationMinutes: booking.durationMinutes,
+        }),
+        attachment: [{ name: 'termin.ics', content: Buffer.from(ics, 'utf8').toString('base64') }],
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send booking confirmed email for booking ${booking.id}`, err instanceof Error ? err.stack : err);
+    }
+
+    if (!coach) return;
+
+    try {
+      await this.mailService.send({
+        to: { email: coach.email, name: coach.name },
+        subject: `Neue Buchung: ${booking.clientName} am ${formatDayLabel(booking)}`,
+        replyTo: { email: booking.clientEmail, name: booking.clientName },
+        htmlContent: await renderBookingNotificationEmail({
+          coachName: coach.name,
+          clientName: booking.clientName,
+          clientEmail: booking.clientEmail,
+          clientPhone: booking.clientPhone,
+          clientNote: booking.clientNote,
+          offerName: booking.offerName,
+          dayTimeLabel,
+          bookingsUrl: `${this.config.getOrThrow<string>('COACH_APP_URL').replace(/\/$/, '')}/bookings`,
+        }),
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send coach booking notification for booking ${booking.id}`, err instanceof Error ? err.stack : err);
+    }
   }
 }

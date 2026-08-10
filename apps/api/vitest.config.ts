@@ -18,6 +18,14 @@ export default defineConfig({
   plugins: [
     swc.vite({
       module: { type: 'es6' },
+      // react-email-Templates sind .tsx: SWC muss dieselbe automatische JSX-Runtime
+      // verwenden wie tsc ("jsx": "react-jsx" in tsconfig.json), sonst fehlt zur
+      // Laufzeit der React-Import ("React is not defined").
+      jsc: {
+        transform: {
+          react: { runtime: 'automatic' },
+        },
+      },
     }),
   ],
 });

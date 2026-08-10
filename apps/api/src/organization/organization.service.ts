@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { organization, offers, bookingPage, availabilitySlots, availabilitySettings, bookings } from '../db/schema';
+import { organization, offers, bookingPage, availabilitySlots, availabilitySettings, bookings, member, user } from '../db/schema';
 import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS, type DateRange } from '../availability/slot-calculation';
 
 @Injectable()
@@ -27,6 +27,43 @@ export class OrganizationService {
     }
 
     return org;
+  }
+
+  // Wie findBySlug, nur über die ID – gebraucht dort, wo nur die organizationId
+  // vorliegt (z. B. BookingsService.confirm, das von der Buchung ausgeht).
+  async findById(organizationId: string) {
+    const [org] = await this.db
+      .select({
+        id:   organization.id,
+        name: organization.name,
+        slug: organization.slug,
+        logo: organization.logo,
+      })
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .limit(1);
+
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    return org;
+  }
+
+  // Der Coach hinter einer Organisation: better-auth legt beim Registrieren genau einen
+  // 'owner'-Member an (siehe auth.module.ts), bei mehreren gewinnt der älteste. Gibt
+  // bewusst null statt eines Fehlers zurück – Benachrichtigungs-Mails an den Coach
+  // dürfen einen Klienten-Request nicht scheitern lassen.
+  async findOwnerContact(organizationId: string): Promise<{ name: string; email: string } | null> {
+    const [owner] = await this.db
+      .select({ name: user.name, email: user.email })
+      .from(member)
+      .innerJoin(user, eq(user.id, member.userId))
+      .where(and(eq(member.organizationId, organizationId), eq(member.role, 'owner')))
+      .orderBy(asc(member.createdAt))
+      .limit(1);
+
+    return owner ?? null;
   }
 
   async findActiveOffersBySlug(slug: string) {
