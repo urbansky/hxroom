@@ -172,3 +172,40 @@ export const bookingResponseSchema = z.object({
   status:    BookingStatus,
 });
 export type BookingResponse = z.infer<typeof bookingResponseSchema>;
+
+// Coach-Sicht auf eine Buchung (Kalender im Backoffice). Enthält bewusst die
+// Klientendaten – für sie ist der Coach der Verantwortliche im Sinne der DSGVO.
+// clientAccessToken fehlt hier genauso bewusst: er ist der Schlüssel zum Warteraum
+// und darf die API nie verlassen.
+export const coachBookingResponseSchema = z.object({
+  id:              z.string(),
+  start:           z.string(),   // ISO 8601
+  end:             z.string(),
+  offerId:         z.string().nullable(),
+  offerName:       z.string(),
+  durationMinutes: z.number(),
+  status:          BookingStatus,
+  clientId:        z.string().nullable(),
+  clientName:      z.string(),
+  clientEmail:     z.string(),
+  clientPhone:     z.string().nullable(),
+  clientNote:      z.string().nullable(),
+  confirmedAt:     z.string().nullable(),
+  createdAt:       z.string(),
+});
+export type CoachBookingResponse = z.infer<typeof coachBookingResponseSchema>;
+
+// Query-Parameter kommen als Strings an, daher z.coerce statt z.number.
+export const listCoachBookingsQuerySchema = z.object({
+  from:   z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
+  to:     z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
+  status: BookingStatus.optional(),
+  limit:  z.coerce.number().int().min(1).max(500).default(200),
+});
+export type ListCoachBookingsQuery = z.infer<typeof listCoachBookingsQuerySchema>;
+
+// Absage durch den Coach. Der Grund ist optional und geht in die Storno-Mail an den Klienten.
+export const cancelBookingSchema = z.object({
+  reason: z.string().max(500, 'Grund ist zu lang').optional(),
+});
+export type CancelBookingDto = z.infer<typeof cancelBookingSchema>;

@@ -7,9 +7,12 @@ interface BookingConfirmationEmailProps {
   offerName: string;
   dayTimeLabel: string;
   confirmUrl: string;
+  /** Gültigkeitsdauer des Links – kommt aus CONFIRMATION_TTL_MINUTES, damit Text und
+   *  tatsächliche Prüfung nicht auseinanderlaufen. */
+  ttlMinutes: number;
 }
 
-export default function BookingConfirmationEmail({ clientName, offerName, dayTimeLabel, confirmUrl }: BookingConfirmationEmailProps) {
+export default function BookingConfirmationEmail({ clientName, offerName, dayTimeLabel, confirmUrl, ttlMinutes }: BookingConfirmationEmailProps) {
   return (
     <MailLayout preview={`Bitte bestätige deinen Termin: ${offerName}, ${dayTimeLabel}`}>
       <Text style={{ margin: '0 0 12px', fontSize: 20, color: '#1a1a1a', fontWeight: 600 }}>
@@ -32,7 +35,7 @@ export default function BookingConfirmationEmail({ clientName, offerName, dayTim
         Termin bestätigen
       </Button>
       <Text style={{ margin: '32px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
-        Der Link ist 30 Minuten gültig. Ohne Bestätigung wird der Termin automatisch wieder freigegeben.
+        {`Der Link ist ${ttlMinutes} Minuten gültig. Ohne Bestätigung wird der Termin automatisch wieder freigegeben.`}
         <br />
         Falls du diesen Termin nicht angefragt hast, kannst du diese E-Mail ignorieren.
       </Text>
@@ -45,6 +48,7 @@ BookingConfirmationEmail.PreviewProps = {
   offerName: 'Coaching-Sitzung · 60 Minuten',
   dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
   confirmUrl: 'https://anna.hxroom.de/confirm/preview?token=preview',
+  ttlMinutes: 30,
 } satisfies BookingConfirmationEmailProps;
 
 export async function renderBookingConfirmationEmail(props: BookingConfirmationEmailProps): Promise<string> {

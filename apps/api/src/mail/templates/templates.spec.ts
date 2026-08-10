@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
 
@@ -24,6 +25,32 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).toContain('Coaching-Sitzung');
       expect(html).toContain('09:00');
       expect(html).toContain('60 Minuten');
+    });
+  });
+
+  describe('Klient: Absage', () => {
+    const props = {
+      clientName: 'Max Mustermann',
+      coachName: 'Anna Bergmann',
+      offerName: 'Coaching-Sitzung',
+      dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+      bookingPageUrl: 'https://anna.hxroom.de',
+    }
+
+    it('rendert Termindaten und Link zur Buchungsseite', async () => {
+      const html = await renderBookingCancelledEmail(props);
+
+      expect(html).toContain('Max Mustermann');
+      expect(html).toContain('Coaching-Sitzung');
+      expect(html).toContain('https://anna.hxroom.de');
+    });
+
+    it('zeigt den Grund nur, wenn der Coach einen angegeben hat', async () => {
+      const ohne = await renderBookingCancelledEmail({ ...props, reason: null });
+      expect(ohne).not.toContain('Grund');
+
+      const mit = await renderBookingCancelledEmail({ ...props, reason: 'Bin an dem Tag verhindert.' });
+      expect(mit).toContain('Bin an dem Tag verhindert.');
     });
   });
 

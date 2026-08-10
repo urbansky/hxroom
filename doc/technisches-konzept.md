@@ -751,6 +751,7 @@ Rein API-interne Schemas (z.B. Webhook-Payloads, interne Job-DTOs) können lokal
 **BullMQ** (Redis-backed) verwaltet alle zeitbasierten und asynchronen Tasks:
 
 - Nach Buchung: Job `expire-unconfirmed-booking` einplanen (delay = TTL, z.B. 30 Minuten) – prüft bei Ausführung, ob `bookings.status` noch `pending` ist; falls ja: `status = 'cancelled'`, Slot wird freigegeben. Wurde die Buchung zwischenzeitlich bestätigt, ist der Job ein No-op. Bei kurzfristigen Buchungen (Sitzungsbeginn näher als die TTL) wird die TTL auf die verbleibende Vorlaufzeit gekappt – offene Detailfrage, siehe `idee-klienten-matching.md`.
+  **Umgesetzt (2026-08-10) ohne BullMQ:** Solange kein Redis im Betrieb ist, erledigt `BookingExpiryService` (`apps/api/src/bookings/booking-expiry.service.ts`) dasselbe über `@nestjs/schedule` – ein Lauf alle 5 Minuten storniert alle abgelaufenen `pending`-Buchungen gesammelt. Die Ungenauigkeit von ±5 Minuten ist bei einer TTL von 30 Minuten unkritisch. Beim Umstieg auf BullMQ kann der Cron ersatzlos entfallen; die TTL-Kappung bei kurzfristigen Buchungen ist weiterhin offen.
 - Nach Bestätigung: Jobs einplanen (`reminder-24h`, `reminder-1h`)
 - Nach Sitzungsende: Job `transcribe-session` (wenn Einwilligung vorhanden)
 - Job-Worker in NestJS (`@Processor`-Decorator)

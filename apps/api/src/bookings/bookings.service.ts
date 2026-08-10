@@ -10,22 +10,13 @@ import { buildBookingIcs } from '../mail/ics';
 import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
 import { renderBookingConfirmedEmail } from '../mail/templates/client/booking-confirmed';
 import { renderBookingNotificationEmail } from '../mail/templates/coach/booking-notification';
+import { CONFIRMATION_TTL_MINUTES, isExpiredPending } from './booking.constants';
+import { formatDayLabel, formatDayTimeLabel } from './booking-formatting';
+import { buildConfirmUrl } from './booking-urls';
 import type { CreateBookingDto, BookingResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
 type BookingRow = typeof bookingsTable.$inferSelect;
-
-const dayDateFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', weekday: 'long', day: 'numeric', month: 'long' });
-const timeFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
-
-function formatDayTimeLabel(booking: BookingRow): string {
-  return `${dayDateFormatter.format(booking.startTime)}, ${timeFormatter.format(booking.startTime)}–${timeFormatter.format(booking.endTime)} Uhr`;
-}
-
-// Kurzform ohne Uhrzeit – für Betreffzeilen, die schon den Klientennamen tragen.
-function formatDayLabel(booking: BookingRow): string {
-  return dayDateFormatter.format(booking.startTime);
-}
 
 // Nie das komplette DB-Row zurückgeben: clientAccessToken darf ausschließlich per
 // E-Mail an den Klienten gehen, niemals in einer Browser-lesbaren API-Antwort landen
@@ -39,12 +30,6 @@ function toBookingResponse(booking: BookingRow): BookingResponse {
     status: booking.status,
   };
 }
-
-// Siehe doc/idee-klienten-matching.md: Zeitfenster, in dem eine 'pending'-Buchung
-// bestätigt werden muss, bevor sie automatisch verfällt. Offene Frage dort (TTL bei
-// sehr kurzfristigen Buchungen kappen) betrifft aktuell nur diese Prüfung, da der
-// automatische Verfall-Job (BullMQ) noch nicht Teil dieser Runde ist.
-const CONFIRMATION_TTL_MINUTES = 30;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -114,7 +99,7 @@ export class BookingsService {
     // (der Klient sieht im UI die "Termin vorgemerkt"-Ansicht) – ein Mail-Fehler soll
     // den Request nicht als 500 enden lassen, nur geloggt werden.
     if (org.slug) {
-      const confirmUrl = this.buildConfirmUrl(org.slug, booking.id, booking.clientAccessToken);
+      const confirmUrl = buildConfirmUrl(this.config, org.slug, booking.id, booking.clientAccessToken);
       try {
         await this.mailService.send({
           to: { email: booking.clientEmail, name: booking.clientName },
@@ -124,6 +109,7 @@ export class BookingsService {
             offerName: booking.offerName,
             dayTimeLabel: formatDayTimeLabel(booking),
             confirmUrl,
+            ttlMinutes: CONFIRMATION_TTL_MINUTES,
           }),
         });
       } catch (err) {
@@ -134,12 +120,6 @@ export class BookingsService {
     }
 
     return toBookingResponse(booking);
-  }
-
-  private buildConfirmUrl(slug: string, bookingId: string, token: string): string {
-    const rootDomain = this.config.getOrThrow<string>('ROOT_DOMAIN');
-    const https = this.config.get<string>('ROOT_DOMAIN_HTTPS') === 'true';
-    return `${https ? 'https' : 'http'}://${slug}.${rootDomain}/confirm/${bookingId}?token=${token}`;
   }
 
   async confirm(bookingId: string, token: string) {
@@ -165,7 +145,9 @@ export class BookingsService {
         throw new ConflictException('Booking is not awaiting confirmation');
       }
 
-      if (Date.now() - booking.createdAt.getTime() > CONFIRMATION_TTL_MINUTES * 60_000) {
+      // Zweite Verteidigungslinie neben dem Verfall-Cron: fängt die Buchung ab, deren
+      // TTL zwischen zwei Cron-Läufen abgelaufen ist.
+      if (isExpiredPending(booking.createdAt, new Date())) {
         await tx.update(bookings).set({ status: 'cancelled' }).where(eq(bookings.id, bookingId));
         return { expired: true as const };
       }

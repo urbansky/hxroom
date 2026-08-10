@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { DbModule } from './db/db.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
@@ -14,6 +15,10 @@ import { BookingsModule } from './bookings/bookings.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Für periodische Aufgaben, aktuell nur den Verfall unbestätigter Buchungen
+    // (BookingExpiryService). Achtung bei mehreren API-Instanzen: die Cron-Läufe
+    // sind nicht koordiniert, das Update ist aber idempotent.
+    ScheduleModule.forRoot(),
     DbModule,
     S3Module,
     AuthModule,
