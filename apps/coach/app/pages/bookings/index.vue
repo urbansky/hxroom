@@ -11,9 +11,9 @@ const viewMode = ref<'agenda' | 'week'>('agenda')
 
 type FilterValue = 'upcoming' | 'past' | 'cancelled'
 const FILTER_ITEMS = [
-  { label: 'Kommende', value: 'upcoming' as const },
-  { label: 'Vergangene', value: 'past' as const },
-  { label: 'Abgesagte', value: 'cancelled' as const },
+  { label: 'Kommende Termine', value: 'upcoming' as const },
+  { label: 'Vergangene Termine', value: 'past' as const },
+  { label: 'Abgesagte Termine', value: 'cancelled' as const },
 ]
 const filter = ref<FilterValue>('upcoming')
 
@@ -107,7 +107,10 @@ const emptyStateText = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 max-w-3xl mx-auto w-full">
+  <div
+    class="p-4 sm:p-6 mx-auto w-full transition-[max-width] duration-200"
+    :class="viewMode === 'week' ? 'max-w-[100rem]' : 'max-w-3xl'"
+  >
     <h1 class="font-serif text-3xl text-highlighted mb-2">Kalender</h1>
     <p class="text-muted mb-6">Alle Termine, die Klienten bei dir gebucht haben.</p>
 
@@ -115,31 +118,33 @@ const emptyStateText = computed(() => {
       <div class="inline-flex items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
         <button
           type="button"
-          class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
           :class="viewMode === 'agenda' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
           @click="viewMode = 'agenda'"
         >
-          <UIcon name="i-lucide-list" class="size-4 inline-block -mt-0.5 mr-1" />
+          <UIcon name="i-lucide-list" class="size-4 shrink-0" />
           Agenda
         </button>
         <button
           type="button"
-          class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
           :class="viewMode === 'week' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
           @click="viewMode = 'week'"
         >
-          <UIcon name="i-lucide-calendar-days" class="size-4 inline-block -mt-0.5 mr-1" />
-          Woche
+          <UIcon name="i-lucide-calendar-days" class="size-4 shrink-0" />
+          Wochenansicht
         </button>
       </div>
 
+      <BookingWeekNav v-if="viewMode === 'week'" v-model:week-start="weekStart" />
+
       <USelect
-        v-if="viewMode === 'agenda'"
+        v-else
         v-model="filter"
         :items="FILTER_ITEMS"
         :ui="opaqueSelectContentUi"
         size="sm"
-        class="w-40"
+        class="w-48"
       />
     </div>
 
@@ -151,7 +156,7 @@ const emptyStateText = computed(() => {
 
     <template v-else-if="viewMode === 'week'">
       <BookingWeek
-        v-model:week-start="weekStart"
+        :week-start="weekStart"
         :bookings="bookings"
         :availability="availability"
         @select="openDetail"

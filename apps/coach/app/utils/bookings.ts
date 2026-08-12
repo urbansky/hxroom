@@ -6,6 +6,8 @@ const timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute
 const dayHeadingFormatter = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
 const shortDateFormatter = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 const dateTimeFormatter = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+const dayMonthFormatter = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long' })
+const monthYearFormatter = new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' })
 
 export function formatTime(iso: string): string {
   return timeFormatter.format(new Date(iso))
@@ -21,6 +23,21 @@ export function formatShortDate(iso: string): string {
 
 export function formatDateTime(iso: string): string {
   return `${dateTimeFormatter.format(new Date(iso))} Uhr`
+}
+
+/**
+ * Wochenbereich für die Kalendernavigation. Monat und Jahr werden nur so oft genannt,
+ * wie sie sich unterscheiden: "10. – 16. August 2026", "28. September – 4. Oktober 2026",
+ * "28. Dezember 2026 – 3. Januar 2027".
+ */
+export function formatWeekRange(start: Date, end: Date): string {
+  if (start.getFullYear() !== end.getFullYear()) {
+    return `${dayMonthFormatter.format(start)} ${start.getFullYear()} – ${dayMonthFormatter.format(end)} ${end.getFullYear()}`
+  }
+  if (start.getMonth() !== end.getMonth()) {
+    return `${dayMonthFormatter.format(start)} – ${dayMonthFormatter.format(end)} ${end.getFullYear()}`
+  }
+  return `${start.getDate()}. – ${end.getDate()}. ${monthYearFormatter.format(end)}`
 }
 
 /** Mitternacht des Tages, zu dem der Zeitpunkt gehört – Schlüssel für die Tagesgruppierung. */
