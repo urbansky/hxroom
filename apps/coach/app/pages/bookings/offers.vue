@@ -251,7 +251,7 @@ const plannedFeatures = [
           role="button"
           tabindex="0"
           draggable="true"
-          class="group flex items-start gap-2 rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
+          class="group relative flex items-start gap-3 rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
           :class="[
             !offer.isActive && 'opacity-50',
             draggedId === offer.id && 'opacity-30',
@@ -264,9 +264,25 @@ const plannedFeatures = [
           @drop="onDrop($event)"
           @dragend="onDragEnd"
         >
+          <!-- Absolut positioniert statt im Fluss: Als Flex-Kind belegte das Icon auch
+               unsichtbar (opacity-0) seinen Platz und riss eine Lücke links neben der
+               Farbpille. Rechts, weil die Kachel dort ohnehin Leerraum hat und die linke
+               Seite jetzt der Farbpille gehört.
+               Nur ein Hinweis, kein Bedienelement: draggable und dragstart liegen auf der
+               ganzen Kachel, gezogen werden kann sie von jeder Stelle aus. -->
           <UIcon
             name="i-lucide-grip-vertical"
-            class="size-4 text-muted shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+            class="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+          />
+
+          <!-- Farbe der Sitzungsart (siehe offerColor in utils/offers.ts). `self-stretch`
+               statt fester Höhe: Die Pille wächst mit dem Inhalt mit, also auch dann, wenn
+               über "Beschreibungen anzeigen" der Beschreibungstext eingeblendet wird.
+               Bewusst innerhalb des Paddings statt als Rand der Karte – ein Rand würde bei
+               dieser Breite mit dem Eckradius kollidieren (innerer Radius wird 0). -->
+          <span
+            class="w-1 rounded-full shrink-0 self-stretch"
+            :style="{ backgroundColor: offerColor(offer.id) }"
           />
 
           <div class="min-w-0 flex-1 flex flex-col gap-0.5">
