@@ -5,39 +5,35 @@ definePageMeta({ middleware: 'auth' })
 
 const { $api } = useApi()
 
-const WEEKDAYS = [
-  { value: 0, label: 'Montag', short: 'Mo' },
-  { value: 1, label: 'Dienstag', short: 'Di' },
-  { value: 2, label: 'Mittwoch', short: 'Mi' },
-  { value: 3, label: 'Donnerstag', short: 'Do' },
-  { value: 4, label: 'Freitag', short: 'Fr' },
-  { value: 5, label: 'Samstag', short: 'Sa' },
-  { value: 6, label: 'Sonntag', short: 'So' },
-] as const
-
-const weekdaySelectItems = WEEKDAYS.map(day => ({ label: day.label, value: day.value }))
+/** Nur noch für die Wochentagsauswahl im Drawer – das Raster selbst bringt seine Köpfe mit. */
+const weekdaySelectItems = [
+  { label: 'Montag', value: 0 },
+  { label: 'Dienstag', value: 1 },
+  { label: 'Mittwoch', value: 2 },
+  { label: 'Donnerstag', value: 3 },
+  { label: 'Freitag', value: 4 },
+  { label: 'Samstag', value: 5 },
+  { label: 'Sonntag', value: 6 },
+]
 
 // --ui-bg ist im Hauptbereich bewusst transluzent (siehe assets/main.css), macht
 // aber das aufgeklappte Select-Dropdown schwer lesbar – hier deckend erzwingen.
 const opaqueSelectContentUi = { content: 'bg-[#faf8f4] dark:bg-[#141814]' }
 
-const tabItems = [
-  { label: 'Verfügbarkeit', value: 'availability' },
+type TabValue = 'availability' | 'settings' | 'sync'
+
+// Unterstrichene Tabs, nicht der Segmented-Control-Umschalter der Terminansicht:
+// Dort wechselt man die Darstellung derselben Termine, hier den Bereich.
+// "Zeiten" statt "Verfügbarkeit": Die Seitenüberschrift sagt bereits, worum es geht –
+// der Tab muss sie nicht wiederholen.
+const TAB_ITEMS = [
+  { label: 'Zeiten', value: 'availability' },
   { label: 'Einstellungen', value: 'settings' },
   { label: 'Kalendersync', value: 'sync' },
 ]
-const activeTab = ref('availability')
-
-const viewMode = ref<'list' | 'calendar'>('list')
+const activeTab = ref<TabValue>('availability')
 
 const rows = ref<AvailabilitySlotResponse[]>([])
-
-const groupedByWeekday = computed(() => {
-  const map = new Map<number, AvailabilitySlotResponse[]>()
-  for (const day of WEEKDAYS) map.set(day.value, [])
-  for (const slot of rows.value) map.get(slot.weekday)?.push(slot)
-  return map
-})
 
 await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
   $fetch: $api,
@@ -158,60 +154,6 @@ async function deleteDraft() {
   rows.value = rows.value.filter(r => r.id !== draft.id)
   isDrawerOpen.value = false
 }
-
-// --- Kalenderansicht: Monatsraster (reine Projektion der wöchentlichen Regeln,
-// noch keine Ausnahmen für einzelne Tage – siehe doc/funktionen/angebote-verfuegbarkeiten.md) ---
-const viewDate = ref(new Date())
-
-const monthLabel = computed(() => {
-  const label = viewDate.value.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
-  return label.charAt(0).toUpperCase() + label.slice(1)
-})
-
-function toMondayFirstWeekday(date: Date) {
-  return (date.getDay() + 6) % 7
-}
-
-const monthGrid = computed(() => {
-  const year = viewDate.value.getFullYear()
-  const month = viewDate.value.getMonth()
-  const first = new Date(year, month, 1)
-  const last = new Date(year, month + 1, 0)
-
-  const gridStart = new Date(first)
-  gridStart.setDate(gridStart.getDate() - toMondayFirstWeekday(first))
-  const gridEnd = new Date(last)
-  gridEnd.setDate(gridEnd.getDate() + (6 - toMondayFirstWeekday(last)))
-
-  const today = new Date()
-  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const bookingWindowEnd = new Date(todayMidnight)
-  bookingWindowEnd.setDate(bookingWindowEnd.getDate() + settings.bookingWindowWeeks * 7)
-
-  const days: { date: Date; inCurrentMonth: boolean; weekday: number; isToday: boolean; inBookingWindow: boolean }[] = []
-  const cursor = new Date(gridStart)
-  while (cursor <= gridEnd) {
-    days.push({
-      date: new Date(cursor),
-      inCurrentMonth: cursor.getMonth() === month,
-      weekday: toMondayFirstWeekday(cursor),
-      isToday: cursor.toDateString() === today.toDateString(),
-      inBookingWindow: cursor >= todayMidnight && cursor < bookingWindowEnd,
-    })
-    cursor.setDate(cursor.getDate() + 1)
-  }
-  return days
-})
-
-function prevMonth() {
-  viewDate.value = new Date(viewDate.value.getFullYear(), viewDate.value.getMonth() - 1, 1)
-}
-function nextMonth() {
-  viewDate.value = new Date(viewDate.value.getFullYear(), viewDate.value.getMonth() + 1, 1)
-}
-function goToday() {
-  viewDate.value = new Date()
-}
 </script>
 
 <template>
@@ -219,115 +161,38 @@ function goToday() {
     <h1 class="font-serif text-3xl text-highlighted mb-2">Verfügbarkeit</h1>
     <p class="text-muted mb-6">Lege fest, an welchen Wochentagen und Uhrzeiten Klienten bei dir buchen können.</p>
 
-    <UTabs :items="tabItems" v-model="activeTab" :content="false" class="mb-6" />
+    <!-- Die Trennlinie trägt die ganze Zeile, nicht nur die Tabs: Sonst bricht sie unter
+         dem letzten Tab ab und der Button steht ohne Bezug daneben. items-end setzt Tabs
+         und Button auf dieselbe Grundlinie. -->
+    <div class="flex items-end justify-between gap-4 mb-6 border-b border-default">
+      <!-- Die Linie der Tabs entfällt dafür (Theme: list = "border-b -mb-px"); mb-0 hebt
+           den Versatz mit auf, damit der Indikator genau auf der Linie sitzt. -->
+      <UTabs
+        :items="TAB_ITEMS"
+        :model-value="activeTab"
+        variant="link"
+        :content="false"
+        :ui="{ list: 'border-b-0 mb-0' }"
+        @update:model-value="activeTab = $event as TabValue"
+      />
+
+      <!-- Nur im Verfügbarkeits-Tab, aber ohne Sprung beim Tabwechsel: Die Höhe der
+           Zeile gibt der Umschalter vor. Gefüllt wie "Klient anlegen" in der
+           Klientenliste – die einzige Aktion der Seite trägt die sonst leise Zeile. -->
+      <UButton
+        v-if="activeTab === 'availability'"
+        icon="i-lucide-plus"
+        size="sm"
+        color="primary"
+        class="mb-2"
+        @click="openCreate()"
+      >
+        Zeit hinzufügen
+      </UButton>
+    </div>
 
     <template v-if="activeTab === 'availability'">
-      <div class="flex items-center justify-between gap-4 mb-4">
-        <div class="inline-flex items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
-          <button
-            type="button"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
-            :class="viewMode === 'list' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
-            @click="viewMode = 'list'"
-          >
-            <UIcon name="i-lucide-list" class="size-4 shrink-0" />
-            Liste
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
-            :class="viewMode === 'calendar' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
-            @click="viewMode = 'calendar'"
-          >
-            <UIcon name="i-lucide-calendar-days" class="size-4 shrink-0" />
-            Kalender
-          </button>
-        </div>
-
-        <UButton icon="i-lucide-plus" size="sm" color="primary" variant="soft" @click="openCreate()">
-          Neue Verfügbarkeit
-        </UButton>
-      </div>
-
-      <!-- Listenansicht: pro Wochentag -->
-      <div v-if="viewMode === 'list'" class="flex flex-col gap-3">
-        <div
-          v-for="day in WEEKDAYS"
-          :key="day.value"
-          class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 sm:p-5"
-        >
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <h3 class="font-medium text-highlighted">{{ day.label }}</h3>
-            <UButton icon="i-lucide-plus" size="xs" color="neutral" variant="ghost" @click="openCreate(day.value)">
-              Zeit hinzufügen
-            </UButton>
-          </div>
-
-          <div v-if="groupedByWeekday.get(day.value)?.length" class="flex flex-wrap gap-2">
-            <button
-              v-for="slot in groupedByWeekday.get(day.value)"
-              :key="slot.id"
-              type="button"
-              class="px-3 py-1.5 rounded-lg border border-default bg-neutral-50 dark:bg-neutral-800/50 text-sm text-highlighted hover:border-accented transition-colors cursor-pointer"
-              @click="openEdit(slot)"
-            >
-              {{ slot.startTime }} – {{ slot.endTime }}
-            </button>
-          </div>
-          <p v-else class="text-sm text-muted italic">Keine Zeiten</p>
-        </div>
-      </div>
-
-      <!-- Kalenderansicht: Monatsraster -->
-      <div v-else class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 sm:p-5">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <h3 class="font-medium text-highlighted">{{ monthLabel }}</h3>
-          <div class="flex items-center gap-1">
-            <UButton icon="i-lucide-chevron-left" size="xs" color="neutral" variant="ghost" @click="prevMonth" />
-            <UButton size="xs" color="neutral" variant="ghost" @click="goToday">Heute</UButton>
-            <UButton icon="i-lucide-chevron-right" size="xs" color="neutral" variant="ghost" @click="nextMonth" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-7 gap-1.5 mb-1.5">
-          <div v-for="day in WEEKDAYS" :key="day.value" class="text-center text-xs font-medium text-muted uppercase tracking-wide py-1">
-            {{ day.short }}
-          </div>
-        </div>
-
-        <div class="grid grid-cols-7 gap-1.5">
-          <div
-            v-for="cell in monthGrid"
-            :key="cell.date.toISOString()"
-            role="button"
-            tabindex="0"
-            class="min-h-[5.5rem] rounded-lg border p-1.5 flex flex-col gap-1 text-left cursor-pointer transition-colors outline-primary/25 focus-visible:outline-3"
-            :class="[
-              cell.inCurrentMonth ? 'border-default hover:border-accented' : 'border-transparent opacity-40',
-              cell.isToday && 'ring-1 ring-primary',
-            ]"
-            @click="openCreate(cell.weekday)"
-            @keydown.enter="openCreate(cell.weekday)"
-          >
-            <span class="text-xs" :class="cell.isToday ? 'font-bold text-primary' : 'text-muted'">{{ cell.date.getDate() }}</span>
-            <div v-if="cell.inBookingWindow" class="flex flex-col gap-0.5">
-              <button
-                v-for="slot in groupedByWeekday.get(cell.weekday)"
-                :key="slot.id"
-                type="button"
-                class="text-[10px] leading-tight px-1 py-0.5 rounded bg-primary/10 text-primary text-left truncate hover:bg-primary/20 transition-colors cursor-pointer"
-                @click.stop="openEdit(slot)"
-              >
-                {{ slot.startTime }}–{{ slot.endTime }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p class="text-xs text-muted mt-4">
-          Zeigt deine wöchentlichen Verfügbarkeiten, projiziert auf den Monat – nur innerhalb deines aktuellen Buchungsfensters ({{ settings.bookingWindowWeeks === 1 ? '1 Woche' : `${settings.bookingWindowWeeks} Wochen` }} ab heute). Ausnahmen für einzelne Tage (z. B. Urlaub) sind noch nicht möglich.
-        </p>
-      </div>
+      <AvailabilityWeek :slots="rows" @select="openEdit" @create="openCreate" />
     </template>
 
     <template v-else-if="activeTab === 'settings'">
@@ -385,7 +250,10 @@ function goToday() {
     <!-- Anlegen-/Bearbeiten-Drawer -->
     <USlideover v-model:open="isDrawerOpen" :title="draft.id ? 'Verfügbarkeit bearbeiten' : 'Neue Verfügbarkeit'">
       <template #body>
-        <div class="flex flex-col gap-6">
+        <!-- Echtes form-Element, damit Enter in den Zeitfeldern speichert. Der
+             Speichern-Button steht im Footer und wird über das form-Attribut zugeordnet –
+             ohne ihn löst der Browser bei mehreren Feldern kein Absenden aus. -->
+        <form id="availability-slot-form" class="flex flex-col gap-6" @submit.prevent="saveDraft">
           <UFormField label="Wochentag">
             <USelect v-model="draft.weekday" :items="weekdaySelectItems" :ui="opaqueSelectContentUi" class="w-full" />
           </UFormField>
@@ -400,7 +268,7 @@ function goToday() {
           </div>
 
           <p v-if="saveError" class="text-sm text-error">{{ saveError }}</p>
-        </div>
+        </form>
       </template>
 
       <template #footer>
@@ -416,7 +284,13 @@ function goToday() {
           <div v-else />
           <div class="flex items-center gap-2">
             <UButton label="Abbrechen" color="neutral" variant="ghost" @click="isDrawerOpen = false" />
-            <UButton :label="draft.id ? 'Speichern' : 'Anlegen'" color="primary" :loading="saving" @click="saveDraft" />
+            <UButton
+              :label="draft.id ? 'Speichern' : 'Anlegen'"
+              type="submit"
+              form="availability-slot-form"
+              color="primary"
+              :loading="saving"
+            />
           </div>
         </div>
       </template>
