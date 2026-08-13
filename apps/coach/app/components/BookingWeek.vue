@@ -114,19 +114,38 @@ function availabilityBlocks(weekday: number) {
 }
 
 /**
- * Farbgebung eines Terminblocks. Kommende Termine sind gefüllt, vergangene nur noch getönt
- * und umrandet – so bleibt der Blick auf dem, was noch ansteht, ohne dass die Vergangenheit
- * an Lesbarkeit verliert (blasse Füllung mit hellem Text wäre kontrastschwach).
+ * Ein Terminblock verwendet dieselben Bausteine wie die Terminkachel in
+ * BookingAgenda.vue: weiße Fläche, dünner Rahmen, Sitzungsfarbe als Pille links,
+ * darunter Klientenname und Angebot. Dadurch erkennt man in beiden Ansichten
+ * dasselbe Objekt wieder.
+ *
+ * Bewusst nicht übernommen wurde die frühere Vollfläche in der Primärfarbe: Sie war
+ * eine eigene Formensprache, und mit der aufgehellten Sitzungspalette (L 50–67) trägt
+ * eine gefüllte Fläche ohnehin keinen weißen Text mehr (nur rund 2,5:1).
+ *
+ * Vergangenes bekommt eine gefüllte Fläche (bg-elevated) statt reduzierter Deckkraft.
+ * opacity nahm Rahmen und Sitzungsfarbe gleich mit zurück – auf dem Verfügbarkeitsband
+ * lösten sich die Blöcke dadurch fast auf. Die gefüllte Fläche bleibt scharf und liest
+ * sich trotzdem als abgeschlossen, weil sie dunkler ist als die offene weiße Karte.
  */
 function toneFor(booking: CoachBookingResponse, isPast: boolean) {
-  if (booking.status === 'pending') {
-    return isPast
-      ? { container: 'border border-dashed border-default bg-elevated hover:bg-accented', time: 'text-dimmed', name: 'text-muted', offer: 'text-dimmed' }
-      : { container: 'border border-dashed border-warning/60 bg-warning/10 hover:bg-warning/20', time: 'text-warning', name: 'text-highlighted', offer: 'text-muted' }
+  return {
+    container: [
+      // Unbestätigt: gestrichelt wie in der Kachel. Ein Badge wie dort passt in einen
+      // Rasterblock nicht, deshalb trägt zusätzlich der Rahmen die Warnfarbe.
+      booking.status === 'pending' ? 'border border-dashed border-warning/60' : 'border border-default',
+      // Der Schatten hebt kommende Termine vom Raster ab. Ohne ihn war der Kreis um das
+      // heutige Datum das kräftigste Element der Ansicht – kräftiger als der Inhalt.
+      isPast
+        ? 'bg-elevated hover:border-accented'
+        : 'bg-white dark:bg-neutral-900 shadow-sm hover:border-accented',
+    ].join(' '),
+    // Die Uhrzeit ist hier zurückgenommen, anders als in der Kachel: Im Raster sagt
+    // schon die Position, wann der Termin liegt – der Name ist die eigentliche Nachricht.
+    time: isPast ? 'text-dimmed' : 'text-muted',
+    name: isPast ? 'text-muted' : 'text-highlighted',
+    offer: isPast ? 'text-dimmed' : 'text-muted',
   }
-  return isPast
-    ? { container: 'border border-primary/30 bg-primary/10 hover:bg-primary/20', time: 'text-primary/70', name: 'text-primary', offer: 'text-primary/70' }
-    : { container: 'bg-primary/85 hover:bg-primary text-inverted', time: '', name: '', offer: 'opacity-75' }
 }
 
 function bookingBlocks(weekday: number) {
@@ -213,23 +232,34 @@ function bookingBlocks(weekday: number) {
           v-for="block in bookingBlocks(day.value)"
           :key="block.booking.id"
           type="button"
-          class="absolute inset-x-1 rounded px-1.5 py-1 text-left overflow-hidden transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+          class="absolute inset-x-1 flex items-stretch gap-1.5 rounded-lg px-1.5 py-1 text-left overflow-hidden transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
           :class="block.tone.container"
           :style="{ top: `${block.top}px`, height: `${block.height}px` }"
           @click="$emit('select', block.booking)"
         >
-          <span class="block text-xs leading-tight tabular-nums truncate" :class="block.tone.time">
-            {{ formatTimeRange(block.booking) }}
-          </span>
-          <span class="block text-xs leading-tight font-medium truncate" :class="block.tone.name">
-            {{ block.booking.clientName }}
-          </span>
+          <!-- Sitzungsfarbe, identisch zur Terminkachel (offerColor in utils/offers.ts).
+               Ohne offerId bleibt die Spalte leer, statt eine Farbe zu erfinden, die zu
+               keinem Angebot gehört. -->
           <span
-            v-if="block.showOffer"
-            class="block text-xs leading-tight truncate"
-            :class="block.tone.offer"
-          >
-            {{ block.booking.offerName }}
+            v-if="block.booking.offerId"
+            class="w-1 rounded-full shrink-0"
+            :style="{ backgroundColor: offerColor(block.booking.offerId) }"
+          />
+
+          <span class="flex-1 min-w-0">
+            <span class="block text-xs leading-tight tabular-nums truncate" :class="block.tone.time">
+              {{ formatTimeRange(block.booking) }}
+            </span>
+            <span class="block text-xs leading-tight font-medium truncate" :class="block.tone.name">
+              {{ block.booking.clientName }}
+            </span>
+            <span
+              v-if="block.showOffer"
+              class="block text-xs leading-tight truncate"
+              :class="block.tone.offer"
+            >
+              {{ block.booking.offerName }}
+            </span>
           </span>
         </button>
       </div>

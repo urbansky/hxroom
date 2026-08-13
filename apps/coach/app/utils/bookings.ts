@@ -78,12 +78,15 @@ export interface BookingDayGroup {
   /** ISO-Datum (YYYY-MM-DD) als stabiler Key fürs Rendering. */
   key: string
   heading: string
+  /** Für die Hervorhebung der heutigen Tagesüberschrift. */
+  isToday: boolean
   bookings: CoachBookingResponse[]
 }
 
 /** Gruppiert eine nach Startzeit sortierte Liste in Tagesblöcke. */
 export function groupByDay(bookings: CoachBookingResponse[], now = new Date()): BookingDayGroup[] {
   const groups = new Map<string, BookingDayGroup>()
+  const today = startOfDay(now).getTime()
 
   for (const booking of bookings) {
     const day = startOfDay(new Date(booking.start))
@@ -92,7 +95,12 @@ export function groupByDay(bookings: CoachBookingResponse[], now = new Date()): 
     if (existing) {
       existing.bookings.push(booking)
     } else {
-      groups.set(key, { key, heading: formatDayHeading(booking.start, now), bookings: [booking] })
+      groups.set(key, {
+        key,
+        heading: formatDayHeading(booking.start, now),
+        isToday: day.getTime() === today,
+        bookings: [booking],
+      })
     }
   }
 

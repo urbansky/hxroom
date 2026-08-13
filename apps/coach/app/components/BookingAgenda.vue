@@ -13,11 +13,26 @@ const groups = computed(() => groupByDay(props.bookings))
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-8">
     <section v-for="group in groups" :key="group.key">
-      <h2 class="text-xs font-medium uppercase tracking-wide text-muted mb-2">
-        {{ group.heading }}
-      </h2>
+      <!-- Die Überschrift trägt den Tag, deshalb steht in der Kachel nur die Uhrzeit.
+           Sie ist bewusst kräftiger gesetzt als eine reine Beschriftung: Sie soll die
+           Termine darunter als Tagesblock zusammenfassen, sonst wirkt sie bei nur einem
+           Termin wie ein Etikett für eine einzelne Kachel. -->
+      <div class="flex items-baseline gap-3 mb-3">
+        <h2
+          class="text-sm font-medium shrink-0"
+          :class="group.isToday ? 'text-primary' : 'text-highlighted'"
+        >
+          {{ group.heading }}
+        </h2>
+        <span class="text-xs text-muted shrink-0 tabular-nums">
+          {{ group.bookings.length }} {{ group.bookings.length === 1 ? 'Termin' : 'Termine' }}
+        </span>
+        <!-- bg-(--ui-border), nicht bg-default: Letzteres ist der Seitenhintergrund
+             (--ui-bg), die Linie wäre damit unsichtbar. -->
+        <span class="h-px flex-1 bg-(--ui-border)" />
+      </div>
 
       <!-- Der nächste Termin wird allein über die relative Zeitangabe rechts oben
            ("in 22 Std.") gekennzeichnet. Ein zusätzlicher Ring in ring-primary stand hier

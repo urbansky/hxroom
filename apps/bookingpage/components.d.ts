@@ -13,12 +13,12 @@ declare module 'vue' {
   export interface GlobalComponents {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    UBadge: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
-    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
-    UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
-    UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
-    UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
-    UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
-    USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_bc380c2cbc087e7a2f702e4f3b9b5d0b/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
+    UBadge: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
+    UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
+    UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
+    UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
+    UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
+    USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
   }
 }
