@@ -226,20 +226,20 @@ function goToday() {
         <div class="inline-flex items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
           <button
             type="button"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
             :class="viewMode === 'list' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
             @click="viewMode = 'list'"
           >
-            <UIcon name="i-lucide-list" class="size-4 inline-block -mt-0.5 mr-1" />
+            <UIcon name="i-lucide-list" class="size-4 shrink-0" />
             Liste
           </button>
           <button
             type="button"
-            class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
             :class="viewMode === 'calendar' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
             @click="viewMode = 'calendar'"
           >
-            <UIcon name="i-lucide-calendar-days" class="size-4 inline-block -mt-0.5 mr-1" />
+            <UIcon name="i-lucide-calendar-days" class="size-4 shrink-0" />
             Kalender
           </button>
         </div>
