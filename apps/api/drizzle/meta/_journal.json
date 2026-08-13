@@ -71,6 +71,13 @@
       "when": 1785671792794,
       "tag": "0009_tidy_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786594630001,
+      "tag": "0010_nosy_talon",
+      "breakpoints": true
     }
   ]
 }

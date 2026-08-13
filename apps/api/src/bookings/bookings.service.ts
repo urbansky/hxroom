@@ -10,6 +10,8 @@ import { buildBookingIcs } from '../mail/ics';
 import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
 import { renderBookingConfirmedEmail } from '../mail/templates/client/booking-confirmed';
 import { renderBookingNotificationEmail } from '../mail/templates/coach/booking-notification';
+import { isUniqueViolation } from '../common/pg-errors';
+import { normalizeEmail } from '../clients/normalize-email';
 import { CONFIRMATION_TTL_MINUTES, isExpiredPending } from './booking.constants';
 import { formatDayLabel, formatDayTimeLabel } from './booking-formatting';
 import { buildConfirmUrl } from './booking-urls';
@@ -29,10 +31,6 @@ function toBookingResponse(booking: BookingRow): BookingResponse {
     offerName: booking.offerName,
     status: booking.status,
   };
-}
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
 }
 
 @Injectable()
@@ -88,7 +86,7 @@ export class BookingsService {
       } catch (err) {
         // Letzte Absicherung durch den partiellen Unique-Index (bookings_org_start_active_unique) –
         // sollte dank des Row-Locks oben im Normalfall nicht erreicht werden.
-        if ((err as { code?: string }).code === '23505') {
+        if (isUniqueViolation(err)) {
           throw new ConflictException('This time slot is no longer available');
         }
         throw err;

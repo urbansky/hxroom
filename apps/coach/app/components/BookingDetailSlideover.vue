@@ -2,7 +2,10 @@
 import type { CoachBookingResponse } from '@hxroom/shared'
 
 const props = defineProps<{ booking: CoachBookingResponse | null }>()
-const emit = defineEmits<{ cancelled: [booking: CoachBookingResponse] }>()
+const emit = defineEmits<{
+  cancelled: [booking: CoachBookingResponse]
+  updated: [booking: CoachBookingResponse]
+}>()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -13,6 +16,7 @@ const cancelReason = ref('')
 const cancelling = ref(false)
 const actionError = ref<string | null>(null)
 const downloading = ref(false)
+const isPickerOpen = ref(false)
 
 // Beim Schließen zurücksetzen, damit der nächste Termin nicht mit halb ausgefülltem
 // Absage-Formular aufgeht.
@@ -45,6 +49,23 @@ async function downloadIcs() {
     actionError.value = 'Kalendereintrag konnte nicht geladen werden.'
   } finally {
     downloading.value = false
+  }
+}
+
+// Manuelle Zuordnung zum Klientenstamm (Baustein 3 aus doc/idee-klienten-matching.md).
+// Die Kontaktdaten der Buchung bleiben dabei unverändert – sie halten fest, was der
+// Klient beim Buchen eingegeben hat.
+async function assignClient(clientId: string | null) {
+  if (!props.booking) return
+  actionError.value = null
+  try {
+    const updated = await $api<CoachBookingResponse>(`/bookings/${props.booking.id}/client`, {
+      method: 'PATCH',
+      body: { clientId },
+    })
+    emit('updated', updated)
+  } catch {
+    actionError.value = 'Zuordnung konnte nicht gespeichert werden.'
   }
 }
 
@@ -111,6 +132,30 @@ async function cancelBooking() {
             <ULink :to="`mailto:${booking.clientEmail}`" class="text-primary">{{ booking.clientEmail }}</ULink>
             <ULink v-if="booking.clientPhone" :to="`tel:${booking.clientPhone}`" class="text-primary">{{ booking.clientPhone }}</ULink>
           </div>
+
+          <div class="mt-3 flex items-center gap-2 flex-wrap">
+            <UButton
+              v-if="booking.clientId"
+              :to="`/clients/${booking.clientId}`"
+              label="Klientenprofil öffnen"
+              icon="i-lucide-user-round"
+              color="neutral"
+              variant="subtle"
+              size="xs"
+            />
+            <UButton
+              :label="booking.clientId ? 'Anderem Klienten zuordnen' : 'Klient zuordnen'"
+              icon="i-lucide-link"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              @click="isPickerOpen = true"
+            />
+          </div>
+
+          <p v-if="!booking.clientId" class="text-xs text-muted mt-2">
+            Noch keinem Klienten zugeordnet – das geschieht automatisch, sobald die Buchung bestätigt ist.
+          </p>
         </div>
 
         <div v-if="booking.clientNote">
@@ -161,4 +206,12 @@ async function cancelBooking() {
       </div>
     </template>
   </USlideover>
+
+  <!-- Bewusst außerhalb des USlideover: dessen Default-Slot ist der Trigger, dort
+       gerendert würde der Picker als Auslöser statt als eigenes Overlay behandelt. -->
+  <ClientPicker
+    v-model:open="isPickerOpen"
+    :current-client-id="booking?.clientId ?? null"
+    @select="assignClient"
+  />
 </template>

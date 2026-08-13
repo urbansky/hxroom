@@ -2,70 +2,15 @@ import { ConflictException, Inject, Injectable, Logger, NotFoundException } from
 import { ConfigService } from '@nestjs/config';
 import { and, asc, eq, gte, lte, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { bookings } from '../db/schema';
+import { bookings, clients } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { formatDayTimeLabel } from './booking-formatting';
 import { buildBookingPageUrl } from './booking-urls';
-import type { CancelBookingDto, CoachBookingResponse, ListCoachBookingsQuery } from '@hxroom/shared';
-
-// Explizite Spaltenliste statt select(): clientAccessToken darf die API nie verlassen,
-// und ein select() ohne Argument würde ihn bei jedem Schema-Wechsel stillschweigend
-// wieder mitnehmen.
-const coachBookingColumns = {
-  id:              bookings.id,
-  startTime:       bookings.startTime,
-  endTime:         bookings.endTime,
-  offerId:         bookings.offerId,
-  offerName:       bookings.offerName,
-  durationMinutes: bookings.durationMinutes,
-  status:          bookings.status,
-  clientId:        bookings.clientId,
-  clientName:      bookings.clientName,
-  clientEmail:     bookings.clientEmail,
-  clientPhone:     bookings.clientPhone,
-  clientNote:      bookings.clientNote,
-  confirmedAt:     bookings.confirmedAt,
-  createdAt:       bookings.createdAt,
-};
-
-interface CoachBookingRow {
-  id: string;
-  startTime: Date;
-  endTime: Date;
-  offerId: string | null;
-  offerName: string;
-  durationMinutes: number;
-  status: CoachBookingResponse['status'];
-  clientId: string | null;
-  clientName: string;
-  clientEmail: string;
-  clientPhone: string | null;
-  clientNote: string | null;
-  confirmedAt: Date | null;
-  createdAt: Date;
-}
-
-function toCoachBookingResponse(row: CoachBookingRow): CoachBookingResponse {
-  return {
-    id: row.id,
-    start: row.startTime.toISOString(),
-    end: row.endTime.toISOString(),
-    offerId: row.offerId,
-    offerName: row.offerName,
-    durationMinutes: row.durationMinutes,
-    status: row.status,
-    clientId: row.clientId,
-    clientName: row.clientName,
-    clientEmail: row.clientEmail,
-    clientPhone: row.clientPhone,
-    clientNote: row.clientNote,
-    confirmedAt: row.confirmedAt?.toISOString() ?? null,
-    createdAt: row.createdAt.toISOString(),
-  };
-}
+import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
+import type { AssignBookingClientDto, CancelBookingDto, CoachBookingResponse, ListCoachBookingsQuery } from '@hxroom/shared';
 
 /**
  * Coach-seitiger Zugriff auf die eigenen Buchungen (Kalender im Backoffice).
@@ -121,6 +66,47 @@ export class CoachBookingsService {
     }
 
     return toCoachBookingResponse(cancelled);
+  }
+
+  /**
+   * Ordnet eine Buchung manuell einem Klienten zu (Baustein 3 aus
+   * doc/idee-klienten-matching.md). Korrigiert ein falsches automatisches
+   * E-Mail-Matching und verknüpft manuell angelegte Termine – der Coach hat das
+   * letzte Wort über die Zuordnung. `null` löst die Verknüpfung wieder.
+   *
+   * Die Snapshot-Felder clientName/clientEmail/clientPhone der Buchung bleiben
+   * bewusst unverändert: sie dokumentieren, was der Klient beim Buchen eingegeben
+   * hat, und sind Beleg des Vorgangs – nicht der aktuelle Stammdatensatz. Wer sie
+   * hier mitzöge, würde die Buchungshistorie nachträglich umschreiben.
+   *
+   * Kein Mailversand: die Zuordnung ist eine reine Verwaltungsoperation ohne
+   * Außenwirkung für den Klienten.
+   */
+  async assignClient(organizationId: string, bookingId: string, dto: AssignBookingClientDto): Promise<CoachBookingResponse> {
+    await this.findOwn(organizationId, bookingId);
+
+    // Mandantentrennung (doc/technisches-konzept.md §11): ein Klient gehört exklusiv
+    // einer Organisation. Ohne diese Prüfung könnte eine fremde clientId an die eigene
+    // Buchung geraten und Klientendaten organisationsübergreifend zusammenführen.
+    if (dto.clientId !== null) {
+      const [client] = await this.db
+        .select({ id: clients.id })
+        .from(clients)
+        .where(and(eq(clients.id, dto.clientId), eq(clients.organizationId, organizationId)))
+        .limit(1);
+
+      if (!client) {
+        throw new NotFoundException('Client not found');
+      }
+    }
+
+    const [updated] = await this.db
+      .update(bookings)
+      .set({ clientId: dto.clientId })
+      .where(eq(bookings.id, bookingId))
+      .returning(coachBookingColumns);
+
+    return toCoachBookingResponse(updated);
   }
 
   /** iCalendar-Datei für einen einzelnen Termin – zum Import in den Kalender des Coachs. */

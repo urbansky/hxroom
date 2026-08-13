@@ -109,17 +109,30 @@ export const offers = pgTable('offers', {
 });
 
 // Klienten-Matching über mehrere Buchungen hinweg (siehe doc/idee-klienten-matching.md).
-// Ein Datensatz pro (Organisation, E-Mail). Wird erst bei Bestätigung einer Buchung
-// angelegt/verknüpft (nicht schon bei der Erstellung) – vermeidet "Geister-Klienten"
-// durch nie bestätigte Buchungen. `email` wird vom Service normalisiert
+// Ein Datensatz pro (Organisation, E-Mail). `email` wird vom Service normalisiert
 // (lowercase, getrimmt) vor jedem Insert/Lookup, der Unique-Constraint allein ist
 // case-sensitive und reicht dafür nicht aus.
+//
+// Zwei Entstehungswege:
+// - Automatisch beim Bestätigen einer Buchung (BookingsService.confirm) – bewusst erst
+//   dann und nicht schon bei der Erstellung, das vermeidet "Geister-Klienten" durch nie
+//   bestätigte Buchungen.
+// - Manuell durch den Coach (ClientsService.create, Funktion 03 in
+//   doc/funktionen/backoffice-coach.md) – für Bestandsklienten aus anderen Systemen.
+//   Solche Datensätze haben zunächst keine Buchung; die "keine Geister-Klienten"-Regel
+//   gilt nur für den automatischen Weg.
+//
+// phone/note pflegt ausschließlich der Coach. Sie sind unabhängig von den gleichnamigen
+// Snapshot-Feldern an `bookings`, die festhalten, was der Klient beim Buchen eingegeben hat.
 export const clients = pgTable('clients', {
   id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
   name:           text('name').notNull(),
   email:          text('email').notNull(),
+  phone:          text('phone'),
+  note:           text('note'), // interne Anmerkung des Coachs, nie für den Klienten sichtbar
   createdAt:      timestamp('created_at').notNull().defaultNow(),
+  updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
 }, (table) => ({
   uniqueEmailPerOrg: unique().on(table.organizationId, table.email),
 }));

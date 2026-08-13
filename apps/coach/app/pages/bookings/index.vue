@@ -88,6 +88,17 @@ function openDetail(booking: CoachBookingResponse) {
   isDetailOpen.value = true
 }
 
+// Nach einer geänderten Klientenzuordnung: Zeile an Ort und Stelle ersetzen, die
+// Buchung bleibt in jedem Filter sichtbar, weil sich weder Status noch Zeit ändern.
+function applyUpdated(updated: CoachBookingResponse) {
+  const idx = bookings.value.findIndex(b => b.id === updated.id)
+  if (idx === -1) return
+  bookings.value[idx] = updated
+  if (selectedBooking.value?.id === updated.id) {
+    selectedBooking.value = updated
+  }
+}
+
 function applyCancelled(updated: CoachBookingResponse) {
   const idx = bookings.value.findIndex(b => b.id === updated.id)
   if (idx === -1) return
@@ -192,6 +203,7 @@ const emptyStateText = computed(() => {
       v-model:open="isDetailOpen"
       :booking="selectedBooking"
       @cancelled="applyCancelled"
+      @updated="applyUpdated"
     />
   </div>
 </template>

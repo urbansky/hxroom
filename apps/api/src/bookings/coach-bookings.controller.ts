@@ -1,9 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { cancelBookingSchema, listCoachBookingsQuerySchema, type CancelBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
+import { assignBookingClientSchema, cancelBookingSchema, listCoachBookingsQuerySchema, type AssignBookingClientDto, type CancelBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
 import { CoachBookingsService } from './coach-bookings.service';
 
 // Kalender-Ansicht im Coach-Backoffice. Teilt sich den Pfad 'bookings' mit dem
@@ -32,6 +32,18 @@ export class CoachBookingsController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.coachBookingsService.cancel(org.id, id, dto);
+  }
+
+  // Zuordnung zu einem Klienten – liegt hier und nicht im ClientsController, weil die
+  // Buchung das geänderte Objekt ist.
+  @Patch(':id/client')
+  assignClient(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(assignBookingClientSchema)) dto: AssignBookingClientDto,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.assignClient(org.id, id, dto);
   }
 
   // Antwort bewusst selbst schreiben statt über @Header-Decorator: Nest würde den

@@ -19,46 +19,63 @@ const groups = computed(() => groupByDay(props.bookings))
         {{ group.heading }}
       </h2>
 
+      <!-- Der nächste Termin wird allein über die relative Zeitangabe rechts oben
+           ("in 22 Std.") gekennzeichnet. Ein zusätzlicher Ring in ring-primary stand hier
+           einmal: Sage-700 liest sich bei 1 px nicht als Farbe, sondern als zweite dunkle
+           Kontur neben dem Rahmen – und mit der Sitzungsfarbe links kamen so drei Ränder
+           an einer Kachel zusammen. -->
       <div class="flex flex-col gap-2">
         <button
           v-for="booking in group.bookings"
           :key="booking.id"
           type="button"
-          class="w-full text-left rounded-xl border p-4 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
-          :class="[
-            booking.status === 'cancelled'
-              ? 'border-default border-dashed bg-transparent opacity-60'
-              : booking.status === 'pending'
-                ? 'border-default border-dashed bg-white dark:bg-neutral-900 hover:border-accented'
-                : 'border-default bg-white dark:bg-neutral-900 hover:border-accented',
-            booking.id === props.highlightId && 'ring-1 ring-primary',
-          ]"
+          class="w-full text-left flex items-start gap-3 rounded-xl border p-4 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+          :class="booking.status === 'cancelled'
+            ? 'border-default border-dashed bg-transparent opacity-60'
+            : booking.status === 'pending'
+              ? 'border-default border-dashed bg-white dark:bg-neutral-900 hover:border-accented'
+              : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
           @click="$emit('select', booking)"
         >
-          <div class="flex items-baseline justify-between gap-3">
-            <span
-              class="text-sm font-medium tabular-nums"
-              :class="booking.status === 'cancelled' ? 'text-muted line-through' : 'text-highlighted'"
-            >
-              {{ formatTimeRange(booking) }}
-            </span>
+          <!-- Farbe der Sitzungsart, identisch zur Angebotsliste (offerColor in
+               utils/offers.ts) – dieselbe Farbe steht dort für dasselbe Angebot, die
+               Angebotsseite dient damit als Legende. `self-stretch`: die Pille nimmt die
+               Höhe des Inhalts an. Bei abgesagten Terminen verblasst sie über das
+               opacity-60 der Kachel mit, ein Sonderfall ist dafür nicht nötig.
+               Ohne offerId (manuell angelegter Termin) bleibt die Spalte leer, statt eine
+               Farbe zu erfinden, die zu keinem Angebot gehört. -->
+          <span
+            v-if="booking.offerId"
+            class="w-1 rounded-full shrink-0 self-stretch"
+            :style="{ backgroundColor: offerColor(booking.offerId) }"
+          />
 
-            <span v-if="booking.id === props.highlightId && formatRelativeToStart(booking.start)" class="text-xs text-primary shrink-0">
-              {{ formatRelativeToStart(booking.start) }}
-            </span>
-          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-baseline justify-between gap-3">
+              <span
+                class="text-sm font-medium tabular-nums"
+                :class="booking.status === 'cancelled' ? 'text-muted line-through' : 'text-highlighted'"
+              >
+                {{ formatTimeRange(booking) }}
+              </span>
 
-          <div class="mt-1 flex items-center gap-2 min-w-0">
-            <span class="font-medium truncate" :class="booking.status === 'cancelled' ? 'text-muted' : 'text-highlighted'">
-              {{ booking.clientName }}
-            </span>
-            <UBadge v-if="booking.status === 'pending'" :label="STATUS_LABELS.pending" color="warning" variant="subtle" size="sm" class="shrink-0" />
-            <UBadge v-else-if="booking.status === 'cancelled'" :label="STATUS_LABELS.cancelled" color="neutral" variant="subtle" size="sm" class="shrink-0" />
-          </div>
+              <span v-if="booking.id === props.highlightId && formatRelativeToStart(booking.start)" class="text-xs text-primary shrink-0">
+                {{ formatRelativeToStart(booking.start) }}
+              </span>
+            </div>
 
-          <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
-            <span class="truncate">{{ booking.durationMinutes }} Min. · {{ booking.offerName }}</span>
-            <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
+            <div class="mt-1 flex items-center gap-2 min-w-0">
+              <span class="font-medium truncate" :class="booking.status === 'cancelled' ? 'text-muted' : 'text-highlighted'">
+                {{ booking.clientName }}
+              </span>
+              <UBadge v-if="booking.status === 'pending'" :label="STATUS_LABELS.pending" color="warning" variant="subtle" size="sm" class="shrink-0" />
+              <UBadge v-else-if="booking.status === 'cancelled'" :label="STATUS_LABELS.cancelled" color="neutral" variant="subtle" size="sm" class="shrink-0" />
+            </div>
+
+            <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
+              <span class="truncate">{{ booking.durationMinutes }} Min. · {{ booking.offerName }}</span>
+              <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
+            </div>
           </div>
         </button>
       </div>

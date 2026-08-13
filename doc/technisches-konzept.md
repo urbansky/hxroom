@@ -596,20 +596,29 @@ export const coachProfiles = pgTable('coach_profiles', {
 // KLIENTEN-MATCHING (siehe idee-klienten-matching.md für Herleitung):
 // - email wird im Service-Layer vor jedem Lookup/Insert normalisiert (lowercase + trim),
 //   damit z.B. "Anna@Firma.de" und "anna@firma.de" denselben Client treffen. Der
-//   Unique-Constraint allein reicht dafür nicht (case-sensitive).
-// - Ein Client-Datensatz wird NICHT bei Buchungseingang angelegt, sondern erst bei
-//   Bestätigung der Buchung (siehe bookings.confirmedAt) – vermeidet "Geister-Klienten"
-//   durch nie bestätigte Buchungen.
+//   Unique-Constraint allein reicht dafür nicht (case-sensitive). Gemeinsame Funktion
+//   normalizeEmail() für beide Entstehungswege.
+// - Zwei Entstehungswege: automatisch bei Bestätigung einer Buchung (NICHT schon bei
+//   Buchungseingang – vermeidet "Geister-Klienten" durch nie bestätigte Buchungen), und
+//   manuell durch den Coach für Bestandsklienten aus anderen Systemen. Manuell angelegte
+//   Klienten haben zunächst keine Buchung; die "keine Geister-Klienten"-Regel gilt nur
+//   für den automatischen Weg.
 // - Automatisches Matching ist die Grundlage, nicht die einzige Quelle der Wahrheit:
 //   der Coach kann jede Buchung manuell einem bestehenden Client zuordnen/umhängen
 //   (bookings.clientId ist jederzeit im Backoffice änderbar), unabhängig vom
 //   automatischen Ergebnis. Der Coach hat das letzte Wort.
+// - phone/note pflegt ausschließlich der Coach; note ist eine interne Anmerkung und für
+//   den Klienten nie sichtbar. Beide sind unabhängig von den gleichnamigen Snapshot-
+//   Feldern an bookings, die festhalten, was der Klient beim Buchen eingegeben hat.
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: text('organization_id').notNull(),
   name: text('name').notNull(),
   email: text('email').notNull(),
+  phone: text('phone'),
+  note: text('note'),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 }, (table) => ({
   // Stellt sicher: pro Organization ist jede E-Mail-Adresse (normalisiert) nur einmal vorhanden
   uniqueEmailPerOrg: unique().on(table.organizationId, table.email),

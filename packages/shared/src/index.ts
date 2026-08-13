@@ -209,3 +209,50 @@ export const cancelBookingSchema = z.object({
   reason: z.string().max(500, 'Grund ist zu lang').optional(),
 });
 export type CancelBookingDto = z.infer<typeof cancelBookingSchema>;
+
+// Zuordnung einer Buchung zu einem Klienten (Baustein 3 aus doc/idee-klienten-matching.md):
+// der Coach korrigiert das automatische E-Mail-Matching oder verknüpft manuell.
+// null löst die Zuordnung, ohne die Buchung selbst zu verändern.
+export const assignBookingClientSchema = z.object({
+  clientId: z.string().min(1, 'Klient ist erforderlich').nullable(),
+});
+export type AssignBookingClientDto = z.infer<typeof assignBookingClientSchema>;
+
+// Klientenverwaltung (CRM, siehe doc/funktionen/backoffice-coach.md Abschnitt 3).
+// Die E-Mail ist Pflicht, weil sie der Matching-Schlüssel für spätere Online-Buchungen
+// ist – ein Klient ohne Adresse wäre für den automatischen Weg unauffindbar.
+export const createClientSchema = z.object({
+  name:  z.string().min(1, 'Name ist erforderlich').max(160),
+  email: z.string().email('Ungültige E-Mail-Adresse'),
+  phone: z.string().max(40, 'Telefonnummer ist zu lang').nullish(),
+  note:  z.string().max(2000, 'Notiz ist zu lang').nullish(),
+});
+export type CreateClientDto = z.infer<typeof createClientSchema>;
+
+export const updateClientSchema = createClientSchema.partial();
+export type UpdateClientDto = z.infer<typeof updateClientSchema>;
+
+export const clientResponseSchema = z.object({
+  id:        z.string(),
+  name:      z.string(),
+  email:     z.string(),
+  phone:     z.string().nullable(),
+  note:      z.string().nullable(),
+  createdAt: z.string(),
+});
+export type ClientResponse = z.infer<typeof clientResponseSchema>;
+
+// Listeneintrag mit den Kennzahlen aus Funktion 01: Anzahl gehaltener Sitzungen,
+// letzte und nächste Sitzung. Alle drei werden serverseitig aggregiert.
+export const clientListItemSchema = clientResponseSchema.extend({
+  sessionCount:  z.number(),
+  lastSessionAt: z.string().nullable(),
+  nextSessionAt: z.string().nullable(),
+});
+export type ClientListItem = z.infer<typeof clientListItemSchema>;
+
+// Klientenprofil (Funktion 02) inkl. vollständiger Sitzungshistorie.
+export const clientDetailSchema = clientResponseSchema.extend({
+  bookings: z.array(coachBookingResponseSchema),
+});
+export type ClientDetail = z.infer<typeof clientDetailSchema>;

@@ -101,6 +101,8 @@ const pageTitle = computed(() => {
     '/settings/privacy': 'Datenschutz',
     '/settings/account': 'Account',
   }
+  // Die Map trifft nur exakte Pfade – dynamische Routen brauchen einen eigenen Zweig.
+  if (route.path.startsWith('/clients/')) return 'Klient'
   return titles[route.path] ?? 'HxRoom'
 })
 </script>
