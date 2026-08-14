@@ -2,13 +2,14 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { betterAuth, generateId } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { organization } from 'better-auth/plugins';
+import { admin, organization } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { MailModule } from '../mail/mail.module';
 import { MailService } from '../mail/mail.service';
 import { renderEmailVerificationEmail } from '../mail/templates/coach/email-verification';
 import * as schema from '../db/schema';
+import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 
 export const AUTH = Symbol('AUTH');
 export type Auth = ReturnType<typeof betterAuth>;
@@ -31,11 +32,21 @@ export type Auth = ReturnType<typeof betterAuth>;
               allowUserToCreateOrganization: false,
               creatorRole: 'owner',
             }),
+            admin({
+              defaultRole: DEFAULT_ROLE,
+              adminRoles: [...ADMIN_ROLES],
+            }),
           ],
           databaseHooks: {
             user: {
               create: {
                 after: async (user) => {
+                  // Betreiber gehören zu keiner Organisation: ohne Mitgliedschaft bleibt
+                  // activeOrganizationId leer und die Coach-Endpunkte weisen sie ab.
+                  // Für Coachs – auch für die vom Betreiber per admin.createUser
+                  // angelegten – entsteht die Organisation dagegen genau hier.
+                  if (isAdminRole((user as { role?: string | null }).role)) return;
+
                   const baseSlug = generateSlug(user.name ?? user.email);
                   const slug = await ensureUniqueSlug(baseSlug, db);
                   const orgId = generateId();

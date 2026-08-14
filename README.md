@@ -125,6 +125,61 @@ Zwei Eigenheiten, die kein Fehler sind:
 - Der Avatar-Upload braucht RustFS (`docker compose -f infra/docker-compose.dev.yml up -d`).
   Fehlt er, läuft der Seed trotzdem durch und weist darauf hin.
 
+### Betreiber-Account anlegen (`admin:create`)
+
+Ein Betreiber-Account ist ein regulärer better-auth-User mit der plattformweiten Rolle
+`admin` und **ohne Organisation** – dadurch weisen ihn alle Coach-Endpunkte ab, er kommt
+nur an die Admin-Endpunkte. Die Rolle lässt sich über die normale Registrierung nicht
+setzen (`user.role` ist im admin-Plugin `input: false`), deshalb gibt es dieses Skript.
+Hintergrund in [`doc/technisches-konzept.md`](doc/technisches-konzept.md) §7,
+Abschnitt „Betreiber-Zugang".
+
+**Lokal:**
+
+```bash
+pnpm --filter @hxroom/api admin:create --email betreiber@example.com --name "Vorname Nachname"
+```
+
+Das Skript legt den Account an, markiert die Adresse als verifiziert (ohne das greift
+`requireEmailVerification` und der Login schlägt fehl) und gibt ein generiertes Passwort
+**einmalig** aus. Login danach unter `http://admin.hxroom.localhost`.
+
+| Option | Bedeutung |
+|---|---|
+| `--email` | Pflicht. Wird normalisiert (lowercase, getrimmt). |
+| `--name` | Pflicht. Anzeigename. |
+| `--password` | Optional. Ohne Angabe wird eines generiert – die bessere Wahl, sonst landet das Passwort in der Shell-History. |
+| `--force` | Stuft auch einen Account hoch, der zu einer Organisation gehört. Siehe unten. |
+
+Der Lauf ist wiederholbar: existiert die Adresse bereits, wird nur die Rolle gesetzt statt
+ein zweiter Account angelegt. Gehört der Account allerdings zu einer Organisation, ist es
+ein Coach – dann bricht das Skript ab, statt ihn stillschweigend zum Betreiber zu machen
+und ihm seine Organisation samt Klientendaten anzuhängen. `--force` übergeht das.
+
+**Produktion**, Variante 1 – vom eigenen Rechner über den SSH-Tunnel (siehe nächster
+Abschnitt, `apps/api/.env.prod` zeigt durch den Tunnel auf Port `5433`):
+
+```bash
+# 1. SSH-Tunnel öffnen (Terminal offen lassen)
+ssh hxroom
+
+# 2. Skript mit Produktions-Env starten (neues Terminal)
+pnpm --filter @hxroom/api admin:create:prod --email betreiber@example.com --name "Vorname Nachname"
+```
+
+**Produktion**, Variante 2 – direkt auf dem Server. Das Image enthält nur `dist/` und die
+Produktions-Dependencies, also kein `tsx`; die kompilierte Datei wird direkt mit `node`
+aufgerufen, die Datenbank-Variablen liegen im Container bereits an:
+
+```bash
+ssh hxroom
+docker compose exec api node dist/db/create-admin.js \
+  --email betreiber@example.com --name "Vorname Nachname"
+```
+
+Login danach unter `https://admin.hxroom.de`. Das ausgegebene Passwort sollte nach dem
+ersten Login geändert werden.
+
 ### Produktionsdatenbank (Drizzle Studio)
 
 Zugriff über SSH-Port-Forwarding. Einmalig in `~/.ssh/config` eintragen:

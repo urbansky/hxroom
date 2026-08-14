@@ -11,6 +11,14 @@ export const user = pgTable('user', {
   image: text('image'),
   createdAt: timestamp('created_at').notNull(),
   updatedAt: timestamp('updated_at').notNull(),
+  // better-auth admin plugin. `role` ist die plattformweite Rolle ('user' für Coachs,
+  // 'admin' für Betreiber) und hat nichts mit member.role zu tun, das die Rolle
+  // innerhalb einer Organisation trägt. NULL wird vom Plugin wie defaultRole behandelt,
+  // Bestandsaccounts brauchen deshalb keine Datenmigration.
+  role: text('role'),
+  banned: boolean('banned').default(false),
+  banReason: text('ban_reason'),
+  banExpires: timestamp('ban_expires'),
 });
 
 export const session = pgTable('session', {
@@ -23,6 +31,9 @@ export const session = pgTable('session', {
   userAgent: text('user_agent'),
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   activeOrganizationId: text('active_organization_id'),
+  // better-auth admin plugin: gesetzt, solange ein Betreiber die Sitzung eines Coachs
+  // übernommen hat (Support-Zugang). Enthält die User-ID des Betreibers.
+  impersonatedBy: text('impersonated_by'),
 });
 
 export const account = pgTable('account', {

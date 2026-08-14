@@ -78,6 +78,13 @@
       "when": 1786594630001,
       "tag": "0010_nosy_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786701792034,
+      "tag": "0011_sparkling_stephen_strange",
+      "breakpoints": true
     }
   ]
 }

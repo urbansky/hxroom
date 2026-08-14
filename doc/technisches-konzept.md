@@ -282,10 +282,11 @@ Bei Aktivierung des englischen Auftritts: eigener Content unter `hxroom.io` (nic
 
 ## 7. Authentifizierung & Sessions (better-auth)
 
-better-auth übernimmt das gesamte Session-Management für **Coaches** (die einzigen User mit Account im System):
+better-auth übernimmt das gesamte Session-Management. Accounts im System haben ausschließlich **Coachs** und **Betreiber** – Klienten nie:
 
 ```
-Coach registriert sich → better-auth Session → JWT in HttpOnly Cookie
+Coach registriert sich  → better-auth Session → JWT in HttpOnly Cookie
+Betreiber (intern)      → better-auth Session mit user.role = 'admin'
 Klient → kein Account, kein Login → Zugang nur via signiertem Token im Buchungslink
 ```
 
@@ -295,6 +296,24 @@ Klient → kein Account, kein Login → Zugang nur via signiertem Token im Buchu
 2. **Zugang zum Warteraum** – am Tag der Sitzung berechtigt derselbe Link zum Betreten des Warteraums (`apps/videocall`) und zur Generierung eines LiveKit-Access-Tokens für den Call.
 
 Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist für den Warteraum-Zugang einmalig verwendbar (Invalidierung nach Join, gespeichert in `clientTokenUsedAt`). Die Bestätigung (`confirmedAt`) ist ein separates, frühes Ereignis und invalidiert den Link nicht – er bleibt bis zum Sitzungstag für den Warteraum-Zugang gültig.
+
+### Betreiber-Zugang (`admin.hxroom.de`)
+
+Der Zugang zum Betreiber-Backoffice läuft über dieselbe better-auth-Instanz wie der Coach-Login – kein zweites Auth-System, kein Shared-Account. Grundlage ist das **better-auth `admin`-Plugin**, das eine globale Rollenspalte `user.role` einführt (`'user'` für Coachs, `'admin'` für Betreiber). Sie ist unabhängig von `member.role`, das weiterhin die organisationsbezogene Rolle (`owner`) trägt.
+
+**Ein Betreiber ist Mitglied keiner Organisation.** Daraus folgt die Mandantentrennung ohne zusätzliche Prüfung: Ohne `member`-Eintrag bleibt `session.activeOrganizationId` leer, der `AuthGuard` setzt kein `req.organization`, und sämtliche Coach-Endpunkte antworten mit `401 No active organization`. Ein Betreiber kann Coach-Daten also nur über explizit dafür gebaute Admin-Endpunkte sehen, nie über die regulären Coach-APIs.
+
+| Anforderung (`funktionen/backoffice-betreiber.md`) | Umsetzung |
+|---|---|
+| 1.04 Coach manuell anlegen | `admin.createUser` – der bestehende `user.create`-Hook legt Organisation und `member(owner)` automatisch mit an. `emailVerified` muss dabei explizit gesetzt oder eine Verifizierungsmail ausgelöst werden, sonst greift `requireEmailVerification`. |
+| 1.05 Coach sperren / entsperren | `admin.banUser` / `unbanUser` – setzt `banned`, verwirft alle Sessions, blockt neue Logins; `banExpires` hebt die Sperre automatisch auf. |
+| 1.06 Coach löschen (DSGVO) | **Nicht** über `admin.removeUser` – siehe §17. Braucht einen eigenen Endpunkt, der die Organisation löscht und ein Löschprotokoll schreibt. |
+| 1.07 Impersonation | `admin.impersonateUser` – die erzeugte Session durchläuft den regulären `session.create`-Hook, `activeOrganizationId` wird also korrekt auf die Organisation des Coachs gesetzt. |
+| 7.04 Weitere Admin-Nutzer | Zusätzliche Rollen über `createAccessControl` und `adminRoles`, z. B. `'support'` mit eingeschränktem Rechteumfang. |
+
+Schema-seitig ergänzt das Plugin `user` um `role`, `banned`, `banReason`, `banExpires` und `session` um `impersonatedBy`. Da `apps/api/src/db/schema.ts` handgeschrieben ist, müssen diese Felder dort manuell nachgezogen und migriert werden.
+
+Serverseitig kommt zum bestehenden `AuthGuard` ein `AdminGuard`, der zusätzlich `session.user.role` gegen die Betreiber-Rollen prüft. Coach-Verwaltung, Sperren, Rollen und Impersonation liefert das Plugin unter `/api/auth/admin/*`; die fachlichen Auswertungen (MRR, Churn, Plattform-Metriken) bekommen ein eigenes NestJS-Admin-Modul hinter dem `AdminGuard`.
 
 ---
 
@@ -922,7 +941,7 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 - Klienten-Buchungstoken: HMAC-signiert, TTL, einmalig verwendbar
 - Kein Logging von E-Mail-Adressen oder Namen in Application Logs (nur IDs)
 - AVV automatisch bei Registrierung abgeschlossen
-- DSGVO-Löschfunktion: Cascade-Delete Coach → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`
+- DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.
 - Audioaufnahme / Transkription: aktive Klienten-Einwilligung pro Sitzung, dokumentiert mit Timestamp, IP und Version
 - Audio-Recordings werden nach erfolgreicher Transkription automatisch aus S3 gelöscht
 - PDF-Rechnungen und Datenexporte nur via signierte URLs mit kurzer TTL abrufbar

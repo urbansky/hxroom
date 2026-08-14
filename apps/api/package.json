@@ -12,6 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "dotenv -e .env -- tsx src/db/seed.ts",
+    "admin:create": "dotenv -e .env -- tsx src/db/create-admin.ts",
+    "admin:create:prod": "dotenv -e .env.prod -- tsx src/db/create-admin.ts",
     "db:studio": "drizzle-kit studio",
     "db:studio:prod": "dotenv -e .env.prod -- drizzle-kit studio",
     "email:dev": "email dev --dir src/mail/templates"
