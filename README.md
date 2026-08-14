@@ -92,9 +92,38 @@ pnpm db:migrate
 
 # Drizzle Studio (lokale DB)
 pnpm db:studio
+
+# Testdaten für die lokale Entwicklung anlegen
+pnpm db:seed
 ```
 
 Das Drizzle-Schema liegt in `apps/api/src/db/schema.ts`.
+
+### Testdaten (`pnpm db:seed`)
+
+Legt zwei Demo-Coachs an, damit die Coach-App nicht leer startet – Passwort jeweils
+`hxroom1234`:
+
+| Coach | Login | Buchungsseite | Datenlage |
+|---|---|---|---|
+| Anna Bergmann | `anna@hxroom.test` | `http://anna.hxroom.localhost` | 4 Angebote, 9 Zeitfenster, 8 Klienten, ~27 Termine |
+| Tobias Reinhardt | `tobias@hxroom.test` | `http://tobias.hxroom.localhost` | leer – für Empty-States und zum Prüfen der Mandantentrennung |
+
+Annas Termine verteilen sich bewusst auf Vergangenheit, laufende Woche und die nächsten
+vier Wochen und decken alle Status ab, sodass Wochenkalender, alle drei Agenda-Filter,
+Klientenliste und Klientenprofil gefüllt sind.
+
+Der Lauf ist wiederholbar: alle Datensätze tragen IDs mit dem Präfix `seed-`, und jeder
+Lauf löscht zuerst genau diese. Selbst angelegte Accounts bleiben unangetastet. Gegen eine
+nicht-lokale Umgebung verweigert das Skript den Dienst (Prüfung auf `BETTER_AUTH_URL` und
+`NODE_ENV`).
+
+Zwei Eigenheiten, die kein Fehler sind:
+
+- Die unbestätigte Buchung wird vom `BookingExpiryService` nach 30 Minuten automatisch
+  abgesagt. Für einen frischen „Wartet auf Bestätigung"-Zustand einfach erneut seeden.
+- Der Avatar-Upload braucht RustFS (`docker compose -f infra/docker-compose.dev.yml up -d`).
+  Fehlt er, läuft der Seed trotzdem durch und weist darauf hin.
 
 ### Produktionsdatenbank (Drizzle Studio)
 

@@ -11,6 +11,7 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed": "dotenv -e .env -- tsx src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "db:studio:prod": "dotenv -e .env.prod -- drizzle-kit studio",
     "email:dev": "email dev --dir src/mail/templates"
@@ -50,6 +51,7 @@
     "dotenv-cli": "^8.0.0",
     "drizzle-kit": "0.31.10",
     "react-email": "^6.9.1",
+    "tsx": "4.22.3",
     "typescript": "^5.7.0",
     "unplugin-swc": "^1.5.9",
     "vite-tsconfig-paths": "^6.1.1",
