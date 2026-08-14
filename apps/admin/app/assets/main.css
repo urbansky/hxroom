@@ -1,0 +1,36 @@
+:root {
+  --ui-bg: rgb(250 248 244 / 0.8);
+}
+
+.admin-sidebar {
+  background-color: #faf8f4;
+}
+
+.admin-sidebar .sidebar-nav [data-slot="label"] {
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ui-text-highlighted);
+  opacity: 0.5;
+}
+
+.admin-sidebar .sidebar-nav [data-slot="link"] {
+  color: var(--ui-text-highlighted);
+}
+
+.admin-sidebar .sidebar-nav [data-slot="link"].text-primary {
+  color: var(--ui-primary);
+}
+
+.admin-sidebar .sidebar-nav [data-slot="link"].text-primary [data-slot="linkLabel"] {
+  color: var(--ui-text-highlighted);
+}
+
+.admin-sidebar .sidebar-nav [data-slot="linkLeadingIcon"] {
+  color: var(--ui-text-muted);
+}
+
+.admin-sidebar .sidebar-nav [data-slot="linkLeadingIcon"].text-primary {
+  color: var(--ui-primary);
+}

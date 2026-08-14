@@ -243,7 +243,7 @@ hxroom/
 | Bereich | Technologie |
 |---|---|
 | Backend | NestJS, PostgreSQL, Drizzle ORM |
-| Auth | better-auth + Organization Plugin |
+| Auth | better-auth + Organization- und Admin-Plugin |
 | Frontend | Vue 3, Nuxt 4, Nuxt UI v4, Pinia |
 | Video | LiveKit (self-hosted) |
 | Speech2Text | Whisper / faster-whisper (self-hosted) |

@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# nuxt generate legt neben .output/ einen dist-Symlink an – ohne Slash nicht von `dist/` erfasst
+dist
 .output/
 .nuxt/
 .data/

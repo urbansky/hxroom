@@ -8,6 +8,7 @@ on:
       - "apps/coach/**"
       - "apps/bookingpage/**"
       - "apps/landing/**"
+      - "apps/admin/**"
       - "packages/ui/**"
       - "packages/shared/**"
       - "pnpm-lock.yaml"
@@ -26,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [api, coach, bookingpage, landing]
+        app: [api, coach, bookingpage, landing, admin]
 
     steps:
       - name: Checkout
