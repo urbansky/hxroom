@@ -29,6 +29,15 @@ const emailPending = ref(false)
 const emailError = ref<string | null>(null)
 const emailRequestedFor = ref<string | null>(null)
 
+// Merkt sich die angefragte Adresse über den Umweg durchs Postfach hinweg.
+//
+// Nötig, weil beide Bestätigungsschritte auf derselben Rück-URL landen: better-auth reicht
+// die callbackURL aus dem Antrag unverändert an den zweiten Schritt weiter, an der Query
+// sind die beiden also nicht zu unterscheiden. Der Vergleich mit der Session sagt dagegen
+// eindeutig, ob der Wechsel schon vollzogen ist – nach Schritt 1 steht dort noch die alte
+// Adresse, weil better-auth sie erst mit dem Klick aus dem neuen Postfach umstellt.
+const pendingEmail = useCookie<string | null>('account-pending-email', { default: () => null })
+
 async function onSubmitEmail(event: FormSubmitEvent<EmailSchema>) {
   emailError.value = null
   emailRequestedFor.value = null
@@ -42,6 +51,7 @@ async function onSubmitEmail(event: FormSubmitEvent<EmailSchema>) {
       emailError.value = mapAuthError(error, 'Die E-Mail-Adresse konnte nicht geändert werden.')
     } else {
       emailRequestedFor.value = event.data.newEmail
+      pendingEmail.value = event.data.newEmail
       emailForm.newEmail = ''
     }
   } finally {
@@ -49,9 +59,25 @@ async function onSubmitEmail(event: FormSubmitEvent<EmailSchema>) {
   }
 }
 
-// Rückkehr vom Bestätigungslink: die Session trägt dann schon die neue Adresse.
+// Rückkehr von einem der beiden Bestätigungslinks.
 const route = useRoute()
-const emailChanged = computed(() => route.query['email-changed'] === 'true')
+
+type EmailChangeState =
+  | 'done'      // Session trägt die angefragte Adresse – der Wechsel ist durch
+  | 'approved'  // erst freigegeben, die Bestätigung aus dem neuen Postfach fehlt noch
+  | 'unknown'   // ohne gemerkte Adresse (Link in einem anderen Browser geöffnet)
+
+const emailChangeState = computed<EmailChangeState | null>(() => {
+  if (route.query['email-changed'] !== 'true') return null
+  if (!pendingEmail.value) return 'unknown'
+  return currentEmail.value === pendingEmail.value ? 'done' : 'approved'
+})
+
+// Aufräumen, sobald der Wechsel durch ist – sonst deutet ein liegengebliebener Wert einen
+// späteren Besuch fälschlich als offenen Wechsel.
+watch(emailChangeState, (state) => {
+  if (state === 'done') pendingEmail.value = null
+}, { immediate: true })
 
 // ─── Passwort ──────────────────────────────────────────────────────────────────────────
 const passwordSchema = z.object({
@@ -160,12 +186,50 @@ async function revokeDeletion() {
     </div>
 
     <UAlert
-      v-if="emailChanged"
+      v-if="emailChangeState === 'done'"
       icon="i-lucide-check-circle"
       color="success"
       variant="soft"
       title="E-Mail-Adresse geändert"
       description="Du meldest dich ab jetzt mit deiner neuen Adresse an."
+    />
+
+    <!--
+      Nach dem ersten Klick ist der Wechsel freigegeben, aber noch nicht vollzogen – unten
+      steht weiterhin die bisherige Adresse. Ohne diesen Hinweis sieht das nach einem Fehler
+      aus, denn der Coach hat gerade eine Bestätigung angeklickt.
+    -->
+    <UAlert
+      v-else-if="emailChangeState === 'approved'"
+      icon="i-lucide-mail-check"
+      color="info"
+      variant="soft"
+      title="Freigabe erhalten – ein Schritt fehlt noch"
+    >
+      <template #description>
+        <div class="flex flex-col gap-2">
+          <p>
+            Wir haben eine Bestätigung an <strong>{{ pendingEmail }}</strong> geschickt.
+            Öffne dieses Postfach und klicke den Link darin.
+          </p>
+          <p class="text-dimmed">
+            Bis dahin bleibt deine bisherige Adresse in Kraft – deshalb steht sie unten noch.
+          </p>
+        </div>
+      </template>
+    </UAlert>
+
+    <!--
+      Link in einem anderen Browser geöffnet: welcher der beiden Schritte das war, ist hier
+      nicht zu erkennen. Statt zu raten benennt der Text, woran der Coach es selbst sieht.
+    -->
+    <UAlert
+      v-else-if="emailChangeState === 'unknown'"
+      icon="i-lucide-mail-check"
+      color="info"
+      variant="soft"
+      title="Bestätigung erhalten"
+      description="Deine aktuelle Anmelde-Adresse steht unten. Ist das noch die bisherige, fehlt der Klick auf den Link, den wir an die neue Adresse geschickt haben."
     />
 
     <!-- E-Mail-Adresse -->
@@ -183,14 +247,36 @@ async function revokeDeletion() {
         />
       </div>
 
+      <!--
+        Der Text darf keine Mail zusichern: better-auth antwortet auch dann mit Erfolg, wenn
+        die Zieladresse schon vergeben ist, und verschickt in dem Fall nichts (Schutz davor,
+        dass sich registrierte Adressen durchprobieren lassen). Statt den ganzen Hinweis
+        deswegen in einen Konditionalsatz zu packen, steht hier die Handlungsanweisung vorn
+        und der Sonderfall als letzter Satz – der sagt dem Coach zugleich, was ausbleibende
+        Post bedeutet.
+      -->
       <UAlert
         v-if="emailRequestedFor"
         icon="i-lucide-mail-check"
         color="info"
         variant="soft"
-        title="Freigabe angefordert"
-        :description="`Wenn ${emailRequestedFor} verwendet werden kann, liegt jetzt eine Freigabe-Mail in ${currentEmail}. Nach deiner Freigabe schicken wir eine Bestätigung an die neue Adresse – erst danach ist der Wechsel wirksam.`"
-      />
+        title="Bitte gib den Wechsel frei"
+      >
+        <template #description>
+          <div class="flex flex-col gap-2">
+            <p>
+              Öffne dein Postfach <strong>{{ currentEmail }}</strong> und gib den Wechsel dort frei.
+            </p>
+            <p>
+              Danach schicken wir eine Bestätigung an <strong>{{ emailRequestedFor }}</strong> –
+              erst mit dem Klick darin ist die Änderung wirksam.
+            </p>
+            <p class="text-dimmed">
+              Kommt keine Mail an, wird {{ emailRequestedFor }} vermutlich schon verwendet.
+            </p>
+          </div>
+        </template>
+      </UAlert>
       <UAlert
         v-if="emailError"
         icon="i-lucide-circle-x"
