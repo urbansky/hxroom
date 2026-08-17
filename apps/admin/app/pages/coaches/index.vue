@@ -95,7 +95,13 @@ function formatDate(iso: string) {
   return dateFormatter.format(new Date(iso))
 }
 
-const { public: { rootDomain } } = useRuntimeConfig()
+const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
+
+// Buchungsseite des Coachs. Gleiche Ableitung wie in apps/coach: das Protokoll steckt
+// nicht in rootDomain, damit lokal (hxroom.localhost) kein https-Link entsteht.
+function bookingPageUrl(subdomain: string) {
+  return `${rootDomainHttps ? 'https' : 'http'}://${subdomain}.${rootDomain}`
+}
 
 const hasFilter = computed(() => Boolean(search.value) || status.value !== 'all')
 
@@ -192,10 +198,23 @@ const columns: TableColumn<CoachListItem>[] = [
             </div>
           </template>
 
+          <!-- Öffnet die Buchungsseite in einem neuen Tab: Der Betreiber prüft sie
+               stichprobenartig und soll dabei die Liste nicht verlieren. rel="noopener",
+               weil die Inhalte dort vom jeweiligen Coach kommen. -->
           <template #subdomain-cell="{ row }">
-            <span v-if="row.original.subdomain" class="text-sm text-muted">
-              {{ row.original.subdomain }}.{{ rootDomain }}
-            </span>
+            <NuxtLink
+              v-if="row.original.subdomain"
+              :to="bookingPageUrl(row.original.subdomain)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group inline-flex items-center gap-1 text-sm text-muted hover:text-primary transition-colors"
+            >
+              <span class="group-hover:underline">{{ row.original.subdomain }}.{{ rootDomain }}</span>
+              <UIcon
+                name="i-lucide-external-link"
+                class="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+              />
+            </NuxtLink>
             <span v-else class="text-sm text-dimmed">—</span>
           </template>
 

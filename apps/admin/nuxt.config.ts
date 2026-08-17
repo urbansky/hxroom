@@ -14,9 +14,12 @@ export default defineNuxtConfig({
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1',
       authUrl: process.env.NUXT_PUBLIC_AUTH_URL ?? 'http://localhost:3000',
-      // Nur zur Anzeige: Aus dem Slug eines Coachs wird in der Liste die vollständige
-      // Buchungs-Subdomain. Kein API-Ziel, deshalb ohne Bezug zum Admin-API-Host.
+      // Aus dem Slug eines Coachs wird in der Liste der Link auf seine Buchungsseite.
+      // Kein API-Ziel, deshalb ohne Bezug zum Admin-API-Host.
       rootDomain: process.env.NUXT_PUBLIC_ROOT_DOMAIN ?? 'hxroom.de',
+      // Lokal ohne TLS ('false'), damit der Link nicht auf https://…hxroom.localhost
+      // zeigt. Gleiche Schreibweise wie in apps/coach.
+      rootDomainHttps: process.env.NUXT_PUBLIC_ROOT_DOMAIN_HTTPS !== 'false',
     },
   },
 

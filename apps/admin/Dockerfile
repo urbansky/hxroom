@@ -24,11 +24,13 @@ FROM deps AS build
 # host-gebunden, so bleiben Coach- und Betreiber-Session im selben Browser getrennt.
 ARG NUXT_PUBLIC_API_URL=https://admin-api.hxroom.de/api/v1
 ARG NUXT_PUBLIC_AUTH_URL=https://admin-api.hxroom.de
-# Basisdomain der Coach-Buchungsseiten, nur zur Anzeige in der Coach-Liste.
+# Basisdomain der Coach-Buchungsseiten – die Coach-Liste verlinkt darauf.
 ARG NUXT_PUBLIC_ROOT_DOMAIN=hxroom.de
+ARG NUXT_PUBLIC_ROOT_DOMAIN_HTTPS=true
 ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 ENV NUXT_PUBLIC_AUTH_URL=$NUXT_PUBLIC_AUTH_URL
 ENV NUXT_PUBLIC_ROOT_DOMAIN=$NUXT_PUBLIC_ROOT_DOMAIN
+ENV NUXT_PUBLIC_ROOT_DOMAIN_HTTPS=$NUXT_PUBLIC_ROOT_DOMAIN_HTTPS
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
