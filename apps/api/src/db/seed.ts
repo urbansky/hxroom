@@ -17,6 +17,7 @@ import { and, count, inArray, like, notLike } from 'drizzle-orm';
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { normalizeEmail } from '../clients/normalize-email';
+import { DELETION_GRACE_DAYS } from '../account/deletion.constants';
 import * as schema from './schema';
 import { planBookings } from './seed/booking-plan';
 import { uploadDemoAvatar } from './seed/avatar';
@@ -165,12 +166,32 @@ async function seedCoach(
     // databaseHook user.create.after (auth.module.ts); ein direkter Insert umgeht diesen
     // Hook, deshalb hier von Hand – mit festem Slug statt generiertem, damit die
     // Buchungsseite immer unter derselben Subdomain erreichbar ist.
+    // Läuft für diesen Coach eine Löschung, wird das Fälligkeitsdatum gleich mitgesetzt –
+    // dadurch ist die Buchungsseite offline (OrganizationService.findBySlug) und das
+    // Warnbanner im Backoffice sichtbar.
+    const deletionScheduledFor = coach.deletionInDays === null
+      ? null
+      : new Date(now.getTime() + coach.deletionInDays * 24 * 60 * 60 * 1000);
+
     await tx.insert(schema.organization).values({
       id: organizationId,
       name: coach.name,
       slug: coach.slug,
       createdAt: now,
+      deletionScheduledFor,
     });
+
+    if (deletionScheduledFor) {
+      await tx.insert(schema.coachDeletions).values({
+        id: `${SEED_ID_PREFIX}deletion-${coach.slug}`,
+        userId,
+        organizationId,
+        // Antragszeitpunkt rückwärts aus dem Stichtag, damit die 30-Tage-Frist stimmt.
+        requestedAt: new Date(deletionScheduledFor.getTime() - DELETION_GRACE_DAYS * 24 * 60 * 60 * 1000),
+        requestedBy: 'coach',
+        scheduledFor: deletionScheduledFor,
+      });
+    }
 
     await tx.insert(schema.member).values({
       id: `${SEED_ID_PREFIX}member-${coach.slug}`,
@@ -305,11 +326,20 @@ function report(summaries: CoachSummary[], avatarWarning: string | null, realUse
   console.log('');
 
   for (const s of summaries) {
-    const label = s.coach.populated ? 'voll ausgestattet' : 'leer, für Empty-States';
+    const label = s.coach.deletionInDays !== null
+      ? `Löschung läuft, in ${s.coach.deletionInDays} Tagen`
+      : s.coach.populated ? 'voll ausgestattet' : 'leer, für Empty-States';
     console.log(`${s.coach.name} (${label})`);
     console.log(`  Login          ${s.coach.email} / ${SEED_PASSWORD}`);
     console.log(`  Backoffice     ${coachApp}`);
-    console.log(`  Buchungsseite  ${https ? 'https' : 'http'}://${s.coach.slug}.${rootDomain}`);
+    const bookingPageUrl = `${https ? 'https' : 'http'}://${s.coach.slug}.${rootDomain}`;
+    // Bei laufender Löschung liefert findBySlug bewusst 404 – ohne diesen Hinweis sieht die
+    // URL im Report nach einem Fehler aus.
+    console.log(
+      s.coach.deletionInDays !== null
+        ? `  Buchungsseite  ${bookingPageUrl} (offline, wegen laufender Löschung)`
+        : `  Buchungsseite  ${bookingPageUrl}`,
+    );
     if (s.coach.populated) {
       console.log(
         `  ${s.offers} Angebote · ${s.clients} Klienten · ${s.bookings} Buchungen`
@@ -364,9 +394,12 @@ async function main(): Promise<void> {
     await assertNoForeignConflicts(db);
 
     // Reset. ON DELETE CASCADE räumt member, account, session, booking_page, offers,
-    // clients, bookings, availability_slots und availability_settings mit weg – deshalb
-    // reichen diese zwei Löschungen.
+    // clients, bookings, availability_slots und availability_settings mit weg.
+    // coach_deletions hängt bewusst an keinem Fremdschlüssel (das Löschprotokoll soll die
+    // Löschung überleben, siehe schema.ts) und muss deshalb von Hand mit weg – sonst
+    // sammeln sich bei jedem Seed-Lauf verwaiste Protokollzeilen an.
     await db.transaction(async (tx) => {
+      await tx.delete(schema.coachDeletions).where(like(schema.coachDeletions.userId, LIKE_SEED));
       await tx.delete(schema.user).where(like(schema.user.id, LIKE_SEED));
       await tx.delete(schema.organization).where(like(schema.organization.id, LIKE_SEED));
     });

@@ -8,14 +8,21 @@ import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS, type DateRange } f
 export class OrganizationService {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
 
+  /**
+   * Auflösung der Klienten-Subdomain. Einziger Zugang zur öffentlichen Buchungsseite und
+   * damit die Stelle, an der eine laufende Kontolöschung sie abschaltet – die vier Aufrufer
+   * (Profil, Angebotsliste, Slot-Abfrage in organization.controller.ts sowie die
+   * Buchungserstellung in BookingsService.create) sind damit alle gesperrt.
+   */
   async findBySlug(slug: string) {
     const [org] = await this.db
       .select({
-        id:              organization.id,
-        name:            organization.name,
-        slug:            organization.slug,
-        logo:            organization.logo,
-        avatarUpdatedAt: bookingPage.avatarUpdatedAt,
+        id:                   organization.id,
+        name:                 organization.name,
+        slug:                 organization.slug,
+        logo:                 organization.logo,
+        avatarUpdatedAt:      bookingPage.avatarUpdatedAt,
+        deletionScheduledFor: organization.deletionScheduledFor,
       })
       .from(organization)
       .leftJoin(bookingPage, eq(bookingPage.organizationId, organization.id))
@@ -23,6 +30,16 @@ export class OrganizationService {
       .limit(1);
 
     if (!org) {
+      throw new NotFoundException(`No coach found for slug "${slug}"`);
+    }
+
+    // Während der Widerrufsfrist ist die Seite offline: neue Klientenbindungen für ein Konto
+    // einzugehen, das in Auflösung ist, wäre gegenüber beiden Seiten unfair. Bewusst dieselbe
+    // Nicht-gefunden-Antwort wie bei einem unbekannten Slug statt eines eigenen Zustands – die
+    // Buchungsseite verrät Klienten so nichts über die Lage des Coachs. Bereits bestehende
+    // Buchungen bleiben gültig und bestätigbar (BookingsService.confirm geht über findById);
+    // abgesagt werden sie erst bei der Ausführung durch den DeletionExecutorService.
+    if (org.deletionScheduledFor) {
       throw new NotFoundException(`No coach found for slug "${slug}"`);
     }
 

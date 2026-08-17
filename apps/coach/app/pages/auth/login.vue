@@ -27,24 +27,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       password: event.data.password,
     })
     if (error) {
-      errorMessage.value = mapAuthError(error.message)
+      errorMessage.value = mapAuthError(error, 'Anmeldung fehlgeschlagen.')
     } else {
       await navigateTo('/')
     }
   } finally {
     pending.value = false
   }
-}
-
-function mapAuthError(msg?: string): string {
-  if (!msg) return 'Anmeldung fehlgeschlagen.'
-  if (msg.toLowerCase().includes('email') && msg.toLowerCase().includes('verif')) {
-    return 'Bitte bestätige zuerst deine E-Mail-Adresse.'
-  }
-  if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
-    return 'E-Mail oder Passwort ist falsch.'
-  }
-  return 'Anmeldung fehlgeschlagen.'
 }
 </script>
 
@@ -93,12 +82,19 @@ function mapAuthError(msg?: string): string {
           @submit="onSubmit"
         >
           <template #footer>
-            <p class="text-center text-sm text-(--ui-text-muted)">
-              Noch kein Konto?
-              <NuxtLink to="/auth/register" class="text-primary font-medium hover:underline">
-                Registrieren
-              </NuxtLink>
-            </p>
+            <div class="flex flex-col gap-2 text-center text-sm text-(--ui-text-muted)">
+              <p>
+                <NuxtLink to="/auth/forgot-password" class="text-primary font-medium hover:underline">
+                  Passwort vergessen?
+                </NuxtLink>
+              </p>
+              <p>
+                Noch kein Konto?
+                <NuxtLink to="/auth/register" class="text-primary font-medium hover:underline">
+                  Registrieren
+                </NuxtLink>
+              </p>
+            </div>
           </template>
         </UAuthForm>
       </div>

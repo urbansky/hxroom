@@ -257,6 +257,25 @@ export const clientDetailSchema = clientResponseSchema.extend({
 });
 export type ClientDetail = z.infer<typeof clientDetailSchema>;
 
+// Kontolöschung durch den Coach selbst (Account-Seite). Läuft über eine Frist mit
+// Widerrufsmöglichkeit statt als Sofort-Löschung – siehe doc/legal.md (30 Tage
+// Aufbewahrung) und doc/technisches-konzept.md §17.
+//
+// Das Passwort ist Pflicht: die Löschung ist die einzige irreversible Aktion im
+// Backoffice, eine offene Session allein soll sie nicht auslösen können.
+export const requestAccountDeletionSchema = z.object({
+  password: z.string().min(1, 'Passwort ist erforderlich'),
+});
+export type RequestAccountDeletionDto = z.infer<typeof requestAccountDeletionSchema>;
+
+// `scheduledFor` = Zeitpunkt der endgültigen Löschung, NULL wenn keine läuft. Bewusst nur
+// dieses eine Feld: die Frist wird beim Antrag einmal gerechnet und danach überall nur
+// gelesen, damit Mailtext, Banner und Cron nicht je eigene Rechnungen anstellen.
+export const accountDeletionStatusSchema = z.object({
+  scheduledFor: z.string().nullable(),
+});
+export type AccountDeletionStatus = z.infer<typeof accountDeletionStatusSchema>;
+
 // Betreiber-Backoffice: Coach-Verwaltung (doc/funktionen/backoffice-betreiber.md, Abschnitt 1).
 // Bewusst eigene API-Endpunkte statt der better-auth admin-Plugin-Funktionen: die Liste
 // verbindet user, member, organization und Kennzahlen aus clients/bookings – eine Projektion,

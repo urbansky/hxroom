@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -36,6 +37,43 @@ export class S3Service {
 
   async deleteObject(key: string): Promise<void> {
     await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+  }
+
+  /**
+   * Löscht alle Objekte unterhalb eines Prefixes und gibt die Anzahl zurück.
+   *
+   * Gebraucht für die Kontolöschung: laut doc/s3-verzeichnisschema.md ist das oberste
+   * Pfadsegment die Coach-ID, damit dort ein einziger Prefix-Delete genügt. Ein gezieltes
+   * deleteObject(coachAvatarKey(...)) würde heute zwar reichen – es gibt aktuell nur den
+   * Avatar –, wäre aber ab dem ersten weiteren Objekttyp stillschweigend unvollständig.
+   *
+   * Bewusst einzelne DeleteObject-Aufrufe statt DeleteObjects (Batch): der Batch-Endpunkt
+   * ist bei RustFS, dem Dev-Backend laut doc/technisches-konzept.md §17, nicht zugesichert.
+   * Bei einer Handvoll Objekten pro Coach ist der Unterschied bedeutungslos.
+   */
+  async deletePrefix(prefix: string): Promise<number> {
+    let continuationToken: string | undefined;
+    let deleted = 0;
+
+    do {
+      const listed = await this.s3.send(new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      }));
+
+      for (const object of listed.Contents ?? []) {
+        if (!object.Key) continue;
+        await this.deleteObject(object.Key);
+        deleted++;
+      }
+
+      // IsTruncated statt NextContinuationToken prüfen: bei der letzten Seite fehlt das
+      // Token, und eine Endlosschleife wäre hier besonders unangenehm.
+      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+    } while (continuationToken);
+
+    return deleted;
   }
 }
 

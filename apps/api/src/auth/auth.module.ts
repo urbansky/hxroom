@@ -8,6 +8,9 @@ import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { MailModule } from '../mail/mail.module';
 import { MailService } from '../mail/mail.service';
 import { renderEmailVerificationEmail } from '../mail/templates/coach/email-verification';
+import { renderEmailChangeApprovalEmail } from '../mail/templates/coach/email-change-approval';
+import { renderEmailChangeVerificationEmail } from '../mail/templates/coach/email-change-verification';
+import { renderPasswordResetEmail } from '../mail/templates/coach/password-reset';
 import * as schema from '../db/schema';
 import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
@@ -99,16 +102,66 @@ export type Auth = ReturnType<typeof betterAuth>;
           trustedOrigins: config.get<string>('CORS_ORIGINS')
             ? config.get<string>('CORS_ORIGINS')!.split(',').map((o) => o.trim())
             : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+          // Kontolöschung läuft NICHT über better-auths user.deleteUser: das löscht sofort
+          // die user-Zeile, und via Cascade nur session/account/member/invitation. Die
+          // Organisation hat keinen Fremdschlüssel auf user, also blieben Klienten,
+          // Buchungen, Angebote und Buchungsseite verwaist zurück – genau davor warnt
+          // doc/technisches-konzept.md §17. Zuständig ist stattdessen das account-Modul,
+          // das über die Organisation löscht und ein Protokoll schreibt.
+          user: {
+            changeEmail: {
+              enabled: true,
+              // Schritt 1 von 2: Freigabe durch die bisherige Adresse. Schritt 2 löst
+              // better-auth selbst über sendVerificationEmail unten aus.
+              sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+                await mail.send({
+                  to: { email: user.email },
+                  subject: 'Änderung deiner E-Mail-Adresse freigeben – HxRoom',
+                  htmlContent: await renderEmailChangeApprovalEmail({
+                    name: user.name,
+                    newEmail,
+                    approveUrl: url,
+                  }),
+                });
+              },
+            },
+          },
           emailAndPassword: {
             enabled: true,
             requireEmailVerification: true,
-          },
-          emailVerification: {
-            sendVerificationEmail: async ({ user, url }) => {
+            // Wer sein Passwort zurücksetzt, hatte es womöglich nicht mehr allein: bestehende
+            // Sitzungen fliegen deshalb raus.
+            revokeSessionsOnPasswordReset: true,
+            sendResetPassword: async ({ user, url }) => {
               await mail.send({
                 to: { email: user.email },
-                subject: 'E-Mail-Adresse bestätigen – HxRoom',
-                htmlContent: await renderEmailVerificationEmail({ name: user.name, verifyUrl: url }),
+                subject: 'Passwort zurücksetzen – HxRoom',
+                htmlContent: await renderPasswordResetEmail({ name: user.name, resetUrl: url }),
+              });
+            },
+          },
+          emailVerification: {
+            // Dieser Handler bedient zwei verschiedene Anlässe, weil better-auth ihn auch für
+            // Schritt 2 des E-Mail-Wechsels benutzt – ohne einen Marker mitzuliefern.
+            // Unterscheidungsmerkmal: beim Wechsel steht in `user.email` schon die neue
+            // Adresse, während in der Datenbank noch die alte liegt. Ohne die Prüfung bekäme
+            // ein langjähriger Coach beim Adresswechsel ein "Willkommen bei HxRoom".
+            sendVerificationEmail: async ({ user, url }) => {
+              const [stored] = await db
+                .select({ email: schema.user.email })
+                .from(schema.user)
+                .where(eq(schema.user.id, user.id))
+                .limit(1);
+              const isEmailChange = !!stored && stored.email !== user.email;
+
+              await mail.send({
+                to: { email: user.email },
+                subject: isEmailChange
+                  ? 'Neue E-Mail-Adresse bestätigen – HxRoom'
+                  : 'E-Mail-Adresse bestätigen – HxRoom',
+                htmlContent: isEmailChange
+                  ? await renderEmailChangeVerificationEmail({ name: user.name, verifyUrl: url })
+                  : await renderEmailVerificationEmail({ name: user.name, verifyUrl: url }),
               });
             },
           },

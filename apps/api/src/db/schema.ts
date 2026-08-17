@@ -69,6 +69,18 @@ export const organization = pgTable('organization', {
   logo: text('logo'),
   createdAt: timestamp('created_at').notNull(),
   metadata: text('metadata'),
+  // Läuft eine Kontolöschung, steht hier der Zeitpunkt, ab dem der Cron sie ausführt
+  // (30 Tage nach dem Antrag, siehe doc/legal.md); NULL = keine Löschung beantragt.
+  //
+  // Bewusst an der Organisation und nicht am User: die Sperre der öffentlichen
+  // Buchungsseite hängt an OrganizationService.findBySlug und käme sonst nur über zwei
+  // Rückwärts-Joins via `member` an das Flag – genau die Richtung, die
+  // doc/technisches-konzept.md §17 als Fehlerquelle beschreibt. Außerdem wäre bei
+  // mehreren Owner-Membern (Studio-Plan) nicht definiert, wessen Flag gilt.
+  //
+  // Gespeichert wird das Fälligkeitsdatum, nicht der Antragszeitpunkt: Cron-Filter,
+  // Mailtext und Banner lesen damit denselben Wert, statt die Frist je einzeln zu rechnen.
+  deletionScheduledFor: timestamp('deletion_scheduled_for'),
 });
 
 export const member = pgTable('member', {
@@ -208,3 +220,38 @@ export const availabilitySettings = pgTable('availability_settings', {
   createdAt:          timestamp('created_at').notNull().defaultNow(),
   updatedAt:          timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
+
+// Löschprotokoll für Coach-Konten (doc/technisches-konzept.md §7, Funktion 1.06: die
+// DSGVO-Löschung braucht einen Nachweis, dass und was gelöscht wurde).
+//
+// Der Name ist bewusst nicht `account_deletions`: `account` ist in diesem Schema die
+// better-auth-Tabelle der Login-Provider, gemeint ist hier aber der Coach.
+//
+// `userId` und `organizationId` haben absichtlich KEIN references(): mit einem
+// Cascade-Fremdschlüssel würde das Protokoll genau in dem Moment mitgelöscht, in dem es
+// die Löschung belegen soll. Aus demselben Grund stehen hier nur IDs – keine Namen, keine
+// E-Mail-Adressen. Das Protokoll ist damit selbst frei von personenbezogenen Daten und
+// darf dauerhaft bleiben.
+export const coachDeletions = pgTable('coach_deletions', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:         text('user_id').notNull(),
+  organizationId: text('organization_id').notNull(),
+  requestedAt:    timestamp('requested_at').notNull().defaultNow(),
+  // 'coach' = Selbstlöschung über die Account-Seite, 'operator' = Löschung durch den
+  // Betreiber. Der Betreiber-Weg existiert noch nicht, der Wert ist für ihn vorgesehen.
+  requestedBy:    text('requested_by').notNull(),
+  scheduledFor:   timestamp('scheduled_for').notNull(),
+  // Gesetzt, sobald die Erinnerungsmail raus ist – sonst würde der Reminder-Cron sie in
+  // den letzten Tagen vor der Ausführung täglich erneut schicken.
+  reminderSentAt: timestamp('reminder_sent_at'),
+  revokedAt:      timestamp('revoked_at'),
+  executedAt:     timestamp('executed_at'),
+  // Was tatsächlich gelöscht wurde, als Anzahl je Tabelle: { clients, bookings, offers }.
+  deletedCounts:  jsonb('deleted_counts').$type<DeletedCounts>(),
+});
+
+export interface DeletedCounts {
+  clients:  number;
+  bookings: number;
+  offers:   number;
+}

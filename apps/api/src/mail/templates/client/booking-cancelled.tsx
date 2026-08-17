@@ -9,10 +9,17 @@ interface BookingCancelledEmailProps {
   dayTimeLabel: string;
   /** Optionaler Grund des Coachs – wird nur angezeigt, wenn er einen angegeben hat. */
   reason?: string | null;
-  bookingPageUrl: string;
+  /**
+   * Link zum Neubuchen. `null`, wenn es keine Buchungsseite mehr gibt – so ist es bei der
+   * Absage im Rahmen einer Kontolöschung. Ein Button auf eine abgeschaltete Subdomain würde
+   * den Klienten sonst ins Leere schicken.
+   */
+  bookingPageUrl: string | null;
 }
 
-// Geht raus, wenn der Coach einen Termin im Backoffice absagt (doc/funktionen/backoffice-coach.md 2.06).
+// Geht raus, wenn der Coach einen Termin im Backoffice absagt
+// (doc/funktionen/backoffice-coach.md 2.06) oder wenn sein Konto gelöscht wird und noch
+// Termine offen sind (DeletionExecutorService).
 export default function BookingCancelledEmail({ clientName, coachName, offerName, dayTimeLabel, reason, bookingPageUrl }: BookingCancelledEmailProps) {
   return (
     <MailLayout preview={`Dein Termin am ${dayTimeLabel} wurde abgesagt`}>
@@ -41,18 +48,27 @@ export default function BookingCancelledEmail({ clientName, coachName, offerName
         </>
       ) : null}
 
-      <Text style={{ margin: '0 0 24px', color: '#555', lineHeight: 1.65, fontSize: 15 }}>
-        Du kannst jederzeit einen neuen Termin buchen.
-      </Text>
-      <Button
-        href={bookingPageUrl}
-        style={{ backgroundColor: '#8B9E8A', color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 6, fontWeight: 600, fontSize: 15 }}
-      >
-        Neuen Termin buchen
-      </Button>
-      <Text style={{ margin: '32px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
-        Du hast eine Frage? Antworte einfach auf diese E-Mail – sie geht direkt an {coachName}.
-      </Text>
+      {bookingPageUrl ? (
+        <>
+          <Text style={{ margin: '0 0 24px', color: '#555', lineHeight: 1.65, fontSize: 15 }}>
+            Du kannst jederzeit einen neuen Termin buchen.
+          </Text>
+          <Button
+            href={bookingPageUrl}
+            style={{ backgroundColor: '#8B9E8A', color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 6, fontWeight: 600, fontSize: 15 }}
+          >
+            Neuen Termin buchen
+          </Button>
+          <Text style={{ margin: '32px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
+            Du hast eine Frage? Antworte einfach auf diese E-Mail – sie geht direkt an {coachName}.
+          </Text>
+        </>
+      ) : (
+        <Text style={{ margin: '0 0 24px', color: '#555', lineHeight: 1.65, fontSize: 15 }}>
+          Eine Neubuchung über HxRoom ist nicht mehr möglich. Wende dich für weitere Termine
+          bitte direkt an {coachName}.
+        </Text>
+      )}
     </MailLayout>
   );
 }

@@ -215,6 +215,13 @@ export interface DemoCoach {
   bookingPage: { tagline: string; bio: string; ctaButton: string; ctaIntro: string } | null;
   /** false = frisch registrierter Coach ohne Daten, für Empty-States. */
   populated: boolean;
+  /**
+   * Tage bis zur vorgemerkten Kontolöschung, oder null für keine laufende Löschung.
+   *
+   * Ohne so einen Coach sind Warnbanner, Widerruf und die offline geschaltete Buchungsseite
+   * nur über Handarbeit in der Datenbank zu sehen.
+   */
+  deletionInDays: number | null;
 }
 
 export const DEMO_COACHES: DemoCoach[] = [
@@ -223,6 +230,7 @@ export const DEMO_COACHES: DemoCoach[] = [
     name: 'Anna Bergmann',
     email: 'anna@hxroom.test',
     populated: true,
+    deletionInDays: null,
     bookingPage: {
       tagline: 'Coaching für berufliche Wendepunkte',
       bio: 'Ich arbeite mit Menschen, die an einem Wendepunkt stehen – beruflich, persönlich oder beides. '
@@ -238,5 +246,23 @@ export const DEMO_COACHES: DemoCoach[] = [
     email: 'tobias@hxroom.test',
     populated: false,
     bookingPage: null,
+    deletionInDays: null,
+  },
+  // Coach mit laufender Kontolöschung: zeigt Warnbanner, Widerrufs-Ansicht auf der
+  // Account-Seite und die offline geschaltete Buchungsseite. Bewusst mit Daten, damit
+  // sichtbar ist, was an der Löschung hängt.
+  {
+    slug: 'martina',
+    name: 'Martina Kühl',
+    email: 'martina@hxroom.test',
+    populated: true,
+    deletionInDays: 12,
+    bookingPage: {
+      tagline: 'Systemisches Coaching für Teams',
+      bio: 'Ich begleite Teams durch Umbrüche: neue Rollen, neue Führung, neue Richtung. '
+        + 'Mein Zugang ist systemisch – wir schauen auf das Zusammenspiel, nicht auf einzelne Schuldige.',
+      ctaButton: 'Termin anfragen',
+      ctaIntro: 'Wähle ein Format und einen Zeitpunkt.',
+    },
   },
 ];

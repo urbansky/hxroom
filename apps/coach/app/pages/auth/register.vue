@@ -29,21 +29,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       callbackURL: `${window.location.origin}/auth/login?verified=true`,
     })
     if (error) {
-      errorMessage.value = mapAuthError(error.message)
+      errorMessage.value = mapAuthError(error, 'Registrierung fehlgeschlagen.')
     } else {
       registered.value = true
     }
   } finally {
     pending.value = false
   }
-}
-
-function mapAuthError(msg?: string): string {
-  if (!msg) return 'Registrierung fehlgeschlagen.'
-  if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('email')) {
-    return 'Diese E-Mail-Adresse ist bereits registriert.'
-  }
-  return 'Registrierung fehlgeschlagen.'
 }
 </script>
 

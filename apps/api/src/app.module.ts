@@ -13,6 +13,7 @@ import { S3Module } from './storage/s3.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { ClientsModule } from './clients/clients.module';
 import { AdminModule } from './admin/admin.module';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AdminModule } from './admin/admin.module';
     BookingsModule,
     ClientsModule,
     AdminModule,
+    AccountModule,
   ],
 })
 export class AppModule {}

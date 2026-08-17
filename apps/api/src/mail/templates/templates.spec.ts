@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
+import { renderEmailVerificationEmail } from './coach/email-verification';
+import { renderEmailChangeApprovalEmail } from './coach/email-change-approval';
+import { renderEmailChangeVerificationEmail } from './coach/email-change-verification';
+import { renderPasswordResetEmail } from './coach/password-reset';
+import { renderDeletionRequestedEmail } from './coach/deletion-requested';
+import { renderDeletionReminderEmail } from './coach/deletion-reminder';
+import { renderDeletionExecutedEmail } from './coach/deletion-executed';
 
 // Der Mailversand in BookingsService läuft bewusst in try/catch – ein kaputtes Template
 // würde dort still geschluckt und der Empfänger bekäme kommentarlos keine Mail.
@@ -84,6 +91,103 @@ describe('Buchungs-Mail-Templates', () => {
       });
       expect(mit).toContain('+49 170 1234567');
       expect(mit).toContain('neue Rolle');
+    });
+  });
+});
+
+// Diese Mails sind der einzige Weg, auf dem ein Coach eine E-Mail-Änderung freigibt, sein
+// Passwort zurücksetzt oder eine laufende Kontolöschung noch stoppt. Bleibt der Link im
+// Markup aus, hat er keinen Ausweg mehr – deshalb wird hier jeweils genau darauf geprüft.
+describe('Account-Mail-Templates', () => {
+  describe('Registrierung: E-Mail-Verifizierung', () => {
+    it('rendert Name und Bestätigungslink', async () => {
+      const html = await renderEmailVerificationEmail({
+        name: 'Anna Bergmann',
+        verifyUrl: 'https://api.hxroom.de/api/auth/verify-email?token=abc',
+      });
+
+      expect(html).toContain('Anna Bergmann');
+      expect(html).toContain('https://api.hxroom.de/api/auth/verify-email?token=abc');
+    });
+  });
+
+  describe('Passwort zurücksetzen', () => {
+    it('rendert den Reset-Link', async () => {
+      const html = await renderPasswordResetEmail({
+        name: 'Anna Bergmann',
+        resetUrl: 'https://api.hxroom.de/api/auth/reset-password/tok123',
+      });
+
+      expect(html).toContain('Anna Bergmann');
+      expect(html).toContain('https://api.hxroom.de/api/auth/reset-password/tok123');
+    });
+  });
+
+  describe('E-Mail-Wechsel: Freigabe durch die alte Adresse', () => {
+    it('nennt die neue Adresse und den Freigabelink', async () => {
+      const html = await renderEmailChangeApprovalEmail({
+        name: 'Anna Bergmann',
+        newEmail: 'anna@neue-praxis.de',
+        approveUrl: 'https://api.hxroom.de/api/auth/verify-email?token=approve',
+      });
+
+      expect(html).toContain('anna@neue-praxis.de');
+      expect(html).toContain('https://api.hxroom.de/api/auth/verify-email?token=approve');
+    });
+  });
+
+  describe('E-Mail-Wechsel: Bestätigung durch die neue Adresse', () => {
+    it('rendert den Bestätigungslink und begrüßt nicht als Neukunde', async () => {
+      const html = await renderEmailChangeVerificationEmail({
+        name: 'Anna Bergmann',
+        verifyUrl: 'https://api.hxroom.de/api/auth/verify-email?token=confirm',
+      });
+
+      expect(html).toContain('https://api.hxroom.de/api/auth/verify-email?token=confirm');
+      // Die Unterscheidung zur Registrierungsmail ist der Sinn dieses Templates.
+      expect(html).not.toContain('Willkommen');
+    });
+  });
+
+  describe('Löschung beantragt', () => {
+    it('nennt Löschdatum und Weg zum Widerruf', async () => {
+      const html = await renderDeletionRequestedEmail({
+        name: 'Anna Bergmann',
+        deletionDateLabel: '16. September 2026',
+        accountUrl: 'https://app.hxroom.de/settings/account',
+      });
+
+      expect(html).toContain('16. September 2026');
+      expect(html).toContain('https://app.hxroom.de/settings/account');
+      expect(html).toContain('zurücknehmen');
+    });
+  });
+
+  describe('Löschung: Erinnerung', () => {
+    it('nennt Restlaufzeit, Löschdatum und Widerrufslink', async () => {
+      const html = await renderDeletionReminderEmail({
+        name: 'Anna Bergmann',
+        deletionDateLabel: '16. September 2026',
+        daysLeft: 7,
+        accountUrl: 'https://app.hxroom.de/settings/account',
+      });
+
+      expect(html).toContain('7 Tage');
+      expect(html).toContain('16. September 2026');
+      expect(html).toContain('https://app.hxroom.de/settings/account');
+    });
+  });
+
+  describe('Löschung ausgeführt', () => {
+    it('rendert die Anzahl der gelöschten Datensätze', async () => {
+      const html = await renderDeletionExecutedEmail({
+        name: 'Anna Bergmann',
+        clientCount: 24,
+        bookingCount: 118,
+      });
+
+      expect(html).toContain('24');
+      expect(html).toContain('118');
     });
   });
 });

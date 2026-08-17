@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 import { Logo } from '@hxroom/ui'
+import type { AccountDeletionStatus } from '@hxroom/shared'
 
 type NavItem = NavigationMenuItem & { description?: string }
 
 const { session, signOut } = useAuth()
 const route = useRoute()
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
+const { $api } = useApi()
 
 const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`)
 
@@ -83,6 +85,24 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     },
   ],
 ])
+
+// Läuft eine Kontolöschung, muss der Coach sie in jeder Ansicht sehen und zurücknehmen können.
+// Ohne diesen Hinweis wäre die 30-Tage-Frist eine Falle: wer den Antrag stellt und vergisst,
+// hätte keinen Anlass mehr, sich vor dem Datenverlust neu zu entscheiden.
+const { data: deletion } = await useFetch<AccountDeletionStatus>('/account/deletion', {
+  $fetch: $api,
+  // Fehler hier dürfen das Backoffice nicht blockieren – ohne Banner ist es nur weniger
+  // auskunftsfreudig, die Account-Seite zeigt den Zustand ohnehin.
+  default: () => ({ scheduledFor: null }),
+})
+
+const deletionDateLabel = computed(() => {
+  const scheduledFor = deletion.value?.scheduledFor
+  if (!scheduledFor) return null
+  return new Date(scheduledFor).toLocaleDateString('de-DE', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
+})
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
@@ -168,6 +188,16 @@ const pageTitle = computed(() => {
 <!--      </template>-->
 
       <template #body>
+        <UAlert
+          v-if="deletionDateLabel"
+          icon="i-lucide-alert-triangle"
+          color="warning"
+          variant="soft"
+          class="mb-4"
+          :title="`Dein Konto wird am ${deletionDateLabel} gelöscht`"
+          description="Deine Buchungsseite ist offline. Bis zum Stichtag kannst du die Löschung zurücknehmen."
+          :actions="[{ label: 'Löschung zurücknehmen', color: 'warning', variant: 'outline', to: '/settings/account' }]"
+        />
         <slot />
       </template>
     </UDashboardPanel>
