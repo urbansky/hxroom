@@ -153,7 +153,7 @@ async function revokeDeletion() {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 max-w-2xl flex flex-col gap-4">
+  <div class="p-4 sm:p-6 max-w-3xl mx-auto w-full flex flex-col gap-4">
     <div>
       <h1 class="font-serif text-3xl text-highlighted mb-1">Account</h1>
       <p class="text-sm text-muted">Verwaltung deines Kontos und deiner Sicherheitseinstellungen.</p>
