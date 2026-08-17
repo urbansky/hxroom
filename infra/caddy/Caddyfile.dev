@@ -13,6 +13,13 @@
 		reverse_proxy host.docker.internal:3000
 	}
 
+	# Gleiche API, eigener Host für das Betreiber-Backoffice – trennt das Session-Cookie
+	# von der Coach-Session (siehe doc/technisches-konzept.md §7).
+	@adminapi host admin-api.hxroom.localhost
+	handle @adminapi {
+		reverse_proxy host.docker.internal:3000
+	}
+
 	@app host app.hxroom.localhost
 	handle @app {
 		reverse_proxy host.docker.internal:5173

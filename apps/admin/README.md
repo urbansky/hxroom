@@ -20,6 +20,8 @@ pnpm --filter @hxroom/admin dev
 
 Der Dev-Server lauscht auf Port **5175**; der Dev-Caddy routet `admin.hxroom.localhost` fest dorthin. Die API-Adressen kommen aus `.env` (`NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_AUTH_URL`) – Vorlage in `.env.example`.
 
+**Die App spricht `admin-api.hxroom.localhost` an, nicht `api.hxroom.localhost`** – denselben API-Container, nur unter zweitem Hostnamen. Session-Cookies hängen am Host; über den gemeinsamen API-Host würde ein Betreiber-Login die Coach-Session desselben Browsers überschreiben. Serverseitig muss dieser Host in `ADMIN_AUTH_URL` (`apps/api/.env`) stehen, sonst weist better-auth ihn ab. Hintergrund: [`doc/technisches-konzept.md`](../../doc/technisches-konzept.md) §6 und §7.
+
 Der Login funktioniert nur über `admin.hxroom.localhost`, nicht über `localhost:5175`: nur die Caddy-Domain steht in `CORS_ORIGINS` der API.
 
 ## Docker
@@ -35,12 +37,12 @@ Der Build-Kontext ist das **Monorepo-Root** (wegen Workspace-Abhängigkeiten):
 docker build -f apps/admin/Dockerfile -t hxroom-admin .
 ```
 
-Die `NUXT_PUBLIC_*`-Werte werden zur **Build-Zeit** ins Bundle eingebettet und zeigen per Default auf `https://api.hxroom.de`. Für ein Image gegen eine andere API:
+Die `NUXT_PUBLIC_*`-Werte werden zur **Build-Zeit** ins Bundle eingebettet und zeigen per Default auf `https://admin-api.hxroom.de`. Für ein Image gegen eine andere API:
 
 ```bash
 docker build -f apps/admin/Dockerfile \
-  --build-arg NUXT_PUBLIC_API_URL=http://api.hxroom.localhost/api/v1 \
-  --build-arg NUXT_PUBLIC_AUTH_URL=http://api.hxroom.localhost \
+  --build-arg NUXT_PUBLIC_API_URL=http://admin-api.hxroom.localhost/api/v1 \
+  --build-arg NUXT_PUBLIC_AUTH_URL=http://admin-api.hxroom.localhost \
   -t hxroom-admin .
 ```
 

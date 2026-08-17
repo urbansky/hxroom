@@ -10,6 +10,7 @@ import { MailService } from '../mail/mail.service';
 import { renderEmailVerificationEmail } from '../mail/templates/coach/email-verification';
 import * as schema from '../db/schema';
 import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
+import { resolveAuthHosts } from './auth-hosts';
 
 export const AUTH = Symbol('AUTH');
 export type Auth = ReturnType<typeof betterAuth>;
@@ -21,8 +22,15 @@ export type Auth = ReturnType<typeof betterAuth>;
     {
       provide: AUTH,
       inject: [DRIZZLE, ConfigService, MailService],
-      useFactory: (db: DrizzleDb, config: ConfigService, mail: MailService) =>
-        betterAuth({
+      useFactory: (db: DrizzleDb, config: ConfigService, mail: MailService) => {
+        // ADMIN_AUTH_URL ist optional: ohne die Variable bleibt genau ein Host erlaubt,
+        // das Verhalten entspricht dann dem vor der Trennung.
+        const authHosts = resolveAuthHosts(
+          config.get<string>('BETTER_AUTH_URL', 'http://localhost:3000'),
+          config.get<string>('ADMIN_AUTH_URL'),
+        );
+
+        return betterAuth({
           database: drizzleAdapter(db, {
             provider: 'pg',
             schema: { ...schema },
@@ -85,7 +93,9 @@ export type Auth = ReturnType<typeof betterAuth>;
             },
           },
           secret: config.getOrThrow<string>('BETTER_AUTH_SECRET'),
-          baseURL: config.get<string>('BETTER_AUTH_URL', 'http://localhost:3000'),
+          // Objekt statt String: better-auth löst die baseURL dann pro Request aus dem
+          // Host-Header auf und lässt nur die gelisteten Hosts zu (siehe auth-hosts.ts).
+          baseURL: authHosts,
           trustedOrigins: config.get<string>('CORS_ORIGINS')
             ? config.get<string>('CORS_ORIGINS')!.split(',').map((o) => o.trim())
             : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
@@ -102,7 +112,8 @@ export type Auth = ReturnType<typeof betterAuth>;
               });
             },
           },
-        }),
+        });
+      },
     },
   ],
   exports: [AUTH],

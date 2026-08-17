@@ -37,7 +37,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     // signIn liefert die Rolle nicht zuverlässig mit – deshalb die Session frisch ziehen.
     // Ein Coach mit korrekten Zugangsdaten wird hier abgewiesen und wieder abgemeldet,
-    // statt in eine Redirect-Schleife der Middleware zu laufen.
+    // statt in eine Redirect-Schleife der Middleware zu laufen. Das signOut betrifft nur
+    // die Session auf dem Admin-API-Host; eine laufende Coach-Session bleibt bestehen.
     const { data: current } = await $authClient.getSession({ query: { disableCookieCache: true } })
     if (current?.user?.role !== ADMIN_ROLE) {
       await $authClient.signOut()

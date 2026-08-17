@@ -17,8 +17,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!data?.user) return navigateTo('/auth/login')
 
-  // Angemeldet, aber kein Betreiber: Session beenden, sonst bliebe ein gültiges Cookie
-  // für eine Domain bestehen, die dieser Account nicht nutzen darf.
+  // Angemeldet, aber kein Betreiber: die Session auf dem Admin-API-Host beenden, sonst
+  // liefe jede weitere Navigation erneut in diese Abweisung. Betrifft nur diesen Host –
+  // das Cookie hängt an admin-api.hxroom.de und ist von der Coach-Session auf
+  // api.hxroom.de getrennt, ein paralleler Coach-Login bleibt also bestehen.
   if (data.user.role !== ADMIN_ROLE) {
     await useNuxtApp().$authClient.signOut()
     return navigateTo('/auth/login?forbidden=1')

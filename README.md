@@ -56,10 +56,13 @@ Caddy läuft im Dev-Container und routet `*.hxroom.localhost` auf die lokalen Po
 | http://app.hxroom.localhost     | Coach-Backoffice     |
 | http://anna.hxroom.localhost    | Buchungsseite        |
 | http://api.hxroom.localhost     | Backend API          |
+| http://admin-api.hxroom.localhost | Backend API – zweiter Host, nur für das Betreiber-Backoffice |
 | http://admin.hxroom.localhost   | Betreiber-Backoffice |
 | http://livekit.hxroom.localhost | LiveKit              |
 
 `*.localhost`-Domains funktionieren auf macOS ohne `/etc/hosts`-Eintrag. Die Dev-Server müssen auf `0.0.0.0` lauschen (bereits in `nuxt.config.ts` konfiguriert).
+
+`admin-api` ist derselbe API-Container wie `api`, nur unter zweitem Hostnamen. Session-Cookies hängen am Host: ohne diese Trennung würde ein Betreiber-Login die Coach-Session desselben Browsers überschreiben. Details in [`doc/technisches-konzept.md`](doc/technisches-konzept.md) §6.
 
 ### Objekt-Storage (RustFS)
 

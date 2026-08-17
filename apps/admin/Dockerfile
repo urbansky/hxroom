@@ -19,9 +19,11 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # ---- Build ----
 FROM deps AS build
-# NUXT_PUBLIC_* werden zur Build-Zeit ins SPA-Bundle eingebettet
-ARG NUXT_PUBLIC_API_URL=https://api.hxroom.de/api/v1
-ARG NUXT_PUBLIC_AUTH_URL=https://api.hxroom.de
+# NUXT_PUBLIC_* werden zur Build-Zeit ins SPA-Bundle eingebettet.
+# Eigener API-Host (gleicher Container wie api.hxroom.de): Session-Cookies sind
+# host-gebunden, so bleiben Coach- und Betreiber-Session im selben Browser getrennt.
+ARG NUXT_PUBLIC_API_URL=https://admin-api.hxroom.de/api/v1
+ARG NUXT_PUBLIC_AUTH_URL=https://admin-api.hxroom.de
 ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 ENV NUXT_PUBLIC_AUTH_URL=$NUXT_PUBLIC_AUTH_URL
 COPY tsconfig.base.json ./

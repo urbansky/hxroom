@@ -199,9 +199,14 @@ app.hxroom.de/call/*   → Nuxt-App `videocall` (pfadbasiert, gleicher Host wie 
 [slug].hxroom.de       → Nuxt-App `bookingpage` (Klienten-Subdomain: Buchung & Bestätigung)
 [slug].hxroom.de/call/* → Nuxt-App `videocall` (pfadbasiert, Warteraum + Call für Klienten)
 api.hxroom.de          → NestJS API
+admin-api.hxroom.de    → dieselbe NestJS API, eigener Host nur für das Betreiber-Backoffice
 livekit.hxroom.de      → LiveKit Server (intern, kein öffentliches UI)
 admin.hxroom.de        → Nuxt-App `admin` (internes Betreiber-Backoffice, ab MVP)
 ```
+
+**Warum zwei API-Hosts?** Session-Cookies sind host-gebunden, und ihr Name gilt instanzweit (`advanced.cookiePrefix` lässt sich nicht pro App setzen). Sprächen Coach- und Betreiber-App denselben API-Host an, gäbe es pro Browser nur **eine** Session: ein Betreiber-Login würde die Coach-Session überschreiben und umgekehrt. `admin-api.hxroom.de` zeigt deshalb auf denselben Container wie `api.hxroom.de`; getrennt sind allein die Cookie-Ablagen. Umgesetzt über die dynamische `baseURL` von better-auth (`allowedHosts`, siehe `apps/api/src/auth/auth-hosts.ts`) – **eine** Instanz, eine Session-Tabelle.
+
+Der Host ist ausdrücklich **keine** Autorisierungsgrenze: welche Rolle was darf, entscheidet weiterhin `user.role` über den `AdminGuard` (§7).
 
 **Subdomain-Routing im Frontend:** Jede Subdomain wird von ihrer eigenen Nuxt-App bedient (`apps/landing`, `apps/coach`, `apps/bookingpage`, `apps/admin`). Caddy routet anhand des Hostnames an den jeweiligen Container; innerhalb der App übernimmt Nuxts file-based Routing (`pages/`) die URL-Auflösung. Die `bookingpage`-App liest den Coach-Slug serverseitig aus dem Hostname (Nuxt Server Middleware), um Branding und Buchungs­kontext bereits beim ersten Render zu laden – wichtig für SEO und schnellen Erstaufbau der Buchungsseite.
 
@@ -233,6 +238,7 @@ Da derselbe `videocall`-Container unter beiden Hosts erreichbar ist, unterscheid
 | `http(s)://app.hxroom.io/<path>` | `https://app.hxroom.de/<path>` |
 | `http(s)://admin.hxroom.io/<path>` | `https://admin.hxroom.de/<path>` |
 | `http(s)://api.hxroom.io/<path>` | `https://api.hxroom.de/<path>` |
+| `http(s)://admin-api.hxroom.io/<path>` | `https://admin-api.hxroom.de/<path>` |
 | `http(s)://[slug].hxroom.io/<path>` | `https://[slug].hxroom.de/<path>` |
 
 Eigene `http://`-Blöcke in der Caddy-Config vermeiden die Kette `http://.io → https://.io → https://.de` – jeder Request benötigt **genau einen Hop**.
@@ -300,6 +306,10 @@ Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist 
 ### Betreiber-Zugang (`admin.hxroom.de`)
 
 Der Zugang zum Betreiber-Backoffice läuft über dieselbe better-auth-Instanz wie der Coach-Login – kein zweites Auth-System, kein Shared-Account. Grundlage ist das **better-auth `admin`-Plugin**, das eine globale Rollenspalte `user.role` einführt (`'user'` für Coachs, `'admin'` für Betreiber). Sie ist unabhängig von `member.role`, das weiterhin die organisationsbezogene Rolle (`owner`) trägt.
+
+**Eigener API-Host, gleiche Instanz.** Die Admin-App spricht `admin-api.hxroom.de` an, nicht `api.hxroom.de` (§6). Der Grund ist die Cookie-Ablage: Session-Cookies hängen am Host, und ihr Name ist instanzweit festgelegt – über denselben API-Host gäbe es pro Browser nur eine Session für beide Rollen, ein Betreiber-Login würde die Coach-Session überschreiben. Mit dem zweiten Hostnamen liegen zwei getrennte Cookies vor, Coach- und Betreiber-Backoffice sind parallel nutzbar. Konfiguriert wird das über die dynamische `baseURL` (`allowedHosts`, `apps/api/src/auth/auth-hosts.ts`), gespeist aus `BETTER_AUTH_URL` und `ADMIN_AUTH_URL`.
+
+Zwei Konsequenzen, die man beim Weiterbauen kennen muss: Das Protokoll der `baseURL` wird bewusst aus `BETTER_AUTH_URL` abgeleitet, weil better-auth daran den `__Secure-`-Prefix des Cookie-Namens festmacht – ein abweichender Wert würde alle bestehenden Sessions ungültig machen. Und Impersonation (1.07) erzeugt die Session auf dem Admin-Host; sie authentifiziert damit **nicht** automatisch die Coach-App unter `app.hxroom.de`.
 
 **Ein Betreiber ist Mitglied keiner Organisation.** Daraus folgt die Mandantentrennung ohne zusätzliche Prüfung: Ohne `member`-Eintrag bleibt `session.activeOrganizationId` leer, der `AuthGuard` setzt kein `req.organization`, und sämtliche Coach-Endpunkte antworten mit `401 No active organization`. Ein Betreiber kann Coach-Daten also nur über explizit dafür gebaute Admin-Endpunkte sehen, nie über die regulären Coach-APIs.
 

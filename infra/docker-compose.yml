@@ -20,6 +20,7 @@ services:
       - landing
       - coach
       - bookingpage
+      - admin
       - api
     restart: unless-stopped
 
@@ -42,6 +43,13 @@ services:
     build:
       context: ..
       dockerfile: apps/bookingpage/Dockerfile
+    restart: unless-stopped
+
+  admin:
+    image: ghcr.io/urbansky/hxroom/admin:latest
+    build:
+      context: ..
+      dockerfile: apps/admin/Dockerfile
     restart: unless-stopped
 
   postgres:
@@ -124,6 +132,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}
+      - ADMIN_AUTH_URL=${ADMIN_AUTH_URL}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - COACH_APP_URL=${COACH_APP_URL}
       - ROOT_DOMAIN=${ROOT_DOMAIN}

@@ -23,15 +23,22 @@ api.hxroom.de {
 	reverse_proxy api:3000
 }
 
+# Derselbe API-Container, nur unter eigenem Hostnamen: Session-Cookies sind host-gebunden,
+# damit bleiben Coach- und Betreiber-Session im selben Browser nebeneinander bestehen.
+admin-api.hxroom.de {
+	import ionos-tls
+	reverse_proxy api:3000
+}
+
 app.hxroom.de {
 	import ionos-tls
 	reverse_proxy coach:80
 }
 
-#admin.hxroom.de {
-#	import ionos-tls
-#	reverse_proxy admin:80
-#}
+admin.hxroom.de {
+	import ionos-tls
+	reverse_proxy admin:80
+}
 
 #livekit.hxroom.de {
 #	import ionos-tls
