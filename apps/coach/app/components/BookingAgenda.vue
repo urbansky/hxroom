@@ -5,24 +5,53 @@ const props = defineProps<{
   bookings: CoachBookingResponse[]
   /** Wird hervorgehoben und mit relativer Zeitangabe versehen. */
   highlightId?: string | null
+  /**
+   * 'card' (Standard): eigenständige Kacheln auf dem Seitenhintergrund – so steht die
+   * Agenda im Kalender.
+   * 'flat': Zeilen ohne eigenen Rahmen, für die Einbettung in eine Karte. Dort trüge
+   * jede Kachel sonst einen zweiten Rahmen in derselben Farbe wie die Karte um sie
+   * herum, und der weiße Kachelgrund verschwände ohnehin im weißen Kartengrund.
+   */
+  variant?: 'card' | 'flat'
 }>()
 
 defineEmits<{ select: [booking: CoachBookingResponse] }>()
 
 const groups = computed(() => groupByDay(props.bookings))
+const isFlat = computed(() => props.variant === 'flat')
+
+// Der Rahmen unterscheidet in der Kachel-Variante die Status; flach übernimmt das
+// allein die Deckkraft. Die Statusangabe selbst geht nicht verloren, sie steht in
+// beiden Varianten als Badge neben dem Namen.
+function rowClass(booking: CoachBookingResponse): string {
+  if (isFlat.value) {
+    const base = 'rounded-lg p-3 -mx-3 hover:bg-elevated'
+    return booking.status === 'cancelled' ? `${base} opacity-60` : base
+  }
+  if (booking.status === 'cancelled') return 'rounded-xl border p-4 border-default border-dashed bg-transparent opacity-60'
+  if (booking.status === 'pending') return 'rounded-xl border p-4 border-default border-dashed bg-white dark:bg-neutral-900 hover:border-accented'
+  return 'rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 hover:border-accented'
+}
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col" :class="isFlat ? 'gap-5' : 'gap-8'">
     <section v-for="group in groups" :key="group.key">
       <!-- Die Überschrift trägt den Tag, deshalb steht in der Kachel nur die Uhrzeit.
            Sie ist bewusst kräftiger gesetzt als eine reine Beschriftung: Sie soll die
            Termine darunter als Tagesblock zusammenfassen, sonst wirkt sie bei nur einem
-           Termin wie ein Etikett für eine einzelne Kachel. -->
-      <div class="flex items-baseline gap-3 mb-3">
+           Termin wie ein Etikett für eine einzelne Kachel.
+           In einer Karte tritt sie zurück: dort steht der Kartentitel darüber, und zwei
+           gleich kräftige Überschriften kurz hintereinander lesen sich als Konkurrenz.
+           Ganz entfallen darf sie auch dort nicht – sie ist die einzige Stelle, an der
+           das Datum steht. -->
+      <div class="flex items-baseline gap-3" :class="isFlat ? 'mb-1' : 'mb-3'">
         <h2
-          class="text-sm font-medium shrink-0"
-          :class="group.isToday ? 'text-primary' : 'text-highlighted'"
+          class="text-sm shrink-0"
+          :class="[
+            isFlat ? 'font-normal' : 'font-medium',
+            group.isToday ? 'text-primary' : isFlat ? 'text-muted' : 'text-highlighted',
+          ]"
         >
           {{ group.heading }}
         </h2>
@@ -31,7 +60,7 @@ const groups = computed(() => groupByDay(props.bookings))
         </span>
         <!-- bg-(--ui-border), nicht bg-default: Letzteres ist der Seitenhintergrund
              (--ui-bg), die Linie wäre damit unsichtbar. -->
-        <span class="h-px flex-1 bg-(--ui-border)" />
+        <span v-if="!isFlat" class="h-px flex-1 bg-(--ui-border)" />
       </div>
 
       <!-- Der nächste Termin wird allein über die relative Zeitangabe rechts oben
@@ -39,17 +68,13 @@ const groups = computed(() => groupByDay(props.bookings))
            einmal: Sage-700 liest sich bei 1 px nicht als Farbe, sondern als zweite dunkle
            Kontur neben dem Rahmen – und mit der Sitzungsfarbe links kamen so drei Ränder
            an einer Kachel zusammen. -->
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col" :class="isFlat ? 'gap-0.5' : 'gap-2'">
         <button
           v-for="booking in group.bookings"
           :key="booking.id"
           type="button"
-          class="w-full text-left flex items-start gap-3 rounded-xl border p-4 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
-          :class="booking.status === 'cancelled'
-            ? 'border-default border-dashed bg-transparent opacity-60'
-            : booking.status === 'pending'
-              ? 'border-default border-dashed bg-white dark:bg-neutral-900 hover:border-accented'
-              : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
+          class="w-full text-left flex items-start gap-3 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+          :class="rowClass(booking)"
           @click="$emit('select', booking)"
         >
           <!-- Farbe der Sitzungsart, identisch zur Angebotsliste (offerColor in

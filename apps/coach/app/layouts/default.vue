@@ -15,7 +15,7 @@ const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${roo
 const navItems: NavItem[][] = [
   [
     { type: 'label', label: 'Übersicht' },
-    { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/', description: 'Nächste Termine und Systemstatus' },
+    { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/', description: 'Nächste Termine und Kennzahlen' },
   ],
   [
     { type: 'label', label: 'Buchungen' },

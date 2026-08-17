@@ -1,84 +1,215 @@
 <script setup lang="ts">
+import type { AvailabilitySlotResponse, ClientListItem, ClientResponse, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
+
 definePageMeta({ middleware: 'auth' })
 
+const { $api } = useApi()
 const { session } = useAuth()
+const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 
-const features = [
-  {
-    icon: 'i-lucide-calendar-days',
-    title: 'Tagesübersicht',
-    description: 'Nächste Termine des Tages auf einen Blick – mit Klientenname und direktem Raumlink.',
-  },
-  {
-    icon: 'i-lucide-bell-ring',
-    title: '„Klient wartet"-Anzeige',
-    description: 'Echtzeit-Benachrichtigung, wenn ein Klient den Warteraum betritt.',
-  },
-  {
-    icon: 'i-lucide-list-checks',
-    title: 'Onboarding-Checkliste',
-    description: 'Schritt-für-Schritt-Anleitung zum Einrichten deines Accounts – verschwindet nach Abschluss.',
-  },
-]
+/** Mehr Termine passen nicht in eine Übersicht – der Rest steht im Kalender. */
+const AGENDA_LIMIT = 6
+
+const bookings = ref<CoachBookingResponse[]>([])
+const clients = ref<ClientListItem[]>([])
+const offers = ref<OfferResponse[]>([])
+const slots = ref<AvailabilitySlotResponse[]>([])
+const bookingPage = ref<OnboardingBookingPage | null>(null)
+const hasAnyBooking = ref(false)
+
+const loading = ref(true)
+const loadError = ref<string | null>(null)
+
+async function loadDashboard() {
+  loading.value = true
+  loadError.value = null
+  try {
+    const [windowBookings, firstBooking, clientList, offerList, slotList, page] = await Promise.all([
+      // Ein Request für Agenda und Wochenkennzahl – der Zeitraum deckt beides ab.
+      $api<CoachBookingResponse[]>('/bookings', { query: dashboardBookingsQuery() }),
+      // Separat und ohne Zeitfenster, nur für die Checkliste: eine Erstbuchung, die
+      // länger zurückliegt, wäre in der Abfrage darüber unsichtbar.
+      $api<CoachBookingResponse[]>('/bookings', { query: { limit: '1' } }),
+      $api<ClientListItem[]>('/clients'),
+      $api<OfferResponse[]>('/offers'),
+      $api<AvailabilitySlotResponse[]>('/availability-slots'),
+      $api<OnboardingBookingPage>('/booking-page'),
+    ])
+
+    bookings.value = windowBookings
+    hasAnyBooking.value = firstBooking.length > 0
+    clients.value = clientList
+    offers.value = offerList
+    slots.value = slotList
+    bookingPage.value = page
+  } catch {
+    loadError.value = 'Das Dashboard konnte nicht geladen werden.'
+  } finally {
+    loading.value = false
+  }
+}
+
+await loadDashboard()
+
+const today = new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
+
+const agenda = computed(() => upcomingBookings(bookings.value))
+const visibleAgenda = computed(() => agenda.value.slice(0, AGENDA_LIMIT))
+const hiddenCount = computed(() => Math.max(0, agenda.value.length - AGENDA_LIMIT))
+// Nur noch für die Hervorhebung in der Agenda – als eigene Kachel stand der nächste
+// Termin dreimal auf der Seite (Kachel, Agenda, Klientenliste).
+const nextBooking = computed(() => agenda.value[0] ?? null)
+
+const weekCount = computed(() => countThisWeek(bookings.value))
+const clientsWithNext = computed(() => clients.value.filter(c => c.nextSessionAt).length)
+
+const steps = computed(() => onboardingSteps({
+  bookingPage: bookingPage.value,
+  offers: offers.value,
+  slots: slots.value,
+  hasBooking: hasAnyBooking.value,
+}))
+
+// Die Buchungsseite läuft auf der eigenen Subdomain – identisch zum Slug der Organisation,
+// den /booking-page mitliefert.
+const bookingPageUrl = computed(() => {
+  const subdomain = bookingPage.value?.subdomain
+  if (!subdomain) return null
+  return `${rootDomainHttps ? 'https' : 'http'}://${subdomain}.${rootDomain}`
+})
+
+const selectedBooking = ref<CoachBookingResponse | null>(null)
+const isDetailOpen = ref(false)
+
+function openDetail(booking: CoachBookingResponse) {
+  selectedBooking.value = booking
+  isDetailOpen.value = true
+}
+
+// Ein Handler für beide Fälle: die Agenda filtert abgesagte Termine selbst heraus,
+// eine Absage verschwindet damit allein durch das Ersetzen des Eintrags.
+function applyBooking(updated: CoachBookingResponse) {
+  const idx = bookings.value.findIndex(b => b.id === updated.id)
+  if (idx !== -1) bookings.value[idx] = updated
+  if (selectedBooking.value?.id === updated.id) selectedBooking.value = updated
+}
+
+const isClientFormOpen = ref(false)
+
+// Nach dem Anlegen neu laden statt lokal einzufügen – die Kennzahlen der Liste
+// (Sitzungen, nächster Termin) und die Sortierung kommen vom Server.
+async function onClientSaved(_client: ClientResponse) {
+  clients.value = await $api<ClientListItem[]>('/clients')
+}
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 flex flex-col gap-6">
+  <div class="p-4 sm:p-6 mx-auto w-full max-w-6xl flex flex-col gap-6">
     <div>
-      <h1 class="font-serif text-3xl text-(--ui-text-highlighted)">
+      <h1 class="font-serif text-3xl text-highlighted">
         Hallo, {{ session.data?.user?.name ?? '…' }}
       </h1>
-      <p class="mt-1 text-sm text-(--ui-text-muted)">
-        Willkommen in deinem Coach-Backoffice.
-      </p>
+      <p class="mt-1 text-muted">{{ today }}</p>
     </div>
 
-    <UAlert
-      icon="i-lucide-construction"
-      color="info"
-      variant="soft"
-      title="Dashboard in Entwicklung"
-      description="Die Übersichtskacheln, der Kalender und die Klientenliste folgen in Phase 3 und 4."
+    <p v-if="loadError" class="text-sm text-error">{{ loadError }}</p>
+
+    <div v-if="loading" class="flex flex-col gap-6">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <USkeleton v-for="n in 2" :key="n" class="h-20 rounded-xl" />
+      </div>
+      <div class="grid gap-4 lg:grid-cols-3">
+        <USkeleton class="h-80 rounded-xl lg:col-span-2" />
+        <USkeleton class="h-80 rounded-xl" />
+      </div>
+    </div>
+
+    <template v-else-if="!loadError">
+      <DashboardOnboarding :steps="steps" />
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <StatCard
+          icon="i-lucide-calendar-days"
+          label="Diese Woche"
+          :value="weekCount === 1 ? '1 Termin' : `${weekCount} Termine`"
+          to="/bookings"
+        />
+        <StatCard
+          icon="i-lucide-users"
+          label="Klienten"
+          :value="clients.length === 1 ? '1 Klient' : `${clients.length} Klienten`"
+          :hint="clientsWithNext ? `${clientsWithNext} mit anstehendem Termin` : null"
+          to="/clients"
+        />
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-3 items-start">
+        <SettingsSection title="Nächste Termine" class="lg:col-span-2">
+          <template #actions>
+            <UButton to="/bookings" label="Kalender" trailing-icon="i-lucide-arrow-right" color="neutral" variant="link" size="sm" class="-my-1" />
+          </template>
+
+          <template v-if="visibleAgenda.length">
+            <BookingAgenda
+              :bookings="visibleAgenda"
+              :highlight-id="nextBooking?.id"
+              variant="flat"
+              @select="openDetail"
+            />
+
+            <UButton
+              v-if="hiddenCount"
+              to="/bookings"
+              :label="hiddenCount === 1 ? 'Ein weiterer Termin im Kalender' : `${hiddenCount} weitere Termine im Kalender`"
+              trailing-icon="i-lucide-arrow-right"
+              color="neutral"
+              variant="link"
+              size="sm"
+              class="self-center"
+            />
+          </template>
+
+          <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
+            <UIcon name="i-lucide-calendar-days" class="size-6 text-muted" />
+            <p class="text-sm text-muted">In den nächsten sieben Tagen ist kein Termin gebucht.</p>
+            <UButton
+              v-if="bookingPageUrl"
+              :to="bookingPageUrl"
+              target="_blank"
+              trailing-icon="i-lucide-external-link"
+              color="primary"
+              variant="soft"
+              size="sm"
+            >
+              Buchungsseite teilen
+            </UButton>
+          </div>
+        </SettingsSection>
+
+        <div class="flex flex-col gap-4">
+          <DashboardQuickActions
+            :booking-page-url="bookingPageUrl"
+            @create-client="isClientFormOpen = true"
+          />
+          <DashboardClients
+            :clients="clients"
+            @create-client="isClientFormOpen = true"
+          />
+        </div>
+      </div>
+    </template>
+
+    <BookingDetailSlideover
+      v-model:open="isDetailOpen"
+      :booking="selectedBooking"
+      @cancelled="applyBooking"
+      @updated="applyBooking"
     />
 
-    <div class="grid gap-4 sm:grid-cols-3">
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-calendar-check" class="size-8 text-primary shrink-0" />
-          <div>
-            <p class="text-xs text-(--ui-text-muted) uppercase tracking-wide">Nächster Termin</p>
-            <USkeleton class="mt-1 h-5 w-32 rounded" />
-          </div>
-        </div>
-      </UCard>
-
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-users" class="size-8 text-primary shrink-0" />
-          <div>
-            <p class="text-xs text-(--ui-text-muted) uppercase tracking-wide">Klienten gesamt</p>
-            <USkeleton class="mt-1 h-5 w-16 rounded" />
-          </div>
-        </div>
-      </UCard>
-
-      <UCard>
-        <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-video" class="size-8 text-primary shrink-0" />
-          <div>
-            <p class="text-xs text-(--ui-text-muted) uppercase tracking-wide">Sitzungen diesen Monat</p>
-            <USkeleton class="mt-1 h-5 w-16 rounded" />
-          </div>
-        </div>
-      </UCard>
-    </div>
-
-    <div class="flex flex-col gap-2 max-w-2xl">
-      <UpcomingFeature
-        v-for="item in features"
-        :key="item.title"
-        v-bind="item"
-      />
-    </div>
+    <ClientFormSlideover
+      v-model:open="isClientFormOpen"
+      :client="null"
+      @saved="onClientSaved"
+    />
   </div>
 </template>
