@@ -95,7 +95,13 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
 
     <UDashboardPanel>
       <template #body>
-        <slot />
+        <!-- Breitenbegrenzung zentral statt pro Seite: deutlich breiter als die Coach-App
+             (max-w-3xl), weil hier Tabellen mit sechs Spalten stehen, aber begrenzt, damit
+             Überschriften auf großen Monitoren nicht auseinanderlaufen. Die Polsterung
+             kommt vom Panel-Body des Themes – Seiten setzen deshalb selbst keine. -->
+        <div class="mx-auto w-full max-w-7xl">
+          <slot />
+        </div>
       </template>
     </UDashboardPanel>
   </UDashboardGroup>

@@ -256,3 +256,48 @@ export const clientDetailSchema = clientResponseSchema.extend({
   bookings: z.array(coachBookingResponseSchema),
 });
 export type ClientDetail = z.infer<typeof clientDetailSchema>;
+
+// Betreiber-Backoffice: Coach-Verwaltung (doc/funktionen/backoffice-betreiber.md, Abschnitt 1).
+// Bewusst eigene API-Endpunkte statt der better-auth admin-Plugin-Funktionen: die Liste
+// verbindet user, member, organization und Kennzahlen aus clients/bookings – eine Projektion,
+// die das Plugin nicht kennt. Das Plugin bleibt für die Schreibwege zuständig (Coach anlegen,
+// sperren, Impersonation), wo seine Auth-Semantik der eigentliche Wert ist.
+
+// Kontostatus eines Coachs. Abgeleitet aus user.banned/banExpires/emailVerified – nicht in
+// der DB gespeichert. Bewusst OHNE 'trial': das ist eine Plan-Aussage, und es gibt weder
+// Subscription-Tabelle noch Trial-Feld. Funktion 01 im Fachdokument wirft beide Achsen in
+// eine Spalte; hier bleiben sie getrennt.
+export const CoachStatus = z.enum(['active', 'pending', 'suspended']);
+export type CoachStatus = z.infer<typeof CoachStatus>;
+
+// Ein Coach = ein user (Rolle != 'admin') mit genau einer 'owner'-Mitgliedschaft in einer
+// Organisation. `id` ist die user.id – sie ist der Schlüssel für alle Folgeaktionen
+// (sperren, löschen, Impersonation), die später über das admin-Plugin laufen.
+export const coachListItemSchema = z.object({
+  id:               z.string(),
+  name:             z.string(),
+  email:            z.string(),
+  registeredAt:     z.string(),            // ISO 8601, user.createdAt
+  status:           CoachStatus,
+  organizationId:   z.string(),
+  organizationName: z.string(),
+  subdomain:        z.string().nullable(), // organization.slug, laut Schema nullable
+  clientCount:      z.number(),
+  sessionCount:     z.number(),            // stattgefundene Sitzungen (bestätigt/abgeschlossen, in der Vergangenheit)
+});
+export type CoachListItem = z.infer<typeof coachListItemSchema>;
+
+// Query-Parameter kommen als Strings an, daher z.coerce statt z.number (wie bei
+// listCoachBookingsQuerySchema). `limit` ist Sicherheitsklammer, keine Pagination:
+// bei erwarteten <100 Coachs wäre ein Offset-Envelope spekulativ.
+// `plan` fehlt bewusst – ohne Subscription-Tabelle gibt es nichts zu filtern.
+export const listCoachesQuerySchema = z.object({
+  q:              z.string().trim().max(160, 'Suchbegriff ist zu lang').optional(),
+  status:         CoachStatus.optional(),
+  registeredFrom: z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
+  registeredTo:   z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
+  sort:           z.enum(['registeredAt', 'name', 'email', 'sessionCount', 'clientCount']).default('registeredAt'),
+  order:          z.enum(['asc', 'desc']).default('desc'),
+  limit:          z.coerce.number().int().min(1).max(500).default(200),
+});
+export type ListCoachesQuery = z.infer<typeof listCoachesQuerySchema>;

@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings, clients } from '../db/schema';
 import { coachBookingColumns, toCoachBookingResponse } from '../bookings/coach-booking.mapper';
+import { HELD_SESSION_STATUSES } from '../bookings/booking.constants';
 import { isUniqueViolation } from '../common/pg-errors';
 import { normalizeEmail } from './normalize-email';
 import type { ClientDetail, ClientListItem, ClientResponse, CreateClientDto, UpdateClientDto } from '@hxroom/shared';
@@ -20,10 +21,9 @@ function toClientResponse(row: ClientRow): ClientResponse {
   };
 }
 
-// Eine Sitzung zählt als gehalten, wenn sie bestätigt (oder abgeschlossen) ist.
-// Abgesagte und nie bestätigte Termine bleiben außen vor – sie haben nicht
-// stattgefunden und würden die Zahl im Klientenprofil verfälschen.
-const HELD_SESSION = inArray(bookings.status, ['confirmed', 'completed']);
+// Statusliste in bookings/booking.constants.ts, weil die Coach-Liste des Betreibers
+// dieselbe Definition braucht (siehe Kommentar dort).
+const HELD_SESSION = inArray(bookings.status, [...HELD_SESSION_STATUSES]);
 
 @Injectable()
 export class ClientsService {

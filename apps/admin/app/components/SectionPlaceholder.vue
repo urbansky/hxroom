@@ -10,11 +10,8 @@ defineProps<{
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 flex flex-col gap-6">
-    <div>
-      <h1 class="font-serif text-3xl text-(--ui-text-highlighted)">{{ title }}</h1>
-      <p class="mt-1 text-sm text-(--ui-text-muted)">{{ description }}</p>
-    </div>
+  <div class="flex flex-col gap-6">
+    <PageHeader :title="title" :description="description" />
 
     <div class="flex flex-col gap-3">
       <UpcomingFeature

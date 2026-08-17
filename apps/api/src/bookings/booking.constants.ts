@@ -12,3 +12,13 @@ export const CONFIRMATION_TTL_MINUTES = 30;
 export function isExpiredPending(createdAt: Date, now: Date, ttlMinutes = CONFIRMATION_TTL_MINUTES): boolean {
   return now.getTime() - createdAt.getTime() > ttlMinutes * 60_000;
 }
+
+// Eine Sitzung zählt als gehalten, wenn sie bestätigt (oder abgeschlossen) ist. Abgesagte
+// und nie bestätigte Termine haben nicht stattgefunden und würden jede Kennzahl
+// verfälschen – in der Klientenliste des Coachs (ClientsService) genauso wie in der
+// Coach-Liste des Betreibers (AdminCoachesService). Deshalb hier einmal definiert: liefen
+// die beiden Listen auseinander, wäre nicht mehr klar, welche Zahl stimmt.
+//
+// Als reines Array statt als Drizzle-Bedingung, damit diese Datei frei von ORM-Importen
+// bleibt; die Aufrufer bauen ihr `inArray` selbst.
+export const HELD_SESSION_STATUSES = ['confirmed', 'completed'] as const;

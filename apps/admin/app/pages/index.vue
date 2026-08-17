@@ -21,15 +21,11 @@ const features = [
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 flex flex-col gap-6">
-    <div>
-      <h1 class="font-serif text-3xl text-(--ui-text-highlighted)">
-        Hallo, {{ session.data?.user?.name ?? '…' }}
-      </h1>
-      <p class="mt-1 text-sm text-(--ui-text-muted)">
-        Willkommen im Betreiber-Backoffice.
-      </p>
-    </div>
+  <div class="flex flex-col gap-6">
+    <PageHeader
+      :title="`Hallo, ${session.data?.user?.name ?? '…'}`"
+      description="Willkommen im Betreiber-Backoffice."
+    />
 
     <UAlert
       icon="i-lucide-construction"
