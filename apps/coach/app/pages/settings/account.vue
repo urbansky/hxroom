@@ -29,15 +29,6 @@ const emailPending = ref(false)
 const emailError = ref<string | null>(null)
 const emailRequestedFor = ref<string | null>(null)
 
-// Merkt sich die angefragte Adresse über den Umweg durchs Postfach hinweg.
-//
-// Nötig, weil beide Bestätigungsschritte auf derselben Rück-URL landen: better-auth reicht
-// die callbackURL aus dem Antrag unverändert an den zweiten Schritt weiter, an der Query
-// sind die beiden also nicht zu unterscheiden. Der Vergleich mit der Session sagt dagegen
-// eindeutig, ob der Wechsel schon vollzogen ist – nach Schritt 1 steht dort noch die alte
-// Adresse, weil better-auth sie erst mit dem Klick aus dem neuen Postfach umstellt.
-const pendingEmail = useCookie<string | null>('account-pending-email', { default: () => null })
-
 async function onSubmitEmail(event: FormSubmitEvent<EmailSchema>) {
   emailError.value = null
   emailRequestedFor.value = null
@@ -51,7 +42,6 @@ async function onSubmitEmail(event: FormSubmitEvent<EmailSchema>) {
       emailError.value = mapAuthError(error, 'Die E-Mail-Adresse konnte nicht geändert werden.')
     } else {
       emailRequestedFor.value = event.data.newEmail
-      pendingEmail.value = event.data.newEmail
       emailForm.newEmail = ''
     }
   } finally {
@@ -60,24 +50,23 @@ async function onSubmitEmail(event: FormSubmitEvent<EmailSchema>) {
 }
 
 // Rückkehr von einem der beiden Bestätigungslinks.
+//
+// Beide landen auf dieser Seite, weil better-auth dieselbe callbackURL an den zweiten Schritt
+// weiterreicht. Unterschieden werden sie über den Marker, den die API in den Link der zweiten
+// Mail schreibt (markEmailChangeCompleted in auth.module.ts) – das funktioniert auch, wenn
+// die Mail auf einem anderen Gerät geöffnet wird als dem, das den Wechsel angestoßen hat.
 const route = useRoute()
 
 type EmailChangeState =
-  | 'done'      // Session trägt die angefragte Adresse – der Wechsel ist durch
+  | 'done'      // Bestätigung aus dem neuen Postfach – der Wechsel ist vollzogen
   | 'approved'  // erst freigegeben, die Bestätigung aus dem neuen Postfach fehlt noch
-  | 'unknown'   // ohne gemerkte Adresse (Link in einem anderen Browser geöffnet)
 
 const emailChangeState = computed<EmailChangeState | null>(() => {
-  if (route.query['email-changed'] !== 'true') return null
-  if (!pendingEmail.value) return 'unknown'
-  return currentEmail.value === pendingEmail.value ? 'done' : 'approved'
+  const marker = route.query['email-changed']
+  if (marker === 'done') return 'done'
+  if (marker === 'true') return 'approved'
+  return null
 })
-
-// Aufräumen, sobald der Wechsel durch ist – sonst deutet ein liegengebliebener Wert einen
-// späteren Besuch fälschlich als offenen Wechsel.
-watch(emailChangeState, (state) => {
-  if (state === 'done') pendingEmail.value = null
-}, { immediate: true })
 
 // ─── Passwort ──────────────────────────────────────────────────────────────────────────
 const passwordSchema = z.object({
@@ -209,8 +198,8 @@ async function revokeDeletion() {
       <template #description>
         <div class="flex flex-col gap-2">
           <p>
-            Wir haben eine Bestätigung an <strong>{{ pendingEmail }}</strong> geschickt.
-            Öffne dieses Postfach und klicke den Link darin.
+            Wir haben eine Bestätigung an deine neue Adresse geschickt. Öffne dieses Postfach
+            und klicke den Link darin.
           </p>
           <p class="text-dimmed">
             Bis dahin bleibt deine bisherige Adresse in Kraft – deshalb steht sie unten noch.
@@ -218,19 +207,6 @@ async function revokeDeletion() {
         </div>
       </template>
     </UAlert>
-
-    <!--
-      Link in einem anderen Browser geöffnet: welcher der beiden Schritte das war, ist hier
-      nicht zu erkennen. Statt zu raten benennt der Text, woran der Coach es selbst sieht.
-    -->
-    <UAlert
-      v-else-if="emailChangeState === 'unknown'"
-      icon="i-lucide-mail-check"
-      color="info"
-      variant="soft"
-      title="Bestätigung erhalten"
-      description="Deine aktuelle Anmelde-Adresse steht unten. Ist das noch die bisherige, fehlt der Klick auf den Link, den wir an die neue Adresse geschickt haben."
-    />
 
     <!-- E-Mail-Adresse -->
     <SettingsSection

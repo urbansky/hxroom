@@ -160,7 +160,7 @@ export type Auth = ReturnType<typeof betterAuth>;
                   ? 'Neue E-Mail-Adresse bestätigen – HxRoom'
                   : 'E-Mail-Adresse bestätigen – HxRoom',
                 htmlContent: isEmailChange
-                  ? await renderEmailChangeVerificationEmail({ name: user.name, verifyUrl: url })
+                  ? await renderEmailChangeVerificationEmail({ name: user.name, verifyUrl: markEmailChangeCompleted(url) })
                   : await renderEmailVerificationEmail({ name: user.name, verifyUrl: url }),
               });
             },
@@ -172,6 +172,35 @@ export type Auth = ReturnType<typeof betterAuth>;
   exports: [AUTH],
 })
 export class AuthModule {}
+
+/**
+ * Markiert die Rücksprung-Adresse im Link der zweiten Wechsel-Mail als Abschluss.
+ *
+ * Der E-Mail-Wechsel läuft über zwei Klicks – Freigabe aus dem alten Postfach, Bestätigung
+ * aus dem neuen –, und better-auth reicht dieselbe callbackURL an beide Schritte weiter.
+ * Beide Klicks landen dadurch auf derselben Seite, die ohne Unterscheidung raten müsste,
+ * welcher der beiden gerade passiert ist: nach dem ersten gilt noch die alte Adresse, nach
+ * dem zweiten die neue. `email-changed=done` macht den Unterschied sichtbar, und zwar
+ * geräteunabhängig – Mail-Links werden oft auf einem anderen Gerät geöffnet als dem, auf dem
+ * der Wechsel angestoßen wurde.
+ *
+ * Sieht der Link anders aus als erwartet, bleibt er unverändert; die Coach-App zeigt dann den
+ * Hinweis für den ersten Schritt statt einer falschen Erfolgsmeldung.
+ */
+function markEmailChangeCompleted(verifyUrl: string): string {
+  try {
+    const link = new URL(verifyUrl);
+    const callback = link.searchParams.get('callbackURL');
+    if (!callback) return verifyUrl;
+
+    const target = new URL(callback);
+    target.searchParams.set('email-changed', 'done');
+    link.searchParams.set('callbackURL', target.toString());
+    return link.toString();
+  } catch {
+    return verifyUrl;
+  }
+}
 
 function generateSlug(input: string): string {
   return input
