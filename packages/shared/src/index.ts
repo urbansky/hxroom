@@ -4,6 +4,12 @@ import { z } from 'zod';
 export const BookingStatus = z.enum(['pending', 'confirmed', 'completed', 'cancelled']);
 export type BookingStatus = z.infer<typeof BookingStatus>;
 
+// Wer eine Buchung abgesagt hat. 'system' steht für den automatischen Verfall einer
+// nie bestätigten Buchung (BookingExpiryService) – für den Coach ist das etwas anderes
+// als eine bewusste Absage, im Status 'cancelled' wäre es sonst nicht unterscheidbar.
+export const CancelledBy = z.enum(['coach', 'client', 'system']);
+export type CancelledBy = z.infer<typeof CancelledBy>;
+
 // Plan types
 export const PlanType = z.enum(['trial', 'solo', 'pro', 'studio']);
 export type PlanType = z.infer<typeof PlanType>;
@@ -164,6 +170,29 @@ export const confirmBookingSchema = z.object({
 });
 export type ConfirmBookingDto = z.infer<typeof confirmBookingSchema>;
 
+// Absage durch den Klienten über den Link aus der Bestätigungsmail. Derselbe Token wie
+// beim Confirm-Flow – der Klient hat kein Konto, der Link ist sein einziger Zugang.
+// Der Grund ist optional und geht in die Benachrichtigung an den Coach.
+export const cancelBookingByClientSchema = z.object({
+  token:  z.string().min(1, 'Token ist erforderlich'),
+  reason: z.string().max(500, 'Grund ist zu lang').optional(),
+});
+export type CancelBookingByClientDto = z.infer<typeof cancelBookingByClientSchema>;
+
+// Token-authentifizierte Klienten-Sicht auf die eigene Buchung: zeigt vor dem Absagen,
+// welcher Termin getroffen wird. Bewusst ohne clientEmail/clientPhone/clientNote – wer
+// den Link in die Finger bekommt, soll nichts erfahren, was nicht ohnehin in der Mail steht.
+export const clientBookingViewSchema = z.object({
+  id:          z.string(),
+  start:       z.string(),   // ISO 8601
+  end:         z.string(),
+  offerName:   z.string(),
+  coachName:   z.string(),
+  status:      BookingStatus,
+  cancellable: z.boolean(),
+});
+export type ClientBookingView = z.infer<typeof clientBookingViewSchema>;
+
 export const bookingResponseSchema = z.object({
   id:        z.string(),
   start:     z.string(),
@@ -192,6 +221,10 @@ export const coachBookingResponseSchema = z.object({
   clientNote:      z.string().nullable(),
   confirmedAt:     z.string().nullable(),
   createdAt:       z.string(),
+  // Absagedetails: für Altbestand und für alles, was nie abgesagt wurde, null.
+  cancelledAt:        z.string().nullable(),
+  cancelledBy:        CancelledBy.nullable(),
+  cancellationReason: z.string().nullable(),
 });
 export type CoachBookingResponse = z.infer<typeof coachBookingResponseSchema>;
 

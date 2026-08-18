@@ -17,6 +17,11 @@ export const router = createRouter({
       component: () => import('../views/ConfirmBookingView.vue'),
       props: true,
     },
+    {
+      path: '/cancel/:bookingId',
+      component: () => import('../views/CancelBookingView.vue'),
+      props: true,
+    },
   ],
   scrollBehavior(to) {
     if (to.hash) {

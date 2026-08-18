@@ -9,13 +9,15 @@ import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
 import { renderBookingConfirmedEmail } from '../mail/templates/client/booking-confirmed';
+import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderBookingNotificationEmail } from '../mail/templates/coach/booking-notification';
+import { renderBookingCancelledByClientEmail } from '../mail/templates/coach/booking-cancelled-by-client';
 import { isUniqueViolation } from '../common/pg-errors';
 import { normalizeEmail } from '../clients/normalize-email';
-import { CONFIRMATION_TTL_MINUTES, isExpiredPending } from './booking.constants';
+import { CONFIRMATION_TTL_MINUTES, canClientCancel, isExpiredPending } from './booking.constants';
 import { formatDayLabel, formatDayTimeLabel } from './booking-formatting';
-import { buildConfirmUrl } from './booking-urls';
-import type { CreateBookingDto, BookingResponse } from '@hxroom/shared';
+import { buildBookingPageUrl, buildCancelUrl, buildConfirmUrl } from './booking-urls';
+import type { CreateBookingDto, BookingResponse, ClientBookingView } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
 type BookingRow = typeof bookingsTable.$inferSelect;
@@ -31,6 +33,15 @@ function toBookingResponse(booking: BookingRow): BookingResponse {
     offerName: booking.offerName,
     status: booking.status,
   };
+}
+
+// Konstantzeit-Vergleich für den clientAccessToken: er ist der einzige Zugangsschutz für
+// Bestätigung und Absage, ein früh abbrechender Vergleich wäre hier angreifbar.
+// timingSafeEqual verlangt gleiche Länge, deshalb der vorgeschaltete Längenvergleich.
+function tokenMatches(provided: string, stored: string): boolean {
+  const providedBuffer = Buffer.from(provided, 'utf8');
+  const storedBuffer = Buffer.from(stored, 'utf8');
+  return providedBuffer.length === storedBuffer.length && timingSafeEqual(providedBuffer, storedBuffer);
 }
 
 @Injectable()
@@ -132,10 +143,7 @@ export class BookingsService {
         throw new NotFoundException('Booking not found');
       }
 
-      const providedToken = Buffer.from(token, 'utf8');
-      const storedToken = Buffer.from(booking.clientAccessToken, 'utf8');
-      const tokenMatches = providedToken.length === storedToken.length && timingSafeEqual(providedToken, storedToken);
-      if (!tokenMatches) {
+      if (!tokenMatches(token, booking.clientAccessToken)) {
         throw new UnauthorizedException('Invalid confirmation token');
       }
 
@@ -146,7 +154,10 @@ export class BookingsService {
       // Zweite Verteidigungslinie neben dem Verfall-Cron: fängt die Buchung ab, deren
       // TTL zwischen zwei Cron-Läufen abgelaufen ist.
       if (isExpiredPending(booking.createdAt, new Date())) {
-        await tx.update(bookings).set({ status: 'cancelled' }).where(eq(bookings.id, bookingId));
+        await tx
+          .update(bookings)
+          .set({ status: 'cancelled', cancelledAt: new Date(), cancelledBy: 'system' })
+          .where(eq(bookings.id, bookingId));
         return { expired: true as const };
       }
 
@@ -188,6 +199,144 @@ export class BookingsService {
     return toBookingResponse(result.booking);
   }
 
+  /**
+   * Token-authentifizierte Sicht des Klienten auf seine eigene Buchung. Sie steht vor der
+   * Absage: der Klient soll sehen, welchen Termin er trifft, bevor er ihn storniert –
+   * gerade wenn er mehrere offene Termine beim selben Coach hat.
+   */
+  async findForClient(bookingId: string, token: string): Promise<ClientBookingView> {
+    const [booking] = await this.db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (!tokenMatches(token, booking.clientAccessToken)) {
+      throw new UnauthorizedException('Invalid access token');
+    }
+
+    const org = await this.organizationService.findById(booking.organizationId);
+    const coach = await this.organizationService.findOwnerContact(booking.organizationId);
+
+    return {
+      id: booking.id,
+      start: booking.startTime.toISOString(),
+      end: booking.endTime.toISOString(),
+      offerName: booking.offerName,
+      coachName: coach?.name ?? org.name,
+      status: booking.status,
+      cancellable: canClientCancel(booking, new Date()),
+    };
+  }
+
+  /**
+   * Absage durch den Klienten über den Link aus der Bestätigungsmail
+   * (doc/funktionen/backoffice-coach.md 2.06). Der Slot wird dadurch sofort wieder
+   * buchbar – dafür sorgt der partielle Unique-Index, der 'cancelled' ausnimmt.
+   *
+   * Der clientAccessToken wird bewusst nicht invalidiert: derselbe Token soll später den
+   * Warteraum öffnen (doc/technisches-konzept.md §8), und ein wiederholter Aufruf des
+   * Links soll dem Klienten „bereits abgesagt" zeigen statt „ungültiger Link".
+   */
+  async cancelByClient(bookingId: string, token: string, reason?: string): Promise<BookingResponse> {
+    const cancelled = await this.db.transaction(async (tx) => {
+      const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).for('update');
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
+
+      if (!tokenMatches(token, booking.clientAccessToken)) {
+        throw new UnauthorizedException('Invalid access token');
+      }
+
+      // Zwei getrennte Meldungen: „schon abgesagt" ist für den Klienten die Entwarnung,
+      // „nicht mehr möglich" der Hinweis, sich an den Coach zu wenden.
+      if (booking.status === 'cancelled') {
+        throw new ConflictException('Booking is already cancelled');
+      }
+
+      if (!canClientCancel(booking, new Date())) {
+        throw new ConflictException('Booking can no longer be cancelled');
+      }
+
+      const [updated] = await tx
+        .update(bookings)
+        .set({
+          status: 'cancelled',
+          cancelledAt: new Date(),
+          cancelledBy: 'client',
+          cancellationReason: reason ?? null,
+        })
+        .where(eq(bookings.id, bookingId))
+        .returning();
+
+      return updated;
+    });
+
+    // Nach dem Commit: die Absage steht und der Slot ist frei – daran darf ein Ausfall
+    // des Mail-Providers nichts ändern, der Klient hat seine Erfolgsseite verdient.
+    try {
+      await this.sendClientCancellationMails(cancelled, reason);
+    } catch (err) {
+      this.logger.error(`Failed to prepare cancellation mails for booking ${cancelled.id}`, err instanceof Error ? err.stack : err);
+    }
+
+    return toBookingResponse(cancelled);
+  }
+
+  // Quittung an den Klienten und Benachrichtigung an den Coach. Getrennte try/catch wie
+  // bei der Bestätigung: die eine Mail darf nicht an der anderen scheitern. Für den Coach
+  // ist seine Mail der einzige aktive Hinweis auf die neue Lücke im Kalender.
+  private async sendClientCancellationMails(booking: BookingRow, reason?: string): Promise<void> {
+    const org = await this.organizationService.findById(booking.organizationId);
+    const coach = await this.organizationService.findOwnerContact(booking.organizationId);
+
+    const dayTimeLabel = formatDayTimeLabel(booking);
+    const coachDisplayName = coach?.name ?? org.name;
+
+    try {
+      await this.mailService.send({
+        to: { email: booking.clientEmail, name: booking.clientName },
+        subject: 'Dein Termin wurde abgesagt – HxRoom',
+        replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
+        htmlContent: await renderBookingCancelledEmail({
+          clientName: booking.clientName,
+          coachName: coachDisplayName,
+          offerName: booking.offerName,
+          dayTimeLabel,
+          cancelledBy: 'client',
+          reason: reason ?? null,
+          bookingPageUrl: org.slug ? buildBookingPageUrl(this.config, org.slug) : null,
+        }),
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send cancellation receipt for booking ${booking.id}`, err instanceof Error ? err.stack : err);
+    }
+
+    if (!coach) {
+      this.logger.warn(`Organization ${org.id} has no owner member – skipped coach cancellation notice for booking ${booking.id}`);
+      return;
+    }
+
+    try {
+      await this.mailService.send({
+        to: { email: coach.email, name: coach.name },
+        subject: `Absage: ${booking.clientName} am ${formatDayLabel(booking)}`,
+        replyTo: { email: booking.clientEmail, name: booking.clientName },
+        htmlContent: await renderBookingCancelledByClientEmail({
+          coachName: coach.name,
+          clientName: booking.clientName,
+          clientEmail: booking.clientEmail,
+          offerName: booking.offerName,
+          dayTimeLabel,
+          reason: reason ?? null,
+          bookingsUrl: `${this.config.getOrThrow<string>('COACH_APP_URL').replace(/\/$/, '')}/bookings`,
+        }),
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send coach cancellation notice for booking ${booking.id}`, err instanceof Error ? err.stack : err);
+    }
+  }
+
   // Wird erst nach dem Commit aufgerufen: die Buchung steht bereits fest, ein Ausfall des
   // Mail-Providers (MailService.send wirft) darf die Bestätigung nicht zurückrollen und den
   // Klienten nicht auf eine Fehlerseite schicken. Beide Mails laufen in getrennten
@@ -226,6 +375,7 @@ export class BookingsService {
           offerName: booking.offerName,
           dayTimeLabel,
           durationMinutes: booking.durationMinutes,
+          cancelUrl: org.slug ? buildCancelUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null,
         }),
         attachment: [{ name: 'termin.ics', content: Buffer.from(ics, 'utf8').toString('base64') }],
       });

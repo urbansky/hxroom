@@ -137,3 +137,12 @@ export const STATUS_LABELS: Record<CoachBookingResponse['status'], string> = {
   completed: 'abgeschlossen',
   cancelled: 'abgesagt',
 }
+
+// Wer abgesagt hat, ist für die Reaktion des Coachs entscheidend: eine Absage des Klienten
+// hinterlässt eine Lücke, die er neu füllen kann, ein Verfall dagegen heißt, dass die
+// Buchung nie bestätigt wurde. Aus Sicht des Coachs formuliert ("von dir").
+export const CANCELLED_BY_LABELS: Record<NonNullable<CoachBookingResponse['cancelledBy']>, string> = {
+  coach: 'von dir',
+  client: 'vom Klienten',
+  system: 'automatisch, weil der Klient nicht bestätigt hat',
+}

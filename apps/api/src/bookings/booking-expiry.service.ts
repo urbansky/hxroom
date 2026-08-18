@@ -28,7 +28,9 @@ export class BookingExpiryService {
     try {
       const expired = await this.db
         .update(bookings)
-        .set({ status: 'cancelled' })
+        // cancelledBy 'system' hält den Verfall von einer bewussten Absage auseinander –
+        // im Backoffice ist das für den Coach ein anderer Vorgang.
+        .set({ status: 'cancelled', cancelledAt: new Date(), cancelledBy: 'system' })
         .where(
           and(
             eq(bookings.status, 'pending'),

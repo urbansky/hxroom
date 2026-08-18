@@ -15,3 +15,10 @@ export function buildBookingPageUrl(config: ConfigService, slug: string): string
 export function buildConfirmUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {
   return `${buildOrigin(config, slug)}/confirm/${bookingId}?token=${token}`;
 }
+
+// Absage-Link für die Bestätigungsmail: derselbe Token wie beim Confirm-Link, nur ein
+// anderes Ziel. Der Klient hat kein Konto – ohne diesen Link bliebe ihm nur die Antwort
+// per Mail, die der Coach dann von Hand nachziehen müsste.
+export function buildCancelUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {
+  return `${buildOrigin(config, slug)}/cancel/${bookingId}?token=${token}`;
+}

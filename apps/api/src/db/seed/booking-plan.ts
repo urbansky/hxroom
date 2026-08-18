@@ -7,7 +7,7 @@
  * gesäten Termine exakt auf dem Raster, das die Verfügbarkeitsregeln aufspannen, und
  * sitzen im Wochenkalender bündig in den hellen Verfügbarkeitsflächen statt versetzt.
  */
-import type { BookingStatus } from '@hxroom/shared';
+import type { BookingStatus, CancelledBy } from '@hxroom/shared';
 import { computeAvailableSlots, type DateRange } from '../../availability/slot-calculation';
 import {
   DEMO_AVAILABILITY,
@@ -35,6 +35,9 @@ export interface PlannedBooking {
   clientNote: string | null;
   /** Nur für die 'pending'-Buchung relevant: sie braucht ein frisches createdAt. */
   createdAt: Date;
+  /** Nur für 'cancelled': wer abgesagt hat und warum. */
+  cancelledBy?: CancelledBy;
+  cancellationReason?: string | null;
 }
 
 /**
@@ -215,6 +218,8 @@ export function planBookings(now: Date): PlannedBooking[] {
       status: 'cancelled',
       clientNote: null,
       createdAt: new Date(cancelledPast.start.getTime() - 4 * 24 * 60 * 60 * 1000),
+      cancelledBy: 'coach',
+      cancellationReason: 'Ich musste an dem Tag kurzfristig zu einer Fortbildung.',
     });
   }
 
@@ -264,7 +269,8 @@ export function planBookings(now: Date): PlannedBooking[] {
     });
   }
 
-  // Abgesagt in der Zukunft
+  // Abgesagt in der Zukunft – vom Klienten selbst, über den Link aus der
+  // Bestätigungsmail. Deckt die Absagedetails im BookingDetailSlideover ab.
   const cancelledFuture = futureGrid.find(freeFor(coaching));
   if (cancelledFuture) {
     add({
@@ -274,6 +280,8 @@ export function planBookings(now: Date): PlannedBooking[] {
       status: 'cancelled',
       clientNote: null,
       createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+      cancelledBy: 'client',
+      cancellationReason: 'Ich bin leider krank geworden und melde mich für einen neuen Termin.',
     });
   }
 

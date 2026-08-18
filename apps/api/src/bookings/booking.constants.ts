@@ -1,3 +1,5 @@
+import type { BookingStatus } from '@hxroom/shared';
+
 // Zeitfenster, in dem eine 'pending'-Buchung bestätigt werden muss, bevor sie verfällt
 // (siehe doc/idee-klienten-matching.md). Wird an drei Stellen gebraucht und muss dort
 // zwingend derselbe Wert sein: beim Lazy-Check in BookingsService.confirm, im
@@ -11,6 +13,17 @@ export const CONFIRMATION_TTL_MINUTES = 30;
 // Funktion, damit die Grenzfälle ohne Datenbank testbar sind.
 export function isExpiredPending(createdAt: Date, now: Date, ttlMinutes = CONFIRMATION_TTL_MINUTES): boolean {
   return now.getTime() - createdAt.getTime() > ttlMinutes * 60_000;
+}
+
+// Der Klient darf seinen Termin über den Link aus der Bestätigungsmail bis zum
+// Terminbeginn selbst absagen (doc/funktionen/backoffice-coach.md 2.06). Danach ist die
+// Sitzung entweder gelaufen oder läuft gerade – dann gehört die Absage in die Hand des
+// Coachs, nicht in einen Mail-Link. Eine Absagefrist darüber hinaus gibt es im MVP nicht.
+//
+// 'pending' ist bewusst eingeschlossen: wer noch nicht bestätigt hat, soll den Slot
+// trotzdem aktiv freigeben können, statt auf den TTL-Verfall zu warten.
+export function canClientCancel(booking: { status: BookingStatus; startTime: Date }, now: Date): boolean {
+  return (booking.status === 'pending' || booking.status === 'confirmed') && booking.startTime > now;
 }
 
 // Eine Sitzung zählt als gehalten, wenn sie bestätigt (oder abgeschlossen) ist. Abgesagte

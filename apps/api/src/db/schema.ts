@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { BookingStatus } from '@hxroom/shared';
+import type { BookingStatus, CancelledBy } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -166,24 +166,30 @@ export const clients = pgTable('clients', {
 // erst der Klient gematcht/angelegt (clientId gesetzt). offerName/durationMinutes
 // sind Snapshots zum Buchungszeitpunkt, unabhängig von späteren Angebotsänderungen.
 export const bookings = pgTable('bookings', {
-  id:                text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  organizationId:    text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
-  clientId:          text('client_id').references(() => clients.id, { onDelete: 'set null' }),
-  offerId:           text('offer_id').references(() => offers.id, { onDelete: 'set null' }),
-  offerName:         text('offer_name').notNull(),
-  durationMinutes:   integer('duration_minutes').notNull(),
-  startTime:         timestamp('start_time').notNull(),
-  endTime:           timestamp('end_time').notNull(),
-  status:            text('status').$type<BookingStatus>().notNull().default('pending'),
-  clientName:        text('client_name').notNull(),
-  clientEmail:       text('client_email').notNull(),
-  clientPhone:       text('client_phone'),
-  clientNote:        text('client_note'),
-  clientAccessToken: text('client_access_token').notNull(),
-  clientTokenUsedAt: timestamp('client_token_used_at'),
-  confirmedAt:       timestamp('confirmed_at'),
-  createdAt:         timestamp('created_at').notNull().defaultNow(),
-  updatedAt:         timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+  id:                 text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:     text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  clientId:           text('client_id').references(() => clients.id, { onDelete: 'set null' }),
+  offerId:            text('offer_id').references(() => offers.id, { onDelete: 'set null' }),
+  offerName:          text('offer_name').notNull(),
+  durationMinutes:    integer('duration_minutes').notNull(),
+  startTime:          timestamp('start_time').notNull(),
+  endTime:            timestamp('end_time').notNull(),
+  status:             text('status').$type<BookingStatus>().notNull().default('pending'),
+  clientName:         text('client_name').notNull(),
+  clientEmail:        text('client_email').notNull(),
+  clientPhone:        text('client_phone'),
+  clientNote:         text('client_note'),
+  clientAccessToken:  text('client_access_token').notNull(),
+  clientTokenUsedAt:  timestamp('client_token_used_at'),
+  confirmedAt:        timestamp('confirmed_at'),
+  // Absagedetails. Ohne sie wäre 'cancelled' ein Sammelstatus, in dem eine Absage des
+  // Coachs, eine Absage des Klienten und der TTL-Verfall nicht mehr auseinanderzuhalten
+  // sind – der Coach sieht so im Kalender, was tatsächlich passiert ist.
+  cancelledAt:        timestamp('cancelled_at'),
+  cancelledBy:        text('cancelled_by').$type<CancelledBy>(),
+  cancellationReason: text('cancellation_reason'),
+  createdAt:          timestamp('created_at').notNull().defaultNow(),
+  updatedAt:          timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 }, (table) => ({
   uniqueAccessToken: unique().on(table.clientAccessToken),
   // Partieller Index: eine stornierte/verfallene Buchung blockiert den Zeitpunkt

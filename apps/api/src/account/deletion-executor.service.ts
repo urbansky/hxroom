@@ -190,8 +190,10 @@ export class DeletionExecutorService {
     coachDisplayName: string,
   ): Promise<number> {
     const upcoming = await tx
+      // Urheber ist der Coach: die Löschung seines Kontos ist seine Entscheidung, nicht
+      // ein automatischer Verfall.
       .update(bookings)
-      .set({ status: 'cancelled' })
+      .set({ status: 'cancelled', cancelledAt: new Date(), cancelledBy: 'coach' })
       .where(and(
         eq(bookings.organizationId, organizationId),
         inArray(bookings.status, ['pending', 'confirmed']),
@@ -218,6 +220,7 @@ export class DeletionExecutorService {
             coachName: coachDisplayName,
             offerName: booking.offerName,
             dayTimeLabel: formatDayTimeLabel(booking),
+            cancelledBy: 'coach',
             reason: null,
             // Kein Link: die Buchungsseite verschwindet mit dem Konto.
             bookingPageUrl: null,

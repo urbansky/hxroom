@@ -298,6 +298,9 @@ async function seedCoach(
           clientAccessToken: randomBytes(32).toString('hex'),
           clientTokenUsedAt: isConfirmed ? booking.createdAt : null,
           confirmedAt: isConfirmed ? booking.createdAt : null,
+          cancelledAt: booking.status === 'cancelled' ? booking.createdAt : null,
+          cancelledBy: booking.cancelledBy ?? null,
+          cancellationReason: booking.cancellationReason ?? null,
           createdAt: booking.createdAt,
           updatedAt: booking.createdAt,
         };

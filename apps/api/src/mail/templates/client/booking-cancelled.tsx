@@ -7,6 +7,11 @@ interface BookingCancelledEmailProps {
   coachName: string;
   offerName: string;
   dayTimeLabel: string;
+  /**
+   * Wer abgesagt hat. Bei 'client' ist diese Mail die Quittung auf die eigene Absage –
+   * ein „musste leider abgesagt werden" wäre dort schlicht falsch.
+   */
+  cancelledBy: 'coach' | 'client';
   /** Optionaler Grund des Coachs – wird nur angezeigt, wenn er einen angegeben hat. */
   reason?: string | null;
   /**
@@ -17,17 +22,22 @@ interface BookingCancelledEmailProps {
   bookingPageUrl: string | null;
 }
 
-// Geht raus, wenn der Coach einen Termin im Backoffice absagt
-// (doc/funktionen/backoffice-coach.md 2.06) oder wenn sein Konto gelöscht wird und noch
-// Termine offen sind (DeletionExecutorService).
-export default function BookingCancelledEmail({ clientName, coachName, offerName, dayTimeLabel, reason, bookingPageUrl }: BookingCancelledEmailProps) {
+// Geht raus, wenn der Coach einen Termin im Backoffice absagt, wenn der Klient ihn über
+// den Link aus der Bestätigungsmail selbst absagt (beides
+// doc/funktionen/backoffice-coach.md 2.06) oder wenn das Coach-Konto gelöscht wird und
+// noch Termine offen sind (DeletionExecutorService).
+export default function BookingCancelledEmail({ clientName, coachName, offerName, dayTimeLabel, cancelledBy, reason, bookingPageUrl }: BookingCancelledEmailProps) {
+  const byClient = cancelledBy === 'client';
+
   return (
-    <MailLayout preview={`Dein Termin am ${dayTimeLabel} wurde abgesagt`}>
+    <MailLayout preview={byClient ? `Deine Absage für den ${dayTimeLabel} ist eingegangen` : `Dein Termin am ${dayTimeLabel} wurde abgesagt`}>
       <Text style={{ margin: '0 0 12px', fontSize: 20, color: '#1a1a1a', fontWeight: 600 }}>
         Hallo {clientName},
       </Text>
       <Text style={{ margin: '0 0 20px', color: '#555', lineHeight: 1.65, fontSize: 15 }}>
-        dein Termin bei {coachName} musste leider abgesagt werden.
+        {byClient
+          ? `deine Absage ist eingegangen – der folgende Termin bei ${coachName} ist storniert. ${coachName} wurde darüber informiert.`
+          : `dein Termin bei ${coachName} musste leider abgesagt werden.`}
       </Text>
       <Section style={{ backgroundColor: '#f5f5f2', borderRadius: 8, margin: '0 0 24px', padding: '16px 20px' }}>
         <Text style={{ margin: 0, fontSize: 14, color: '#333', lineHeight: 1.7, textDecoration: 'line-through' }}>
@@ -37,7 +47,9 @@ export default function BookingCancelledEmail({ clientName, coachName, offerName
         </Text>
       </Section>
 
-      {reason ? (
+      {/* Bei einer Selbstabsage kennt der Klient seinen Grund – ihn zurückzuspiegeln
+          wäre nur Füllmaterial. Der Grund geht stattdessen an den Coach. */}
+      {reason && !byClient ? (
         <>
           <Text style={{ margin: '0 0 6px', fontSize: 12, color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Grund
@@ -78,6 +90,7 @@ BookingCancelledEmail.PreviewProps = {
   coachName: 'Anna Bergmann',
   offerName: 'Coaching-Sitzung',
   dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+  cancelledBy: 'coach',
   reason: 'Ich bin an dem Tag leider kurzfristig verhindert.',
   bookingPageUrl: 'https://anna.hxroom.de',
 } satisfies BookingCancelledEmailProps;

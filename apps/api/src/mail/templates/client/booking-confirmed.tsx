@@ -1,4 +1,4 @@
-import { Section, Text } from '@react-email/components';
+import { Link, Section, Text } from '@react-email/components';
 import { MailLayout } from '../layout';
 import { renderEmail } from '../../render';
 
@@ -8,12 +8,18 @@ interface BookingConfirmedEmailProps {
   offerName: string;
   dayTimeLabel: string;
   durationMinutes: number;
+  /**
+   * Link zur Selbstabsage. `null`, wenn die Organisation keinen Slug hat und es damit
+   * keine Klienten-Subdomain gibt – dann bleibt nur der Weg über eine Antwortmail.
+   */
+  cancelUrl: string | null;
 }
 
 // Geht raus, sobald der Klient den Bestätigungslink geklickt hat und die Buchung final
-// ist. Bewusst ohne Button: der Zugang zum Warteraum kommt später über die
-// Erinnerungsmails (siehe doc/technisches-konzept.md, reminderJobs).
-export default function BookingConfirmedEmail({ clientName, coachName, offerName, dayTimeLabel, durationMinutes }: BookingConfirmedEmailProps) {
+// ist. Bewusst ohne Haupt-Button: der Zugang zum Warteraum kommt später über die
+// Erinnerungsmails (siehe doc/technisches-konzept.md, reminderJobs). Der Absage-Link
+// steht deshalb dezent im Fußtext – er ist der einzige Selfservice, den der Klient hat.
+export default function BookingConfirmedEmail({ clientName, coachName, offerName, dayTimeLabel, durationMinutes, cancelUrl }: BookingConfirmedEmailProps) {
   return (
     <MailLayout preview={`Dein Termin steht: ${offerName}, ${dayTimeLabel}`}>
       <Text style={{ margin: '0 0 12px', fontSize: 20, color: '#1a1a1a', fontWeight: 600 }}>
@@ -34,9 +40,19 @@ export default function BookingConfirmedEmail({ clientName, coachName, offerName
       <Text style={{ margin: '0 0 8px', color: '#555', lineHeight: 1.65, fontSize: 15 }}>
         Im Anhang dieser E-Mail findest du den Termin als Kalendereintrag – ein Klick, und er steht in deinem Kalender.
       </Text>
-      <Text style={{ margin: '24px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
-        Du hast eine Frage oder musst den Termin absagen? Antworte einfach auf diese E-Mail – sie geht direkt an {coachName}.
-      </Text>
+      {cancelUrl ? (
+        <Text style={{ margin: '24px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
+          Du kannst den Termin nicht wahrnehmen?{' '}
+          <Link href={cancelUrl} style={{ color: '#6d8069' }}>
+            Termin absagen
+          </Link>
+          . Bei allen anderen Fragen antworte einfach auf diese E-Mail – sie geht direkt an {coachName}.
+        </Text>
+      ) : (
+        <Text style={{ margin: '24px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
+          Du hast eine Frage oder musst den Termin absagen? Antworte einfach auf diese E-Mail – sie geht direkt an {coachName}.
+        </Text>
+      )}
     </MailLayout>
   );
 }
@@ -47,6 +63,7 @@ BookingConfirmedEmail.PreviewProps = {
   offerName: 'Coaching-Sitzung',
   dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
   durationMinutes: 60,
+  cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
 } satisfies BookingConfirmedEmailProps;
 
 export async function renderBookingConfirmedEmail(props: BookingConfirmedEmailProps): Promise<string> {

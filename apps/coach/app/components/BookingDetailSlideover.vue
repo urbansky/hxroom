@@ -29,6 +29,8 @@ watch(open, (isOpen) => {
 })
 
 const isCancelled = computed(() => props.booking?.status === 'cancelled')
+// Altbestand hat keinen Urheber – dann bleibt es beim reinen Zeitpunkt.
+const cancelledByLabel = computed(() => props.booking?.cancelledBy ? CANCELLED_BY_LABELS[props.booking.cancelledBy] : null)
 const isPast = computed(() => !!props.booking && new Date(props.booking.end) < new Date())
 
 async function downloadIcs() {
@@ -162,6 +164,19 @@ async function cancelBooking() {
           <p class="text-xs uppercase tracking-wide text-muted mb-1">Nachricht</p>
           <p class="text-sm text-highlighted whitespace-pre-line border-l-2 border-primary/40 pl-3">
             {{ booking.clientNote }}
+          </p>
+        </div>
+
+        <div v-if="booking.cancelledAt">
+          <p class="text-xs uppercase tracking-wide text-muted mb-1">Absage</p>
+          <p class="text-sm text-highlighted">
+            {{ formatDateTime(booking.cancelledAt) }}<template v-if="cancelledByLabel">, {{ cancelledByLabel }}</template>
+          </p>
+          <p
+            v-if="booking.cancellationReason"
+            class="text-sm text-highlighted whitespace-pre-line border-l-2 border-primary/40 pl-3 mt-2"
+          >
+            {{ booking.cancellationReason }}
           </p>
         </div>
 

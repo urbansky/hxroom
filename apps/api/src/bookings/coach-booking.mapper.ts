@@ -1,5 +1,5 @@
 import { bookings } from '../db/schema';
-import type { CoachBookingResponse } from '@hxroom/shared';
+import type { CancelledBy, CoachBookingResponse } from '@hxroom/shared';
 
 // Explizite Spaltenliste statt select(): clientAccessToken darf die API nie verlassen,
 // und ein select() ohne Argument würde ihn bei jedem Schema-Wechsel stillschweigend
@@ -9,20 +9,23 @@ import type { CoachBookingResponse } from '@hxroom/shared';
 // die Sitzungshistorie im Klientenprofil (ClientsService) liefern Buchungen an den
 // Coach aus. Eine zweite Spaltenliste wäre eine zweite Gelegenheit, den Token zu leaken.
 export const coachBookingColumns = {
-  id:              bookings.id,
-  startTime:       bookings.startTime,
-  endTime:         bookings.endTime,
-  offerId:         bookings.offerId,
-  offerName:       bookings.offerName,
-  durationMinutes: bookings.durationMinutes,
-  status:          bookings.status,
-  clientId:        bookings.clientId,
-  clientName:      bookings.clientName,
-  clientEmail:     bookings.clientEmail,
-  clientPhone:     bookings.clientPhone,
-  clientNote:      bookings.clientNote,
-  confirmedAt:     bookings.confirmedAt,
-  createdAt:       bookings.createdAt,
+  id:                 bookings.id,
+  startTime:          bookings.startTime,
+  endTime:            bookings.endTime,
+  offerId:            bookings.offerId,
+  offerName:          bookings.offerName,
+  durationMinutes:    bookings.durationMinutes,
+  status:             bookings.status,
+  clientId:           bookings.clientId,
+  clientName:         bookings.clientName,
+  clientEmail:        bookings.clientEmail,
+  clientPhone:        bookings.clientPhone,
+  clientNote:         bookings.clientNote,
+  confirmedAt:        bookings.confirmedAt,
+  createdAt:          bookings.createdAt,
+  cancelledAt:        bookings.cancelledAt,
+  cancelledBy:        bookings.cancelledBy,
+  cancellationReason: bookings.cancellationReason,
 };
 
 export interface CoachBookingRow {
@@ -40,23 +43,29 @@ export interface CoachBookingRow {
   clientNote: string | null;
   confirmedAt: Date | null;
   createdAt: Date;
+  cancelledAt: Date | null;
+  cancelledBy: CancelledBy | null;
+  cancellationReason: string | null;
 }
 
 export function toCoachBookingResponse(row: CoachBookingRow): CoachBookingResponse {
   return {
-    id: row.id,
-    start: row.startTime.toISOString(),
-    end: row.endTime.toISOString(),
-    offerId: row.offerId,
-    offerName: row.offerName,
-    durationMinutes: row.durationMinutes,
-    status: row.status,
-    clientId: row.clientId,
-    clientName: row.clientName,
-    clientEmail: row.clientEmail,
-    clientPhone: row.clientPhone,
-    clientNote: row.clientNote,
-    confirmedAt: row.confirmedAt?.toISOString() ?? null,
-    createdAt: row.createdAt.toISOString(),
+    id:                 row.id,
+    start:              row.startTime.toISOString(),
+    end:                row.endTime.toISOString(),
+    offerId:            row.offerId,
+    offerName:          row.offerName,
+    durationMinutes:    row.durationMinutes,
+    status:             row.status,
+    clientId:           row.clientId,
+    clientName:         row.clientName,
+    clientEmail:        row.clientEmail,
+    clientPhone:        row.clientPhone,
+    clientNote:         row.clientNote,
+    confirmedAt:        row.confirmedAt?.toISOString() ?? null,
+    createdAt:          row.createdAt.toISOString(),
+    cancelledAt:        row.cancelledAt?.toISOString() ?? null,
+    cancelledBy:        row.cancelledBy,
+    cancellationReason: row.cancellationReason,
   };
 }

@@ -301,6 +301,8 @@ Klient → kein Account, kein Login → Zugang nur via signiertem Token im Buchu
 1. **Bestätigung der Buchung** – Klick auf den Link direkt nach der Buchung setzt `bookings.status` von `pending` auf `confirmed` und `confirmedAt`. Erst dadurch wird der Klienten-Datensatz final angelegt/verknüpft (siehe `clients`-Schema in §11 sowie `idee-klienten-matching.md`). Ohne Klick innerhalb der TTL verfällt die Buchung automatisch.
 2. **Zugang zum Warteraum** – am Tag der Sitzung berechtigt derselbe Link zum Betreten des Warteraums (`apps/videocall`) und zur Generierung eines LiveKit-Access-Tokens für den Call.
 
+Daneben trägt derselbe Token eine dritte, jederzeit mögliche Funktion: die **Selbstabsage** des Klienten (`/cancel/{bookingId}?token=…`, umgesetzt 2026-08-18). Sie ist bis zum Terminbeginn möglich, nimmt optional einen Grund entgegen und benachrichtigt den Coach per E-Mail. Der Absage-Link steht in der Mail „Dein Termin ist bestätigt"; er invalidiert den Token nicht, damit ein zweiter Aufruf „bereits abgesagt" meldet statt „ungültiger Link".
+
 Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist für den Warteraum-Zugang einmalig verwendbar (Invalidierung nach Join, gespeichert in `clientTokenUsedAt`). Die Bestätigung (`confirmedAt`) ist ein separates, frühes Ereignis und invalidiert den Link nicht – er bleibt bis zum Sitzungstag für den Warteraum-Zugang gültig.
 
 ### Betreiber-Zugang (`admin.hxroom.de`)
@@ -675,6 +677,11 @@ export const bookings = pgTable('bookings', {
   confirmedAt: timestamp('confirmed_at'), // gesetzt beim Klick auf den Bestätigungslink; erst dann wird clients-Matching final vollzogen
   clientAccessToken: text('client_access_token'), // derselbe Token dient zuerst der Bestätigung, später dem Warteraum-Zugang
   clientTokenUsedAt: timestamp('client_token_used_at'), // Zeitpunkt des Warteraum-Eintritts (separat von confirmedAt)
+  // Absagedetails: 'cancelled' allein sagt nicht, ob der Coach abgesagt hat, der Klient
+  // selbst (Link aus der Bestätigungsmail) oder ob die Buchung nur nie bestätigt wurde.
+  cancelledAt: timestamp('cancelled_at'),
+  cancelledBy: text('cancelled_by').$type<'coach' | 'client' | 'system'>(), // 'system' = TTL-Verfall
+  cancellationReason: text('cancellation_reason'), // optionaler Freitext, max. 500 Zeichen
   roomName: text('room_name'),
   createdAt: timestamp('created_at').defaultNow(),
 });

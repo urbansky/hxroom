@@ -53,7 +53,12 @@ export class CoachBookingsService {
 
     const [cancelled] = await this.db
       .update(bookings)
-      .set({ status: 'cancelled' })
+      .set({
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancelledBy: 'coach',
+        cancellationReason: dto.reason ?? null,
+      })
       .where(eq(bookings.id, bookingId))
       .returning(coachBookingColumns);
 
@@ -160,6 +165,7 @@ export class CoachBookingsService {
         coachName: coachDisplayName,
         offerName: booking.offerName,
         dayTimeLabel: formatDayTimeLabel(booking),
+        cancelledBy: 'coach',
         reason: reason ?? null,
         bookingPageUrl: buildBookingPageUrl(this.config, org.slug),
       }),

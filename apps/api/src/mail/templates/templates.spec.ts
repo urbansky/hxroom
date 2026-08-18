@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
+import { renderBookingCancelledByClientEmail } from './coach/booking-cancelled-by-client';
 import { renderEmailVerificationEmail } from './coach/email-verification';
 import { renderEmailChangeApprovalEmail } from './coach/email-change-approval';
 import { renderEmailChangeVerificationEmail } from './coach/email-change-verification';
@@ -22,6 +23,7 @@ describe('Buchungs-Mail-Templates', () => {
       offerName: 'Coaching-Sitzung',
       dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
       durationMinutes: 60,
+      cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
     };
 
     it('rendert alle Termindaten', async () => {
@@ -33,6 +35,22 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).toContain('09:00');
       expect(html).toContain('60 Minuten');
     });
+
+    // Diese Mail ist der einzige Ort, an dem der Klient den Absage-Link bekommt – fehlt
+    // er, bleibt ihm nur die Antwortmail und der Coach muss die Absage von Hand nachziehen.
+    it('enthält den Absage-Link', async () => {
+      const html = await renderBookingConfirmedEmail(props);
+
+      expect(html).toContain('https://anna.hxroom.de/cancel/b-123?token=abc');
+      expect(html).toContain('Termin absagen');
+    });
+
+    it('fällt ohne Buchungsseite auf den Hinweis zur Antwortmail zurück', async () => {
+      const html = await renderBookingConfirmedEmail({ ...props, cancelUrl: null });
+
+      expect(html).not.toContain('/cancel/');
+      expect(html).toContain('Antworte einfach auf diese E-Mail');
+    });
   });
 
   describe('Klient: Absage', () => {
@@ -41,6 +59,7 @@ describe('Buchungs-Mail-Templates', () => {
       coachName: 'Anna Bergmann',
       offerName: 'Coaching-Sitzung',
       dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+      cancelledBy: 'coach' as const,
       bookingPageUrl: 'https://anna.hxroom.de',
     }
 
@@ -58,6 +77,45 @@ describe('Buchungs-Mail-Templates', () => {
 
       const mit = await renderBookingCancelledEmail({ ...props, reason: 'Bin an dem Tag verhindert.' });
       expect(mit).toContain('Bin an dem Tag verhindert.');
+    });
+
+    // Dieselbe Mail dient als Quittung auf die Selbstabsage. Stünde dort "musste leider
+    // abgesagt werden", läse der Klient seine eigene Absage als Absage des Coachs.
+    it('spricht bei der Selbstabsage von der eigenen Absage', async () => {
+      const html = await renderBookingCancelledEmail({ ...props, cancelledBy: 'client', reason: 'Bin krank.' });
+
+      expect(html).toContain('deine Absage ist eingegangen');
+      expect(html).not.toContain('musste leider abgesagt werden');
+      // Der Grund geht an den Coach, nicht zurück an den Klienten.
+      expect(html).not.toContain('Bin krank.');
+    });
+  });
+
+  describe('Coach: Absage durch den Klienten', () => {
+    const props = {
+      coachName: 'Anna Bergmann',
+      clientName: 'Max Mustermann',
+      clientEmail: 'max@example.com',
+      offerName: 'Coaching-Sitzung',
+      dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+      bookingsUrl: 'https://app.hxroom.de/bookings',
+    };
+
+    it('rendert Termin, Klient und Kalenderlink', async () => {
+      const html = await renderBookingCancelledByClientEmail({ ...props, reason: 'Bin an dem Tag krank.' });
+
+      expect(html).toContain('Max Mustermann');
+      expect(html).toContain('Coaching-Sitzung');
+      expect(html).toContain('Bin an dem Tag krank.');
+      expect(html).toContain('mailto:max@example.com');
+      expect(html).toContain('https://app.hxroom.de/bookings');
+    });
+
+    it('sagt ausdrücklich, wenn kein Grund angegeben wurde', async () => {
+      const html = await renderBookingCancelledByClientEmail({ ...props, reason: null });
+
+      expect(html).toContain('Einen Grund hat');
+      expect(html).toContain('nicht angegeben.');
     });
   });
 
