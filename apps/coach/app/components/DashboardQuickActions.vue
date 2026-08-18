@@ -16,7 +16,7 @@ async function copyBookingLink() {
   }
 }
 
-const linkClasses = 'w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-elevated cursor-pointer'
+const linkClasses = 'w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted cursor-pointer'
 </script>
 
 <template>

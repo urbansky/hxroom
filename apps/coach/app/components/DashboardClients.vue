@@ -10,7 +10,7 @@ const rows = computed(() => recentClients(props.clients))
 <template>
   <SettingsSection title="Klienten">
     <template #actions>
-      <UButton to="/clients" label="Alle anzeigen" trailing-icon="i-lucide-arrow-right" color="neutral" variant="link" size="sm" class="-my-1" />
+      <UButton to="/clients" label="Alle anzeigen" trailing-icon="i-lucide-arrow-right" color="primary" variant="link" size="sm" class="-my-1" />
     </template>
 
     <div v-if="rows.length" class="flex flex-col gap-1 -my-2">
@@ -18,7 +18,7 @@ const rows = computed(() => recentClients(props.clients))
         v-for="client in rows"
         :key="client.id"
         :to="`/clients/${client.id}`"
-        class="flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-elevated"
+        class="flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted"
       >
         <span class="size-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <UIcon name="i-lucide-user-round" class="size-4 text-primary" />

@@ -114,83 +114,88 @@ async function onClientSaved(_client: ClientResponse) {
 
     <p v-if="loadError" class="text-sm text-error">{{ loadError }}</p>
 
-    <div v-if="loading" class="flex flex-col gap-6">
-      <div class="grid gap-4 sm:grid-cols-2">
-        <USkeleton v-for="n in 2" :key="n" class="h-20 rounded-xl" />
-      </div>
-      <div class="grid gap-4 lg:grid-cols-3">
-        <USkeleton class="h-80 rounded-xl lg:col-span-2" />
+    <div v-if="loading" class="grid gap-4 lg:grid-cols-3">
+      <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <USkeleton v-for="n in 2" :key="n" class="h-20 rounded-xl" />
+        </div>
         <USkeleton class="h-80 rounded-xl" />
       </div>
+      <USkeleton class="h-96 rounded-xl" />
     </div>
 
     <template v-else-if="!loadError">
       <DashboardOnboarding :steps="steps" />
 
-      <div class="grid gap-4 sm:grid-cols-2">
-        <StatCard
-          icon="i-lucide-calendar-days"
-          label="Diese Woche"
-          :value="weekCount === 1 ? '1 Termin' : `${weekCount} Termine`"
-          to="/bookings"
-        />
-        <StatCard
-          icon="i-lucide-users"
-          label="Klienten"
-          :value="clients.length === 1 ? '1 Klient' : `${clients.length} Klienten`"
-          :hint="clientsWithNext ? `${clientsWithNext} mit anstehendem Termin` : null"
-          to="/clients"
-        />
-      </div>
-
       <div class="grid gap-4 lg:grid-cols-3 items-start">
-        <SettingsSection title="Nächste Termine" class="lg:col-span-2">
-          <!-- Zwei Ziele statt eines "Kalender"-Links: der Auszug hier ist eine gekürzte
-               Agenda, und beide Ansichten des Kalenders sind von hier aus gleich weit
-               entfernt. Die Icons sind dieselben wie im Umschalter dort. -->
-          <template #actions>
-            <div class="flex items-center gap-1 shrink-0">
-              <UButton to="/bookings" label="Ganze Agenda" icon="i-lucide-list" color="neutral" variant="link" size="sm" class="-my-1" />
-              <UButton to="/bookings?view=week" label="Wochenansicht" icon="i-lucide-calendar-days" color="neutral" variant="link" size="sm" class="-my-1" />
-            </div>
-          </template>
-
-          <template v-if="visibleAgenda.length">
-            <BookingAgenda
-              :bookings="visibleAgenda"
-              :highlight-id="nextBooking?.id"
-              variant="flat"
-              @select="openDetail"
-            />
-
-            <UButton
-              v-if="hiddenCount"
+        <!-- Die Kennzahlen stehen in der linken Spalte, nicht über die volle Breite:
+             über zwei Drittel gestreckt füllt "1 Termin" die Kachel nicht, und die
+             rechte Spalte liefe der linken in der Höhe noch weiter davon. -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <StatCard
+              icon="i-lucide-calendar-days"
+              label="Diese Woche"
+              :value="weekCount === 1 ? '1 Termin' : `${weekCount} Termine`"
               to="/bookings"
-              :label="hiddenCount === 1 ? 'Ein weiterer Termin im Kalender' : `${hiddenCount} weitere Termine im Kalender`"
-              trailing-icon="i-lucide-arrow-right"
-              color="neutral"
-              variant="link"
-              size="sm"
-              class="self-center"
             />
-          </template>
-
-          <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
-            <UIcon name="i-lucide-calendar-days" class="size-6 text-muted" />
-            <p class="text-sm text-muted">In den nächsten sieben Tagen ist kein Termin gebucht.</p>
-            <UButton
-              v-if="bookingPageUrl"
-              :to="bookingPageUrl"
-              target="_blank"
-              trailing-icon="i-lucide-external-link"
-              color="primary"
-              variant="soft"
-              size="sm"
-            >
-              Buchungsseite teilen
-            </UButton>
+            <StatCard
+              icon="i-lucide-users"
+              label="Klienten"
+              :value="clients.length === 1 ? '1 Klient' : `${clients.length} Klienten`"
+              :hint="clientsWithNext ? `${clientsWithNext} mit anstehendem Termin` : null"
+              to="/clients"
+            />
           </div>
-        </SettingsSection>
+
+          <SettingsSection title="Nächste Termine">
+            <!-- Zwei Ziele statt eines "Kalender"-Links: der Auszug hier ist eine gekürzte
+                 Agenda, und beide Ansichten des Kalenders sind von hier aus gleich weit
+                 entfernt. Die Icons sind dieselben wie im Umschalter dort. -->
+            <template #actions>
+              <div class="flex items-center gap-1 shrink-0">
+                <UButton to="/bookings" label="Ganze Agenda" icon="i-lucide-list" color="primary" variant="link" size="sm" class="-my-1" />
+                <UButton to="/bookings?view=week" label="Wochenansicht" icon="i-lucide-calendar-days" color="primary" variant="link" size="sm" class="-my-1" />
+              </div>
+            </template>
+
+            <template v-if="visibleAgenda.length">
+              <BookingAgenda
+                :bookings="visibleAgenda"
+                :highlight-id="nextBooking?.id"
+                variant="flat"
+                @select="openDetail"
+              />
+
+              <UButton
+                v-if="hiddenCount"
+                to="/bookings"
+                :label="hiddenCount === 1 ? 'Ein weiterer Termin im Kalender' : `${hiddenCount} weitere Termine im Kalender`"
+                trailing-icon="i-lucide-arrow-right"
+                color="primary"
+                variant="link"
+                size="sm"
+                class="self-center"
+              />
+            </template>
+
+            <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
+              <UIcon name="i-lucide-calendar-days" class="size-6 text-muted" />
+              <p class="text-sm text-muted">In den nächsten sieben Tagen ist kein Termin gebucht.</p>
+              <UButton
+                v-if="bookingPageUrl"
+                :to="bookingPageUrl"
+                target="_blank"
+                trailing-icon="i-lucide-external-link"
+                color="primary"
+                variant="soft"
+                size="sm"
+              >
+                Buchungsseite teilen
+              </UButton>
+            </div>
+          </SettingsSection>
+        </div>
 
         <div class="flex flex-col gap-4">
           <DashboardQuickActions

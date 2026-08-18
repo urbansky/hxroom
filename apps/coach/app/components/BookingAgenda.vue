@@ -25,7 +25,7 @@ const isFlat = computed(() => props.variant === 'flat')
 // beiden Varianten als Badge neben dem Namen.
 function rowClass(booking: CoachBookingResponse): string {
   if (isFlat.value) {
-    const base = 'rounded-lg p-3 -mx-3 hover:bg-elevated'
+    const base = 'rounded-lg p-3 -mx-3 hover:bg-muted'
     return booking.status === 'cancelled' ? `${base} opacity-60` : base
   }
   if (booking.status === 'cancelled') return 'rounded-xl border p-4 border-default border-dashed bg-transparent opacity-60'

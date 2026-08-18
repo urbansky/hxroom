@@ -30,7 +30,7 @@ const nextStep = computed(() => props.steps.find(s => !s.done) ?? null)
       <li v-for="step in steps" :key="step.key">
         <NuxtLink
           :to="step.to"
-          class="flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-elevated"
+          class="flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted"
         >
           <UIcon
             :name="step.done ? 'i-lucide-circle-check' : 'i-lucide-circle-dashed'"
