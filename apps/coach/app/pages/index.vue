@@ -145,8 +145,14 @@ async function onClientSaved(_client: ClientResponse) {
 
       <div class="grid gap-4 lg:grid-cols-3 items-start">
         <SettingsSection title="Nächste Termine" class="lg:col-span-2">
+          <!-- Zwei Ziele statt eines "Kalender"-Links: der Auszug hier ist eine gekürzte
+               Agenda, und beide Ansichten des Kalenders sind von hier aus gleich weit
+               entfernt. Die Icons sind dieselben wie im Umschalter dort. -->
           <template #actions>
-            <UButton to="/bookings" label="Kalender" trailing-icon="i-lucide-arrow-right" color="neutral" variant="link" size="sm" class="-my-1" />
+            <div class="flex items-center gap-1 shrink-0">
+              <UButton to="/bookings" label="Ganze Agenda" icon="i-lucide-list" color="neutral" variant="link" size="sm" class="-my-1" />
+              <UButton to="/bookings?view=week" label="Wochenansicht" icon="i-lucide-calendar-days" color="neutral" variant="link" size="sm" class="-my-1" />
+            </div>
           </template>
 
           <template v-if="visibleAgenda.length">

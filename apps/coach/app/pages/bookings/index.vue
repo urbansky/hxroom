@@ -6,8 +6,19 @@ definePageMeta({ middleware: 'auth' })
 const { $api } = useApi()
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 const { activeOrganization } = useAuth()
+const route = useRoute()
+const router = useRouter()
 
-const viewMode = ref<'agenda' | 'week'>('agenda')
+// Die Ansicht steht in der URL: nur so kann das Dashboard gezielt auf die
+// Wochenansicht verlinken, und ein Reload landet wieder dort, wo der Coach war.
+// Agenda ist der Standard und bleibt deshalb ohne Query-Parameter.
+const viewMode = ref<'agenda' | 'week'>(route.query.view === 'week' ? 'week' : 'agenda')
+
+watch(viewMode, (mode) => {
+  // replace statt push: das Umschalten der Ansicht ist kein Navigationsschritt,
+  // der Zurück-Knopf soll auf die vorherige Seite führen.
+  router.replace({ query: mode === 'week' ? { view: 'week' } : {} })
+})
 
 type FilterValue = 'upcoming' | 'past' | 'cancelled'
 const FILTER_ITEMS = [
