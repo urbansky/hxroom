@@ -11,14 +11,12 @@ provide(OFFERS_KEY, useOffers());
 </script>
 
 <template>
-  <div class="bg-(--ui-bg) text-(--ui-text) min-h-screen antialiased">
-    <NotFoundView v-if="notFound" />
-    <router-view v-else-if="!loading" />
-  </div>
+  <!-- UApp liefert das Portal-Ziel für Overlays (u. a. das Mobilmenü von UHeader) sowie
+       Tooltip- und Toast-Provider. Farben kommen aus der body-Basisregel des Themes. -->
+  <UApp>
+    <div class="min-h-screen antialiased">
+      <NotFoundView v-if="notFound" />
+      <router-view v-else-if="!loading" />
+    </div>
+  </UApp>
 </template>
-
-<style>
-html {
-  scroll-behavior: smooth;
-}
-</style>

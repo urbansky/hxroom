@@ -11,14 +11,28 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AboutSection: typeof import('./src/components/AboutSection.vue')['default']
+    AppointmentSummary: typeof import('./src/components/AppointmentSummary.vue')['default']
+    ContentCard: typeof import('./src/components/ContentCard.vue')['default']
+    LoadingState: typeof import('./src/components/LoadingState.vue')['default']
+    OfferListItem: typeof import('./src/components/OfferListItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SectionHeading: typeof import('./src/components/SectionHeading.vue')['default']
+    SiteFooter: typeof import('./src/components/SiteFooter.vue')['default']
+    SiteHeader: typeof import('./src/components/SiteHeader.vue')['default']
+    StatusPanel: typeof import('./src/components/StatusPanel.vue')['default']
+    UAlert: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
+    UApp: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/App.vue')['default']
+    UAvatar: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Avatar.vue')['default']
     UBadge: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
-    UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
     UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
+    UFormField: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
     UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
     UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
+    UInput: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
+    UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
   }
 }

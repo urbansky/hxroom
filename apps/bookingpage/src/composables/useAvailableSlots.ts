@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
 import type { AvailableSlotResponse } from '@hxroom/shared';
+import { apiUrl, orgSlug } from '../utils/api';
 
 export function useAvailableSlots(offerId: () => string) {
   const slots = ref<AvailableSlotResponse[]>([]);
@@ -11,9 +12,7 @@ export function useAvailableSlots(offerId: () => string) {
     slots.value = [];
     loading.value = true;
 
-    const slug = window.location.hostname.split('.')[0];
-    const apiUrl = import.meta.env.VITE_API_URL ?? 'http://api.hxroom.localhost';
-    const url = `${apiUrl}/api/v1/organizations/${slug}/offers/${offerId()}/available-slots`;
+    const url = `${apiUrl}/api/v1/organizations/${orgSlug()}/offers/${offerId()}/available-slots`;
 
     try {
       const res = await fetch(url);

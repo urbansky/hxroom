@@ -1,5 +1,6 @@
 import { ref, onMounted } from 'vue';
 import type { OfferResponse } from '@hxroom/shared';
+import { apiUrl, orgSlug } from '../utils/api';
 
 export const OFFERS_KEY = Symbol('offers');
 export type UseOffersReturn = ReturnType<typeof useOffers>;
@@ -9,9 +10,7 @@ export function useOffers() {
   const loading = ref(true);
 
   onMounted(async () => {
-    const slug = window.location.hostname.split('.')[0];
-    const apiUrl = import.meta.env.VITE_API_URL ?? 'http://api.hxroom.localhost';
-    const url = `${apiUrl}/api/v1/organizations/${slug}/offers`;
+    const url = `${apiUrl}/api/v1/organizations/${orgSlug()}/offers`;
 
     try {
       const res = await fetch(url);

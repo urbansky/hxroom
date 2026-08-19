@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue';
+import { apiUrl, orgSlug } from '../utils/api';
 
 export interface CoachProfile {
   id: string;
@@ -10,15 +11,11 @@ export interface CoachProfile {
 
 export const COACH_KEY = Symbol('coach');
 
-function getApiUrl(): string {
-  return import.meta.env.VITE_API_URL ?? 'http://api.hxroom.localhost';
-}
-
 // Öffentlicher Proxy-Read-Endpoint (kein Presigned-URL-Mechanismus), siehe
 // doc/s3-verzeichnisschema.md. `null`, solange der Coach kein Profilbild hochgeladen hat.
 export function getAvatarUrl(coach: CoachProfile): string | null {
   if (!coach.avatarUpdatedAt) return null;
-  return `${getApiUrl()}/api/v1/booking-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;
+  return `${apiUrl}/api/v1/booking-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;
 }
 
 export function useCoach() {
@@ -27,8 +24,7 @@ export function useCoach() {
   const notFound = ref(false);
 
   onMounted(async () => {
-    const slug = window.location.hostname.split('.')[0];
-    const apiUrl = getApiUrl();
+    const slug = orgSlug();
     const url = `${apiUrl}/api/v1/organizations/${slug}`;
 
     console.log(`[useCoach] Slug: "${slug}", URL: ${url}`);

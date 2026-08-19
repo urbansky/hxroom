@@ -6,7 +6,9 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [
     vue(),
-    hxroomUI(),
+    // colorMode: false – die Klientenseite erscheint bewusst immer hell (kein Umschalter,
+    // kein OS-Abgleich), damit sie dieselbe Fläche zeigt wie das Coach-Backoffice.
+    hxroomUI({ colorMode: false }),
   ],
   resolve: {
     alias: {
