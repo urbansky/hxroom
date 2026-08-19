@@ -1,0 +1,1 @@
+ALTER TABLE "booking_page" ADD COLUMN "onboarding_celebrated_at" timestamp;

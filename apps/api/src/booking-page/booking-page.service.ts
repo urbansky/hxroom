@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookingPage } from '../db/schema';
 import type { BookingPageDto } from '@hxroom/shared';
@@ -25,6 +25,7 @@ export class BookingPageService {
         ctaButton:       bookingPage.ctaButton,
         ctaIntro:        bookingPage.ctaIntro,
         avatarUpdatedAt: bookingPage.avatarUpdatedAt,
+        onboardingCelebratedAt: bookingPage.onboardingCelebratedAt,
       })
       .from(organization)
       .leftJoin(bookingPage, eq(bookingPage.organizationId, organization.id))
@@ -83,6 +84,32 @@ export class BookingPageService {
     });
 
     return this.get(organizationId);
+  }
+
+  /**
+   * Merkt sich, dass der Coach die Erfolgsmeldung nach abgeschlossener Einrichtung
+   * gesehen hat. Der Zeitpunkt wird nur gesetzt, solange die Spalte NULL ist: ein
+   * zweiter Aufruf (zwei offene Tabs) soll den ursprünglichen Moment nicht überschreiben.
+   */
+  async markOnboardingCelebrated(organizationId: string) {
+    const onboardingCelebratedAt = new Date();
+
+    await this.db
+      .insert(bookingPage)
+      .values({ organizationId, onboardingCelebratedAt })
+      .onConflictDoUpdate({
+        target: bookingPage.organizationId,
+        set: { onboardingCelebratedAt },
+        setWhere: isNull(bookingPage.onboardingCelebratedAt),
+      });
+
+    const [row] = await this.db
+      .select({ onboardingCelebratedAt: bookingPage.onboardingCelebratedAt })
+      .from(bookingPage)
+      .where(eq(bookingPage.organizationId, organizationId))
+      .limit(1);
+
+    return { onboardingCelebratedAt: row?.onboardingCelebratedAt ?? onboardingCelebratedAt };
   }
 
   async uploadAvatar(organizationId: string, source: Buffer) {

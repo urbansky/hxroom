@@ -41,6 +41,14 @@ export class BookingPageController {
     return this.bookingPageService.update(org.id, dto);
   }
 
+  // Eigener Endpunkt statt eines Feldes im PATCH oben: der ist der Autosave der
+  // Buchungsseite, das Onboarding-Flag hat mit deren Inhalten nichts zu tun.
+  @Post('onboarding-celebrated')
+  markOnboardingCelebrated(@CurrentOrganization() org: { id: string } | undefined) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.bookingPageService.markOnboardingCelebrated(org.id);
+  }
+
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: MAX_AVATAR_FILE_SIZE },

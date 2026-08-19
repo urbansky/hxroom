@@ -85,6 +85,8 @@ export interface OnboardingBookingPage {
   tagline: string | null
   bio: string | null
   avatarUpdatedAt: string | null
+  /** Zeitpunkt, an dem die Erfolgsmeldung weggeklickt wurde; null = noch nicht gesehen. */
+  onboardingCelebratedAt: string | null
 }
 
 /**

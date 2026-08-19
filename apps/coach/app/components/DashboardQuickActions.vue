@@ -1,20 +1,8 @@
 <script setup lang="ts">
-const props = defineProps<{ bookingPageUrl: string | null }>()
+defineProps<{ bookingPageUrl: string | null }>()
 const emit = defineEmits<{ createClient: [] }>()
 
-const toast = useToast()
-
-async function copyBookingLink() {
-  if (!props.bookingPageUrl) return
-  try {
-    // navigator.clipboard gibt es nur in sicheren Kontexten (https oder localhost) –
-    // im Fehlerfall bleibt der Link über "Buchungsseite öffnen" erreichbar.
-    await navigator.clipboard.writeText(props.bookingPageUrl)
-    toast.add({ title: 'Buchungslink kopiert', description: props.bookingPageUrl, color: 'success', icon: 'i-lucide-check' })
-  } catch {
-    toast.add({ title: 'Kopieren nicht möglich', description: props.bookingPageUrl, color: 'error', icon: 'i-lucide-clipboard-x' })
-  }
-}
+const { copyBookingLink } = useBookingLink()
 
 const linkClasses = 'w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted cursor-pointer'
 </script>
@@ -22,7 +10,7 @@ const linkClasses = 'w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 ro
 <template>
   <SettingsSection title="Schnellzugriff">
     <div class="flex flex-col gap-1 -my-2">
-      <button v-if="bookingPageUrl" type="button" :class="linkClasses" @click="copyBookingLink">
+      <button v-if="bookingPageUrl" type="button" :class="linkClasses" @click="copyBookingLink(bookingPageUrl)">
         <UIcon name="i-lucide-link" class="size-4 text-muted shrink-0" />
         <span class="text-sm text-highlighted">Buchungslink kopieren</span>
       </button>

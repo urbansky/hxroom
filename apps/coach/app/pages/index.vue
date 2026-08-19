@@ -78,6 +78,20 @@ const bookingPageUrl = computed(() => {
   return `${rootDomainHttps ? 'https' : 'http'}://${subdomain}.${rootDomain}`
 })
 
+/**
+ * Die Erfolgsmeldung verschwindet sofort, der Server wird nur nachgezogen. Schlägt der
+ * Request fehl, taucht sie beim nächsten Laden wieder auf – für einen Glückwunsch die
+ * harmlosere Richtung als eine Fehlermeldung.
+ */
+async function onCelebrationDismissed() {
+  if (bookingPage.value) bookingPage.value.onboardingCelebratedAt = new Date().toISOString()
+  try {
+    await $api('/booking-page/onboarding-celebrated', { method: 'POST' })
+  } catch {
+    // bewusst still
+  }
+}
+
 const selectedBooking = ref<CoachBookingResponse | null>(null)
 const isDetailOpen = ref(false)
 
@@ -125,7 +139,13 @@ async function onClientSaved(_client: ClientResponse) {
     </div>
 
     <template v-else-if="!loadError">
-      <DashboardOnboarding :steps="steps" />
+      <DashboardOnboarding
+        :steps="steps"
+        :celebrated-at="bookingPage?.onboardingCelebratedAt ?? null"
+        :coach-name="session.data?.user?.name"
+        :booking-page-url="bookingPageUrl"
+        @dismiss="onCelebrationDismissed"
+      />
 
       <div class="grid gap-4 lg:grid-cols-3 items-start">
         <!-- Die Kennzahlen stehen in der linken Spalte, nicht über die volle Breite:

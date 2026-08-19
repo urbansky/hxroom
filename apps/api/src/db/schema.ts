@@ -111,6 +111,11 @@ export const bookingPage = pgTable('booking_page', {
   // Separat von `updatedAt`, da Text-Autosave sonst unnötig den Avatar-Cache invalidiert.
   // NULL = kein Avatar gesetzt (Existenz-Flag), sonst Cache-Busting-Version für die Avatar-URL.
   avatarUpdatedAt: timestamp('avatar_updated_at'),
+  // Zeitpunkt, an dem der Coach die Erfolgsmeldung nach abgeschlossener Einrichtung
+  // weggeklickt hat; NULL = noch nicht gesehen. An der Organisation und nicht am User,
+  // weil alle Schritte der Checkliste (Buchungsseite, Angebote, Verfügbarkeiten, erste
+  // Buchung) der Organisation gehören – nicht der einzelnen Person.
+  onboardingCelebratedAt: timestamp('onboarding_celebrated_at'),
   createdAt:       timestamp('created_at').notNull().defaultNow(),
   updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
