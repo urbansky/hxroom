@@ -15,7 +15,7 @@ import { MailService } from '../mail/mail.service';
 import { S3Service } from '../storage/s3.service';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderDeletionExecutedEmail } from '../mail/templates/coach/deletion-executed';
-import { formatDayTimeLabel } from '../bookings/booking-formatting';
+import { toAppointmentInfo } from '../bookings/booking-formatting';
 
 // Transaktionshandle von Drizzle. Alle Schritte einer Löschung laufen darauf, damit ein
 // Fehler auf halbem Weg die ganze Löschung zurückrollt statt ein halb gelöschtes Konto zu
@@ -200,12 +200,14 @@ export class DeletionExecutorService {
         gte(bookings.startTime, new Date()),
       ))
       .returning({
-        id:          bookings.id,
-        clientName:  bookings.clientName,
-        clientEmail: bookings.clientEmail,
-        offerName:   bookings.offerName,
-        startTime:   bookings.startTime,
-        endTime:     bookings.endTime,
+        id:              bookings.id,
+        clientName:      bookings.clientName,
+        clientEmail:     bookings.clientEmail,
+        offerId:         bookings.offerId,
+        offerName:       bookings.offerName,
+        durationMinutes: bookings.durationMinutes,
+        startTime:       bookings.startTime,
+        endTime:         bookings.endTime,
       });
 
     for (const booking of upcoming) {
@@ -218,8 +220,7 @@ export class DeletionExecutorService {
           htmlContent: await renderBookingCancelledEmail({
             clientName: booking.clientName,
             coachName: coachDisplayName,
-            offerName: booking.offerName,
-            dayTimeLabel: formatDayTimeLabel(booking),
+            appointment: toAppointmentInfo(booking),
             cancelledBy: 'coach',
             reason: null,
             // Kein Link: die Buchungsseite verschwindet mit dem Konto.

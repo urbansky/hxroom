@@ -1,52 +1,46 @@
-import { Button, Section, Text } from '@react-email/components';
 import { MailLayout } from '../layout';
+import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
+import { Footnote, Greeting, Paragraph, PrimaryButton } from '../_components/blocks';
 import { renderEmail } from '../../render';
 
 interface BookingConfirmationEmailProps {
   clientName: string;
-  offerName: string;
-  dayTimeLabel: string;
+  appointment: AppointmentInfo;
   confirmUrl: string;
   /** Gültigkeitsdauer des Links – kommt aus CONFIRMATION_TTL_MINUTES, damit Text und
    *  tatsächliche Prüfung nicht auseinanderlaufen. */
   ttlMinutes: number;
 }
 
-export default function BookingConfirmationEmail({ clientName, offerName, dayTimeLabel, confirmUrl, ttlMinutes }: BookingConfirmationEmailProps) {
+export default function BookingConfirmationEmail({ clientName, appointment, confirmUrl, ttlMinutes }: BookingConfirmationEmailProps) {
   return (
-    <MailLayout preview={`Bitte bestätige deinen Termin: ${offerName}, ${dayTimeLabel}`}>
-      <Text style={{ margin: '0 0 12px', fontSize: 20, color: '#1a1a1a', fontWeight: 600 }}>
-        Hallo {clientName},
-      </Text>
-      <Text style={{ margin: '0 0 20px', color: '#555', lineHeight: 1.65, fontSize: 15 }}>
-        bitte bestätige deinen Termin – erst dann ist er für dich reserviert.
-      </Text>
-      <Section style={{ backgroundColor: '#f5f5f2', borderRadius: 8, margin: '0 0 28px', padding: '16px 20px' }}>
-        <Text style={{ margin: 0, fontSize: 14, color: '#333' }}>
-          <strong>{offerName}</strong>
-          <br />
-          {dayTimeLabel}
-        </Text>
-      </Section>
-      <Button
-        href={confirmUrl}
-        style={{ backgroundColor: '#8B9E8A', color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 6, fontWeight: 600, fontSize: 15 }}
-      >
-        Termin bestätigen
-      </Button>
-      <Text style={{ margin: '32px 0 0', fontSize: 13, color: '#999', lineHeight: 1.6 }}>
+    <MailLayout preview={`Bitte bestätige deinen Termin: ${appointment.offerName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`}>
+      <Greeting>Hallo {clientName},</Greeting>
+      <Paragraph>bitte bestätige deinen Termin – erst dann ist er für dich reserviert.</Paragraph>
+      <AppointmentBlock
+        appointment={appointment}
+        title={appointment.offerName}
+        meta={`${appointment.durationMinutes} Min.`}
+      />
+      <PrimaryButton href={confirmUrl}>Termin bestätigen</PrimaryButton>
+      <Footnote>
         {`Der Link ist ${ttlMinutes} Minuten gültig. Ohne Bestätigung wird der Termin automatisch wieder freigegeben.`}
         <br />
         Falls du diesen Termin nicht angefragt hast, kannst du diese E-Mail ignorieren.
-      </Text>
+      </Footnote>
     </MailLayout>
   );
 }
 
 BookingConfirmationEmail.PreviewProps = {
   clientName: 'Max Mustermann',
-  offerName: 'Coaching-Sitzung · 60 Minuten',
-  dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+  appointment: {
+    dayLabel: 'Montag, 3. August',
+    timeRangeLabel: '09:00 – 10:00',
+    offerId: 'offer-1',
+    offerName: 'Coaching-Sitzung',
+    durationMinutes: 60,
+  },
   confirmUrl: 'https://anna.hxroom.de/confirm/preview?token=preview',
   ttlMinutes: 30,
 } satisfies BookingConfirmationEmailProps;

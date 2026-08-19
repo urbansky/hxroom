@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { offerColor } from '@hxroom/shared';
 import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
@@ -11,6 +12,16 @@ import { renderDeletionRequestedEmail } from './coach/deletion-requested';
 import { renderDeletionReminderEmail } from './coach/deletion-reminder';
 import { renderDeletionExecutedEmail } from './coach/deletion-executed';
 
+// Termindaten, wie toAppointmentInfo() sie liefert – Tag und Zeitspanne getrennt, weil der
+// Termin-Block sie in zwei Zeilen zeigt (wie die Agenda im Coach-Dashboard).
+const appointment = {
+  dayLabel: 'Montag, 3. August',
+  timeRangeLabel: '09:00 – 10:00',
+  offerId: 'offer-1',
+  offerName: 'Coaching-Sitzung',
+  durationMinutes: 60,
+};
+
 // Der Mailversand in BookingsService läuft bewusst in try/catch – ein kaputtes Template
 // würde dort still geschluckt und der Empfänger bekäme kommentarlos keine Mail.
 // Diese Smoke-Tests stellen sicher, dass die Templates überhaupt rendern und die
@@ -20,9 +31,7 @@ describe('Buchungs-Mail-Templates', () => {
     const props = {
       clientName: 'Max Mustermann',
       coachName: 'Anna Bergmann',
-      offerName: 'Coaching-Sitzung',
-      dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
-      durationMinutes: 60,
+      appointment,
       cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
     };
 
@@ -33,7 +42,25 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).toContain('Anna Bergmann');
       expect(html).toContain('Coaching-Sitzung');
       expect(html).toContain('09:00');
-      expect(html).toContain('60 Minuten');
+      expect(html).toContain('60 Min.');
+    });
+
+    // Der farbige Balken ist das Wiedererkennungsmerkmal aus dem Coach-Dashboard: Mail und
+    // Agenda müssen für dasselbe Angebot dieselbe Farbe zeigen. Der feste Hex-Wert sichert
+    // zusätzlich die Reihenfolge der Palette in @hxroom/shared ab – ein Umsortieren dort
+    // würde sonst still die Farben aller bestehenden Angebote verschieben.
+    it('färbt den Balken mit der Farbe der Sitzungsart', async () => {
+      const html = await renderBookingConfirmedEmail(props);
+
+      expect(offerColor('offer-1')).toBe('#A3B14F');
+      expect(html).toContain(offerColor('offer-1'));
+    });
+
+    it('rendert Termine ohne Angebot mit neutralem Balken', async () => {
+      const html = await renderBookingConfirmedEmail({ ...props, appointment: { ...appointment, offerId: null } });
+
+      expect(html).not.toContain('undefined');
+      expect(html).toContain('#c5d0c4');
     });
 
     // Diese Mail ist der einzige Ort, an dem der Klient den Absage-Link bekommt – fehlt
@@ -57,8 +84,7 @@ describe('Buchungs-Mail-Templates', () => {
     const props = {
       clientName: 'Max Mustermann',
       coachName: 'Anna Bergmann',
-      offerName: 'Coaching-Sitzung',
-      dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+      appointment,
       cancelledBy: 'coach' as const,
       bookingPageUrl: 'https://anna.hxroom.de',
     }
@@ -96,8 +122,7 @@ describe('Buchungs-Mail-Templates', () => {
       coachName: 'Anna Bergmann',
       clientName: 'Max Mustermann',
       clientEmail: 'max@example.com',
-      offerName: 'Coaching-Sitzung',
-      dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+      appointment,
       bookingsUrl: 'https://app.hxroom.de/bookings',
     };
 
@@ -124,8 +149,7 @@ describe('Buchungs-Mail-Templates', () => {
       coachName: 'Anna Bergmann',
       clientName: 'Max Mustermann',
       clientEmail: 'max@example.com',
-      offerName: 'Coaching-Sitzung',
-      dayTimeLabel: 'Montag, 3. August, 09:00–10:00 Uhr',
+      appointment,
       bookingsUrl: 'https://app.hxroom.de/bookings',
     };
 

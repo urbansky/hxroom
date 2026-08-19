@@ -180,7 +180,7 @@ HTTP-Client für den Whisper-Service, BullMQ-Job-Definition für Post-Session-Tr
 Das `StorageModule` inkl. Upload-Logik, signierte URLs und Bucket-Operationen lässt sich vollständig von Claude Code generieren – AWS SDK v3 ist ein sehr gut abgedecktes Pattern.
 
 **E-Mail-Templates**
-Alle transaktionalen E-Mails werden als Vue/HTML-Templates erstellt und mit Claude Code aus Zod-Schemas typisiert.
+Alle transaktionalen E-Mails liegen als React-Email-Templates in `apps/api/src/mail/templates/`. Gemeinsames Grundgerüst (`layout.tsx`) und Bausteine (`_components/`) übernehmen die Farb- und Typo-Tokens der Coach-App; der Termin-Block trägt denselben farbigen Balken wie die Agenda im Dashboard, dessen Farbe aus `offerColor()` in `@hxroom/shared` kommt.
 
 **Tests**
 Unit-Tests für Services und Composables lassen sich von Claude Code aus vorhandenem Code generieren.

@@ -97,6 +97,55 @@ export const offerResponseSchema = z.object({
 });
 export type OfferResponse = z.infer<typeof offerResponseSchema>;
 
+/**
+ * Farbe je Sitzungsart – geteilt zwischen Coach-App (Agenda, Wochenansicht, Angebotsliste)
+ * und den Termin-Mails, damit dasselbe Angebot überall dieselbe Farbe trägt.
+ *
+ * Die Farbe wird deterministisch aus der Angebots-ID abgeleitet und nirgends gespeichert:
+ * Kein Schema-Eingriff, und dasselbe Angebot bekommt bei jedem Rendern dieselbe Farbe.
+ * Wenn der Coach Farben später selbst wählen soll, tritt eine Spalte an `offers` an die
+ * Stelle dieser Ableitung – dann bleibt `offerColor()` nur noch der Fallback für Angebote
+ * ohne gesetzte Farbe.
+ *
+ * Die Palette bleibt im warmen HxRoom-Farbklima (Sage und Gold zuerst) und meidet reines
+ * Rot – das ist für Fehlerzustände reserviert. Die Farbtöne sind über den Kreis verteilt,
+ * damit benachbarte Angebote in der Liste nicht verwechselt werden; der engste Abstand
+ * liegt bei 26° zwischen Terrakotta und Gold.
+ *
+ * Die Werte sind bewusst hell und gesättigt (L ≈ 50–67). Das ist eine Festlegung auf den
+ * Einsatz als Farbfläche ohne Text: Weißer Text darauf käme nur auf ~2,5:1. Wer die Farbe
+ * später als gefüllten Block mit Beschriftung nutzen will (etwa in der Wochenansicht),
+ * braucht dafür abgedunkelte Varianten.
+ *
+ * Die Reihenfolge ist Teil des Vertrags: Ein Umsortieren verschiebt still die Farben aller
+ * bestehenden Angebote (abgesichert durch einen Test in apps/api/src/mail/templates).
+ */
+const OFFER_COLORS = [
+  '#7FB07C', // Sage
+  '#D2A24C', // Gold
+  '#5FAEB5', // Petrol
+  '#D9785C', // Terrakotta
+  '#A886BC', // Pflaume
+  '#A3B14F', // Olive
+  '#7EA1CC', // Blaugrau
+  '#D2839A', // Altrosa
+] as const;
+
+// djb2 – klein und ohne Abhängigkeit. Es geht nicht um Streuqualität, sondern darum,
+// dass dieselbe ID immer denselben Index trifft.
+function hashString(value: string): number {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) {
+    hash = ((hash << 5) + hash + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/** Farbe der Sitzungsart als Hex-Wert, abgeleitet aus der Angebots-ID. */
+export function offerColor(offerId: string): string {
+  return OFFER_COLORS[hashString(offerId) % OFFER_COLORS.length]!;
+}
+
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells)
 const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Uhrzeit muss im Format HH:MM angegeben werden');
 

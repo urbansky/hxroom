@@ -15,7 +15,7 @@ import { renderBookingCancelledByClientEmail } from '../mail/templates/coach/boo
 import { isUniqueViolation } from '../common/pg-errors';
 import { normalizeEmail } from '../clients/normalize-email';
 import { CONFIRMATION_TTL_MINUTES, canClientCancel, isExpiredPending } from './booking.constants';
-import { formatDayLabel, formatDayTimeLabel } from './booking-formatting';
+import { formatDayLabel, toAppointmentInfo } from './booking-formatting';
 import { buildBookingPageUrl, buildCancelUrl, buildConfirmUrl } from './booking-urls';
 import type { CreateBookingDto, BookingResponse, ClientBookingView } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
@@ -115,8 +115,7 @@ export class BookingsService {
           subject: 'Bitte bestätige deinen Termin – HxRoom',
           htmlContent: await renderBookingConfirmationEmail({
             clientName: booking.clientName,
-            offerName: booking.offerName,
-            dayTimeLabel: formatDayTimeLabel(booking),
+            appointment: toAppointmentInfo(booking),
             confirmUrl,
             ttlMinutes: CONFIRMATION_TTL_MINUTES,
           }),
@@ -290,7 +289,7 @@ export class BookingsService {
     const org = await this.organizationService.findById(booking.organizationId);
     const coach = await this.organizationService.findOwnerContact(booking.organizationId);
 
-    const dayTimeLabel = formatDayTimeLabel(booking);
+    const appointment = toAppointmentInfo(booking);
     const coachDisplayName = coach?.name ?? org.name;
 
     try {
@@ -301,8 +300,7 @@ export class BookingsService {
         htmlContent: await renderBookingCancelledEmail({
           clientName: booking.clientName,
           coachName: coachDisplayName,
-          offerName: booking.offerName,
-          dayTimeLabel,
+          appointment,
           cancelledBy: 'client',
           reason: reason ?? null,
           bookingPageUrl: org.slug ? buildBookingPageUrl(this.config, org.slug) : null,
@@ -326,8 +324,7 @@ export class BookingsService {
           coachName: coach.name,
           clientName: booking.clientName,
           clientEmail: booking.clientEmail,
-          offerName: booking.offerName,
-          dayTimeLabel,
+          appointment,
           reason: reason ?? null,
           bookingsUrl: `${this.config.getOrThrow<string>('COACH_APP_URL').replace(/\/$/, '')}/bookings`,
         }),
@@ -350,7 +347,6 @@ export class BookingsService {
       this.logger.warn(`Organization ${org.id} has no owner member – skipped coach notification for booking ${booking.id}`);
     }
 
-    const dayTimeLabel = formatDayTimeLabel(booking);
     const coachDisplayName = coach?.name ?? org.name;
 
     const ics = buildBookingIcs({
@@ -372,9 +368,7 @@ export class BookingsService {
         htmlContent: await renderBookingConfirmedEmail({
           clientName: booking.clientName,
           coachName: coachDisplayName,
-          offerName: booking.offerName,
-          dayTimeLabel,
-          durationMinutes: booking.durationMinutes,
+          appointment: toAppointmentInfo(booking),
           cancelUrl: org.slug ? buildCancelUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null,
         }),
         attachment: [{ name: 'termin.ics', content: Buffer.from(ics, 'utf8').toString('base64') }],
@@ -396,8 +390,7 @@ export class BookingsService {
           clientEmail: booking.clientEmail,
           clientPhone: booking.clientPhone,
           clientNote: booking.clientNote,
-          offerName: booking.offerName,
-          dayTimeLabel,
+          appointment: toAppointmentInfo(booking),
           bookingsUrl: `${this.config.getOrThrow<string>('COACH_APP_URL').replace(/\/$/, '')}/bookings`,
         }),
       });

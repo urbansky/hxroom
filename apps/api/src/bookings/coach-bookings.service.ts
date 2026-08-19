@@ -7,7 +7,7 @@ import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
-import { formatDayTimeLabel } from './booking-formatting';
+import { toAppointmentInfo } from './booking-formatting';
 import { buildBookingPageUrl } from './booking-urls';
 import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
 import type { AssignBookingClientDto, CancelBookingDto, CoachBookingResponse, ListCoachBookingsQuery } from '@hxroom/shared';
@@ -163,8 +163,7 @@ export class CoachBookingsService {
       htmlContent: await renderBookingCancelledEmail({
         clientName: booking.clientName,
         coachName: coachDisplayName,
-        offerName: booking.offerName,
-        dayTimeLabel: formatDayTimeLabel(booking),
+        appointment: toAppointmentInfo(booking),
         cancelledBy: 'coach',
         reason: reason ?? null,
         bookingPageUrl: buildBookingPageUrl(this.config, org.slug),
