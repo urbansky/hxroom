@@ -34,10 +34,6 @@ const rows = computed(() => recentClients(props.clients))
           </span>
           <span v-else class="block text-sm text-muted truncate">Noch kein Termin</span>
         </span>
-
-        <span class="hidden sm:block text-sm text-muted shrink-0 tabular-nums">
-          {{ formatSessionCount(client.sessionCount) }}
-        </span>
       </NuxtLink>
     </div>
 
