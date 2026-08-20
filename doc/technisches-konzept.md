@@ -297,14 +297,18 @@ Betreiber (intern)      → better-auth Session mit user.role = 'admin'
 Klient → kein Account, kein Login → Zugang nur via signiertem Token im Buchungslink
 ```
 
-**Klienten-Zugang** funktioniert über einen signierten Token (HMAC-SHA256), der beim Anlegen eines Termins generiert und per E-Mail verschickt wird. Derselbe Link erfüllt zwei Aufgaben nacheinander, keine zweite Mail nötig:
+**Klienten-Zugang** funktioniert über einen Zufallstoken (256 Bit, `randomBytes(32)`), der beim Anlegen eines Termins generiert, in `bookings.clientAccessToken` abgelegt und per E-Mail verschickt wird. Geprüft wird er mit einem Konstantzeit-Vergleich (`common/client-token.ts`). Bewusst kein HMAC: Der Token muss ohnehin in der Datenbank stehen, damit die Buchung ihn kennt – und als gespeicherter Wert ist er zusätzlich einzeln widerrufbar, was eine reine Signatur nicht wäre. Derselbe Link erfüllt zwei Aufgaben nacheinander, keine zweite Mail nötig:
 
 1. **Bestätigung der Buchung** – Klick auf den Link direkt nach der Buchung setzt `bookings.status` von `pending` auf `confirmed` und `confirmedAt`. Erst dadurch wird der Klienten-Datensatz final angelegt/verknüpft (siehe `clients`-Schema in §11 sowie `idee-klienten-matching.md`). Ohne Klick innerhalb der TTL verfällt die Buchung automatisch.
 2. **Zugang zum Warteraum** – am Tag der Sitzung berechtigt derselbe Link zum Betreten des Warteraums (`apps/bookingpage`) und zur Generierung eines LiveKit-Access-Tokens für den Call.
 
 Daneben trägt derselbe Token eine dritte, jederzeit mögliche Funktion: die **Selbstabsage** des Klienten (`/cancel/{bookingId}?token=…`, umgesetzt 2026-08-18). Sie ist bis zum Terminbeginn möglich, nimmt optional einen Grund entgegen und benachrichtigt den Coach per E-Mail. Der Absage-Link steht in der Mail „Dein Termin ist bestätigt"; er invalidiert den Token nicht, damit ein zweiter Aufruf „bereits abgesagt" meldet statt „ungültiger Link".
 
-Der Token hat ein Ablaufdatum (2 Stunden nach geplantem Sitzungsbeginn) und ist für den Warteraum-Zugang einmalig verwendbar (Invalidierung nach Join, gespeichert in `clientTokenUsedAt`). Die Bestätigung (`confirmedAt`) ist ein separates, frühes Ereignis und invalidiert den Link nicht – er bleibt bis zum Sitzungstag für den Warteraum-Zugang gültig.
+Der Token selbst trägt kein Ablaufdatum; begrenzt wird stattdessen der Zeitraum, in dem er den Warteraum öffnet – das **Zugangsfenster** von Terminbeginn −60 Minuten bis Terminende +120 Minuten (`call/call-access.ts`, umgesetzt 2026-08-20). Gemessen ab dem Ende, nicht ab dem Beginn: Bei einer 90-Minuten-Sitzung fiele der Zugang sonst noch während des Gesprächs weg. Außerhalb des Fensters meldet die API `too_early` beziehungsweise `expired` statt eines Fehlers, damit der Klient eine Wartezeit angezeigt bekommt.
+
+Innerhalb des Fensters ist der Link **mehrfach** verwendbar. Ein Verbrauch nach dem ersten Join wäre in der Praxis eine Falle: Reload, Netzabbruch, Akku leer oder Wechsel vom Handy an den Rechner würden den Klienten aus seiner eigenen Sitzung aussperren, und er hat kein Konto, über das er wieder hineinkäme. `clientTokenUsedAt` hält deshalb nur den **ersten** Warteraum-Eintritt fest – für den Coach die Antwort auf „wie lange wartet er schon" – und invalidiert nichts. Ebenso wenig invalidieren die Bestätigung (`confirmedAt`) und der Aufruf des Absage-Links.
+
+Der eigentliche Schutz liegt woanders: Der Klient landet nach dem Öffnen des Links im Warteraum, nicht im Gespräch. In den Call kommt er erst, wenn der Coach ihn einlässt (§8).
 
 ### Betreiber-Zugang (`admin.hxroom.de`)
 
@@ -339,7 +343,7 @@ Der Videocall verteilt sich auf mehrere Ebenen:
 | Ort | Verantwortung |
 |---|---|
 | `infra/livekit/` | LiveKit-Server (Docker-Container) mit `livekit.yaml`/`egress.yaml`. |
-| `apps/api/` | Erzeugt HMAC-Buchungstokens für Klienten und LiveKit-Access-Tokens, verwaltet Rooms (`session_${bookingId}`), empfängt LiveKit-Webhooks, enqueued nach Sessionende den Whisper-Job. |
+| `apps/api/` | Erzeugt Buchungstokens für Klienten und LiveKit-Access-Tokens, hält den Sitzungszustand (Warteraum, Einlass, Ende), verwaltet Rooms (`session_${bookingId}`), empfängt LiveKit-Webhooks, enqueued nach Sessionende den Whisper-Job. |
 | `packages/livekit/` | **Geteilte Call-Schicht** – LiveKit-Composables (Room-Verbindung, Tracks, Devices, Reconnect), die rollenneutralen Video-Komponenten und der Erweiterungs-Seam, über den beide Apps ihre rollenspezifischen Teile einhängen. Nutzt das LiveKit JS SDK (`livekit-client`). |
 | `apps/bookingpage/` | **Klienten-Subdomain** (`[slug].hxroom.de`) – Angebote, Verfügbarkeiten, Buchungsseite, E-Mail-Bestätigung sowie Warteraum und Call des Klienten unter `/call/{bookingId}`. Zugriff über den signierten Buchungstoken; enthält das Einwilligungs-Banner und die Weiterleitung auf die Danke-Seite. |
 | `apps/coach/` | Coach-Backoffice (`app.hxroom.de`) – Klientenverwaltung, Angebote, Einstellungen, die „Klient wartet"-Benachrichtigung (Server-Sent Events) und der Call-Screen des Coachs unter `/call/{bookingId}`. Zugriff über die better-auth Session; enthält Einlassen-Button, Notiz-Seitenleiste und Sitzungs-Timer. |
@@ -394,11 +398,11 @@ accessToken.addGrant({
 });
 ```
 
-**Zwei verschiedene TTLs, nicht verwechseln:** Der HMAC-Buchungstoken aus §7 läuft 2 Stunden nach geplantem Sitzungsbeginn ab – er ist der Zugang zum Warteraum. Die TTL des LiveKit-Tokens begrenzt dagegen nur das Zeitfenster, in dem er zum *Verbinden* benutzt werden kann, nicht die Gesprächsdauer; eine bestehende Verbindung bleibt darüber hinaus bestehen. 10 Minuten reichen deshalb aus und halten die Gültigkeit eines abgefangenen Tokens kurz.
+**Zwei verschiedene Zeitgrenzen, nicht verwechseln:** Das Zugangsfenster aus §7 (Beginn −60 min bis Ende +120 min) entscheidet, wann der Buchungstoken den Warteraum öffnet. Die TTL des LiveKit-Tokens begrenzt dagegen nur das Zeitfenster, in dem er zum *Verbinden* benutzt werden kann, nicht die Gesprächsdauer; eine bestehende Verbindung bleibt darüber hinaus bestehen. 10 Minuten reichen deshalb aus und halten die Gültigkeit eines abgefangenen Tokens kurz.
 
 **Teilnehmer-Identität:** `identity` muss im Raum eindeutig sein – verbinden sich zwei Clients mit derselben Identität, trennt LiveKit den ersten (`DUPLICATE_IDENTITY`). Sie wird deshalb deterministisch und rollengetrennt vergeben: `coach_${userId}` für den Coach, `client_${bookingId}` für den Klienten.
 
-**Der Raumname ist keine Sicherheitsgrenze.** Er entsteht deterministisch aus der Booking-ID und ist damit ratbar, sobald jemand eine Booking-ID kennt. Die Mandantentrennung hängt allein an der Token-Ausgabe: Der Endpunkt muss beim Coach prüfen, dass die Buchung zu seiner `activeOrganizationId` gehört, und beim Klienten, dass der HMAC-Token zu genau dieser `bookingId` passt und der Coach ihn eingelassen hat. Das ist die eine Stelle dieser Architektur, an der ein Fehler teuer wird.
+**Der Raumname ist keine Sicherheitsgrenze.** Er entsteht deterministisch aus der Booking-ID und ist damit ratbar, sobald jemand eine Booking-ID kennt. Die Mandantentrennung hängt allein an der Token-Ausgabe: Der Endpunkt muss beim Coach prüfen, dass die Buchung zu seiner `activeOrganizationId` gehört, und beim Klienten, dass der Buchungstoken zu genau dieser `bookingId` passt, das Zugangsfenster offen ist und der Coach ihn eingelassen hat. Umgesetzt ist sie an genau einer Stelle, `call/call.service.ts` – die LiveKit-Token-Ausgabe hängt sich an dieselben Methoden, statt die Prüfung ein zweites Mal zu schreiben. Das ist die eine Stelle dieser Architektur, an der ein Fehler teuer wird.
 
 **Zwei Domains sind für LiveKit unkritisch:** Die Raumzugehörigkeit hängt ausschließlich am `room`-Grant im JWT; von welcher Origin die Seite ausgeliefert wurde, wertet LiveKit nicht aus. Das Signaling läuft als WebSocket ohne CORS-Preflight, die Medien als ICE/DTLS/SRTP – auf dieser Ebene existiert der Origin-Begriff gar nicht. Coach und Klient können sich also problemlos von `app.hxroom.de` und `[slug].hxroom.de` aus in denselben Raum verbinden.
 
@@ -693,13 +697,18 @@ export const bookings = pgTable('bookings', {
     .default('pending'),
   confirmedAt: timestamp('confirmed_at'), // gesetzt beim Klick auf den Bestätigungslink; erst dann wird clients-Matching final vollzogen
   clientAccessToken: text('client_access_token'), // derselbe Token dient zuerst der Bestätigung, später dem Warteraum-Zugang
-  clientTokenUsedAt: timestamp('client_token_used_at'), // Zeitpunkt des Warteraum-Eintritts (separat von confirmedAt)
+  clientTokenUsedAt: timestamp('client_token_used_at'), // erster Warteraum-Eintritt (separat von confirmedAt, invalidiert den Token nicht)
+  // Zustand des Videocalls. Der Warteraum ist kein eigener LiveKit-Raum, sondern ergibt
+  // sich aus diesen Zeitstempeln – sie müssen die Datenbank erreichen, damit ein Reload
+  // des Coach-Browsers den eingelassenen Klienten nicht zurückwirft.
+  admittedAt: timestamp('admitted_at'),   // Coach hat den Klienten eingelassen
+  callEndedAt: timestamp('call_ended_at'), // Sitzung beendet; setzt zugleich status = 'completed'
   // Absagedetails: 'cancelled' allein sagt nicht, ob der Coach abgesagt hat, der Klient
   // selbst (Link aus der Bestätigungsmail) oder ob die Buchung nur nie bestätigt wurde.
   cancelledAt: timestamp('cancelled_at'),
   cancelledBy: text('cancelled_by').$type<'coach' | 'client' | 'system'>(), // 'system' = TTL-Verfall
   cancellationReason: text('cancellation_reason'), // optionaler Freitext, max. 500 Zeichen
-  roomName: text('room_name'),
+  roomName: text('room_name'), // noch nicht angelegt: der Raumname entsteht deterministisch aus der ID (§8)
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -974,7 +983,7 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 - **Ionos Mail Business (Deutschland)** → E-Mail-Empfang / Postfächer für `kontakt@hxroom.de` etc., vollständig EU
 - **Stripe** mit EU-Entities und SCCs → DSGVO-konform für Zahlungsdaten
 - better-auth HttpOnly Cookies, kein Token in LocalStorage
-- Klienten-Buchungstoken: HMAC-signiert, TTL, einmalig verwendbar
+- Klienten-Buchungstoken: 256 Bit Zufall, Konstantzeit-Vergleich, gültig nur im Zugangsfenster der Sitzung
 - Kein Logging von E-Mail-Adressen oder Namen in Application Logs (nur IDs)
 - AVV automatisch bei Registrierung abgeschlossen
 - DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.

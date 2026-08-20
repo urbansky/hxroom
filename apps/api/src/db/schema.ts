@@ -187,6 +187,13 @@ export const bookings = pgTable('bookings', {
   clientAccessToken:  text('client_access_token').notNull(),
   clientTokenUsedAt:  timestamp('client_token_used_at'),
   confirmedAt:        timestamp('confirmed_at'),
+  // Videocall (doc/videocall-umsetzungsplan.md A1). Der Warteraum ist kein eigener
+  // LiveKit-Raum, sondern ein Zustand dieser Buchung – und er muss die Datenbank
+  // erreichen: läge "eingelassen" nur im Speicher, würde ein Reload des Coach-Browsers
+  // den bereits eingelassenen Klienten zurück in den Warteraum werfen.
+  // clientTokenUsedAt (oben) hält den ersten Warteraum-Eintritt fest.
+  admittedAt:         timestamp('admitted_at'),
+  callEndedAt:        timestamp('call_ended_at'),
   // Absagedetails. Ohne sie wäre 'cancelled' ein Sammelstatus, in dem eine Absage des
   // Coachs, eine Absage des Klienten und der TTL-Verfall nicht mehr auseinanderzuhalten
   // sind – der Coach sieht so im Kalender, was tatsächlich passiert ist.

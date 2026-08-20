@@ -300,6 +300,51 @@ export const assignBookingClientSchema = z.object({
 });
 export type AssignBookingClientDto = z.infer<typeof assignBookingClientSchema>;
 
+// Videocall: Zustand einer Sitzung (doc/videocall-umsetzungsplan.md A1).
+//
+// Der Warteraum ist kein eigener LiveKit-Raum, sondern dieser Zustand. Ein falscher
+// oder fehlender Token ist bewusst kein Zustand, sondern ein 401 – und eine fremde
+// Buchung ein 404. Hier stehen nur Lagen, die es dem Aufrufer zu erklären gilt.
+export const CallState = z.enum([
+  'too_early', // Zugangsfenster noch nicht offen – opensAt sagt, ab wann
+  'open',      // Fenster offen, der Klient hat den Warteraum noch nicht betreten
+  'waiting',   // Klient ist im Warteraum, der Coach hat noch nicht eingelassen
+  'admitted',  // Coach hat eingelassen (ab B2 kommt hier der LiveKit-Token dazu)
+  'ended',     // Sitzung wurde beendet
+  'cancelled', // Buchung abgesagt
+  'expired',   // Zugangsfenster vorbei oder Buchung nie bestätigt
+]);
+export type CallState = z.infer<typeof CallState>;
+
+// Bewusst eine Form für beide Rollen: dasselbe Objekt beantwortet die Frage des
+// Klienten ("darf ich rein?") und die des Coachs ("wartet jemand?"). Es trägt später
+// unverändert das SSE-Ereignis (A2) und den LiveKit-Token (B2).
+//
+// Keine clientEmail/-Phone/-Note – wie bei clientBookingViewSchema soll aus dem Link
+// nichts hervorgehen, was nicht ohnehin in der Mail des Klienten steht.
+export const callAccessResponseSchema = z.object({
+  bookingId:    z.string(),
+  state:        CallState,
+  start:        z.string(),   // ISO 8601
+  end:          z.string(),
+  offerName:    z.string(),
+  coachName:    z.string(),
+  clientName:   z.string(),
+  opensAt:      z.string(),   // Beginn des Zugangsfensters
+  // Erster Eintritt des Klienten in den Warteraum. Für den Coach die Antwort auf
+  // "wie lange wartet er schon" – ob überhaupt jemand wartet, sagt bereits state.
+  waitingSince: z.string().nullable(),
+  admittedAt:   z.string().nullable(),
+});
+export type CallAccessResponse = z.infer<typeof callAccessResponseSchema>;
+
+// Betreten des Warteraums. Wie beim Bestätigen und Absagen ist der Token aus dem
+// Mail-Link der einzige Ausweis des Klienten.
+export const enterWaitingRoomSchema = z.object({
+  token: z.string().min(1, 'Token ist erforderlich'),
+});
+export type EnterWaitingRoomDto = z.infer<typeof enterWaitingRoomSchema>;
+
 // Klientenverwaltung (CRM, siehe doc/funktionen/backoffice-coach.md Abschnitt 3).
 // Die E-Mail ist Pflicht, weil sie der Matching-Schlüssel für spätere Online-Buchungen
 // ist – ein Klient ohne Adresse wäre für den automatischen Weg unauffindbar.

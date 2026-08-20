@@ -11,6 +11,7 @@ import { OffersModule } from './offers/offers.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { S3Module } from './storage/s3.module';
 import { BookingsModule } from './bookings/bookings.module';
+import { CallModule } from './call/call.module';
 import { ClientsModule } from './clients/clients.module';
 import { AdminModule } from './admin/admin.module';
 import { AccountModule } from './account/account.module';
@@ -32,6 +33,7 @@ import { AccountModule } from './account/account.module';
     OffersModule,
     AvailabilityModule,
     BookingsModule,
+    CallModule,
     ClientsModule,
     AdminModule,
     AccountModule,

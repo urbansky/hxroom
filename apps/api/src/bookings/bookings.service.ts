@@ -1,6 +1,6 @@
 import { ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes, timingSafeEqual } from 'crypto';
+import { randomBytes } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookings, clients } from '../db/schema';
@@ -13,6 +13,7 @@ import { renderBookingCancelledEmail } from '../mail/templates/client/booking-ca
 import { renderBookingNotificationEmail } from '../mail/templates/coach/booking-notification';
 import { renderBookingCancelledByClientEmail } from '../mail/templates/coach/booking-cancelled-by-client';
 import { isUniqueViolation } from '../common/pg-errors';
+import { tokenMatches } from '../common/client-token';
 import { normalizeEmail } from '../clients/normalize-email';
 import { CONFIRMATION_TTL_MINUTES, canClientCancel, isExpiredPending } from './booking.constants';
 import { formatDayLabel, toAppointmentInfo } from './booking-formatting';
@@ -33,15 +34,6 @@ function toBookingResponse(booking: BookingRow): BookingResponse {
     offerName: booking.offerName,
     status: booking.status,
   };
-}
-
-// Konstantzeit-Vergleich für den clientAccessToken: er ist der einzige Zugangsschutz für
-// Bestätigung und Absage, ein früh abbrechender Vergleich wäre hier angreifbar.
-// timingSafeEqual verlangt gleiche Länge, deshalb der vorgeschaltete Längenvergleich.
-function tokenMatches(provided: string, stored: string): boolean {
-  const providedBuffer = Buffer.from(provided, 'utf8');
-  const storedBuffer = Buffer.from(stored, 'utf8');
-  return providedBuffer.length === storedBuffer.length && timingSafeEqual(providedBuffer, storedBuffer);
 }
 
 @Injectable()
