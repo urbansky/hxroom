@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AboutSection: typeof import('./src/components/AboutSection.vue')['default']
     AppointmentSummary: typeof import('./src/components/AppointmentSummary.vue')['default']
+    CallStage: typeof import('./src/components/CallStage.vue')['default']
     ContentCard: typeof import('./src/components/ContentCard.vue')['default']
     LoadingState: typeof import('./src/components/LoadingState.vue')['default']
     OfferListItem: typeof import('./src/components/OfferListItem.vue')['default']
@@ -34,5 +35,6 @@ declare module 'vue' {
     UInput: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
     USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
     UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.9.0_83157413d1cba46c73a89f4e9739a225/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
+    WaitingRoom: typeof import('./src/components/WaitingRoom.vue')['default']
   }
 }

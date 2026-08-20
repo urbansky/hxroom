@@ -57,6 +57,14 @@ export const router = createRouter({
       component: () => import('../views/CancelBookingView.vue'),
       props: true,
     },
+    // Warteraum, Gespräch und Abschluss liegen bewusst auf einer Route: Den Zustand kennt
+    // der Server, ein Reload landet damit immer an der richtigen Stelle. Der Zugang ist
+    // wie bei /confirm und /cancel der Token aus der Mail (?token=…).
+    {
+      path: '/call/:bookingId',
+      component: () => import('../views/CallView.vue'),
+      props: true,
+    },
   ],
   scrollBehavior(to, from) {
     if (!to.hash) return { top: 0 };

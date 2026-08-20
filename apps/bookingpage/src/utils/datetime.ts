@@ -69,3 +69,28 @@ export function weekdayOfDateKey(key: string): number {
   const { year, month, day } = parseDateKey(key);
   return (new Date(year, month - 1, day).getDay() + 6) % 7;
 }
+
+/**
+ * Verbleibende Zeit als deutscher Satzteil: "in 3 Stunden", "in 12 Minuten".
+ *
+ * Für den Warteraum, der ohne Zutun des Servers herunterzählt: Das Verstreichen von Zeit
+ * erzeugt in der API kein Ereignis, weil dabei nichts geschrieben wird.
+ *
+ * Bewusst grob gerundet: Ein sekundengenauer Countdown über Stunden hinweg macht nur
+ * unruhig, und in der letzten Minute interessiert die genaue Zahl niemanden mehr – da
+ * wartet man einfach.
+ */
+export function formatCountdown(msRemaining: number): string {
+  const seconds = Math.max(0, Math.round(msRemaining / 1000));
+
+  if (seconds < 60) return 'in weniger als einer Minute';
+
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return minutes === 1 ? 'in einer Minute' : `in ${minutes} Minuten`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return hours === 1 ? 'in einer Stunde' : `in ${hours} Stunden`;
+
+  const days = Math.round(hours / 24);
+  return days === 1 ? 'in einem Tag' : `in ${days} Tagen`;
+}

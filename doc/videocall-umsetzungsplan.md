@@ -44,9 +44,17 @@ Zwei Punkte, die den Ausschlag gaben: Die idempotenten Pfade aus A1 dürfen **ni
 
 Neu in der Antwortform: `clientOnline` – ob der Klient gerade eine Verbindung hält. Damit beantwortet A2 die Frage, die A1 offenlassen musste, und der Coach unterscheidet „wartet seit 10:02" von „war da, ist jetzt weg". Grenze: Bus und Präsenzregistry leben im Prozess; bei mehreren API-Instanzen bräuchte es einen geteilten Kanal (kein Redis im Betrieb, eine Instanz im Deployment).
 
-### A3 · Warteraum des Klienten (`apps/bookingpage`)
+### A3 · Warteraum des Klienten (`apps/bookingpage`) ✅ *(umgesetzt 2026-08-20)*
 
 Route `/call/:bookingId` mit dem Token aus der URL: Warteraum-Ansicht mit Coach-Kontext, eigene Statusmeldungen für die Fehlerfälle (zu früh, abgesagt, Link ungültig, Termin vorbei) und nach dem Einlassen eine leere Platzhalter-Bühne. Der SPA-Fallback ist vorhanden, es braucht keine Infra-Änderung (§6).
+
+Umgesetzt als `views/CallView.vue` mit `composables/useCallState.ts` sowie den Komponenten `WaitingRoom.vue` und `CallStage.vue`. Alle Zustände liegen auf einer Route – der Server kennt den Stand, ein Reload mitten im Gespräch landet daher wieder auf der Bühne.
+
+Die Reihenfolge beim Öffnen ist entscheidend: erst `POST …/waiting-room`, dann der `EventSource`. Ein `EventSource` kann den HTTP-Status nicht lesen; bei ungültigem Token bekäme er nur ein anonymes `onerror` und verbände endlos neu, ohne dass der Klient je erführe, warum nichts passiert. Der POST liefert 401 und 404 sauber aus und ist zugleich der Warteraum-Eintritt.
+
+Der Ereignisstrom bleibt über die gesamte Wartezeit offen – daran hängt die Präsenzanzeige des Coachs aus A2 – und schließt bei den Endzuständen und beim Verlassen der Seite. Zeit läuft lokal: Ein Sekundentakt speist den Countdown, und beim Erreichen von `opensAt` tritt die Seite selbsttätig erneut ein. Dafür trägt die Antwort seit A3 neben `opensAt` auch `closesAt`, damit die Oberfläche beide Fenstergrenzen kennt, ohne die serverseitigen Konstanten zu duplizieren.
+
+**Gefunden dabei, nicht behoben:** `apps/bookingpage` ist die einzige App ohne lokale Icon-Sammlung (`@iconify-json/lucide` fehlt, anders als in `coach`, `admin` und `landing`). Nuxt UI lädt die Symbole deshalb zur Laufzeit von `api.iconify.design` nach – auch im Produktions-Build, in dem der Host fest im Bundle steht. Auf der Klientenseite überträgt das die IP jedes Klienten an einen Dritten, während der Footer derselben Seite „DSGVO-konform · Server Deutschland" verspricht. Die Dependency allein genügt nicht: Der Nuxt-UI-Vite-Plugin bündelt in dieser SPA nicht automatisch, es braucht eine bewusste Entscheidung zwischen der vollständigen Sammlung (556 KB) und einer Handauswahl der benutzten Symbole.
 
 ### A4 · Call-Screen des Coachs (`apps/coach`)
 

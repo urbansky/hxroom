@@ -5,7 +5,7 @@ import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { tokenMatches } from '../common/client-token';
-import { callWindowOpensAt, canAdmit, canEnd, resolveCallState } from './call-access';
+import { callWindowClosesAt, callWindowOpensAt, canAdmit, canEnd, resolveCallState } from './call-access';
 import { CallEventsService } from './call-events.service';
 import type { CallAccessResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
@@ -248,6 +248,7 @@ export class CallService {
       coachName:    coach?.name ?? org.name,
       clientName:   booking.clientName,
       opensAt:      callWindowOpensAt(booking.startTime).toISOString(),
+      closesAt:     callWindowClosesAt(booking.endTime).toISOString(),
       waitingSince: booking.clientTokenUsedAt?.toISOString() ?? null,
       admittedAt:   booking.admittedAt?.toISOString() ?? null,
       clientOnline: this.events.isClientOnline(booking.id),

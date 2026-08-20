@@ -330,7 +330,11 @@ export const callAccessResponseSchema = z.object({
   offerName:    z.string(),
   coachName:    z.string(),
   clientName:   z.string(),
-  opensAt:      z.string(),   // Beginn des Zugangsfensters
+  // Grenzen des Zugangsfensters. Beide gehen mit, weil das Verstreichen von Zeit
+  // serverseitig kein Ereignis erzeugt (nichts wird geschrieben) – die Oberfläche rechnet
+  // Countdown und Ablauf damit selbst aus, statt im Sekundentakt nachzufragen.
+  opensAt:      z.string(),
+  closesAt:     z.string(),
   // Erster Eintritt des Klienten in den Warteraum. Für den Coach die Antwort auf
   // "wie lange wartet er schon" – ob überhaupt jemand wartet, sagt bereits state.
   waitingSince: z.string().nullable(),
