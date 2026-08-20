@@ -5,11 +5,8 @@ import {
   CALL_OPENS_MINUTES_BEFORE_START,
   callWindowClosesAt,
   callWindowOpensAt,
-  canAdmit,
-  canEnd,
-  resolveCallState,
-  type CallBookingState,
-} from './call-access';
+} from '@hxroom/shared';
+import { canAdmit, canEnd, resolveCallState, type CallBookingState } from './call-access';
 
 // Sitzung von 10:00 bis 11:00; Fenster damit 09:00 bis 13:00.
 const START = new Date('2026-08-20T10:00:00.000Z');

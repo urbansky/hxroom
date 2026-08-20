@@ -1,24 +1,9 @@
+import { callWindowClosesAt, callWindowOpensAt } from '@hxroom/shared';
 import type { BookingStatus, CallState } from '@hxroom/shared';
 
-// Zugangsfenster für den Videocall (doc/videocall-umsetzungsplan.md A1).
-//
-// Vorher: Wer zehn Minuten zu früh dran ist, soll den Warteraum sehen und nicht eine
-// Fehlerseite. Eine Stunde deckt auch den Klienten ab, der den Link schon mittags
-// öffnet, um die Technik zu prüfen.
-//
-// Nachher: gemessen ab dem geplanten *Ende*, nicht ab dem Beginn. doc/technisches-konzept.md §7
-// nennt "2 Stunden nach geplantem Sitzungsbeginn" – bei einer 90-Minuten-Sitzung fiele der
-// Zugang damit eine halbe Stunde vor Schluss weg. Der Absatz wird entsprechend nachgezogen.
-export const CALL_OPENS_MINUTES_BEFORE_START = 60;
-export const CALL_CLOSES_MINUTES_AFTER_END = 120;
-
-export function callWindowOpensAt(startTime: Date): Date {
-  return new Date(startTime.getTime() - CALL_OPENS_MINUTES_BEFORE_START * 60_000);
-}
-
-export function callWindowClosesAt(endTime: Date): Date {
-  return new Date(endTime.getTime() + CALL_CLOSES_MINUTES_AFTER_END * 60_000);
-}
+// Das Zugangsfenster selbst liegt in @hxroom/shared: Der Server entscheidet über den
+// Zugang, das Backoffice des Coachs blendet danach den "Sitzung starten"-Knopf ein (A5).
+// Beide müssen dieselbe Grenze kennen.
 
 // Die Felder der Buchung, aus denen sich der Zustand ergibt – bewusst als eigenes
 // Interface statt als Drizzle-Row, damit diese Datei frei von ORM-Importen bleibt und

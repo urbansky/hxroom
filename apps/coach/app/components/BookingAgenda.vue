@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CoachBookingResponse } from '@hxroom/shared'
+import { isWithinCallWindow, type CoachBookingResponse } from '@hxroom/shared'
 
 const props = defineProps<{
   bookings: CoachBookingResponse[]
@@ -19,6 +19,24 @@ defineEmits<{ select: [booking: CoachBookingResponse] }>()
 
 const groups = computed(() => groupByDay(props.bookings))
 const isFlat = computed(() => props.variant === 'flat')
+
+// Minütlich nachgeführt wie in BookingWeek.vue: Ohne Ticker erschiene der
+// "Sitzung starten"-Knopf erst beim nächsten Laden der Seite – also womöglich nie,
+// während der Klient schon wartet.
+const now = ref(new Date())
+let nowTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  nowTimer = setInterval(() => (now.value = new Date()), 60_000)
+})
+onUnmounted(() => clearInterval(nowTimer))
+
+// Startbar ist eine bestätigte Sitzung innerhalb des Zugangsfensters. Die Grenzen kommen
+// aus @hxroom/shared – dieselben, nach denen der Server den Zugang gewährt.
+function canStart(booking: CoachBookingResponse): boolean {
+  return booking.status === 'confirmed'
+    && isWithinCallWindow(new Date(booking.start), new Date(booking.end), now.value)
+}
 
 // Der Rahmen unterscheidet in der Kachel-Variante die Status; flach übernimmt das
 // allein die Deckkraft. Die Statusangabe selbst geht nicht verloren, sie steht in
@@ -69,11 +87,13 @@ function rowClass(booking: CoachBookingResponse): string {
            Kontur neben dem Rahmen – und mit der Sitzungsfarbe links kamen so drei Ränder
            an einer Kachel zusammen. -->
       <div class="flex flex-col" :class="isFlat ? 'gap-0.5' : 'gap-2'">
+        <!-- Zeile und Aktion sind Geschwister, nicht ineinander verschachtelt: Ein Knopf
+             im Knopf wäre ungültiges HTML, und die ganze Zeile bleibt weiterhin die
+             Klickfläche für die Detailansicht. -->
+        <div v-for="booking in group.bookings" :key="booking.id" class="flex items-center gap-2">
         <button
-          v-for="booking in group.bookings"
-          :key="booking.id"
           type="button"
-          class="w-full text-left flex items-start gap-3 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+          class="flex-1 min-w-0 text-left flex items-start gap-3 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
           :class="rowClass(booking)"
           @click="$emit('select', booking)"
         >
@@ -118,6 +138,16 @@ function rowClass(booking: CoachBookingResponse): string {
             </div>
           </div>
         </button>
+
+        <UButton
+          v-if="canStart(booking)"
+          :to="`/call/${booking.id}`"
+          label="Sitzung starten"
+          icon="i-lucide-video"
+          size="sm"
+          class="shrink-0"
+        />
+        </div>
       </div>
     </section>
   </div>

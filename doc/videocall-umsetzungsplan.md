@@ -70,9 +70,22 @@ Nicht übernommen: der Farbbalken der Sitzungsart aus der Agenda. `CallAccessRes
 
 **Damit ist Stufe A abgeschlossen** – bis auf die Einstiegspunkte (A5). Der Kreis Warteraum → Benachrichtigung → Einlass → „Call" → Ende → Danke-Seite läuft vollständig über beide Oberflächen, ohne eine Zeile LiveKit.
 
-### A5 · Einstiegspunkte
+### A5 · Einstiegspunkte ✅ *(umgesetzt 2026-08-20)*
 
 Call-Link zentral bauen (analog zu den bestehenden Bestätigungs- und Absage-Links in `booking-urls.ts`), in die Bestätigungsmail des Klienten aufnehmen und im Coach-Dashboard beziehungsweise der Terminliste einen „Sitzung starten"-Einstieg ergänzen. Bewusst am Ende: Die Ziele existieren dann schon, zum Testen genügt vorher die URL von Hand.
+
+Umgesetzt: `buildCallUrl()` in `booking-urls.ts`, ein Warteraum-Knopf in `client/booking-confirmed.tsx` samt Hinweis auf die Öffnungszeit, `URL` und `LOCATION` in der Kalenderdatei des Klienten, sowie ein „Sitzung starten"-Knopf in der Agenda-Zeile und im Termin-Slideover der Coach-App.
+
+**Die Fenstergrenzen sind nach `packages/shared` gewandert.** Der Server entscheidet über den Zugang, das Backoffice blendet danach den Knopf ein – beide brauchen dieselbe Grenze, und eine zweite Konstante im Frontend liefe unweigerlich auseinander. `isWithinCallWindow()` kam dabei neu dazu.
+
+Zwei Dinge, die beim Bauen auffielen:
+
+- Der Kommentar in `booking-confirmed.tsx` verwies für den Warteraum-Zugang auf Erinnerungsmails, **die es nicht gibt** (die `reminderJobs` aus §12 sind Entwurf, keine Tabelle). Diese Mail ist damit der einzige Weg, auf dem der Klient seinen Link je erhält – der Kommentar ist entsprechend richtiggestellt.
+- Die Terminliste lud mit `from: now`. Da die API auf den Beginn filtert, fiel eine **gerade laufende** Sitzung aus der Liste – ausgerechnet die, die der Coach starten will. Das Ladefenster reicht jetzt zwölf Stunden zurück, gefiltert wird clientseitig auf das Ende, wie es `upcomingBookings()` im Dashboard schon tat.
+
+In der Agenda sitzt der Knopf **neben** der Zeile, nicht darin: Die Zeile ist ein `<button>`, ein Knopf darin wäre ungültiges HTML. Beide Stellen führen eine reaktive Jetzt-Zeit im Minutentakt mit, sonst erschiene der Knopf erst beim nächsten Laden der Seite – womöglich nie, während der Klient wartet.
+
+**Damit ist Stufe A abgeschlossen.** Der Ablauf läuft von der Buchung bis zum Sitzungsende ohne Zutun von außen.
 
 **Ergebnis Stufe A:** Mail → Warteraum → Benachrichtigung des Coachs → Einlassen → „Call" → Ende → Danke-Seite. Ohne eine Zeile LiveKit.
 

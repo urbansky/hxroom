@@ -33,6 +33,8 @@ describe('Buchungs-Mail-Templates', () => {
       coachName: 'Anna Bergmann',
       appointment,
       cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
+      callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
+      callOpensMinutesBefore: 60,
     };
 
     it('rendert alle Termindaten', async () => {
@@ -77,6 +79,30 @@ describe('Buchungs-Mail-Templates', () => {
 
       expect(html).not.toContain('/cancel/');
       expect(html).toContain('Antworte einfach auf diese E-Mail');
+    });
+
+    // Erinnerungsmails vor dem Termin gibt es nicht – diese Mail ist damit der einzige Weg,
+    // auf dem der Klient den Zugang zum Warteraum je erhält.
+    it('enthält den Link zum Warteraum', async () => {
+      const html = await renderBookingConfirmedEmail(props);
+
+      expect(html).toContain('https://anna.hxroom.de/call/b-123?token=abc');
+      expect(html).toContain('Zum Warteraum');
+    });
+
+    // Die Minutenzahl kommt aus CALL_OPENS_MINUTES_BEFORE_START, damit der Text nicht
+    // etwas anderes verspricht als die Prüfung im Server zulässt.
+    it('nennt die Öffnungszeit des Raums', async () => {
+      const html = await renderBookingConfirmedEmail({ ...props, callOpensMinutesBefore: 45 });
+
+      expect(html).toContain('45 Minuten vor Beginn');
+    });
+
+    it('lässt den Warteraum-Abschnitt ohne Buchungsseite weg', async () => {
+      const html = await renderBookingConfirmedEmail({ ...props, callUrl: null });
+
+      expect(html).not.toContain('/call/');
+      expect(html).not.toContain('Zum Warteraum');
     });
   });
 

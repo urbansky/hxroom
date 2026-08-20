@@ -300,6 +300,37 @@ export const assignBookingClientSchema = z.object({
 });
 export type AssignBookingClientDto = z.infer<typeof assignBookingClientSchema>;
 
+// Zugangsfenster für den Videocall (doc/videocall-umsetzungsplan.md A1).
+//
+// Vorher: Wer zehn Minuten zu früh dran ist, soll den Warteraum sehen und nicht eine
+// Fehlerseite. Eine Stunde deckt auch den Klienten ab, der den Link schon mittags
+// öffnet, um die Technik zu prüfen.
+//
+// Nachher: gemessen ab dem geplanten *Ende*, nicht ab dem Beginn. doc/technisches-konzept.md §7
+// nannte "2 Stunden nach geplantem Sitzungsbeginn" – bei einer 90-Minuten-Sitzung fiele der
+// Zugang damit eine halbe Stunde vor Schluss weg.
+//
+// Liegt hier und nicht in der API, weil beide Seiten dieselbe Grenze brauchen: Der Server
+// entscheidet über den Zugang, das Backoffice des Coachs blendet danach den
+// "Sitzung starten"-Knopf ein (A5). Eine zweite Konstante im Frontend liefe unweigerlich
+// irgendwann auseinander.
+export const CALL_OPENS_MINUTES_BEFORE_START = 60;
+export const CALL_CLOSES_MINUTES_AFTER_END = 120;
+
+export function callWindowOpensAt(startTime: Date): Date {
+  return new Date(startTime.getTime() - CALL_OPENS_MINUTES_BEFORE_START * 60_000);
+}
+
+export function callWindowClosesAt(endTime: Date): Date {
+  return new Date(endTime.getTime() + CALL_CLOSES_MINUTES_AFTER_END * 60_000);
+}
+
+/** Ist der Videocall zu diesem Zeitpunkt zugänglich? Rein zeitlich – den Status der
+ *  Buchung prüft der Server zusätzlich (resolveCallState). */
+export function isWithinCallWindow(startTime: Date, endTime: Date, now: Date): boolean {
+  return now >= callWindowOpensAt(startTime) && now <= callWindowClosesAt(endTime);
+}
+
 // Videocall: Zustand einer Sitzung (doc/videocall-umsetzungsplan.md A1).
 //
 // Der Warteraum ist kein eigener LiveKit-Raum, sondern dieser Zustand. Ein falscher

@@ -13,6 +13,10 @@ export interface BookingIcsInput {
   organizer?: { name: string; email: string };
   attendee?: { name: string; email: string };
   description?: string;
+  /** Adresse des Videocalls. Landet als URL und als LOCATION im Eintrag: URL ist das
+   *  RFC-Feld, LOCATION dasjenige, das Apple und Google anzeigen und bei einer Adresse
+   *  anklickbar machen. Ohne beides fände der Klient den Link nur in der Mail wieder. */
+  url?: string;
   /** Nur für Tests überschreibbar; sonst der Zeitpunkt der Generierung. */
   now?: Date;
 }
@@ -80,6 +84,9 @@ export function buildBookingIcs(input: BookingIcsInput): string {
 
   if (input.description) {
     lines.push(`DESCRIPTION:${escapeText(input.description)}`);
+  }
+  if (input.url) {
+    lines.push(`URL:${escapeText(input.url)}`, `LOCATION:${escapeText(input.url)}`);
   }
   if (input.organizer) {
     lines.push(`ORGANIZER;CN=${escapeText(input.organizer.name)}:mailto:${input.organizer.email}`);

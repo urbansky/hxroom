@@ -147,6 +147,23 @@ describe('buildBookingIcs', () => {
     });
   });
 
+  // Der Klient soll den Warteraum zum Termin auch dann wiederfinden, wenn er die Mail
+  // längst nicht mehr sucht. URL ist das RFC-Feld, LOCATION dasjenige, das Apple und
+  // Google anzeigen – deshalb beide mit demselben Wert.
+  it('schreibt den Call-Link als URL und LOCATION', () => {
+    const ics = buildBookingIcs({ ...BASE, url: 'https://anna.hxroom.de/call/b-1?token=abc' });
+
+    expect(valueOf(ics, 'URL')).toBe('https://anna.hxroom.de/call/b-1?token=abc');
+    expect(valueOf(ics, 'LOCATION')).toBe('https://anna.hxroom.de/call/b-1?token=abc');
+  });
+
+  it('lässt URL und LOCATION weg, wenn kein Link vorliegt', () => {
+    const ics = buildBookingIcs(BASE);
+
+    expect(ics).not.toContain('URL:');
+    expect(ics).not.toContain('LOCATION:');
+  });
+
   it('lässt DESCRIPTION weg, wenn nicht gesetzt', () => {
     expect(buildBookingIcs(BASE)).not.toContain('DESCRIPTION');
   });

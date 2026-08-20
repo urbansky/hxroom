@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CoachBookingResponse } from '@hxroom/shared'
+import { isWithinCallWindow, type CoachBookingResponse } from '@hxroom/shared'
 
 const props = defineProps<{ booking: CoachBookingResponse | null }>()
 const emit = defineEmits<{
@@ -31,7 +31,25 @@ watch(open, (isOpen) => {
 const isCancelled = computed(() => props.booking?.status === 'cancelled')
 // Altbestand hat keinen Urheber – dann bleibt es beim reinen Zeitpunkt.
 const cancelledByLabel = computed(() => props.booking?.cancelledBy ? CANCELLED_BY_LABELS[props.booking.cancelledBy] : null)
-const isPast = computed(() => !!props.booking && new Date(props.booking.end) < new Date())
+// Minütlich nachgeführt: Das Slideover bleibt beim Warten offen stehen, und der
+// "Sitzung starten"-Knopf soll dann von selbst erscheinen.
+const now = ref(new Date())
+let nowTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  nowTimer = setInterval(() => (now.value = new Date()), 60_000)
+})
+onUnmounted(() => clearInterval(nowTimer))
+
+const isPast = computed(() => !!props.booking && new Date(props.booking.end) < now.value)
+
+// Startbar ist eine bestätigte Sitzung im Zugangsfenster – dieselben Grenzen, nach denen
+// der Server den Zugang gewährt (@hxroom/shared).
+const canStart = computed(() =>
+  !!props.booking
+  && props.booking.status === 'confirmed'
+  && isWithinCallWindow(new Date(props.booking.start), new Date(props.booking.end), now.value),
+)
 
 async function downloadIcs() {
   if (!props.booking) return
@@ -200,7 +218,9 @@ async function cancelBooking() {
         </div>
       </div>
 
-      <div v-else class="flex items-center justify-between w-full gap-2">
+      <!-- flex-wrap: Mit dem Startknopf stehen hier zeitweise drei Schaltflächen, die in
+           der Breite des Slideovers nicht nebeneinander passen. -->
+      <div v-else class="flex flex-wrap items-center justify-between w-full gap-2">
         <UButton
           v-if="!isCancelled && !isPast"
           label="Termin absagen"
@@ -210,6 +230,13 @@ async function cancelBooking() {
           @click="confirmingCancel = true"
         />
         <div v-else />
+        <div class="flex items-center gap-2">
+        <UButton
+          v-if="canStart"
+          :to="`/call/${booking?.id}`"
+          label="Sitzung starten"
+          icon="i-lucide-video"
+        />
         <UButton
           label="Kalendereintrag"
           icon="i-lucide-calendar-plus"
@@ -218,6 +245,7 @@ async function cancelBooking() {
           :loading="downloading"
           @click="downloadIcs"
         />
+        </div>
       </div>
     </template>
   </USlideover>

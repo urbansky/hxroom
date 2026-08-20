@@ -22,3 +22,10 @@ export function buildConfirmUrl(config: ConfigService, slug: string, bookingId: 
 export function buildCancelUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {
   return `${buildOrigin(config, slug)}/cancel/${bookingId}?token=${token}`;
 }
+
+// Warteraum und Videocall des Klienten (doc/videocall-umsetzungsplan.md A5). Derselbe
+// Token wie beim Bestätigen und Absagen – der Klient hat kein Konto, und eine zweite Mail
+// kurz vor dem Termin gibt es nicht: Diese Adresse ist sein einziger Weg in die Sitzung.
+export function buildCallUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {
+  return `${buildOrigin(config, slug)}/call/${bookingId}?token=${token}`;
+}

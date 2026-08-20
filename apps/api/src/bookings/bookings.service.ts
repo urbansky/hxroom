@@ -17,7 +17,8 @@ import { tokenMatches } from '../common/client-token';
 import { normalizeEmail } from '../clients/normalize-email';
 import { CONFIRMATION_TTL_MINUTES, canClientCancel, isExpiredPending } from './booking.constants';
 import { formatDayLabel, toAppointmentInfo } from './booking-formatting';
-import { buildBookingPageUrl, buildCancelUrl, buildConfirmUrl } from './booking-urls';
+import { buildBookingPageUrl, buildCallUrl, buildCancelUrl, buildConfirmUrl } from './booking-urls';
+import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
 import type { CreateBookingDto, BookingResponse, ClientBookingView } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
@@ -341,6 +342,10 @@ export class BookingsService {
 
     const coachDisplayName = coach?.name ?? org.name;
 
+    // Ein Link für Mail und Kalendereintrag: Der Klient soll ihn zum Termin auch dann
+    // wiederfinden, wenn er die Mail längst nicht mehr sucht.
+    const callUrl = org.slug ? buildCallUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null;
+
     const ics = buildBookingIcs({
       uid: booking.id,
       start: booking.startTime,
@@ -348,6 +353,7 @@ export class BookingsService {
       summary: `${booking.offerName} mit ${coachDisplayName}`,
       organizer: coach ? { name: coach.name, email: coach.email } : undefined,
       attendee: { name: booking.clientName, email: booking.clientEmail },
+      url: callUrl ?? undefined,
     });
 
     try {
@@ -362,6 +368,8 @@ export class BookingsService {
           coachName: coachDisplayName,
           appointment: toAppointmentInfo(booking),
           cancelUrl: org.slug ? buildCancelUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null,
+          callUrl,
+          callOpensMinutesBefore: CALL_OPENS_MINUTES_BEFORE_START,
         }),
         attachment: [{ name: 'termin.ics', content: Buffer.from(ics, 'utf8').toString('base64') }],
       });

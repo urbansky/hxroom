@@ -41,10 +41,17 @@ const loadError = ref<string | null>(null)
 const weekStart = ref(startOfWeek(new Date()))
 
 function queryForFilter(): Record<string, string> {
-  const now = new Date().toISOString()
-  if (filter.value === 'past') return { to: now, status: 'confirmed' }
+  const now = new Date()
+  if (filter.value === 'past') return { to: now.toISOString(), status: 'confirmed' }
   if (filter.value === 'cancelled') return { status: 'cancelled' }
-  return { from: now }
+
+  // Das Ladefenster reicht bewusst in die Vergangenheit: Die API filtert auf den Beginn,
+  // eine gerade laufende Sitzung fiele mit `from: now` also aus der Liste – ausgerechnet
+  // die, deren Sitzung der Coach starten will. Gefiltert wird deshalb clientseitig auf das
+  // Ende, wie es upcomingBookings() im Dashboard schon tut. Die Spanne deckt die längste
+  // denkbare Sitzung samt Nachlauf des Zugangsfensters ab.
+  const from = new Date(now.getTime() - 12 * 60 * 60_000)
+  return { from: from.toISOString() }
 }
 
 function queryForWeek(): Record<string, string> {
@@ -78,6 +85,15 @@ await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
 })
 
 watch([viewMode, filter, weekStart], loadBookings)
+
+// "Kommend" heißt: noch nicht vorbei. Ein Termin, der gerade läuft, gehört hierher – nicht
+// in die Vergangenheit (siehe queryForFilter). Die übrigen Filter tragen ihre Auswahl
+// bereits in der Abfrage.
+const visibleBookings = computed(() => {
+  if (viewMode.value === 'week' || filter.value !== 'upcoming') return bookings.value
+  const now = Date.now()
+  return bookings.value.filter(b => new Date(b.end).getTime() >= now)
+})
 
 // Der nächste anstehende Termin wird in der Agenda hervorgehoben.
 const nextBookingId = computed(() => {
@@ -187,8 +203,8 @@ const emptyStateText = computed(() => {
 
     <template v-else>
       <BookingAgenda
-        v-if="bookings.length"
-        :bookings="bookings"
+        v-if="visibleBookings.length"
+        :bookings="visibleBookings"
         :highlight-id="nextBookingId"
         @select="openDetail"
       />
