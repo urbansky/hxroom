@@ -68,12 +68,12 @@ hxroom/
 ├── apps/
 │   ├── api/          # NestJS Backend (api.hxroom.de)
 │   ├── coach/        # Coach-Backoffice (app.hxroom.de)
-│   ├── bookingpage/  # Klienten-Subdomain: Buchung & Bestätigung ([slug].hxroom.de)
-│   ├── videocall/    # Warteraum + Call (Klient & Coach), pfadbasiert: */call
+│   ├── bookingpage/  # Klienten-Subdomain: Buchung, Warteraum & Call ([slug].hxroom.de)
 │   ├── admin/        # Betreiber-Backoffice (admin.hxroom.de)
 │   └── landing/      # Landingpage (hxroom.de)
 ├── packages/
 │   ├── shared/       # Gemeinsame Types & Zod-Schemas
+│   ├── livekit/      # Geteilte Call-Schicht: LiveKit-Composables & Video-Komponenten
 │   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten
 ├── infra/
 │   ├── docker-compose.yml          # Produktion
@@ -84,7 +84,7 @@ hxroom/
 └── CLAUDE.md         # Claude Code Instruktionsdatei
 ```
 
-Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Fünf Nuxt-Apps sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden. Eine Ausnahme ist `videocall`: statt einer eigenen Subdomain wird die App pfadbasiert unter zwei bestehenden Domains gemountet (`[slug].hxroom.de/call/*` für Klienten, `app.hxroom.de/call/*` für Coaches) – siehe §6 und §8. `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends.
+Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Die drei Nuxt-Apps (`coach`, `admin`, `landing`) und die Vite-SPA `bookingpage` sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden. `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends, `packages/livekit` die Call-Schicht zwischen `bookingpage` und `coach` (§8).
 
 ---
 
@@ -99,7 +99,7 @@ Es gibt zwei Compose-Dateien in `infra/`:
 
 ### Lokale Entwicklung (`docker-compose.dev.yml`)
 
-Die Apps (api, coach, bookingpage, videocall, admin, landing) laufen lokal per `pnpm dev`. Docker übernimmt nur die Infrastruktur:
+Die Apps (api, coach, bookingpage, admin, landing) laufen lokal per `pnpm dev`. Docker übernimmt nur die Infrastruktur:
 
 - **PostgreSQL** (Port 5433 auf dem Host, 5432 im Container)
 - **RustFS** als S3-kompatibler Object Store (siehe `docker-compose-test-rustfs.yml`), Console auf Port 9001, S3-API auf Port 9000
@@ -113,7 +113,7 @@ Alle Services laufen als Container auf dem Hetzner-Host:
 
 ```yaml
 services:
-  api, coach, bookingpage, videocall, admin, landing   # gebuildete App-Images
+  api, coach, bookingpage, admin, landing   # gebuildete App-Images
   postgres:   image: postgres:17-alpine
   redis:      image: redis:7-alpine
   livekit:    image: livekit/livekit-server:latest
@@ -195,9 +195,9 @@ Claude Code erkennt Duplikate, vereinheitlicht DTOs auf Zod-Schemas und macht Fe
 ```
 hxroom.de              → Nuxt-App `landing` (öffentlich)
 app.hxroom.de          → Nuxt-App `coach` (Coach-Backoffice, Login erforderlich)
-app.hxroom.de/call/*   → Nuxt-App `videocall` (pfadbasiert, gleicher Host wie Coach-Backoffice)
-[slug].hxroom.de       → Nuxt-App `bookingpage` (Klienten-Subdomain: Buchung & Bestätigung)
-[slug].hxroom.de/call/* → Nuxt-App `videocall` (pfadbasiert, Warteraum + Call für Klienten)
+app.hxroom.de/call/*   → Route in `coach` (Call-Screen des Coachs)
+[slug].hxroom.de       → Vite-SPA `bookingpage` (Klienten-Subdomain: Buchung & Bestätigung)
+[slug].hxroom.de/call/* → Route in `bookingpage` (Warteraum + Call für Klienten)
 api.hxroom.de          → NestJS API
 admin-api.hxroom.de    → dieselbe NestJS API, eigener Host nur für das Betreiber-Backoffice
 livekit.hxroom.de      → LiveKit Server (intern, kein öffentliches UI)
@@ -208,19 +208,20 @@ admin.hxroom.de        → Nuxt-App `admin` (internes Betreiber-Backoffice, ab M
 
 Der Host ist ausdrücklich **keine** Autorisierungsgrenze: welche Rolle was darf, entscheidet weiterhin `user.role` über den `AdminGuard` (§7).
 
-**Subdomain-Routing im Frontend:** Jede Subdomain wird von ihrer eigenen Nuxt-App bedient (`apps/landing`, `apps/coach`, `apps/bookingpage`, `apps/admin`). Caddy routet anhand des Hostnames an den jeweiligen Container; innerhalb der App übernimmt Nuxts file-based Routing (`pages/`) die URL-Auflösung. Die `bookingpage`-App liest den Coach-Slug serverseitig aus dem Hostname (Nuxt Server Middleware), um Branding und Buchungs­kontext bereits beim ersten Render zu laden – wichtig für SEO und schnellen Erstaufbau der Buchungsseite.
+**Subdomain-Routing im Frontend:** Jede Subdomain wird von ihrer eigenen App bedient (`apps/landing`, `apps/coach`, `apps/bookingpage`, `apps/admin`). Caddy routet allein anhand des Hostnames an den jeweiligen Container; innerhalb der App übernimmt deren eigenes Routing die URL-Auflösung – bei den Nuxt-Apps das file-based Routing (`pages/`), bei `bookingpage` der Vue Router. Da `bookingpage` als statische SPA ausgeliefert wird, liest sie den Coach-Slug clientseitig aus dem Hostname und lädt Branding und Buchungskontext über die API nach.
 
-**Pfadbasiertes Routing für `videocall`:** Die App bekommt bewusst keine eigene Subdomain, sondern wird unter dem Pfad `/call/*` in zwei bestehende Domains gemountet – kein zusätzliches DNS oder Zertifikat nötig, kein Domainwechsel für Klient oder Coach mitten im Session-Flow:
+**Die Call-Pfade brauchen keine eigene Caddy-Regel.** `/call/*` ist in beiden Apps eine gewöhnliche interne Route und wird über die bestehenden Host-Blöcke bedient:
 
 ```
-# infra/caddy/Caddyfile (Ausschnitt, vereinfacht)
-*.hxroom.de {
-  handle /call/* { reverse_proxy videocall:3000 }
-  handle         { reverse_proxy bookingpage:3000 }  # oder coach:3000 bei app.hxroom.de, admin:3000 bei admin.hxroom.de
-}
+app.hxroom.de/call/{bookingId}    → coach:80        → SPA-Fallback → Nuxt-Route /call/[bookingId]
+[slug].hxroom.de/call/{bookingId} → bookingpage:80  → SPA-Fallback → Vue-Router-Route /call/:bookingId
 ```
 
-Da derselbe `videocall`-Container unter beiden Hosts erreichbar ist, unterscheidet eine Nuxt Server Middleware anhand des Host-Headers das Auth-Schema: `app.hxroom.de` → better-auth Session-Cookie (Coach), `[slug].hxroom.de` → signierter Klienten-Token aus dem Buchungslink. Details zur Aufteilung siehe §8.
+Voraussetzung ist allein der SPA-Fallback `try_files $uri $uri/ /index.html` in den nginx-Konfigurationen beider Container – derselbe Mechanismus, der schon `/confirm/:bookingId` und `/cancel/:bookingId` bedient.
+
+**Warum Coach und Klient trotzdem auf getrennten Hosts bleiben:** Das Session-Cookie gehört `api.hxroom.de`, nicht der Coach-App. Technisch könnte der Coach seinen Call also auch unter `[slug].hxroom.de` öffnen – beide Hosts sind same-site zu `api.hxroom.de`, das Cookie würde mitgesendet. Dagegen spricht das Pro-Feature „eigene Domain (CNAME)": Sobald ein Coach `coaching.anna-bergmann.de` auf seine Subdomain zeigen lässt, wäre der Aufruf cross-site, `SameSite=Lax` blockierte das Cookie, und Safaris Third-Party-Cookie-Sperre hebelte auch ein `SameSite=None` aus. Der Klient ist davon nie betroffen – er hat kein Cookie, sein Zugang ist der signierte Token in der URL. Die Trennung hält die Coach-Session dauerhaft von Custom-Domains fern.
+
+Ein zweiter Effekt derselben Aufteilung: Kamera- und Mikrofonfreigaben gelten pro Origin. Der Coach erteilt sie einmalig auf `app.hxroom.de` und wird danach in keiner Sitzung erneut gefragt; der Klient erteilt sie auf der Subdomain seines Coachs und behält sie für alle weiteren Sitzungen dort.
 
 **Wildcard-Zertifikat:** Caddy mit Ionos DNS-Provider (`caddy-dns/ionos`) für automatisches `*.hxroom.de` Let's-Encrypt-Zertifikat via DNS-01 Challenge.
 
@@ -299,7 +300,7 @@ Klient → kein Account, kein Login → Zugang nur via signiertem Token im Buchu
 **Klienten-Zugang** funktioniert über einen signierten Token (HMAC-SHA256), der beim Anlegen eines Termins generiert und per E-Mail verschickt wird. Derselbe Link erfüllt zwei Aufgaben nacheinander, keine zweite Mail nötig:
 
 1. **Bestätigung der Buchung** – Klick auf den Link direkt nach der Buchung setzt `bookings.status` von `pending` auf `confirmed` und `confirmedAt`. Erst dadurch wird der Klienten-Datensatz final angelegt/verknüpft (siehe `clients`-Schema in §11 sowie `idee-klienten-matching.md`). Ohne Klick innerhalb der TTL verfällt die Buchung automatisch.
-2. **Zugang zum Warteraum** – am Tag der Sitzung berechtigt derselbe Link zum Betreten des Warteraums (`apps/videocall`) und zur Generierung eines LiveKit-Access-Tokens für den Call.
+2. **Zugang zum Warteraum** – am Tag der Sitzung berechtigt derselbe Link zum Betreten des Warteraums (`apps/bookingpage`) und zur Generierung eines LiveKit-Access-Tokens für den Call.
 
 Daneben trägt derselbe Token eine dritte, jederzeit mögliche Funktion: die **Selbstabsage** des Klienten (`/cancel/{bookingId}?token=…`, umgesetzt 2026-08-18). Sie ist bis zum Terminbeginn möglich, nimmt optional einen Grund entgegen und benachrichtigt den Coach per E-Mail. Der Absage-Link steht in der Mail „Dein Termin ist bestätigt"; er invalidiert den Token nicht, damit ein zweiter Aufruf „bereits abgesagt" meldet statt „ungültiger Link".
 
@@ -339,11 +340,17 @@ Der Videocall verteilt sich auf mehrere Ebenen:
 |---|---|
 | `infra/livekit/` | LiveKit-Server (Docker-Container) mit `livekit.yaml`/`egress.yaml`. |
 | `apps/api/` | Erzeugt HMAC-Buchungstokens für Klienten und LiveKit-Access-Tokens, verwaltet Rooms (`session_${bookingId}`), empfängt LiveKit-Webhooks, enqueued nach Sessionende den Whisper-Job. |
-| `apps/bookingpage/` | **Klienten-Subdomain** (`[slug].hxroom.de`) – Angebote, Verfügbarkeiten, Buchungsseite, E-Mail-Bestätigung. Kein Videocall-Code mehr enthalten; die Bestätigung verlinkt auf `[slug].hxroom.de/call/{bookingId}`. |
-| `apps/coach/` | Coach-Backoffice (`app.hxroom.de`) – Klientenverwaltung, Angebote, Einstellungen. Zeigt nur eine schlanke „Klient wartet"-Benachrichtigung (Server-Sent Events) mit Link auf `app.hxroom.de/call/{bookingId}` – der Call-Screen selbst liegt in `apps/videocall`. |
-| `apps/videocall/` | **Warteraum + Call für beide Seiten**, pfadbasiert unter zwei Domains gemountet (siehe §6): `[slug].hxroom.de/call/*` (Klient, Zugriff via signiertem Buchungstoken) und `app.hxroom.de/call/*` (Coach, Zugriff via better-auth Session). Enthält Einwilligungs-Banner, Warteraum-UI, Einlassen-Button, Video-UI und Session-Notizen (Live-Editing während des Calls). Nutzt das LiveKit JS SDK. |
+| `packages/livekit/` | **Geteilte Call-Schicht** – LiveKit-Composables (Room-Verbindung, Tracks, Devices, Reconnect), die rollenneutralen Video-Komponenten und der Erweiterungs-Seam, über den beide Apps ihre rollenspezifischen Teile einhängen. Nutzt das LiveKit JS SDK (`livekit-client`). |
+| `apps/bookingpage/` | **Klienten-Subdomain** (`[slug].hxroom.de`) – Angebote, Verfügbarkeiten, Buchungsseite, E-Mail-Bestätigung sowie Warteraum und Call des Klienten unter `/call/{bookingId}`. Zugriff über den signierten Buchungstoken; enthält das Einwilligungs-Banner und die Weiterleitung auf die Danke-Seite. |
+| `apps/coach/` | Coach-Backoffice (`app.hxroom.de`) – Klientenverwaltung, Angebote, Einstellungen, die „Klient wartet"-Benachrichtigung (Server-Sent Events) und der Call-Screen des Coachs unter `/call/{bookingId}`. Zugriff über die better-auth Session; enthält Einlassen-Button, Notiz-Seitenleiste und Sitzungs-Timer. |
 
-**Session-Notizen – Split nach Zeitpunkt, nicht nach App:** Live-Editing während der Sitzung passiert in `apps/videocall` und schreibt direkt in `session_notes` über `apps/api`. Das Einsehen/Nachbearbeiten in der Sitzungshistorie (Klientenliste, CRM) bleibt in `apps/coach`. Beide UI-Oberflächen greifen auf dieselbe Tabelle zu – keine Logik-Duplikation.
+**Geteilte Schicht statt eigener Call-App:** `/call/*` ist in beiden Apps eine interne Route (§6). Gemeinsam ist deshalb nicht die App, sondern die Schicht darunter – LiveKit-Mechanik plus Video-Bühne. Sie liegt in `packages/livekit` und wird von beiden Seiten importiert. Eine eigenständige Call-App bräuchte dagegen einen dritten Container, ein Base-Path-Setup für ihre Assets und eine Host-Header-Weiche für zwei Auth-Schemata.
+
+**Rollenunterschiede über Extensions statt über zwei Implementierungen:** `packages/livekit` stellt die Call-Komponente rollenneutral bereit; was Coach und Klient unterscheidet, wird beim Einbinden hineingereicht – Notiz-Seitenleiste und Einlassen-Button auf Coach-Seite, Einwilligungs-Banner auf Klientenseite. Ein `status`-Event (`connecting` | `connected` | `end` | `failed`) meldet Zustandswechsel an die einbettende App zurück, die daraufhin etwa den Klienten auf die Danke-Seite weiterleitet.
+
+**Herkunft der Schicht:** `packages/livekit` wird nicht neu geschrieben, sondern aus **HxMeet** (`hxmeet-core-component`, MIT-Lizenz, eigene Vorarbeit) übernommen und auf den HxRoom-Scope entkernt – Chat, Reactions, Teilnehmerliste und die Multi-Party-Layouts entfallen, siehe `project.md` §5a. Mitgenommen wird vor allem die erprobte LiveKit-Mechanik: `prepareConnection()` als Warmlauf schon im Warteraum, browserspezifische Behandlung verweigerter Kamera-/Mikrofonfreigaben (Chrome, Safari und fehlende Hardware melden sich unterschiedlich), Connect-Retry und die Auswertung der `DisconnectReason`. Anzupassen sind die Nuxt-UI-Imports (HxMeet liegt auf v3, HxRoom auf v4).
+
+**Session-Notizen – Split nach Zeitpunkt, nicht nach App:** Live-Editing während der Sitzung passiert im Call-Screen in `apps/coach` und schreibt direkt in `session_notes` über `apps/api`. Das Einsehen/Nachbearbeiten in der Sitzungshistorie (Klientenliste, CRM) liegt in derselben App, aber außerhalb des Calls. Beide Oberflächen greifen auf dieselbe Tabelle zu – keine Logik-Duplikation.
 
 ### Deployment
 
@@ -377,7 +384,7 @@ room-name: session_${bookingId}
 const accessToken = new AccessToken(
   process.env.LIVEKIT_API_KEY,
   process.env.LIVEKIT_API_SECRET,
-  { identity: participantIdentity, ttl: '2h' }
+  { identity: participantIdentity, ttl: '10m' }
 );
 accessToken.addGrant({
   room: `session_${bookingId}`,
@@ -387,15 +394,25 @@ accessToken.addGrant({
 });
 ```
 
+**Zwei verschiedene TTLs, nicht verwechseln:** Der HMAC-Buchungstoken aus §7 läuft 2 Stunden nach geplantem Sitzungsbeginn ab – er ist der Zugang zum Warteraum. Die TTL des LiveKit-Tokens begrenzt dagegen nur das Zeitfenster, in dem er zum *Verbinden* benutzt werden kann, nicht die Gesprächsdauer; eine bestehende Verbindung bleibt darüber hinaus bestehen. 10 Minuten reichen deshalb aus und halten die Gültigkeit eines abgefangenen Tokens kurz.
+
+**Teilnehmer-Identität:** `identity` muss im Raum eindeutig sein – verbinden sich zwei Clients mit derselben Identität, trennt LiveKit den ersten (`DUPLICATE_IDENTITY`). Sie wird deshalb deterministisch und rollengetrennt vergeben: `coach_${userId}` für den Coach, `client_${bookingId}` für den Klienten.
+
+**Der Raumname ist keine Sicherheitsgrenze.** Er entsteht deterministisch aus der Booking-ID und ist damit ratbar, sobald jemand eine Booking-ID kennt. Die Mandantentrennung hängt allein an der Token-Ausgabe: Der Endpunkt muss beim Coach prüfen, dass die Buchung zu seiner `activeOrganizationId` gehört, und beim Klienten, dass der HMAC-Token zu genau dieser `bookingId` passt und der Coach ihn eingelassen hat. Das ist die eine Stelle dieser Architektur, an der ein Fehler teuer wird.
+
+**Zwei Domains sind für LiveKit unkritisch:** Die Raumzugehörigkeit hängt ausschließlich am `room`-Grant im JWT; von welcher Origin die Seite ausgeliefert wurde, wertet LiveKit nicht aus. Das Signaling läuft als WebSocket ohne CORS-Preflight, die Medien als ICE/DTLS/SRTP – auf dieser Ebene existiert der Origin-Begriff gar nicht. Coach und Klient können sich also problemlos von `app.hxroom.de` und `[slug].hxroom.de` aus in denselben Raum verbinden.
+
 ### Warteraum-Flow
 
 Der Warteraum ist **kein separater LiveKit Room**, sondern ein Frontend-Zustand:
 
-1. Klient öffnet `[slug].hxroom.de/call/{bookingId}` mit Buchungs-Token → `apps/videocall` zeigt Warteraum-UI (Coach-Branding)
-2. `apps/api` prüft Token, gibt noch **keinen** LiveKit-Token aus
+1. Klient öffnet `[slug].hxroom.de/call/{bookingId}` mit Buchungs-Token → `apps/bookingpage` zeigt die Warteraum-UI (Coach-Branding) und wärmt die LiveKit-Verbindung per `prepareConnection()` vor
+2. `apps/api` prüft den Token, gibt aber noch **keinen** LiveKit-Token aus
 3. Coach sieht in `apps/coach` die „Klient wartet"-Benachrichtigung (via Server-Sent Events) und folgt dem Link zu `app.hxroom.de/call/{bookingId}`
-4. Coach klickt in `apps/videocall` auf „Einlassen" → `apps/api` generiert LiveKit-Token für den Klienten
-5. Frontend des Klienten (`apps/videocall`) verbindet sich mit dem LiveKit Room
+4. Coach klickt dort auf „Einlassen" → `apps/api` generiert den LiveKit-Token für den Klienten
+5. Frontend des Klienten verbindet sich mit dem LiveKit Room – dank Warmlauf nahezu ohne Verzögerung
+
+Das Einlassen selbst kann **nicht** über den LiveKit-Data-Channel signalisiert werden, weil der Klient zu diesem Zeitpunkt noch nicht im Raum ist. Es läuft über die API und den SSE-Kanal. Erst Signale *während* der Sitzung – etwa „Coach beendet die Sitzung" – nutzen den Data-Channel.
 
 ---
 
@@ -758,7 +775,7 @@ packages/shared/src/schemas/
   newsletter.ts    # subscribeSchema
 ```
 
-**Warum shared:** Die Frontend-Apps (`coach`, `bookingpage`, `videocall`) importieren dieselben Schemas direkt für Formularvalidierung (`schema.safeParse(formData)`) und Response-Parsing (`schema.parse(await res.json())`). Eine einzige Source of Truth – kein Typ-Drift zwischen API und Frontend.
+**Warum shared:** Die Frontend-Apps (`coach`, `bookingpage`, `admin`) importieren dieselben Schemas direkt für Formularvalidierung (`schema.safeParse(formData)`) und Response-Parsing (`schema.parse(await res.json())`). Eine einzige Source of Truth – kein Typ-Drift zwischen API und Frontend.
 
 **Muster je Ressource:**
 
@@ -907,7 +924,7 @@ export const organizationBilling = pgTable('organization_billing', {
 | **1 – Fundament** | Docker Compose Setup, DB-Schema, Basis-Auth | Monorepo-Setup, Drizzle-Schema, Docker-Config |
 | **2 – Auth & Profil** | Registrierung, Login, Subdomain-Setup, Branding | better-auth Integration, Coach-Modul |
 | **3 – Buchung** | Angebote (Einzelsitzungen), Verfügbarkeiten inkl. Zwei-Stufen-Modell, Buchungsseite, E-Mail-Bestätigung | Offer-Modul, Booking-Modul, Availability-Logik, E-Mail-Templates |
-| **4 – Videocall** | Warteraum, LiveKit-Integration, Call-UI, Scaffolding `apps/videocall` inkl. pfadbasiertem Caddy-Routing | LiveKit-Service, Token-Generierung, Vue-Composable |
+| **4 – Videocall** | Warteraum, LiveKit-Integration, Call-UI als Route in `bookingpage` und `coach`, geteilte Schicht `packages/livekit` | LiveKit-Modul (Token, Webhooks), SSE-Kanal „Klient wartet", Übernahme und Entkernen der HxMeet-Composables |
 | **5 – Nachbereitung** | Notizen, Session-Abschluss, Klienten-Weiterleitung | Notes-Modul, Session-State |
 | **6 – Speech2Text** | Whisper-Transkription, Klienten-Einwilligung, Transkript-Ansicht | Whisper-Service, BullMQ-Job, Consent-Flow, Transkript-UI |
 | **7 – CRM** | Klientenliste, Sitzungshistorie | Client-Modul, Dashboard-Queries |
@@ -934,6 +951,8 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 ```
 
 **Lokale Subdomain-Entwicklung:** `/etc/hosts` Einträge für `app.localhost` und `test.localhost`, Caddy läuft lokal als Reverse Proxy.
+
+**Kamera-Tests brauchen HTTPS:** `getUserMedia()` funktioniert nur in einem sicheren Kontext. Die Dev-Umgebung liefert derzeit über `http://[slug].hxroom.localhost` aus (`auto_https off` in `Caddyfile.dev`). Chrome und Firefox behandeln `*.localhost` als vertrauenswürdig, **Safari nicht** – für die Call-Entwicklung dort also lokales TLS über Caddys interne CA aktivieren. Dabei muss `livekit.hxroom.localhost` mitziehen: Eine per `https://` ausgelieferte Seite darf keine `ws://`-Verbindung öffnen, der Browser blockt sie als Mixed Content kommentarlos.
 
 ---
 

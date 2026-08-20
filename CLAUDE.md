@@ -41,7 +41,14 @@ Wichtigste Regeln:
 - Shared Komponente hinzufügen: in packages/ui/components/ anlegen, aus packages/ui/index.ts exportieren
 
 ## Videokonferenz
-Die Videokonferenz (LiveKit) ist Teil der Klienten-Subdomain in `apps/bookingpage/`. Der Klient-Lifecycle Buchung → Warteraum → Videocall läuft vollständig in dieser App; die Coach-Seite des Calls (Einlassen-Button, Coach-Video-UI) liegt in `apps/coach/`. Token-Generierung und LiveKit-Webhooks in `apps/api/`, der LiveKit-Server unter `infra/livekit/`.
+`/call/*` ist in beiden Frontends eine normale interne Route – kein eigener Container, keine Caddy-Sonderregel.
+
+- `apps/bookingpage/` – Klient-Lifecycle Buchung → Warteraum → Videocall, Zugriff über den signierten Buchungstoken
+- `apps/coach/` – Coach-Seite des Calls (Einlassen-Button, Notiz-Seitenleiste, Timer), Zugriff über die better-auth Session
+- `packages/livekit/` – geteilte Call-Schicht: LiveKit-Composables und rollenneutrale Video-Komponenten. Rollenspezifisches wird über Extensions eingehängt, nicht in den Kern gebaut. Herkunft: `hxmeet-core-component` (MIT, eigene Vorarbeit)
+- `apps/api/` – Token-Generierung und LiveKit-Webhooks; `infra/livekit/` – LiveKit-Server
+
+Coach und Klient bleiben bewusst auf getrennten Hosts (`app.hxroom.de` vs. `[slug].hxroom.de`), damit die Coach-Session nie auf einer Custom-Domain (CNAME-Pro-Feature) landet. Details in `doc/technisches-konzept.md` §6 und §8.
 
 ## Dokumentation im Ordner `doc/`
 
