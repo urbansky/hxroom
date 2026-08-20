@@ -32,9 +32,17 @@ Umgesetzt in `apps/api/src/call/`: `call-access.ts` trägt die gesamte fachliche
 
 Zwei Festlegungen aus der Umsetzung: Das Zugangsfenster gilt auch für einen bereits eingelassenen Klienten – sonst bliebe ein alter Mail-Link dauerhaft ein Türöffner. Und `end` verlangt eine zuvor eingelassene Sitzung, weil `completed` als gehaltene Sitzung in die Kennzahlen des Coachs einfließt; der No-Show bekommt in B6 einen eigenen Weg.
 
-### A2 · SSE-Kanal „Klient wartet"
+### A2 · SSE-Kanal „Klient wartet" ✅ *(umgesetzt 2026-08-20)*
 
-Ereigniskanal in der API, der den Zustand aus A1 pusht – pro Buchung für den Call-Screen und app-weit für die Benachrichtigung im Coach-Backoffice. Eigener Schritt, weil hier eigene Fallstricke hängen (Cookie-Authentifizierung ohne Header, Proxy-Buffering in Caddy und nginx, Reconnect, Heartbeat) und sie mit der Zugriffslogik nichts zu tun haben.
+Ereigniskanal in der API, der den Zustand aus A1 pusht – je ein Kanal pro Buchung für den Call-Screen des Coachs und den Warteraum des Klienten. Der app-weite Kanal für eine Benachrichtigung überall im Backoffice ist bewusst verschoben, bis es die zugehörige Oberfläche gibt. Eigener Schritt, weil hier eigene Fallstricke hängen (Cookie-Authentifizierung ohne Header, Proxy-Buffering in Caddy und nginx, Reconnect, Heartbeat) und sie mit der Zugriffslogik nichts zu tun haben.
+
+Umgesetzt als `call/call-events.service.ts`: ein rxjs-Subject, das **nur die bookingId** transportiert – wer etwas ändert, muss deshalb keine Antwort bauen können, und der Stream lädt den frischen Stand selbst. Genau das erlaubt es, auch die Absage durch den Coach (`CoachBookingsService`) anzuschließen, damit ein wartender Klient nicht auf jemanden wartet, der nicht mehr kommt. Streams: `GET /bookings/:id/waiting-room/events?token=…` und `GET /bookings/:id/call/events`, beide mit derselben Zugangsprüfung wie A1.
+
+Der Fallstrick „Proxy-Buffering" hat sich weitgehend erledigt: Die nginx-Container liefern nur statische Dateien und proxyen keine API-Requests, Caddy flusht `text/event-stream` von sich aus. Geblieben ist ein Heartbeat alle 25 Sekunden gegen unbekannte Zwischenstationen.
+
+Zwei Punkte, die den Ausschlag gaben: Die idempotenten Pfade aus A1 dürfen **nicht** melden – sonst käme jeder Reload des Klienten als „wartet"-Meldung beim Coach an. Und das Verstreichen von Zeit (`too_early → open`, Ablauf des Fensters) erzeugt keinen Schreibvorgang und damit kein Ereignis; da jede Nachricht `opensAt`, `start` und `end` mitliefert, rechnet die Oberfläche das in A3/A4 selbst aus.
+
+Neu in der Antwortform: `clientOnline` – ob der Klient gerade eine Verbindung hält. Damit beantwortet A2 die Frage, die A1 offenlassen musste, und der Coach unterscheidet „wartet seit 10:02" von „war da, ist jetzt weg". Grenze: Bus und Präsenzregistry leben im Prozess; bei mehreren API-Instanzen bräuchte es einen geteilten Kanal (kein Redis im Betrieb, eine Instanz im Deployment).
 
 ### A3 · Warteraum des Klienten (`apps/bookingpage`)
 

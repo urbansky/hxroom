@@ -335,6 +335,11 @@ export const callAccessResponseSchema = z.object({
   // "wie lange wartet er schon" – ob überhaupt jemand wartet, sagt bereits state.
   waitingSince: z.string().nullable(),
   admittedAt:   z.string().nullable(),
+  // Hält der Klient gerade eine Verbindung zum Ereigniskanal? Für den Coach der
+  // Unterschied zwischen "wartet seit 10:02" und "war da, ist jetzt weg". Bewusst neben
+  // dem Zustand statt in ihm: waitingSince ist eine Tatsache der Buchung, clientOnline
+  // eine Momentaufnahme des Servers.
+  clientOnline: z.boolean(),
 });
 export type CallAccessResponse = z.infer<typeof callAccessResponseSchema>;
 

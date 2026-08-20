@@ -418,6 +418,8 @@ Der Warteraum ist **kein separater LiveKit Room**, sondern ein Frontend-Zustand:
 
 Das Einlassen selbst kann **nicht** über den LiveKit-Data-Channel signalisiert werden, weil der Klient zu diesem Zeitpunkt noch nicht im Raum ist. Es läuft über die API und den SSE-Kanal. Erst Signale *während* der Sitzung – etwa „Coach beendet die Sitzung" – nutzen den Data-Channel.
 
+**Umgesetzt seit 2026-08-20** (`apps/api/src/call/`): Zustand und Zugangsfenster als Zustandsmaschine an der Buchung, dazu zwei SSE-Ströme – `GET /bookings/:id/waiting-room/events?token=…` für den Klienten und `GET /bookings/:id/call/events` für den Coach. Jedes Ereignis trägt den vollständigen Zustand, ein verpasstes heilt damit beim nächsten von selbst. Der Ereignisbus transportiert nur die `bookingId`; den Stand lädt der jeweilige Strom selbst – so kann auch die Absage durch den Coach einen wartenden Klienten sofort erreichen. Bus und Präsenzregistry leben im Prozess und setzen eine einzelne API-Instanz voraus, wie schon die Cron-Läufe des `ScheduleModule`.
+
 ---
 
 ## 9. Speech-to-Text (Whisper self-hosted)

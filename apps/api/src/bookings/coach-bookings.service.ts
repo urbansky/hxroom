@@ -10,6 +10,7 @@ import { renderBookingCancelledEmail } from '../mail/templates/client/booking-ca
 import { toAppointmentInfo } from './booking-formatting';
 import { buildBookingPageUrl } from './booking-urls';
 import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
+import { CallEventsService } from '../call/call-events.service';
 import type { AssignBookingClientDto, CancelBookingDto, CoachBookingResponse, ListCoachBookingsQuery } from '@hxroom/shared';
 
 /**
@@ -26,6 +27,7 @@ export class CoachBookingsService {
     private readonly organizationService: OrganizationService,
     private readonly mailService: MailService,
     private readonly config: ConfigService,
+    private readonly callEvents: CallEventsService,
   ) {}
 
   async list(organizationId: string, query: ListCoachBookingsQuery): Promise<CoachBookingResponse[]> {
@@ -61,6 +63,13 @@ export class CoachBookingsService {
       })
       .where(eq(bookings.id, bookingId))
       .returning(coachBookingColumns);
+
+    // Sitzt der Klient in diesem Moment im Warteraum, soll er die Absage sofort sehen und
+    // nicht auf einen Coach warten, der nicht mehr kommt (A2). Die anderen Wege in den
+    // Status 'cancelled' brauchen das nicht: Bei der Selbstabsage ist der Klient selbst der
+    // Handelnde, der Verfall-Cron trifft nur nie bestätigte Buchungen, und die
+    // Kontolöschung hat dreißig Tage Vorlauf.
+    this.callEvents.notifyChanged(bookingId);
 
     // Wie beim übrigen Mailversand: nach dem Update, in try/catch. Die Absage steht
     // bereits in der DB und der Slot ist frei – ein Mail-Fehler darf daran nichts ändern.

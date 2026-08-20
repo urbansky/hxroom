@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Sse } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { enterWaitingRoomSchema, type EnterWaitingRoomDto } from '@hxroom/shared';
 import { CallService } from './call.service';
@@ -30,5 +30,17 @@ export class ClientCallController {
     @Body(new ZodValidationPipe(enterWaitingRoomSchema)) dto: EnterWaitingRoomDto,
   ) {
     return this.callService.enterWaitingRoom(id, dto.token);
+  }
+
+  /**
+   * Ereignisstrom: meldet dem wartenden Klienten, dass der Coach ihn eingelassen oder die
+   * Sitzung beendet hat (doc/videocall-umsetzungsplan.md A2).
+   *
+   * Auch hier steht der Token in der Query – `EventSource` kann weder einen Body noch
+   * eigene Header senden. Solange dieser Strom offen ist, gilt der Klient als anwesend.
+   */
+  @Sse(':id/waiting-room/events')
+  events(@Param('id') id: string, @Query('token') token: string) {
+    return this.callService.streamForClient(id, token ?? '');
   }
 }

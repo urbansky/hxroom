@@ -1,14 +1,20 @@
-import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException, type MessageEvent } from '@nestjs/common';
+import { Observable, concat, concatMap, defer, finalize, interval, map, merge, of } from 'rxjs';
 import { and, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { tokenMatches } from '../common/client-token';
 import { callWindowOpensAt, canAdmit, canEnd, resolveCallState } from './call-access';
+import { CallEventsService } from './call-events.service';
 import type { CallAccessResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
 type BookingRow = typeof bookingsTable.$inferSelect;
+
+// Abstand der Heartbeats. Kurz genug für die üblichen Leerlaufgrenzen von Proxys
+// (60 Sekunden), lang genug, um nicht selbst ins Gewicht zu fallen.
+const HEARTBEAT_INTERVAL_MS = 25_000;
 
 /**
  * Zustand und Zugang des Videocalls (doc/videocall-umsetzungsplan.md A1).
@@ -24,6 +30,7 @@ export class CallService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly organizationService: OrganizationService,
+    private readonly events: CallEventsService,
   ) {}
 
   // --- Klient: Ausweis ist der Token aus dem Mail-Link ---
@@ -44,14 +51,14 @@ export class CallService {
    * Fehlerseite zu landen.
    */
   async enterWaitingRoom(bookingId: string, token: string): Promise<CallAccessResponse> {
-    const booking = await this.db.transaction(async (tx) => {
+    const { booking, changed } = await this.db.transaction(async (tx) => {
       const [row] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).for('update');
       if (!row) throw new NotFoundException('Booking not found');
       if (!tokenMatches(token, row.clientAccessToken)) throw new UnauthorizedException('Invalid access token');
 
       const state = resolveCallState(row, new Date());
       const entersWaitingRoom = state === 'open' || state === 'waiting' || state === 'admitted';
-      if (!entersWaitingRoom || row.clientTokenUsedAt) return row;
+      if (!entersWaitingRoom || row.clientTokenUsedAt) return { booking: row, changed: false };
 
       const [updated] = await tx
         .update(bookings)
@@ -59,10 +66,34 @@ export class CallService {
         .where(eq(bookings.id, bookingId))
         .returning();
 
-      return updated;
+      return { booking: updated, changed: true };
     });
 
+    if (changed) this.events.notifyChanged(bookingId);
     return this.toResponse(booking);
+  }
+
+  /**
+   * Ereignisstrom des Klienten. Die Zugangsprüfung ist dieselbe wie beim Abruf – sie läuft
+   * vor dem Öffnen des Streams, damit ein ungültiger Token als 401 ankommt und nicht als
+   * leerer Stream.
+   *
+   * Solange der Strom offen ist, gilt der Klient als anwesend. Das ist die Antwort auf die
+   * Frage, die A1 offenlassen musste: ob im Warteraum wirklich noch jemand sitzt.
+   */
+  async streamForClient(bookingId: string, token: string): Promise<Observable<MessageEvent>> {
+    const initial = await this.getForClient(bookingId, token);
+
+    // defer: Die Anmeldung passiert erst beim Abonnieren und nicht schon hier – sonst
+    // bliebe ein Zähler stehen, falls es zwischen Aufruf und Abonnement scheitert.
+    //
+    // Der erste gesendete Zustand stammt noch aus der Zeit vor dieser Anmeldung und meldet
+    // clientOnline: false. Das korrigiert sich sofort selbst: Die Anmeldung ist ihrerseits
+    // eine Änderung und löst damit das nächste Ereignis aus.
+    return defer(() => {
+      const release = this.events.registerClientStream(bookingId);
+      return this.stream(bookingId, initial, () => this.getForClient(bookingId, token)).pipe(finalize(release));
+    });
   }
 
   // --- Coach: Ausweis ist die better-auth Session ---
@@ -70,6 +101,11 @@ export class CallService {
   async getForCoach(organizationId: string, bookingId: string): Promise<CallAccessResponse> {
     const booking = await this.findOwn(organizationId, bookingId);
     return this.toResponse(booking);
+  }
+
+  async streamForCoach(organizationId: string, bookingId: string): Promise<Observable<MessageEvent>> {
+    const initial = await this.getForCoach(organizationId, bookingId);
+    return this.stream(bookingId, initial, () => this.getForCoach(organizationId, bookingId));
   }
 
   /**
@@ -104,6 +140,41 @@ export class CallService {
   // --- intern ---
 
   /**
+   * Gemeinsamer Aufbau beider Ströme: erst der aktuelle Stand, danach bei jeder Meldung
+   * des Busses der frisch geladene.
+   *
+   * Jedes Ereignis trägt den vollständigen Zustand. Dadurch ist jede Nachricht für sich
+   * verständlich, ein verpasstes Ereignis heilt beim nächsten von selbst, und es braucht
+   * weder Last-Event-ID noch Wiedergabepuffer.
+   *
+   * `concatMap` statt `mergeMap`: Zwei dicht aufeinanderfolgende Änderungen dürfen sich
+   * beim Laden nicht überholen – der Klient bekäme sonst 'waiting' nach 'admitted'.
+   *
+   * Was hier bewusst *nicht* passiert: das Verstreichen von Zeit melden. `too_early → open`
+   * und der Ablauf des Zugangsfensters entstehen ohne Schreibvorgang. Da jedes Ereignis
+   * opensAt, start und end mitliefert, rechnet die Oberfläche das selbst aus – billiger als
+   * ein Server, der im Sekundentakt Zustände nachrechnet.
+   */
+  private stream(
+    bookingId: string,
+    initial: CallAccessResponse,
+    load: () => Promise<CallAccessResponse>,
+  ): Observable<MessageEvent> {
+    const state = concat(of(initial), this.events.changesFor(bookingId).pipe(concatMap(() => load()))).pipe(
+      map((data): MessageEvent => ({ data })),
+    );
+
+    // Ohne Nutzlast und ohne Datenbankzugriff, nur damit eine stille Verbindung nicht von
+    // einer Zwischenstation gekappt wird. Als benanntes Ereignis, damit es den regulären
+    // onmessage-Handler der Oberfläche nicht erreicht.
+    const heartbeat = interval(HEARTBEAT_INTERVAL_MS).pipe(
+      map((): MessageEvent => ({ type: 'ping', data: '' })),
+    );
+
+    return merge(state, heartbeat);
+  }
+
+  /**
    * Gemeinsamer Rahmen für die beiden Zustandswechsel des Coachs: Zeile sperren, Zustand
    * aus dem frischen Stand ableiten, schreiben. Die Sperre verhindert, dass zwei offene
    * Tabs desselben Coachs gegeneinander arbeiten.
@@ -118,7 +189,7 @@ export class CallService {
       conflict: string;
     },
   ): Promise<CallAccessResponse> {
-    const booking = await this.db.transaction(async (tx) => {
+    const { booking, changed } = await this.db.transaction(async (tx) => {
       const [row] = await tx
         .select()
         .from(bookings)
@@ -128,13 +199,17 @@ export class CallService {
       if (!row) throw new NotFoundException('Booking not found');
 
       const state = resolveCallState(row, new Date());
-      if (step.alreadyDone(state)) return row;
+      if (step.alreadyDone(state)) return { booking: row, changed: false };
       if (!step.allowed(state)) throw new ConflictException(step.conflict);
 
       const [updated] = await tx.update(bookings).set(step.values()).where(eq(bookings.id, bookingId)).returning();
-      return updated;
+      return { booking: updated, changed: true };
     });
 
+    // Erst nach dem Commit melden – und nur, wenn tatsächlich geschrieben wurde. Der
+    // No-Op-Pfad oben ist der Doppelklick des Coachs; als Ereignis gemeldet, käme er beim
+    // Klienten als zweiter Zustandswechsel an.
+    if (changed) this.events.notifyChanged(bookingId);
     return this.toResponse(booking);
   }
 
@@ -175,6 +250,7 @@ export class CallService {
       opensAt:      callWindowOpensAt(booking.startTime).toISOString(),
       waitingSince: booking.clientTokenUsedAt?.toISOString() ?? null,
       admittedAt:   booking.admittedAt?.toISOString() ?? null,
+      clientOnline: this.events.isClientOnline(booking.id),
     };
   }
 }
