@@ -56,9 +56,19 @@ Der Ereignisstrom bleibt über die gesamte Wartezeit offen – daran hängt die 
 
 **Gefunden dabei, nicht behoben:** `apps/bookingpage` ist die einzige App ohne lokale Icon-Sammlung (`@iconify-json/lucide` fehlt, anders als in `coach`, `admin` und `landing`). Nuxt UI lädt die Symbole deshalb zur Laufzeit von `api.iconify.design` nach – auch im Produktions-Build, in dem der Host fest im Bundle steht. Auf der Klientenseite überträgt das die IP jedes Klienten an einen Dritten, während der Footer derselben Seite „DSGVO-konform · Server Deutschland" verspricht. Die Dependency allein genügt nicht: Der Nuxt-UI-Vite-Plugin bündelt in dieser SPA nicht automatisch, es braucht eine bewusste Entscheidung zwischen der vollständigen Sammlung (556 KB) und einer Handauswahl der benutzten Symbole.
 
-### A4 · Call-Screen des Coachs (`apps/coach`)
+### A4 · Call-Screen des Coachs (`apps/coach`) ✅ *(umgesetzt 2026-08-20)*
 
 Route `/call/[bookingId]` hinter der better-auth Session: Platzhalter-Bühne, Anzeige „Klient wartet", Schaltfläche **Einlassen**, Schaltfläche **Sitzung beenden**. Das Ende setzt den Sitzungsstatus und leitet den Klienten auf eine Danke-Platzhalterseite. Erst damit ist der Kreis geschlossen und der Workflow eigenständig durchspielbar.
+
+Umgesetzt als `pages/call/[bookingId].vue` mit dem Composable `composables/useCallState.ts` und der Bühne `components/CallStage.vue`. Der Screen liegt in einem eigenen, dritten Layout (`layouts/call.vue`) ohne Seitenleiste: Der Coach ist hier im Gespräch, nicht in der Verwaltung, und daneben entsteht später die Notiz-Seitenleiste.
+
+Das Composable ist das Gegenstück zu dem der Klienten-App, mit drei Unterschieden: kein Warteraum-Eintritt (der Einstieg ist ein reiner Abruf, der aber aus demselben Grund vor dem Ereignisstrom läuft – ein `EventSource` kann den HTTP-Status nicht lesen), `withCredentials` statt Token in der Query, und die beiden Aktionen. `runtimeConfig.public.apiUrl` trägt in dieser App bereits `/api/v1`, anders als in `bookingpage`.
+
+`clientOnline` aus A2 zahlt sich hier aus: Der Coach unterscheidet „Wartet seit 4 Min.", „Ist eingetroffen" und „War schon da, ist gerade nicht verbunden". Einlassen bleibt in allen drei Fällen möglich – die Entscheidung trifft der Coach, nicht die Oberfläche. Der Sitzungs-Timer zählt ab `admittedAt` hoch statt die gebuchte Zeit herunter und färbt sich beim Überschreiten dezent um; beendet wird eine Sitzung nur durch den Coach, nie durch eine Uhr.
+
+Nicht übernommen: der Farbbalken der Sitzungsart aus der Agenda. `CallAccessResponse` trägt kein `offerId`, und ein zweiter Request nur für die Farbe lohnt nicht.
+
+**Damit ist Stufe A abgeschlossen** – bis auf die Einstiegspunkte (A5). Der Kreis Warteraum → Benachrichtigung → Einlass → „Call" → Ende → Danke-Seite läuft vollständig über beide Oberflächen, ohne eine Zeile LiveKit.
 
 ### A5 · Einstiegspunkte
 

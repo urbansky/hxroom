@@ -131,6 +131,43 @@ export function parseTimeToMinutes(time: string): number {
   return (hours ?? 0) * 60 + (minutes ?? 0)
 }
 
+/**
+ * Vergangene Zeit für den Call-Screen: `null` in der ersten Minute, danach "3 Min.",
+ * "1 Std. 5 Min.".
+ *
+ * Gegenstück zu formatRelativeToStart, das nur in die Zukunft zeigt. Hier geht es um die
+ * Frage, wie lange jemand schon wartet – und wer zehn Minuten wartet, soll das auch sehen.
+ * In der ersten Minute gibt es nichts zu berichten; `null` überlässt dem Aufrufer die
+ * Formulierung, statt ein holpriges "wartet gerade eben" zu erzwingen.
+ */
+export function formatElapsed(iso: string, now = new Date()): string | null {
+  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000)
+  if (minutes < 1) return null
+  if (minutes < 60) return `${minutes} Min.`
+
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return rest === 0 ? `${hours} Std.` : `${hours} Std. ${rest} Min.`
+}
+
+/**
+ * Laufzeit der Sitzung als Uhrenanzeige – "12:04", ab einer Stunde "1:12:04".
+ *
+ * Sekundengenau und aufsteigend: Der Timer zählt vom Einlass hoch, nicht von der gebuchten
+ * Dauer herunter. Ein Countdown auf null würde beide Seiten unter Druck setzen, obwohl
+ * niemand die Sitzung automatisch beendet.
+ */
+export function formatDuration(fromIso: string, now = new Date()): string {
+  const total = Math.max(0, Math.floor((now.getTime() - new Date(fromIso).getTime()) / 1000))
+  const seconds = String(total % 60).padStart(2, '0')
+  const minutes = Math.floor(total / 60) % 60
+  const hours = Math.floor(total / 3600)
+
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}`
+    : `${minutes}:${seconds}`
+}
+
 export const STATUS_LABELS: Record<CoachBookingResponse['status'], string> = {
   pending: 'unbestätigt',
   confirmed: 'bestätigt',
