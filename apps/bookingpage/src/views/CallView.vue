@@ -18,6 +18,10 @@ const route = useRoute()
 const token = typeof route.query.token === 'string' ? route.query.token : ''
 const { phase, call, errorMessage, now, start } = useCallState(props.bookingId, token)
 
+// Selbstabsage über denselben Token, der diese Seite geöffnet hat – der Warteraum braucht
+// dafür keinen zweiten Ausweis und die API keinen neuen Endpunkt.
+const cancelHref = `/cancel/${props.bookingId}?token=${encodeURIComponent(token)}`
+
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY)
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null)
 
@@ -74,7 +78,13 @@ onMounted(start)
       <UButton to="/" color="neutral" variant="subtle" size="sm" label="Zur Übersicht" />
     </StatusPanel>
 
-    <WaitingRoom v-else-if="call && inWaitingRoom" :call="call" :avatar-url="avatarUrl" :now="now" />
+    <WaitingRoom
+      v-else-if="call && inWaitingRoom"
+      :call="call"
+      :avatar-url="avatarUrl"
+      :now="now"
+      :cancel-href="cancelHref"
+    />
 
     <CallStage v-else-if="call && call.state === 'admitted'" :call="call" />
 

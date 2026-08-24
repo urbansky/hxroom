@@ -3,34 +3,39 @@ import { computed } from 'vue';
 import { formatCountdown, formatDayTimeRange, formatTime } from '../utils/datetime';
 import { offerColor, type CallAccessResponse } from '@hxroom/shared';
 
-// Der Warteraum deckt drei Zustände ab: zu früh (mit Countdown), Fenster offen und
-// wartend. Sie unterscheiden sich nur im Text – dieselbe ruhige Fläche zu behalten ist
-// wichtiger, als drei getrennte Ansichten zu bauen.
-const { call, avatarUrl, now } = defineProps<{
+// Eine Ansicht für die ganze Wartezeit – vom Tag der Buchung bis zum Einlass. Die Grenze
+// des Zugangsfensters (60 Minuten vor Beginn) ist unsere, nicht die des Klienten: Dort
+// erfährt der Coach nichts, einlassen kann niemand, vorzubereiten gibt es nichts. Ein
+// Szenenwechsel an dieser Stelle verspräche "gleich", während es noch eine Stunde dauert.
+// In der API bleibt sie bestehen – sie entscheidet über Zugang, Anwesenheit und später
+// den LiveKit-Token.
+const { call, avatarUrl, now, cancelHref } = defineProps<{
   call: CallAccessResponse;
   avatarUrl: string | null;
   /** Reaktive Jetzt-Zeit aus useCallState; ohne sie stünde der Countdown still. */
   now: number;
+  /** Selbstabsage mit demselben Token, der diese Seite geöffnet hat. */
+  cancelHref: string;
 }>();
-
-const tooEarly = computed(() => call.state === 'too_early');
 
 // Bewusst der Beginn des Termins, nicht der des Zugangsfensters: Wann der Raum
 // aufschließt, ist Technik – gemerkt hat sich der Klient seine Uhrzeit.
-const title = computed(() =>
-  tooEarly.value ? `Dein Termin beginnt um ${formatTime(call.start)} Uhr` : 'Du bist im Warteraum',
+const startsAt = computed(() => Date.parse(call.start));
+const beforeStart = computed(() => now < startsAt.value);
+
+// Die Kapsel trägt als Einzige die Bewegung. Ihre einzige Verzweigung hängt am
+// Terminbeginn – einem Zeitpunkt, den der Klient kennt.
+const status = computed(() =>
+  beforeStart.value ? formatCountdown(startsAt.value - now) : 'Es geht gleich los',
 );
 
-const description = computed(() =>
-  tooEarly.value
-    ? `Du kannst diese Seite geöffnet lassen – sie meldet sich, sobald es losgeht.`
-    : `${call.coachName} weiß, dass du da bist, und lässt dich gleich herein.`,
-);
-
-const countdown = computed(() => formatCountdown(Date.parse(call.start) - now));
+// Absagen kann der Klient bis zum Terminbeginn – dieselbe Grenze, nach der der Server
+// entscheidet (canClientCancel in booking.constants.ts). Danach führte der Link nur auf
+// eine Absage, die abgelehnt wird.
+const canCancel = computed(() => beforeStart.value);
 
 const durationMinutes = computed(() =>
-  Math.round((Date.parse(call.end) - Date.parse(call.start)) / 60_000),
+  Math.round((Date.parse(call.end) - startsAt.value) / 60_000),
 );
 </script>
 
@@ -42,15 +47,19 @@ const durationMinutes = computed(() =>
     </div>
 
     <div>
-      <h1 class="font-serif text-3xl text-highlighted mb-2">{{ title }}</h1>
-      <p class="text-sm text-muted leading-relaxed">{{ description }}</p>
+      <h1 class="font-serif text-3xl text-highlighted mb-2">
+        Dein Termin beginnt um {{ formatTime(call.start) }} Uhr
+      </h1>
+      <p class="text-sm text-muted leading-relaxed">
+        {{ call.coachName }} holt dich zum Termin herein. Du kannst diese Seite so lange geöffnet
+        lassen – sie meldet sich, sobald es losgeht.
+      </p>
     </div>
 
-    <!-- Zu früh: die verbleibende Zeit. Sonst der pulsierende Punkt als Zeichen, dass die
-         Seite lebt und niemand etwas tun muss. -->
+    <!-- Der pulsierende Punkt als Zeichen, dass die Seite lebt und niemand etwas tun muss. -->
     <div class="inline-flex items-center gap-2 bg-primary/10 rounded-full px-3.5 py-1.5">
-      <span class="size-1.5 rounded-full bg-primary" :class="{ 'animate-pulse': !tooEarly }" />
-      <span class="text-xs text-muted">{{ tooEarly ? countdown : 'Verbunden' }}</span>
+      <span class="size-1.5 rounded-full bg-primary animate-pulse" />
+      <span class="text-xs text-muted">{{ status }}</span>
     </div>
 
     <!-- Dieselbe Terminkachel wie in der Agenda der Coach-App (BookingAgenda.vue):
@@ -75,5 +84,10 @@ const durationMinutes = computed(() =>
         </div>
       </div>
     </div>
+
+    <p v-if="canCancel" class="text-xs text-muted">
+      Du kannst den Termin nicht wahrnehmen?
+      <RouterLink :to="cancelHref" class="text-primary underline underline-offset-2">Termin absagen</RouterLink>
+    </p>
   </div>
 </template>
