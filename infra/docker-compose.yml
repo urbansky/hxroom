@@ -147,6 +147,8 @@ services:
       - S3_SECRET_KEY=${RUSTFS_SECRET_KEY}
       - S3_FORCE_PATH_STYLE=true
       - S3_BUCKET=hxroom-files
+      - OTEL_SERVICE_NAME=hxroom-api
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       # Spätere Phasen:
       # - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       # - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}

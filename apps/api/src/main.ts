@@ -1,3 +1,5 @@
+import './tracing';          // <-- MUSS ganz oben stehen
+ 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { toNodeHandler } from 'better-auth/node';
