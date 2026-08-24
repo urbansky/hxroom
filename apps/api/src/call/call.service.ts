@@ -246,6 +246,7 @@ export class CallService {
       start:        booking.startTime.toISOString(),
       end:          booking.endTime.toISOString(),
       offerName:    booking.offerName,
+      offerId:      booking.offerId,
       coachName:    coach?.name ?? org.name,
       clientName:   booking.clientName,
       opensAt:      callWindowOpensAt(booking.startTime).toISOString(),

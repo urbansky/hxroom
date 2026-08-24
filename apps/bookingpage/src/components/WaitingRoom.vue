@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { formatCountdown, formatDayTimeRange, formatTime } from '../utils/datetime';
-import AppointmentSummary from './AppointmentSummary.vue';
-import type { CallAccessResponse } from '@hxroom/shared';
+import { offerColor, type CallAccessResponse } from '@hxroom/shared';
 
 // Der Warteraum deckt drei Zustände ab: zu früh (mit Countdown), Fenster offen und
 // wartend. Sie unterscheiden sich nur im Text – dieselbe ruhige Fläche zu behalten ist
@@ -16,8 +15,10 @@ const { call, avatarUrl, now } = defineProps<{
 
 const tooEarly = computed(() => call.state === 'too_early');
 
+// Bewusst der Beginn des Termins, nicht der des Zugangsfensters: Wann der Raum
+// aufschließt, ist Technik – gemerkt hat sich der Klient seine Uhrzeit.
 const title = computed(() =>
-  tooEarly.value ? `Der Raum öffnet um ${formatTime(call.opensAt)} Uhr` : 'Du bist im Warteraum',
+  tooEarly.value ? `Dein Termin beginnt um ${formatTime(call.start)} Uhr` : 'Du bist im Warteraum',
 );
 
 const description = computed(() =>
@@ -26,7 +27,11 @@ const description = computed(() =>
     : `${call.coachName} weiß, dass du da bist, und lässt dich gleich herein.`,
 );
 
-const countdown = computed(() => formatCountdown(Date.parse(call.opensAt) - now));
+const countdown = computed(() => formatCountdown(Date.parse(call.start) - now));
+
+const durationMinutes = computed(() =>
+  Math.round((Date.parse(call.end) - Date.parse(call.start)) / 60_000),
+);
 </script>
 
 <template>
@@ -48,10 +53,27 @@ const countdown = computed(() => formatCountdown(Date.parse(call.opensAt) - now)
       <span class="text-xs text-muted">{{ tooEarly ? countdown : 'Verbunden' }}</span>
     </div>
 
-    <AppointmentSummary
-      :offer="call.offerName"
-      :appointment="formatDayTimeRange(call.start, call.end)"
-      :coach="call.coachName"
-    />
+    <!-- Dieselbe Terminkachel wie in der Agenda der Coach-App (BookingAgenda.vue):
+         Farbbalken des Angebots, darüber die Zeit, darunter Gegenüber und Dauer. Beide
+         Seiten sehen denselben Termin – er soll auch gleich aussehen. Statt der reinen
+         Uhrzeit steht hier Wochentag und Datum mit, weil dem Klienten die Tagesüberschrift
+         der Agenda fehlt. -->
+    <div class="w-full rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 flex items-start gap-3 text-left">
+      <span
+        v-if="call.offerId"
+        class="w-1 rounded-full shrink-0 self-stretch"
+        :style="{ backgroundColor: offerColor(call.offerId) }"
+      />
+
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium text-highlighted tabular-nums">
+          {{ formatDayTimeRange(call.start, call.end) }}
+        </div>
+        <div class="mt-1 font-medium text-highlighted truncate">{{ call.coachName }}</div>
+        <div class="mt-0.5 text-sm text-muted truncate">
+          {{ durationMinutes }} Min. · {{ call.offerName }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>

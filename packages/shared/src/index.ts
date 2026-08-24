@@ -359,6 +359,9 @@ export const callAccessResponseSchema = z.object({
   start:        z.string(),   // ISO 8601
   end:          z.string(),
   offerName:    z.string(),
+  // Nur für die Farbe des Angebots (offerColor) – dieselbe Kennzeichnung wie in der
+  // Agenda des Coachs und in den Termin-Mails. Null bei manuell angelegten Terminen.
+  offerId:      z.string().nullable(),
   coachName:    z.string(),
   clientName:   z.string(),
   // Grenzen des Zugangsfensters. Beide gehen mit, weil das Verstreichen von Zeit
