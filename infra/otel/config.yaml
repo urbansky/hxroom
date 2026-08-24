@@ -1,0 +1,54 @@
+receivers:
+  hostmetrics:
+    collection_interval: 15s
+    root_path: /hostfs
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      load:
+      network:
+
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 15s
+
+  otlp:                          # NEU – nimmt Traces/Metrics/Logs von api an
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  resourcedetection:
+    detectors: [env, system]
+  batch:
+
+exporters:
+  otlp/signoz:                   # umbenannt zur Unterscheidung vom otlp-*Receiver*
+    endpoint: 116.203.44.109:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [hostmetrics, docker_stats]
+      processors: [resourcedetection, batch]
+      exporters: [otlp/signoz]
+    traces:                      # NEU
+      receivers: [otlp]
+      processors: [resourcedetection, batch]
+      exporters: [otlp/signoz]
+
