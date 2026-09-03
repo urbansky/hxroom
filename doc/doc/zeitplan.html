@@ -128,6 +128,64 @@ body::before {
   font-size: 32px; font-weight: 300; color: var(--cream); letter-spacing: -0.01em;
 }
 
+/* STATUS BADGES */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.02em; white-space: nowrap;
+}
+.status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.status-done { background: rgba(139,158,138,0.12); border: 1px solid rgba(139,158,138,0.28); color: var(--sage-light); }
+.status-done::before { background: var(--sage); }
+.status-current { background: rgba(181,147,90,0.12); border: 1px solid rgba(181,147,90,0.3); color: var(--gold-light); }
+.status-current::before { background: var(--gold); box-shadow: 0 0 0 3px rgba(181,147,90,0.18); }
+.status-planned { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); }
+.status-planned::before { background: var(--text-muted); }
+.phase-forecast { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.phase-forecast em { font-style: normal; color: var(--gold-light); }
+
+/* PROGRESS SECTION */
+.progress-section { margin-bottom: 64px; }
+.progress-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+}
+.progress-top {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+}
+.progress-title { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+.progress-date { font-size: 11px; color: var(--text-muted); letter-spacing: 0.06em; }
+.progress-bar-bg {
+  height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;
+  position: relative; margin-bottom: 22px; overflow: visible;
+}
+.progress-bar-fill {
+  position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--sage-dark), var(--gold));
+}
+.progress-bar-marker {
+  position: absolute; top: -4px; width: 2px; height: 16px;
+  background: var(--text-secondary);
+}
+.progress-bar-marker::after {
+  content: attr(data-label);
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; color: var(--text-muted); white-space: nowrap;
+}
+.progress-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.progress-metric {}
+.progress-metric-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px; font-weight: 300; color: var(--cream); line-height: 1;
+}
+.progress-metric-num.gold { color: var(--gold-light); }
+.progress-metric-label { font-size: 10px; color: var(--text-muted); margin-top: 5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.progress-note {
+  margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border-soft);
+  font-size: 12px; color: var(--text-secondary); line-height: 1.7;
+}
+
 /* PHASES */
 .phases { display: flex; flex-direction: column; gap: 16px; margin-bottom: 64px; }
 
@@ -245,6 +303,11 @@ body::before {
 .milestone-when { font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; }
 .milestone-title { font-size: 13px; color: var(--text-primary); margin-bottom: 3px; }
 .milestone-desc { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+.milestone-target {
+  margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(181,147,90,0.1); border: 1px solid rgba(181,147,90,0.28);
+  border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--gold-light); font-weight: 500;
+}
 
 /* SUMMARY TABLE */
 .summary-section { margin-bottom: 64px; }
@@ -352,7 +415,7 @@ body::before {
     <div class="nav-wordmark">HxRoom</div>
     <span class="nav-badge">Entwicklungsplan</span>
   </div>
-  <div class="nav-meta">10h / Woche · Claude Code</div>
+  <div class="nav-meta">Stand 18.08.2026 · Ist-Tempo 7,9h / Woche</div>
 </nav>
 
 <main class="page">
@@ -361,7 +424,7 @@ body::before {
   <header class="hero anim anim-1">
     <div class="hero-eyebrow">
       <div class="hero-eyebrow-dot"></div>
-      <span class="hero-eyebrow-text">Realistischer Zeitplan · Solo-Entwicklung</span>
+      <span class="hero-eyebrow-text">Fortschritts-Update · Stand 18.08.2026</span>
     </div>
     <h1 class="hero-title">Von Null zum<br>fertigen <em>Produkt.</em></h1>
     <p class="hero-sub">9 Phasen, ausschließlich mit Claude Code entwickelt. 10 Stunden pro Woche, kein manuelles Coding.</p>
@@ -387,6 +450,50 @@ body::before {
     </div>
   </div>
 
+  <!-- PROGRESS -->
+  <section class="progress-section anim anim-2">
+    <div class="section-header">
+      <div class="eyebrow">
+        <div class="eyebrow-line"></div>
+        <span class="eyebrow-text">Ist-Stand</span>
+      </div>
+      <h2 class="section-title">Wo wir wirklich stehen</h2>
+    </div>
+    <div class="progress-box">
+      <div class="progress-top">
+        <div class="progress-title">Phase 3 abgeschlossen · Start Mai 2026 (angenommen 04.05.)</div>
+        <div class="progress-date">120h / 360h geleistet</div>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: 33.3%;"></div>
+        <div class="progress-bar-marker" style="left: 33.3%;" data-label="heute · Woche 15,1"></div>
+        <div class="progress-bar-marker" style="left: 25%; background: rgba(255,255,255,0.15);" data-label="Plan · Woche 12"></div>
+      </div>
+      <div class="progress-metrics">
+        <div class="progress-metric">
+          <div class="progress-metric-num">3<span style="color: var(--text-muted); font-size: 16px;"> / 9</span></div>
+          <div class="progress-metric-label">Phasen fertig</div>
+        </div>
+        <div class="progress-metric">
+          <div class="progress-metric-num gold">7,9h</div>
+          <div class="progress-metric-label">Ist-Tempo / Woche</div>
+        </div>
+        <div class="progress-metric">
+          <div class="progress-metric-num gold">79%</div>
+          <div class="progress-metric-label">von Plan-Tempo (10h)</div>
+        </div>
+        <div class="progress-metric">
+          <div class="progress-metric-num gold">~3</div>
+          <div class="progress-metric-label">Wochen Verzug</div>
+        </div>
+      </div>
+      <div class="progress-note">
+        Plan sah Phase 3 bis Ende Woche 12 (~26.07.2026) vor – tatsächlich abgeschlossen um Woche ~15. Bei unverändertem Ist-Tempo (7,9h/Woche statt 10h/Woche) verschiebt sich der Launch von Woche 36 (10.01.2027) auf ca. <em style="color: var(--gold-light);">18.03.2027</em>. Die Wochenangaben je Phase unten sind Original-Plan; die <em style="color: var(--gold-light);">kursiven Datumsangaben</em> ab Phase 4 sind die Prognose bei Ist-Tempo.<br><br>
+        🎯 <strong style="color: var(--gold-light);">Zieltermin Beta mit echten Coaches: 01.11.2026</strong> (fest zugesagt). Dafür reichen ab jetzt ~6,5h/Woche für Phase 4+5 – das sind nur 82% des bisherigen Ist-Tempos (7,9h/Woche). Bei gleichbleibendem Tempo liegt gut 2 Wochen Puffer vor dem Zieltermin.
+      </div>
+    </div>
+  </section>
+
   <!-- PHASES -->
   <section class="anim anim-3">
     <div class="section-header">
@@ -410,6 +517,7 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 1–4</div>
             <div class="phase-hours">40 Stunden</div>
+            <div style="margin-top: 8px;"><span class="status-badge status-done">Abgeschlossen</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -454,6 +562,7 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 5–7</div>
             <div class="phase-hours">30 Stunden</div>
+            <div style="margin-top: 8px;"><span class="status-badge status-done">Abgeschlossen</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -494,6 +603,8 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 8–12</div>
             <div class="phase-hours">50 Stunden</div>
+            <div class="phase-forecast">real bis <em>~18.08.2026</em></div>
+            <div style="margin-top: 8px;"><span class="status-badge status-done">Abgeschlossen</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -538,6 +649,8 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 13–16</div>
             <div class="phase-hours">40 Stunden</div>
+            <div class="phase-forecast">Prognose: <em>18.08.–22.09.2026</em></div>
+            <div style="margin-top: 8px;"><span class="status-badge status-current">Läuft jetzt</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -578,6 +691,9 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 17–19</div>
             <div class="phase-hours">30 Stunden</div>
+            <div class="phase-forecast">Prognose: <em>22.09.–18.10.2026</em></div>
+            <div class="phase-forecast" style="color: var(--gold-light);">🎯 Ziel: 01.11.2026</div>
+            <div style="margin-top: 8px;"><span class="status-badge status-planned">Geplant</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -616,6 +732,8 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 20–22</div>
             <div class="phase-hours">30 Stunden</div>
+            <div class="phase-forecast">Prognose: <em>18.10.–13.11.2026</em></div>
+            <div style="margin-top: 8px;"><span class="status-badge status-planned">Geplant</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -655,6 +773,8 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 23–26</div>
             <div class="phase-hours">40 Stunden</div>
+            <div class="phase-forecast">Prognose: <em>13.11.–18.12.2026</em></div>
+            <div style="margin-top: 8px;"><span class="status-badge status-planned">Geplant</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -697,6 +817,8 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 27–32</div>
             <div class="phase-hours">60 Stunden</div>
+            <div class="phase-forecast">Prognose: <em>18.12.2026–09.02.2027</em></div>
+            <div style="margin-top: 8px;"><span class="status-badge status-planned">Geplant</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -736,6 +858,8 @@ body::before {
           <div class="phase-meta">
             <div class="phase-weeks">Woche 33–36</div>
             <div class="phase-hours">40 Stunden</div>
+            <div class="phase-forecast">Prognose: <em>09.02.–18.03.2027</em></div>
+            <div style="margin-top: 8px;"><span class="status-badge status-planned">Geplant</span></div>
           </div>
           <button class="phase-chevron">
             <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -777,38 +901,39 @@ body::before {
       <h2 class="section-title">Wann ist was möglich?</h2>
     </div>
     <div class="timeline-strip">
-      <div class="timeline-label">9 Monate Entwicklungspfad</div>
+      <div class="timeline-label">9 Monate Entwicklungspfad · grau = Ist-Fortschritt (33%)</div>
       <div class="timeline-track">
         <div class="timeline-bar-bg">
-          <div class="timeline-bar-fill" style="width: 100%;"></div>
+          <div class="timeline-bar-fill" style="width: 33.3%; background: linear-gradient(90deg, var(--sage-dark), var(--sage));"></div>
         </div>
         <div class="timeline-milestones">
           <div class="milestone-item">
             <div class="milestone-dot-row">
               <div class="milestone-dot m1"></div>
               <div class="milestone-line"></div>
-              <div class="milestone-when">Woche 19 · ~5 Monate</div>
+              <div class="milestone-when">Woche 19 · Plan 13.09.2026</div>
             </div>
             <div class="milestone-title">Beta mit echten Coaches</div>
-            <div class="milestone-desc">Buchung, Videocall und Notizen funktionieren. Kein Billing nötig für die ersten Beta-Coaches.</div>
+            <div class="milestone-desc">Buchung, Videocall und Notizen funktionieren. Kein Billing nötig für die ersten Beta-Coaches.<br><strong style="color: var(--gold-light);">Prognose bei Ist-Tempo: ~18.10.2026</strong></div>
+            <div class="milestone-target">🎯 Zieltermin: 01.11.2026</div>
           </div>
           <div class="milestone-item">
             <div class="milestone-dot-row">
               <div class="milestone-dot m2"></div>
               <div class="milestone-line"></div>
-              <div class="milestone-when">Woche 26 · ~6,5 Monate</div>
+              <div class="milestone-when">Woche 26 · Plan 01.11.2026</div>
             </div>
             <div class="milestone-title">Erste zahlende Kunden</div>
-            <div class="milestone-desc">Stripe Billing ist live. Trial-to-Paid-Conversion kann beginnen.</div>
+            <div class="milestone-desc">Stripe Billing ist live. Trial-to-Paid-Conversion kann beginnen.<br><strong style="color: var(--gold-light);">Prognose: ~18.12.2026</strong></div>
           </div>
           <div class="milestone-item">
             <div class="milestone-dot-row">
               <div class="milestone-dot m3"></div>
               <div class="milestone-line" style="display:none;"></div>
-              <div class="milestone-when">Woche 36 · ~9 Monate</div>
+              <div class="milestone-when">Woche 36 · Plan 10.01.2027</div>
             </div>
             <div class="milestone-title">Vollständiges Produkt</div>
-            <div class="milestone-desc">Alle Features live, Betreiber-Backoffice aktiv, Production-ready.</div>
+            <div class="milestone-desc">Alle Features live, Betreiber-Backoffice aktiv, Production-ready.<br><strong style="color: var(--gold-light);">Prognose: ~18.03.2027</strong></div>
           </div>
         </div>
       </div>
@@ -839,59 +964,59 @@ body::before {
             <td><div class="td-phase"><div class="td-phase-num">1</div>Fundament & Infrastruktur</div></td>
             <td class="td-weeks">Woche 1–4</td>
             <td><span class="td-hours">40h</span></td>
-            <td><span class="tag tag-muted">Start</span></td>
+            <td><span class="status-badge status-done">Abgeschlossen</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">2</div>Auth & Coach-Profil</div></td>
             <td class="td-weeks">Woche 5–7</td>
             <td><span class="td-hours">30h</span></td>
-            <td><span class="tag tag-muted">—</span></td>
+            <td><span class="status-badge status-done">Abgeschlossen</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">3</div>Buchungssystem</div></td>
-            <td class="td-weeks">Woche 8–12</td>
+            <td class="td-weeks">Woche 8–12 <span class="td-weeks" style="display:block;">(real bis ~18.08.)</span></td>
             <td><span class="td-hours">50h</span></td>
-            <td><span class="tag tag-muted">Komplex</span></td>
+            <td><span class="status-badge status-done">Abgeschlossen</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">4</div>Videocall</div></td>
-            <td class="td-weeks">Woche 13–16</td>
+            <td class="td-weeks">Woche 13–16 <span class="td-weeks" style="display:block;">(Prognose bis 22.09.)</span></td>
             <td><span class="td-hours">40h</span></td>
-            <td><span class="tag tag-muted">—</span></td>
+            <td><span class="status-badge status-current">Läuft jetzt</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">5</div>Nachbereitung & CRM</div></td>
-            <td class="td-weeks">Woche 17–19</td>
+            <td class="td-weeks">Woche 17–19 <span class="td-weeks" style="display:block;">(Prognose bis 18.10., Ziel 01.11.)</span></td>
             <td><span class="td-hours">30h</span></td>
-            <td><span class="tag tag-sage">Beta-ready</span></td>
+            <td><span class="status-badge status-planned">Geplant</span> <span class="tag tag-sage">Beta-ready</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">6</div>Whisper-Transkription</div></td>
-            <td class="td-weeks">Woche 20–22</td>
+            <td class="td-weeks">Woche 20–22 <span class="td-weeks" style="display:block;">(Prognose bis 13.11.)</span></td>
             <td><span class="td-hours">30h</span></td>
-            <td><span class="tag tag-muted">—</span></td>
+            <td><span class="status-badge status-planned">Geplant</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">7</div>Billing (Stripe)</div></td>
-            <td class="td-weeks">Woche 23–26</td>
+            <td class="td-weeks">Woche 23–26 <span class="td-weeks" style="display:block;">(Prognose bis 18.12.)</span></td>
             <td><span class="td-hours">40h</span></td>
-            <td><span class="tag tag-gold">Zahlende Kunden</span></td>
+            <td><span class="status-badge status-planned">Geplant</span> <span class="tag tag-gold">Zahlende Kunden</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">8</div>Pro-Features & Admin</div></td>
-            <td class="td-weeks">Woche 27–32</td>
+            <td class="td-weeks">Woche 27–32 <span class="td-weeks" style="display:block;">(Prognose bis 09.02.2027)</span></td>
             <td><span class="td-hours">60h</span></td>
-            <td><span class="tag tag-muted">—</span></td>
+            <td><span class="status-badge status-planned">Geplant</span></td>
           </tr>
           <tr>
             <td><div class="td-phase"><div class="td-phase-num">9</div>Beta-Härtung & Launch</div></td>
-            <td class="td-weeks">Woche 33–36</td>
+            <td class="td-weeks">Woche 33–36 <span class="td-weeks" style="display:block;">(Prognose bis 18.03.2027)</span></td>
             <td><span class="td-hours">40h</span></td>
-            <td><span class="tag tag-gold">Launch</span></td>
+            <td><span class="status-badge status-planned">Geplant</span> <span class="tag tag-gold">Launch</span></td>
           </tr>
           <tr class="summary-total">
             <td><strong>Gesamt</strong></td>
-            <td class="td-weeks">36 Wochen · ~9 Monate</td>
+            <td class="td-weeks">36 Wochen · ~9 Monate <span class="td-weeks" style="display:block;">(Prognose: ~46 Wochen, Launch 18.03.2027)</span></td>
             <td><span class="td-hours">360h</span></td>
             <td></td>
           </tr>
@@ -943,7 +1068,7 @@ body::before {
   <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-brand">HxRoom</div>
-    <div class="footer-meta">Entwicklungsplan v1.0 · Solo-Entwicklung mit Claude Code · 10h / Woche</div>
+    <div class="footer-meta">Entwicklungsplan v1.1 · Fortschritts-Update 18.08.2026 · Ist-Tempo 7,9h / Woche</div>
   </footer>
 
 </main>
