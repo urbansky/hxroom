@@ -35,6 +35,21 @@ processors:
     detectors: [env, system]
   batch:
 
+  # Zweite Verteidigungslinie gegen Zugangstoken in Traces. Die API redigiert bereits an
+  # der Quelle (apps/api/src/tracing-redaction.ts); hier greift dieselbe Regel noch einmal
+  # für alles, was eine andere Instrumentierung oder ein künftiger Dienst beisteuert.
+  # Betroffen sind die URL-Attribute beider Semconv-Generationen. `error_mode: ignore`,
+  # damit ein Span ohne diese Attribute die Pipeline nicht anhält.
+  transform/redact_query_tokens:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - replace_pattern(span.attributes["url.query"], "(?i)(^|[?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
+          - replace_pattern(span.attributes["url.full"], "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
+          - replace_pattern(span.attributes["http.url"], "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
+          - replace_pattern(span.attributes["http.target"], "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
+
 exporters:
   otlp/signoz:                   # umbenannt zur Unterscheidung vom otlp-*Receiver*
     endpoint: 116.203.44.109:4317
@@ -49,6 +64,6 @@ service:
       exporters: [otlp/signoz]
     traces:                      # NEU
       receivers: [otlp]
-      processors: [resourcedetection, batch]
+      processors: [resourcedetection, transform/redact_query_tokens, batch]
       exporters: [otlp/signoz]
 
