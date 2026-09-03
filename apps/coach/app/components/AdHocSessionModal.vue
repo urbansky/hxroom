@@ -39,8 +39,15 @@ const offerItems = computed(() =>
     .map(offer => ({ label: `${offer.name} · ${offer.durationMinutes} Min.`, value: offer.id })),
 )
 
+// Die E-Mail steht als `description` unter dem Namen: Zwei Klienten mit gleichem oder
+// ähnlichem Namen sind sonst nicht auseinanderzuhalten, und die Adresse ist das, was
+// gleich den Zugangslink bekommt.
 const clientItems = computed(() =>
-  (props.clients ?? []).map(client => ({ label: client.name, value: client.id })),
+  (props.clients ?? []).map(client => ({
+    label: client.name,
+    description: client.email,
+    value: client.id,
+  })),
 )
 
 const clientId = computed(() => props.client?.id ?? selectedClientId.value)
@@ -124,8 +131,8 @@ async function copyLink() {
             v-model="selectedClientId"
             :items="clientItems"
             value-key="value"
+            :filter-fields="['label', 'description']"
             placeholder="Klient wählen"
-            searchable
             class="w-full"
           />
         </UFormField>
