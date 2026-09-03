@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ClientDetail, ClientResponse, CoachBookingResponse } from '@hxroom/shared'
+import type { ClientDetail, ClientResponse, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -27,6 +27,22 @@ async function loadClient() {
 }
 
 await loadClient()
+
+// Spontan-Termin: Die Angebote bestimmen Bezeichnung und Dauer. Sie werden hier
+// mitgeladen, damit das Modal beim Öffnen sofort auswählbar ist.
+const offers = ref<OfferResponse[]>([])
+const adHocOpen = ref(false)
+
+async function openAdHoc() {
+  if (!offers.value.length) {
+    try {
+      offers.value = await $api<OfferResponse[]>('/offers')
+    } catch {
+      offers.value = []
+    }
+  }
+  adHocOpen.value = true
+}
 
 // Die API liefert die Historie absteigend – für die Anzeige wird sie in anstehende
 // und vergangene Termine getrennt. Abgesagte Termine gelten als vergangen, egal wann
@@ -91,16 +107,29 @@ function onSaved(saved: ClientResponse) {
           </div>
           <p class="text-xs text-muted mt-2">Klient seit {{ formatShortDate(client.createdAt) }}</p>
         </div>
-        <UButton
-          label="Bearbeiten"
-          icon="i-lucide-pencil"
-          color="neutral"
-          variant="subtle"
-          size="sm"
-          class="shrink-0"
-          @click="isFormOpen = true"
-        />
+        <div class="flex items-center gap-2 shrink-0">
+          <UButton
+            label="Spontan-Termin"
+            icon="i-lucide-video"
+            size="sm"
+            @click="openAdHoc"
+          />
+          <UButton
+            label="Bearbeiten"
+            icon="i-lucide-pencil"
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            @click="isFormOpen = true"
+          />
+        </div>
       </div>
+
+      <AdHocSessionModal
+        v-model:open="adHocOpen"
+        :client="{ id: client.id, name: client.name }"
+        :offers="offers"
+      />
 
       <!-- Interne Notiz -->
       <div class="mb-8">

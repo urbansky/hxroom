@@ -20,6 +20,10 @@ const hasAnyBooking = ref(false)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 
+// Spontan-Termin: Klienten und Angebote liegen für das Dashboard bereits vor, das Modal
+// braucht keinen eigenen Abruf.
+const adHocOpen = ref(false)
+
 async function loadDashboard() {
   loading.value = true
   loadError.value = null
@@ -119,12 +123,27 @@ async function onClientSaved(_client: ClientResponse) {
 
 <template>
   <div class="p-4 sm:p-6 mx-auto w-full max-w-6xl flex flex-col gap-6">
-    <div>
-      <h1 class="font-serif text-3xl text-highlighted">
-        Hallo, {{ session.data?.user?.name ?? '…' }}
-      </h1>
-      <p class="mt-1 text-muted">{{ today }}</p>
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="font-serif text-3xl text-highlighted">
+          Hallo, {{ session.data?.user?.name ?? '…' }}
+        </h1>
+        <p class="mt-1 text-muted">{{ today }}</p>
+      </div>
+
+      <!-- Der Weg ins spontane Gespräch: von hier aus, ohne erst einen Klienten zu
+           suchen. Erst sichtbar, wenn beides vorliegt – ohne Klienten oder Angebote
+           führte der Knopf in ein Modal, in dem nichts zu wählen ist. -->
+      <UButton
+        v-if="!loading && clients.length && offers.length"
+        label="Spontan-Termin"
+        icon="i-lucide-video"
+        class="shrink-0"
+        @click="adHocOpen = true"
+      />
     </div>
+
+    <AdHocSessionModal v-model:open="adHocOpen" :clients="clients" :offers="offers" />
 
     <p v-if="loadError" class="text-sm text-error">{{ loadError }}</p>
 

@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { assignBookingClientSchema, cancelBookingSchema, listCoachBookingsQuerySchema, type AssignBookingClientDto, type CancelBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
+import { assignBookingClientSchema, cancelBookingSchema, createAdHocBookingSchema, listCoachBookingsQuerySchema, type AssignBookingClientDto, type CancelBookingDto, type CreateAdHocBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
 import { CoachBookingsService } from './coach-bookings.service';
 
 // Kalender-Ansicht im Coach-Backoffice. Teilt sich den Pfad 'bookings' mit dem
@@ -21,6 +21,17 @@ export class CoachBookingsController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.coachBookingsService.list(org.id, query);
+  }
+
+  // Spontan-Termin: beginnt im Moment des Aufrufs. Steht vor ':id/cancel', damit die
+  // feste Route nicht von einem Pfadparameter verdeckt werden kann.
+  @Post('ad-hoc')
+  createAdHoc(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Body(new ZodValidationPipe(createAdHocBookingSchema)) dto: CreateAdHocBookingDto,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.createAdHoc(org.id, dto);
   }
 
   @Post(':id/cancel')

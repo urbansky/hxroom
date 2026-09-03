@@ -253,8 +253,8 @@ export type BookingResponse = z.infer<typeof bookingResponseSchema>;
 
 // Coach-Sicht auf eine Buchung (Kalender im Backoffice). Enthält bewusst die
 // Klientendaten – für sie ist der Coach der Verantwortliche im Sinne der DSGVO.
-// clientAccessToken fehlt hier genauso bewusst: er ist der Schlüssel zum Warteraum
-// und darf die API nie verlassen.
+// clientAccessToken fehlt hier genauso bewusst: er ist der Schlüssel zum Warteraum.
+// Einzige Ausnahme ist adHocBookingResponseSchema – dort begründet und eng begrenzt.
 export const coachBookingResponseSchema = z.object({
   id:              z.string(),
   start:           z.string(),   // ISO 8601
@@ -299,6 +299,26 @@ export const assignBookingClientSchema = z.object({
   clientId: z.string().min(1, 'Klient ist erforderlich').nullable(),
 });
 export type AssignBookingClientDto = z.infer<typeof assignBookingClientSchema>;
+
+// Spontan-Termin: Der Coach startet eine Sitzung, die jetzt beginnt (backoffice-coach.md 2.04).
+// Nur Klient und Angebot – der Beginn ist der Zeitpunkt des Aufrufs, die Dauer steht am
+// Angebot. Bewusst ohne Zeitangabe: Sobald man einen Zeitpunkt wählen kann, ist es kein
+// spontaner Termin mehr, sondern das manuelle Anlegen (eigener Schritt).
+export const createAdHocBookingSchema = z.object({
+  clientId: z.string().min(1, 'Klient ist erforderlich'),
+  offerId:  z.string().min(1, 'Angebot ist erforderlich'),
+});
+export type CreateAdHocBookingDto = z.infer<typeof createAdHocBookingSchema>;
+
+// Die einzige Antwort, die den Zugangslink des Klienten mitführt – und damit den
+// clientAccessToken, der sonst nirgends die API verlässt. Sie geht an den
+// authentifizierten Eigentümer der Buchung, der den Link ohnehin weitergeben soll: Eine
+// Mail ist für ein Gespräch in fünf Minuten oft zu langsam, der Coach braucht ihn für
+// WhatsApp, SMS oder das laufende Telefonat. Nur hier, nie in GET /bookings.
+export const adHocBookingResponseSchema = coachBookingResponseSchema.extend({
+  callUrl: z.string(),
+});
+export type AdHocBookingResponse = z.infer<typeof adHocBookingResponseSchema>;
 
 // Zugangsfenster für den Videocall (doc/videocall-umsetzungsplan.md A1).
 //

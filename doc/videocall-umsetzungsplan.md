@@ -89,6 +89,16 @@ In der Agenda sitzt der Knopf **neben** der Zeile, nicht darin: Die Zeile ist ei
 
 **Ergebnis Stufe A:** Mail → Warteraum → Benachrichtigung des Coachs → Einlassen → „Call" → Ende → Danke-Seite. Ohne eine Zeile LiveKit.
 
+### A6 · Spontan-Termin ✅ *(umgesetzt 2026-08-24)*
+
+Nachträglich ergänzt, aus einem Befund beim Prüfen von Stufe A: Der Ablauf ließ sich nur testen, indem man Terminzeiten per SQL ins Zugangsfenster schob und danach zurücksetzte. Für jeden Schritt der Stufe B wäre das der Dauerzustand geworden.
+
+Der Coach wählt Klient und Angebot, die Sitzung beginnt im Moment des Aufrufs, der Klient bekommt den Zugangslink per E-Mail – und der Coach zusätzlich in die Zwischenablage, weil eine Mail für ein Gespräch in fünf Minuten oft zu langsam ist. Zugleich die halbe MVP-Funktion 2.04 aus `doc/funktionen/backoffice-coach.md`; der zweite Teil (Termin zu einem *gewählten* Zeitpunkt anlegen) teilt sich später Dienst und Dialog mit diesem hier.
+
+`POST /bookings/ad-hoc` in `CoachBookingsService.createAdHoc()`, bewusst neben `BookingsService.create()` statt darin: Der öffentliche Buchungsweg prüft gegen einen berechneten Verfügbarkeits-Slot und endet in `pending`, bis der Klient bestätigt. Beides ergibt hier keinen Sinn – ein spontaner Termin liegt außerhalb der freigegebenen Zeiten, und auf eine Bestätigungsmail zu warten hieße, das Gespräch nicht zu führen. Die Buchung entsteht direkt als `confirmed` und zählt damit wie jede andere.
+
+**Eine bewusste Ausnahme:** `adHocBookingResponseSchema` führt als einzige Antwort die Call-URL und damit den `clientAccessToken` mit. Die Regel, dass er die API nie verlässt, zielt auf den öffentlichen Kontext, in dem sonst jeder eine Buchung selbst bestätigen könnte; hier steht die Antwort hinter dem `AuthGuard` und geht an den Eigentümer der Buchung, der den Link ohnehin weitergeben soll. Nur dort, nie in `GET /bookings`.
+
 ---
 
 ## Stufe B – Echtes Video
