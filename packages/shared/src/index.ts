@@ -10,6 +10,13 @@ export type BookingStatus = z.infer<typeof BookingStatus>;
 export const CancelledBy = z.enum(['coach', 'client', 'system']);
 export type CancelledBy = z.infer<typeof CancelledBy>;
 
+// Herkunft einer Buchung. 'booking_page' ist der öffentliche Weg über die Buchungsseite,
+// 'ad_hoc' der vom Coach selbst gestartete Spontan-Termin. Als Enum statt als Flag, weil
+// der zweite Teil von Funktion 2.04 (Termin zu einem gewählten Zeitpunkt anlegen) hier
+// später als 'manual' dazukommt.
+export const BookingOrigin = z.enum(['booking_page', 'ad_hoc']);
+export type BookingOrigin = z.infer<typeof BookingOrigin>;
+
 // Plan types
 export const PlanType = z.enum(['trial', 'solo', 'pro', 'studio']);
 export type PlanType = z.infer<typeof PlanType>;
@@ -270,6 +277,7 @@ export const coachBookingResponseSchema = z.object({
   clientNote:      z.string().nullable(),
   confirmedAt:     z.string().nullable(),
   createdAt:       z.string(),
+  origin:          BookingOrigin,
   // Absagedetails: für Altbestand und für alles, was nie abgesagt wurde, null.
   cancelledAt:        z.string().nullable(),
   cancelledBy:        CancelledBy.nullable(),
@@ -301,12 +309,17 @@ export const assignBookingClientSchema = z.object({
 export type AssignBookingClientDto = z.infer<typeof assignBookingClientSchema>;
 
 // Spontan-Termin: Der Coach startet eine Sitzung, die jetzt beginnt (backoffice-coach.md 2.04).
-// Nur Klient und Angebot – der Beginn ist der Zeitpunkt des Aufrufs, die Dauer steht am
-// Angebot. Bewusst ohne Zeitangabe: Sobald man einen Zeitpunkt wählen kann, ist es kein
-// spontaner Termin mehr, sondern das manuelle Anlegen (eigener Schritt).
+// Der Beginn ist der Zeitpunkt des Aufrufs. Bewusst ohne Zeitangabe: Sobald man einen
+// Zeitpunkt wählen kann, ist es kein spontaner Termin mehr, sondern das manuelle Anlegen
+// (eigener Schritt).
+//
+// Das Angebot ist optional: Ein spontanes Gespräch ist oft keines der veröffentlichten
+// Angebote, und niemand soll erst ein Pseudo-Angebot anlegen müssen, um telefonieren zu
+// können. Ohne Angebot gilt der Spontan-Standard aus booking.constants.ts (Bezeichnung
+// und Dauer); mit Angebot kommen beide wie gehabt von dort.
 export const createAdHocBookingSchema = z.object({
   clientId: z.string().min(1, 'Klient ist erforderlich'),
-  offerId:  z.string().min(1, 'Angebot ist erforderlich'),
+  offerId:  z.string().min(1, 'Angebot ist erforderlich').optional(),
 });
 export type CreateAdHocBookingDto = z.infer<typeof createAdHocBookingSchema>;
 

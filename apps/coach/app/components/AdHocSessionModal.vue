@@ -55,7 +55,10 @@ const clientName = computed(() =>
   props.client?.name ?? props.clients?.find(c => c.id === selectedClientId.value)?.name ?? '',
 )
 
-const canSubmit = computed(() => Boolean(clientId.value && selectedOfferId.value) && !pending.value)
+// Nur der Klient ist Pflicht: Ohne Angebot entsteht ein Spontan-Termin mit dem Standard
+// aus der API (60 Minuten) – ein Gespräch, das jetzt stattfindet, passt oft in keines der
+// veröffentlichten Angebote.
+const canSubmit = computed(() => Boolean(clientId.value) && !pending.value)
 
 // Beim Öffnen zurücksetzen: Das Modal überlebt den Seitenwechsel nicht, wohl aber den
 // zweiten Klick auf denselben Knopf – dort soll kein alter Link mehr stehen.
@@ -75,7 +78,11 @@ async function start() {
   try {
     created.value = await $api<AdHocBookingResponse>('/bookings/ad-hoc', {
       method: 'POST',
-      body: { clientId: clientId.value, offerId: selectedOfferId.value },
+      body: {
+        clientId: clientId.value,
+        // Weglassen statt null: Das Feld ist im Schema optional, nicht nullable.
+        ...(selectedOfferId.value ? { offerId: selectedOfferId.value } : {}),
+      },
     })
   } catch {
     errorMessage.value = 'Die Sitzung konnte nicht angelegt werden.'
@@ -137,13 +144,15 @@ async function copyLink() {
           />
         </UFormField>
 
-        <UFormField label="Angebot" help="Bestimmt Bezeichnung und Dauer der Sitzung.">
+        <UFormField label="Angebot" help="Bestimmt Bezeichnung und Dauer. Ohne Angebot: Spontan-Termin über 60 Minuten.">
           <USelectMenu
             v-model="selectedOfferId"
             :items="offerItems"
             value-key="value"
-            placeholder="Angebot wählen"
+            placeholder="Angebot wählen (optional)"
+            clear
             class="w-full"
+            @clear="selectedOfferId = null"
           />
         </UFormField>
       </div>

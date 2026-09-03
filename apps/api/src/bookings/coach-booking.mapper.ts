@@ -1,5 +1,5 @@
 import { bookings } from '../db/schema';
-import type { CancelledBy, CoachBookingResponse } from '@hxroom/shared';
+import type { BookingOrigin, CancelledBy, CoachBookingResponse } from '@hxroom/shared';
 
 // Explizite Spaltenliste statt select(): clientAccessToken darf die API nie verlassen,
 // und ein select() ohne Argument würde ihn bei jedem Schema-Wechsel stillschweigend
@@ -16,6 +16,7 @@ export const coachBookingColumns = {
   offerName:          bookings.offerName,
   durationMinutes:    bookings.durationMinutes,
   status:             bookings.status,
+  origin:             bookings.origin,
   clientId:           bookings.clientId,
   clientName:         bookings.clientName,
   clientEmail:        bookings.clientEmail,
@@ -36,6 +37,7 @@ export interface CoachBookingRow {
   offerName: string;
   durationMinutes: number;
   status: CoachBookingResponse['status'];
+  origin: BookingOrigin;
   clientId: string | null;
   clientName: string;
   clientEmail: string;
@@ -57,6 +59,7 @@ export function toCoachBookingResponse(row: CoachBookingRow): CoachBookingRespon
     offerName:          row.offerName,
     durationMinutes:    row.durationMinutes,
     status:             row.status,
+    origin:             row.origin,
     clientId:           row.clientId,
     clientName:         row.clientName,
     clientEmail:        row.clientEmail,

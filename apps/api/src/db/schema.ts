@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { BookingStatus, CancelledBy } from '@hxroom/shared';
+import type { BookingOrigin, BookingStatus, CancelledBy } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -184,6 +184,12 @@ export const bookings = pgTable('bookings', {
   clientEmail:        text('client_email').notNull(),
   clientPhone:        text('client_phone'),
   clientNote:         text('client_note'),
+  // Herkunft der Buchung: 'booking_page' für den öffentlichen Weg, 'ad_hoc' für den vom
+  // Coach gestarteten Spontan-Termin. Ohne dieses Feld ist ein Spontan-Termin nach dem
+  // Anlegen von einer regulären Buchung nicht mehr zu unterscheiden – er ist ebenfalls
+  // 'confirmed' und liegt, anders als eine Buchung, außerhalb jeder Verfügbarkeit.
+  // Der Default trägt den Altbestand; rückwirkend lässt sich die Herkunft nicht ermitteln.
+  origin:             text('origin').$type<BookingOrigin>().notNull().default('booking_page'),
   clientAccessToken:  text('client_access_token').notNull(),
   clientTokenUsedAt:  timestamp('client_token_used_at'),
   confirmedAt:        timestamp('confirmed_at'),

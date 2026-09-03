@@ -125,6 +125,7 @@ async function cancelBooking() {
         </div>
 
         <div class="flex items-center gap-2">
+          <UBadge v-if="isAdHoc(booking)" :label="AD_HOC_LABEL" color="info" variant="subtle" />
           <UBadge
             v-if="booking.status === 'confirmed'"
             :label="STATUS_LABELS.confirmed"

@@ -258,7 +258,7 @@ function bookingBlocks(weekday: number) {
               class="block text-xs leading-tight truncate"
               :class="block.tone.offer"
             >
-              {{ block.booking.offerName }}
+              {{ offerLineLabel(block.booking) }}
             </span>
           </span>
         </button>

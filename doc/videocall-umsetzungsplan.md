@@ -97,6 +97,10 @@ Der Coach wählt Klient und Angebot, die Sitzung beginnt im Moment des Aufrufs, 
 
 `POST /bookings/ad-hoc` in `CoachBookingsService.createAdHoc()`, bewusst neben `BookingsService.create()` statt darin: Der öffentliche Buchungsweg prüft gegen einen berechneten Verfügbarkeits-Slot und endet in `pending`, bis der Klient bestätigt. Beides ergibt hier keinen Sinn – ein spontaner Termin liegt außerhalb der freigegebenen Zeiten, und auf eine Bestätigungsmail zu warten hieße, das Gespräch nicht zu führen. Die Buchung entsteht direkt als `confirmed` und zählt damit wie jede andere.
 
+**Herkunft statt Ratespiel:** Ein Spontan-Termin entsteht als `confirmed` und wäre danach von einer regulären Buchung nicht mehr zu unterscheiden – dabei liegt er außerhalb jeder Verfügbarkeit und war nie `pending`. `bookings.origin` (`'booking_page' | 'ad_hoc'`, Default `'booking_page'`) hält das fest. Bewusst ein Enum statt eines Flags: Der zweite Teil von 2.04 kommt hier später als `'manual'` dazu. Im Backoffice erscheint die Herkunft als Badge „Spontan" in Agenda, Termin-Slideover und Sitzungshistorie; die Klientenseite bleibt unberührt, für den Klienten ist es einfach ein Termin.
+
+**Angebot optional:** Das Gespräch, das jetzt stattfindet, ist oft keines der veröffentlichten Angebote, und ein Pseudo-Angebot dafür anzulegen bliebe in den Angebotslisten des Coachs stehen. Ohne Angebot treten `AD_HOC_OFFER_NAME` („Spontan-Termin") und `AD_HOC_DURATION_MINUTES` (60) aus `booking.constants.ts` an die Stelle des Angebots-Snapshots; `offerId` bleibt `null`, wie bei jeder Buchung ohne verknüpftes Angebot. Die Dauer ist dabei mehr als eine Anzeige – aus ihr ergibt sich die Endzeit und damit das Zugangsfenster aus A1.
+
 **Eine bewusste Ausnahme:** `adHocBookingResponseSchema` führt als einzige Antwort die Call-URL und damit den `clientAccessToken` mit. Die Regel, dass er die API nie verlässt, zielt auf den öffentlichen Kontext, in dem sonst jeder eine Buchung selbst bestätigen könnte; hier steht die Antwort hinter dem `AuthGuard` und geht an den Eigentümer der Buchung, der den Link ohnehin weitergeben soll. Nur dort, nie in `GET /bookings`.
 
 ---

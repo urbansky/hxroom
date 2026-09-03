@@ -175,6 +175,22 @@ export const STATUS_LABELS: Record<CoachBookingResponse['status'], string> = {
   cancelled: 'abgesagt',
 }
 
+// Ein Spontan-Termin ist keine Buchung: Ihn hat der Coach selbst gestartet, er steht in
+// keinem Verfügbarkeits-Slot und war nie 'pending'. Nur diese eine Herkunft wird
+// ausgezeichnet – bei einer regulären Buchung wäre ein Badge reines Rauschen.
+export function isAdHoc(booking: Pick<CoachBookingResponse, 'origin'>): boolean {
+  return booking.origin === 'ad_hoc'
+}
+
+export const AD_HOC_LABEL = 'Spontan'
+
+// In der engen Wochenkachel ist kein Platz für ein Badge; dort steht die Herkunft als
+// Präfix der Angebotszeile. Ohne Angebot heißt der Snapshot bereits „Spontan-Termin“ –
+// ein Präfix wäre dort eine Dopplung.
+export function offerLineLabel(booking: Pick<CoachBookingResponse, 'origin' | 'offerId' | 'offerName'>): string {
+  return isAdHoc(booking) && booking.offerId ? `${AD_HOC_LABEL} · ${booking.offerName}` : booking.offerName
+}
+
 // Wer abgesagt hat, ist für die Reaktion des Coachs entscheidend: eine Absage des Klienten
 // hinterlässt eine Lücke, die er neu füllen kann, ein Verfall dagegen heißt, dass die
 // Buchung nie bestätigt wurde. Aus Sicht des Coachs formuliert ("von dir").

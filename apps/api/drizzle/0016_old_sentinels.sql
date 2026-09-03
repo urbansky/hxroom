@@ -1,0 +1,1 @@
+ALTER TABLE "bookings" ADD COLUMN "origin" text DEFAULT 'booking_page' NOT NULL;

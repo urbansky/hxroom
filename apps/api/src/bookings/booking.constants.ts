@@ -15,6 +15,13 @@ export function isExpiredPending(createdAt: Date, now: Date, ttlMinutes = CONFIR
   return now.getTime() - createdAt.getTime() > ttlMinutes * 60_000;
 }
 
+// Ein Spontan-Termin braucht kein Angebot: Das Gespräch, das jetzt stattfindet, ist oft
+// keines der veröffentlichten Angebote. Fehlt es, treten diese Werte an die Stelle des
+// Angebots-Snapshots. Die Dauer ist dabei mehr als Anzeige – aus ihr ergibt sich die
+// Endzeit und damit das Zugangsfenster des Klienten (call-access.ts).
+export const AD_HOC_OFFER_NAME = 'Spontan-Termin';
+export const AD_HOC_DURATION_MINUTES = 60;
+
 // Der Klient darf seinen Termin über den Link aus der Bestätigungsmail bis zum
 // Terminbeginn selbst absagen (doc/funktionen/backoffice-coach.md 2.06). Danach ist die
 // Sitzung entweder gelaufen oder läuft gerade – dann gehört die Absage in die Hand des

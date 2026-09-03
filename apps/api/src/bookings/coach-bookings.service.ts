@@ -8,6 +8,7 @@ import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { isUniqueViolation } from '../common/pg-errors';
+import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME } from './booking.constants';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderSessionInvitationEmail } from '../mail/templates/client/session-invitation';
 import { toAppointmentInfo } from './booking-formatting';
@@ -138,6 +139,11 @@ export class CoachBookingsService {
    *
    * Keine Kollisionsprüfung gegen andere Termine: Wer spontan startet, weiß, was er
    * gerade tut – der Kalender ist Vorschlag, nicht Vorschrift.
+   *
+   * Das Angebot ist optional. Fehlt es, treten AD_HOC_OFFER_NAME und
+   * AD_HOC_DURATION_MINUTES an die Stelle des Snapshots – ein spontanes Gespräch ist
+   * oft keines der veröffentlichten Angebote, und ein Pseudo-Angebot anzulegen wäre ein
+   * Umweg, der in den Angebotslisten des Coachs stehenbliebe.
    */
   async createAdHoc(organizationId: string, dto: CreateAdHocBookingDto): Promise<AdHocBookingResponse> {
     const org = await this.organizationService.findById(organizationId);
@@ -157,16 +163,22 @@ export class CoachBookingsService {
 
     if (!client) throw new NotFoundException('Client not found');
 
-    const [offer] = await this.db
-      .select({ id: offers.id, name: offers.name, durationMinutes: offers.durationMinutes })
-      .from(offers)
-      .where(and(eq(offers.id, dto.offerId), eq(offers.organizationId, organizationId)))
-      .limit(1);
+    let offer: { id: string; name: string; durationMinutes: number } | undefined;
+    if (dto.offerId) {
+      [offer] = await this.db
+        .select({ id: offers.id, name: offers.name, durationMinutes: offers.durationMinutes })
+        .from(offers)
+        .where(and(eq(offers.id, dto.offerId), eq(offers.organizationId, organizationId)))
+        .limit(1);
 
-    if (!offer) throw new NotFoundException('Offer not found');
+      if (!offer) throw new NotFoundException('Offer not found');
+    }
+
+    const offerName = offer?.name ?? AD_HOC_OFFER_NAME;
+    const durationMinutes = offer?.durationMinutes ?? AD_HOC_DURATION_MINUTES;
 
     const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + offer.durationMinutes * 60_000);
+    const endTime = new Date(startTime.getTime() + durationMinutes * 60_000);
     // Selbst erzeugt statt aus der Rückgabe gelesen: coachBookingColumns führt den Token
     // bewusst nicht, und er wird gleich für den Zugangslink gebraucht.
     const clientAccessToken = randomBytes(32).toString('hex');
@@ -178,17 +190,18 @@ export class CoachBookingsService {
         .values({
           organizationId,
           clientId:        client.id,
-          offerId:         offer.id,
+          offerId:         offer?.id ?? null,
           // Snapshots wie im öffentlichen Buchungsweg: Was hier steht, gilt für diesen
           // Termin, auch wenn Angebot oder Klient sich später ändern.
-          offerName:       offer.name,
-          durationMinutes: offer.durationMinutes,
+          offerName,
+          durationMinutes,
           startTime,
           endTime,
           clientName:      client.name,
           clientEmail:     client.email,
           clientPhone:     client.phone,
           status:          'confirmed',
+          origin:          'ad_hoc',
           confirmedAt:     startTime,
           clientAccessToken,
         })
