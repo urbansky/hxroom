@@ -2,6 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "CommonJS",
+    // Abgekündigt seit TypeScript 6, entfällt in 7.0 – wie in apps/api/tsconfig.json.
+    // Der CJS-Build braucht die node10-Auflösung, solange die Umstellung auf node16
+    // nicht geprüft ist.
+    "ignoreDeprecations": "6.0",
     "moduleResolution": "node",
     "outDir": "./dist/cjs",
     "rootDir": "./src",
