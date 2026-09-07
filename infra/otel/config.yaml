@@ -23,17 +23,61 @@ receivers:
     endpoint: unix:///var/run/docker.sock
     collection_interval: 15s
 
-  otlp:                          # NEU – nimmt Traces/Metrics/Logs von api an
+  otlp:                          # nimmt Traces von der API an (Logs kommen über file_log)
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
 
+  # Container-Logs vom Host. Das Mount `/:/hostfs:ro` ist für hostmetrics ohnehin da,
+  # die Logdateien liegen also schon im Zugriff – ebenso wie `user: "0:0"`, ohne das
+  # die Dateien nicht lesbar wären.
+  #
+  # Bewusst nur der `container`-Operator, der den Docker-JSON-Umschlag entfernt: Die
+  # Dienste loggen unstrukturierten Text, es gibt also nichts weiter zu parsen und ohne
+  # Pino auch keine trace_id, die sich mit einem Span verknüpfen ließe.
+  file_log:
+    include: [/hostfs/var/lib/docker/containers/*/*-json.log]
+    start_at: end                # beim ersten Start nicht die gesamte Historie nachschicken
+    include_file_path: true      # Grundlage für die Container-ID, siehe transform/container_id
+    operators:
+      # Entfernt den Docker-JSON-Umschlag ({"log":…,"stream":…,"time":…}). Die
+      # Pfad-Metadaten sind abgeschaltet, weil der Operator dafür Kubernetes-Pfade
+      # (/var/log/pods/…) erwartet und am Docker-Layout mit
+      # "failed to detect a valid log path" scheitert.
+      - type: container
+        add_metadata_from_filepath: false
+
 processors:
   resourcedetection:
     detectors: [env, system]
+  resource:
+    attributes:
+      - key: host.name
+        value: "HxRoom"
+        action: upsert
   batch:
+
+  # Der Collector liest auch sein eigenes Logfile. Ohne diesen Filter schaukelt sich das
+  # auf, sobald der Export klemmt: Exportfehler → Logzeile → wieder eingelesen → neuer
+  # Exportversuch. Docker setzt HOSTNAME im Container auf dessen kurze ID, das Verzeichnis
+  # trägt die lange – daher der Präfix-Vergleich.
+  filter/exclude_self:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'IsMatch(log.attributes["container.id"], "^${env:HOSTNAME}")'
+
+  # Ersatz für die Metadaten, die der container-Operator unter Docker nicht liefert:
+  # Ohne die ID ließe sich keine Logzeile einem Dienst zuordnen. Der lesbare Name
+  # (api, caddy, …) steckt nicht im Pfad – dafür bräuchte es einen anderen Log-Treiber.
+  transform/container_id:
+    error_mode: ignore
+    log_statements:
+      - context: log
+        statements:
+          - set(log.attributes["container.id"], ExtractPatterns(log.attributes["log.file.path"], "containers/(?P<id>[0-9a-f]+)/")["id"])
 
   # Zweite Verteidigungslinie gegen Zugangstoken in Traces. Die API redigiert bereits an
   # der Quelle (apps/api/src/tracing-redaction.ts); hier greift dieselbe Regel noch einmal
@@ -49,6 +93,14 @@ processors:
           - replace_pattern(span.attributes["url.full"], "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
           - replace_pattern(span.attributes["http.url"], "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
           - replace_pattern(span.attributes["http.target"], "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^&]*", "$${1}$${2}=REDACTED")
+    # Dieselbe Regel für Logzeilen. Zwei Unterschiede zu den Spans: Der Token steht hier
+    # mitten in freiem Text, das Ende des Wertes markiert also auch ein Leerzeichen oder
+    # Anführungszeichen – nicht nur ein `&`, das sonst den Rest der Zeile mitnähme. Und
+    # der Body ist bei einem Textlog eine einzelne Zeichenkette, kein Attribut-Satz.
+    log_statements:
+      - context: log
+        statements:
+          - replace_pattern(log.body, "(?i)([?&])(token|access_token|refresh_token|code|secret|key|password|sig|signature)=[^& \"]*", "$${1}$${2}=REDACTED")
 
 exporters:
   otlp/signoz:                   # umbenannt zur Unterscheidung vom otlp-*Receiver*
@@ -60,10 +112,14 @@ service:
   pipelines:
     metrics:
       receivers: [hostmetrics, docker_stats]
-      processors: [resourcedetection, batch]
+      processors: [resourcedetection, resource, batch]
       exporters: [otlp/signoz]
     traces:                      # NEU
       receivers: [otlp]
-      processors: [resourcedetection, transform/redact_query_tokens, batch]
+      processors: [resourcedetection, resource, transform/redact_query_tokens, batch]
+      exporters: [otlp/signoz]
+    logs:                        # NEU
+      receivers: [file_log]
+      processors: [resourcedetection, resource, transform/container_id, filter/exclude_self, transform/redact_query_tokens, batch]
       exporters: [otlp/signoz]
 
