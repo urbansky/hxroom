@@ -439,7 +439,7 @@ function statusLabel(status: string) {
       <!-- ═══════ UTheme – Sektion mit Gold-Akzent ═══════ -->
       <section class="space-y-4">
         <h2 class="text-xl font-serif font-semibold">UTheme – Gold-Akzent Sektion</h2>
-        <UTheme :ui="{ button: { slots: { base: 'font-serif' } } }">
+        <UTheme :ui="{ button: { base: 'font-serif' } }">
           <div class="flex flex-wrap items-center gap-3">
             <UButton color="secondary">Gold Aktion</UButton>
             <UButton color="secondary" variant="outline">Gold Outline</UButton>

@@ -24,7 +24,7 @@ const open = defineModel<boolean>('open', { required: true })
 const { $api } = useApi()
 const toast = useToast()
 
-const selectedClientId = ref<string | null>(null)
+const selectedClientId = ref<string | undefined>(undefined)
 const selectedOfferId = ref<string | null>(null)
 const pending = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -64,7 +64,7 @@ const canSubmit = computed(() => Boolean(clientId.value) && !pending.value)
 // zweiten Klick auf denselben Knopf – dort soll kein alter Link mehr stehen.
 watch(open, (isOpen) => {
   if (!isOpen) return
-  selectedClientId.value = null
+  selectedClientId.value = undefined
   selectedOfferId.value = offerItems.value.length === 1 ? offerItems.value[0]!.value : null
   errorMessage.value = null
   created.value = null

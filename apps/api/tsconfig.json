@@ -17,6 +17,10 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
+    // baseUrl und moduleResolution "node" (node10) sind seit TypeScript 6 abgekündigt und
+    // fallen in 7.0 weg. Bis zur Umstellung auf node16 – die das Auflösungsverhalten
+    // ändert und eigens geprüft gehört – bleibt die Warnung stummgeschaltet.
+    "ignoreDeprecations": "6.0",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,

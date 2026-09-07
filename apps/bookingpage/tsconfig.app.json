@@ -6,6 +6,8 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
     "noEmit": true,
+    // baseUrl ist seit TypeScript 6 abgekündigt; siehe apps/api/tsconfig.json.
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
