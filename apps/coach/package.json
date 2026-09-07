@@ -11,7 +11,7 @@
   "dependencies": {
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
-    "@iconify-json/tabler": "^1.2.37",
+    "@iconify-json/tabler": "^1.2.38",
     "@nuxt/ui": "^4.11.1",
     "@tiptap/core": "3.31.3",
     "@tiptap/starter-kit": "3.31.3",
@@ -20,7 +20,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.114",
+    "@iconify-json/lucide": "^1.2.130",
     "typescript": "^5.7.0"
   }
 }
