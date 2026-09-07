@@ -1,4 +1,4 @@
-import { Link } from '@react-email/components';
+import { Link } from 'react-email';
 import { MailLayout } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
 import { Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_components/blocks';

@@ -1,4 +1,4 @@
-import { Button, Column, Row, Text } from '@react-email/components';
+import { Button, Column, Row, Text } from 'react-email';
 import type { CSSProperties, ReactNode } from 'react';
 import * as styles from './styles';
 

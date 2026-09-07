@@ -1,4 +1,4 @@
-import { Body, Column, Container, Head, Html, Preview, Row, Text } from '@react-email/components';
+import { Body, Column, Container, Head, Html, Preview, Row, Text } from 'react-email';
 import type { ReactNode } from 'react';
 import { colors, fonts } from './_components/styles';
 
@@ -26,7 +26,9 @@ export function MailLayout({ preview, children }: MailLayoutProps) {
         <meta name="supported-color-schemes" content="light" />
       </Head>
       <Preview>{preview}</Preview>
-      <Body style={{ margin: 0, padding: '40px 16px', backgroundColor: colors.pageBg, fontFamily: fonts.sans }}>
+      {/* `lang` gehört hier wiederholt, obwohl <Html lang="de"> es schon setzt: react-email
+          schreibt sonst ein eigenes lang="en" auf <body> und die Karten-<td>. */}
+      <Body lang="de" style={{ margin: 0, padding: '40px 16px', backgroundColor: colors.pageBg, fontFamily: fonts.sans }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Text style={{ margin: '0 0 16px 4px', fontSize: 22, lineHeight: 1.2, color: colors.wordmark, letterSpacing: '0.02em' }}>
             HxRoom

@@ -1,4 +1,4 @@
-import { Column, Row, Text } from '@react-email/components';
+import { Column, Row, Text } from 'react-email';
 import { offerColor } from '@hxroom/shared';
 import type { ComponentPropsWithoutRef, CSSProperties } from 'react';
 import { colors } from './styles';
