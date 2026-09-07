@@ -15,7 +15,17 @@ COPY apps/admin/package.json apps/admin/
 COPY apps/landing/package.json apps/landing/
 COPY packages/shared/package.json packages/shared/
 COPY packages/ui/package.json packages/ui/
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# `--filter @hxroom/api...`: Gebaut wird nur die API samt @hxroom/shared, die
+# Abhängigkeiten der vier Frontends braucht dieses Image nicht (406 statt 1481 Pakete).
+#
+# `--ignore-scripts`, weil better-sqlite3 sonst kompiliert wird: Es hängt als optionaler
+# Peer an better-auth und landet deshalb auch ohne apps/landing im Baum. Unter Alpine
+# findet prebuild-install nicht immer ein Binary und fällt auf node-gyp zurück, das ohne
+# Python abbricht – daran ist der Build einmal gescheitert. Die API lädt better-sqlite3
+# nie (sie spricht Postgres). Von den drei Paketen in `onlyBuiltDependencies` braucht
+# hier keines seinen Build: esbuild wird nur von drizzle-kit und vitest benutzt, nicht
+# von `nest build`, und das Skript von @nestjs/core ist ein reiner Spendenhinweis.
+RUN --mount=type=cache,id=pnpm-api-deps,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts --filter @hxroom/api...
 
 # ---- Build ----
 FROM deps AS build
@@ -36,7 +46,9 @@ COPY apps/admin/package.json apps/admin/
 COPY apps/landing/package.json apps/landing/
 COPY packages/shared/package.json packages/shared/
 COPY packages/ui/package.json packages/ui/
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
+# Eigene Cache-ID: deps- und production-Stage laufen unter BuildKit parallel und
+# schrieben zuvor in denselben pnpm-Store, was sich in die Quere kommen kann.
+RUN --mount=type=cache,id=pnpm-api-prod,target=/pnpm/store pnpm install --frozen-lockfile --prod --ignore-scripts --filter @hxroom/api...
 COPY --from=build /app/packages/shared/dist packages/shared/dist/
 COPY --from=build /app/apps/api/dist apps/api/dist/
 COPY --from=build /app/apps/api/drizzle apps/api/drizzle/
