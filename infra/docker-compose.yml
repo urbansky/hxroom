@@ -147,8 +147,6 @@ services:
       - S3_SECRET_KEY=${RUSTFS_SECRET_KEY}
       - S3_FORCE_PATH_STYLE=true
       - S3_BUCKET=hxroom-files
-      - OTEL_SERVICE_NAME=hxroom-api
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       # Spätere Phasen:
       # - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       # - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
@@ -159,20 +157,6 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.159.0   # besser pinnen statt :latest
-    user: "0:0"
-    command: ["--config=/etc/otelcol-contrib/config.yaml"]
-    volumes:
-      - ./otel/config.yaml:/etc/otelcol-contrib/config.yaml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /:/hostfs:ro
-    environment:
-      - HOST_PROC=/hostfs/proc
-      - HOST_SYS=/hostfs/sys
-      - HOST_MOUNT_PREFIX=/hostfs
-    restart: unless-stopped
-    
 volumes:
   postgres_data:
   rustfs_data:
