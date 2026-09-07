@@ -251,8 +251,8 @@ importers:
         specifier: ^4.11.1
         version: 4.11.1(f379a9a860b0d25e2fc1c7ca6af4e3bf)
       '@nuxtjs/plausible':
-        specifier: ^3.0.2
-        version: 3.0.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.7)(rollup@4.62.0)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)))
+        specifier: ^4.0.0
+        version: 4.0.0(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.7)(rollup@4.62.0)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)))
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.11.1
@@ -2015,8 +2015,8 @@ packages:
   '@nuxtjs/mdc@0.23.1':
     resolution: {integrity: sha512-H+e/eO/Uj5Apb3YwFQs3X0e6HsIPYEm++/lEDFGuQCvPxUh89idhsZRnYQ5EQgAMge5uTS2hmSYIH4mX8xj+Hw==}
 
-  '@nuxtjs/plausible@3.0.2':
-    resolution: {integrity: sha512-6z01a7XbggSmI4CTWCkDDmLHQNm7wob2dx1QnvpIoo+YEV19298+GsuvlBclXVxXSk7op8r8qJpw25xKo8mzQQ==}
+  '@nuxtjs/plausible@4.0.0':
+    resolution: {integrity: sha512-R2G9BktBVSCG0nDNBSVlC8jDbsYBgrbqmn8wWisiIF9lKfRq99NwIvtw/DLuwexJT5pCYPvBflIof4NS4ZX8Xg==}
 
   '@opentelemetry/api@1.9.1':
     resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
@@ -3824,9 +3824,6 @@ packages:
     resolution: {integrity: sha512-m1Q/RaVOnTp9JxPX+F+Zn7IcLYMzM8kZofDImfsKZd8MbR+ikdOzTeztStWqfrqIxZnYWryyI9ePm3NGjnZgGw==}
     engines: {node: '>=20.19.0'}
 
-  ast-v8-to-istanbul@1.0.0:
-    resolution: {integrity: sha512-1fSfIwuDICFA4LKkCzRPO7F0hzFf0B7+Xqrl27ynQaa+Rh0e1Es0v6kWHPott3lU10AyAr7oKHa65OppjLn3Rg==}
-
   ast-v8-to-istanbul@1.0.6:
     resolution: {integrity: sha512-fvpl29helSO2w/z7utIbrkNXILdrLwDwAMH2I/zPKlGf5244+gf+B4cyS1sANcrPY2h+hWCGSgC8N61s/+AF9A==}
 
@@ -4870,10 +4867,6 @@ packages:
   expand-template@2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
     engines: {node: '>=6'}
-
-  expect-type@1.3.0:
-    resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
-    engines: {node: '>=12.0.0'}
 
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
@@ -7359,10 +7352,6 @@ packages:
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
-
-  tinyrainbow@3.1.0:
-    resolution: {integrity: sha512-Bf+ILmBgretUrdJxzXM0SgXLZ3XfiaUuOj/IKQHuTXip+05Xn+uyEYdVg0kYDipTBcLrCVyUzAPz7QmArb0mmw==}
-    engines: {node: '>=14.0.0'}
 
   tinyrainbow@3.1.1:
     resolution: {integrity: sha512-yau8yJdTt989Mm0Bd/236QnzEiPf2xLLTqUZRUJOo/3CB078LSwzei343DgtJVmfJKJE3TMINY1u42SQsP6mXw==}
@@ -11610,7 +11599,7 @@ snapshots:
       - unplugin
     optional: true
 
-  '@nuxtjs/plausible@3.0.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.7)(rollup@4.62.0)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)))':
+  '@nuxtjs/plausible@4.0.0(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.7)(rollup@4.62.0)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)))':
     dependencies:
       '@nuxt/kit': 4.5.2(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.139.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.1)(rolldown@1.2.7)(rollup@4.62.0)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0))(webpack@5.106.2(esbuild@0.28.1)(lightningcss@1.33.0)))
       '@plausible-analytics/tracker': 0.4.5
@@ -12943,14 +12932,14 @@ snapshots:
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.1.9
-      ast-v8-to-istanbul: 1.0.0
+      ast-v8-to-istanbul: 1.0.6
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-reports: 3.2.0
       magicast: 0.5.4
-      obug: 2.1.3
+      obug: 2.1.4
       std-env: 4.2.0
-      tinyrainbow: 3.1.0
+      tinyrainbow: 3.1.1
       vitest: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@26.5.0)(@vitest/coverage-v8@4.1.9)(vite@8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0))
     optional: true
 
@@ -12973,7 +12962,7 @@ snapshots:
       '@vitest/spy': 4.1.9
       '@vitest/utils': 4.1.9
       chai: 6.2.2
-      tinyrainbow: 3.1.0
+      tinyrainbow: 3.1.1
     optional: true
 
   '@vitest/istanbul-lib-coverage@1.0.1': {}
@@ -13002,7 +12991,7 @@ snapshots:
 
   '@vitest/pretty-format@4.1.9':
     dependencies:
-      tinyrainbow: 3.1.0
+      tinyrainbow: 3.1.1
     optional: true
 
   '@vitest/runner@4.1.9':
@@ -13028,7 +13017,7 @@ snapshots:
     dependencies:
       '@vitest/pretty-format': 4.1.9
       convert-source-map: 2.0.0
-      tinyrainbow: 3.1.0
+      tinyrainbow: 3.1.1
     optional: true
 
   '@volar/language-core@2.4.28':
@@ -13495,13 +13484,6 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.8
       pathe: 2.0.3
-
-  ast-v8-to-istanbul@1.0.0:
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      estree-walker: 3.0.3
-      js-tokens: 10.0.0
-    optional: true
 
   ast-v8-to-istanbul@1.0.6:
     dependencies:
@@ -14509,9 +14491,6 @@ snapshots:
       strip-final-newline: 3.0.0
 
   expand-template@2.0.3: {}
-
-  expect-type@1.3.0:
-    optional: true
 
   expect-type@1.4.0: {}
 
@@ -18259,9 +18238,6 @@ snapshots:
       fdir: 6.5.0(picomatch@4.0.7)
       picomatch: 4.0.7
 
-  tinyrainbow@3.1.0:
-    optional: true
-
   tinyrainbow@3.1.1: {}
 
   to-buffer@1.2.2:
@@ -19044,17 +19020,17 @@ snapshots:
       '@vitest/snapshot': 4.1.9
       '@vitest/spy': 4.1.9
       '@vitest/utils': 4.1.9
-      es-module-lexer: 2.1.0
-      expect-type: 1.3.0
+      es-module-lexer: 2.3.2
+      expect-type: 1.4.0
       magic-string: 0.30.21
-      obug: 2.1.3
+      obug: 2.1.4
       pathe: 2.0.3
       picomatch: 4.0.7
       std-env: 4.2.0
       tinybench: 2.9.0
-      tinyexec: 1.2.4
+      tinyexec: 1.3.0
       tinyglobby: 0.2.17
-      tinyrainbow: 3.1.0
+      tinyrainbow: 3.1.1
       vite: 8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
@@ -19272,7 +19248,7 @@ snapshots:
       browserslist: 4.28.9
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.2
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
@@ -19313,7 +19289,7 @@ snapshots:
       browserslist: 4.28.9
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.2
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
@@ -19354,7 +19330,7 @@ snapshots:
       browserslist: 4.28.9
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
-      es-module-lexer: 2.1.0
+      es-module-lexer: 2.3.2
       eslint-scope: 5.1.1
       events: 3.3.0
       glob-to-regexp: 0.4.1
