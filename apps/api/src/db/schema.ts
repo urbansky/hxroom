@@ -99,6 +99,9 @@ export const invitation = pgTable('invitation', {
   status: text('status').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   inviterId: text('inviter_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  // Seit better-auth 1.7 Pflichtfeld: Die Schema-Prüfung beim Start lehnt sonst jeden
+  // Auth-Request ab. Die übrigen Tabellen setzen createdAt ebenfalls notNull.
+  createdAt: timestamp('created_at').notNull(),
 });
 
 export const bookingPage = pgTable('booking_page', {
