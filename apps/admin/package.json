@@ -12,9 +12,9 @@
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
     "@iconify-json/tabler": "^1.2.37",
-    "@nuxt/ui": "^4.9.0",
+    "@nuxt/ui": "^4.11.1",
     "better-auth": "^1.7.3",
-    "nuxt": "^4.4.8",
+    "nuxt": "^4.5.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {

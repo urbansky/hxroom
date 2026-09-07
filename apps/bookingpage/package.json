@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@nuxt/ui": "^4.5.1",
-    "@tiptap/core": "3.23.6",
-    "@tiptap/starter-kit": "3.23.6",
+    "@nuxt/ui": "^4.11.1",
+    "@tiptap/core": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3",
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
     "tailwindcss": "^4.2.1",

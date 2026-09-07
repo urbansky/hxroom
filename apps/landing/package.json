@@ -11,10 +11,10 @@
   "dependencies": {
     "@hxroom/ui": "workspace:*",
     "@nuxt/content": "^3.14.0",
-    "@nuxt/ui": "^4.5.1",
+    "@nuxt/ui": "^4.11.1",
     "@nuxtjs/plausible": "^3.0.2",
     "better-sqlite3": "^12.10.0",
-    "nuxt": "^4.0.0"
+    "nuxt": "^4.5.2"
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.105",

@@ -4,11 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 // `description` bindet an UEditor (Tiptap) und wird serverseitig gegen
 // richTextDocSchema (@hxroom/shared) validiert – hier bewusst locker typisiert,
 // da Tiptaps eigener Content-Typ nicht mit unserem Zod-Typ deckungsgleich ist.
-// `as any`: @tiptap/starter-kit wird an anderer Stelle im Workspace gegen eine
-// andere @tiptap/pm-Peer-Version aufgelöst, wodurch pnpm zwei strukturell
-// unterschiedliche @tiptap/core-Typinstanzen erzeugt – rein ein TS-Artefakt,
-// zur Laufzeit dieselbe Bibliothek.
-const descriptionExtensions = [StarterKit.configure({ heading: { levels: [2, 3] } })] as any
+const descriptionExtensions = [StarterKit.configure({ heading: { levels: [2, 3] } })]
 
 // Rendert die gespeicherte Beschreibung mit Tiptaps eigenem generateHTML – mit
 // derselben eingeschränkten Extension-Konfiguration wie im UEditor. generateHTML

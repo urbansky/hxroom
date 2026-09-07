@@ -21,7 +21,9 @@ useHead({
   script: [
     {
       type: 'application/ld+json',
-      children: JSON.stringify({
+      // `textContent` statt des früheren `children`: unhead 3 typisiert Script-Tags nach
+      // ihrem `type`, und für ld+json ist textContent die verlangte Schreibweise.
+      textContent: JSON.stringify({
         '@context': 'https://schema.org',
         '@graph': [
           {

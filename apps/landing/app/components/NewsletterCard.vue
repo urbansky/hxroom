@@ -216,7 +216,7 @@ async function onSubmit() {
   stroke: var(--color-sage-500);
 }
 .success-title {
-  //font-family: var(--font-serif), Georgia, serif;
+  /* font-family: var(--font-serif), Georgia, serif; */
   font-size: 22px;
   color: var(--ui-text-highlighted);
   margin-bottom: 10px;
