@@ -15,7 +15,7 @@
     "@nuxt/ui": "^4.9.0",
     "better-auth": "^1.7.3",
     "nuxt": "^4.4.8",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.114",
