@@ -164,9 +164,9 @@ export const clients = pgTable('clients', {
   note:           text('note'), // interne Anmerkung des Coachs, nie für den Klienten sichtbar
   createdAt:      timestamp('created_at').notNull().defaultNow(),
   updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
-}, (table) => ({
-  uniqueEmailPerOrg: unique().on(table.organizationId, table.email),
-}));
+}, (table) => [
+  unique().on(table.organizationId, table.email),
+]);
 
 // Buchungen durchlaufen einen Bestätigungsschritt per E-Mail-Link (siehe
 // doc/idee-klienten-matching.md): Status startet als 'pending', wird erst durch
@@ -211,14 +211,14 @@ export const bookings = pgTable('bookings', {
   cancellationReason: text('cancellation_reason'),
   createdAt:          timestamp('created_at').notNull().defaultNow(),
   updatedAt:          timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
-}, (table) => ({
-  uniqueAccessToken: unique().on(table.clientAccessToken),
+}, (table) => [
+  unique().on(table.clientAccessToken),
   // Partieller Index: eine stornierte/verfallene Buchung blockiert den Zeitpunkt
   // nicht dauerhaft für neue Buchungen.
-  noDoubleBookingAtSameStart: uniqueIndex('bookings_org_start_active_unique')
+  uniqueIndex('bookings_org_start_active_unique')
     .on(table.organizationId, table.startTime)
     .where(sql`status != 'cancelled'`),
-}));
+]);
 
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
 // doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit
