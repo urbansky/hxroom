@@ -6,7 +6,7 @@ import {
   callWindowClosesAt,
   callWindowOpensAt,
 } from '@hxroom/shared';
-import { canAdmit, canEnd, resolveCallState, type CallBookingState } from './call-access';
+import { canAdmit, canEnd, mayJoinRoom, resolveCallState, type CallBookingState } from './call-access';
 
 // Sitzung von 10:00 bis 11:00; Fenster damit 09:00 bis 13:00.
 const START = new Date('2026-08-20T10:00:00.000Z');
@@ -165,5 +165,34 @@ describe('canEnd', () => {
     expect(canEnd('waiting')).toBe(false);
     expect(canEnd('too_early')).toBe(false);
     expect(canEnd('ended')).toBe(false);
+  });
+});
+
+describe('mayJoinRoom', () => {
+  // Für den Klienten ist der Warteraum ein Zustand, kein Raum – vor dem Einlassen gibt es
+  // nichts zu verbinden.
+  it('gibt dem Klienten erst nach dem Einlassen einen Token', () => {
+    expect(mayJoinRoom('admitted', 'client')).toBe(true);
+    expect(mayJoinRoom('open', 'client')).toBe(false);
+    expect(mayJoinRoom('waiting', 'client')).toBe(false);
+  });
+
+  // Der Coach lässt ein; bekäme er seinen Token erst danach, träte der Klient in einen
+  // leeren Raum und wartete auf jemanden, der sich gerade erst verbindet.
+  it('lässt den Coach schon vor dem Einlassen in den Raum', () => {
+    expect(mayJoinRoom('open', 'coach')).toBe(true);
+    expect(mayJoinRoom('waiting', 'coach')).toBe(true);
+    expect(mayJoinRoom('admitted', 'coach')).toBe(true);
+  });
+
+  // Ein Token ist die Erlaubnis, in ein Gespräch zu treten – außerhalb des Fensters und
+  // nach dem Ende gibt es sie für niemanden, auch nicht für den Coach.
+  it('gibt außerhalb des Fensters und nach dem Ende keinem einen Token', () => {
+    for (const role of ['coach', 'client'] as const) {
+      expect(mayJoinRoom('too_early', role)).toBe(false);
+      expect(mayJoinRoom('expired', role)).toBe(false);
+      expect(mayJoinRoom('ended', role)).toBe(false);
+      expect(mayJoinRoom('cancelled', role)).toBe(false);
+    }
   });
 });

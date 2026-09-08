@@ -373,7 +373,7 @@ export const CallState = z.enum([
   'too_early', // Zugangsfenster noch nicht offen – opensAt sagt, ab wann
   'open',      // Fenster offen, der Klient hat den Warteraum noch nicht betreten
   'waiting',   // Klient ist im Warteraum, der Coach hat noch nicht eingelassen
-  'admitted',  // Coach hat eingelassen (ab B2 kommt hier der LiveKit-Token dazu)
+  'admitted',  // Coach hat eingelassen – ab hier trägt die Antwort den LiveKit-Token
   'ended',     // Sitzung wurde beendet
   'cancelled', // Buchung abgesagt
   'expired',   // Zugangsfenster vorbei oder Buchung nie bestätigt
@@ -411,6 +411,18 @@ export const callAccessResponseSchema = z.object({
   // dem Zustand statt in ihm: waitingSince ist eine Tatsache der Buchung, clientOnline
   // eine Momentaufnahme des Servers.
   clientOnline: z.boolean(),
+  // Der Ausweis für den LiveKit-Raum (B2), null solange dieser Aufrufer nicht verbinden
+  // darf: beim Klienten vor dem Einlassen, bei beiden außerhalb des Fensters.
+  //
+  // url und token gehören zusammen und stehen deshalb in einem Objekt statt in zwei
+  // Feldern. Die URL geht mit, weil sie sich zwischen lokal (ws://livekit.hxroom.localhost)
+  // und Betrieb (wss://livekit.hxroom.de) unterscheidet – eine zweite Konstante im Frontend
+  // liefe auseinander, wie es die Fenstergrenzen vor A5 taten.
+  //
+  // Der Token ist kurzlebig (10 Minuten) und wird bei jedem Abruf und jedem SSE-Ereignis
+  // neu ausgestellt. Er begrenzt nur das Zeitfenster zum Verbinden, nicht die
+  // Gesprächsdauer (technisches-konzept.md §8).
+  livekit: z.object({ url: z.string(), token: z.string() }).nullable(),
 });
 export type CallAccessResponse = z.infer<typeof callAccessResponseSchema>;
 

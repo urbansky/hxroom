@@ -60,3 +60,23 @@ export function canAdmit(state: CallState): boolean {
 export function canEnd(state: CallState): boolean {
   return state === 'admitted';
 }
+
+export type CallRole = 'coach' | 'client';
+
+/**
+ * Darf dieser Aufrufer jetzt einen LiveKit-Token bekommen (B2)?
+ *
+ * Die einzige Stelle, an der Coach und Klient unterschiedlich behandelt werden – und der
+ * Unterschied ist der Warteraum: Für den Klienten ist er ein Zustand, kein Raum (§8), vor
+ * dem Einlassen gibt es also nichts zu verbinden. Der Coach dagegen ist derjenige, der
+ * einlässt; bekäme er seinen Token erst danach, träte der Klient in einen leeren Raum und
+ * wartete auf jemanden, der sich gerade erst verbindet.
+ *
+ * Bewusst hier und nicht im Service: Wer ein Token zu früh oder an den Falschen ausgibt,
+ * öffnet ein fremdes Gespräch – der Raumname entsteht aus der Booking-ID und ist ratbar.
+ * Diese Entscheidung gehört zu den anderen, die ohne Datenbank prüfbar sind.
+ */
+export function mayJoinRoom(state: CallState, role: CallRole): boolean {
+  if (state === 'admitted') return true;
+  return role === 'coach' && (state === 'open' || state === 'waiting');
+}

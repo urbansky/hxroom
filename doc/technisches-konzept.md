@@ -436,20 +436,36 @@ room-name: session_${bookingId}
 
 ### Token-Generierung (NestJS)
 
+Umgesetzt in `call/livekit-token.ts` als reine Funktionen mit dem `ConfigService` als
+Parameter – dasselbe Muster wie `bookings/booking-urls.ts`, damit der Aufbau eines Tokens
+ohne Nest-DI testbar bleibt.
+
 ```typescript
-// Vereinfacht – läuft im BookingService
-const accessToken = new AccessToken(
-  process.env.LIVEKIT_API_KEY,
-  process.env.LIVEKIT_API_SECRET,
-  { identity: participantIdentity, ttl: '10m' }
-);
-accessToken.addGrant({
-  room: `session_${bookingId}`,
+const token = new AccessToken(apiKey, apiSecret, {
+  identity: callIdentity(role, id),   // coach_${userId} | client_${bookingId}
+  name: displayName,                  // Anzeigename der Gegenseite auf der Bühne
+  ttl: '10m',
+});
+token.addGrant({
+  room: callRoomName(bookingId),      // session_${bookingId}
   roomJoin: true,
   canPublish: true,
   canSubscribe: true,
+  canPublishData: true,               // für die Signale während der Sitzung (B6)
 });
+return token.toJwt();                 // asynchron: gibt ein Promise zurück
 ```
+
+Kein `roomCreate`: Den Raum legt LiveKit beim ersten Join selbst an
+(`room_auto_create`). `roomCreate` wäre ein Admin-Grant für die RoomService-API und hat in
+einem Token, das an den Browser geht, nichts zu suchen.
+
+Der Token geht nicht über einen eigenen Endpunkt hinaus, sondern als Feld `livekit` in der
+bestehenden `CallAccessResponse` – zusammen mit der `LIVEKIT_URL`, die der Browser nicht
+selbst kennen darf (lokal `ws://`, im Betrieb `wss://`). Ausgestellt wird er bei jedem
+Abruf neu; wer ihn wann bekommt, entscheidet `mayJoinRoom()` in `call/call-access.ts`:
+der Klient ab `admitted`, der Coach schon ab `open` – er lässt ein und muss vor dem
+Klienten im Raum sein.
 
 **Zwei verschiedene Zeitgrenzen, nicht verwechseln:** Das Zugangsfenster aus §7 (Beginn −60 min bis Ende +120 min) entscheidet, wann der Buchungstoken den Warteraum öffnet. Die TTL des LiveKit-Tokens begrenzt dagegen nur das Zeitfenster, in dem er zum *Verbinden* benutzt werden kann, nicht die Gesprächsdauer; eine bestehende Verbindung bleibt darüber hinaus bestehen. 10 Minuten reichen deshalb aus und halten die Gültigkeit eines abgefangenen Tokens kurz.
 

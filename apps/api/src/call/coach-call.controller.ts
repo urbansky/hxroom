@@ -1,12 +1,17 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, Post, Sse, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
+import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
 import { CallService } from './call.service';
 
 /**
  * Call-Screen des Coachs (doc/videocall-umsetzungsplan.md A1). Zugriff über die
  * better-auth Session; welche Buchung er sehen darf, entscheidet allein seine
  * activeOrganizationId.
+ *
+ * Seit B2 geht zusätzlich die userId an den Service: Sie wird zur LiveKit-Identität
+ * (coach_${userId}). Die organizationId taugt dafür nicht – im Studio-Plan teilen sich
+ * mehrere Coachs eine Organisation und würden einander aus dem Raum werfen.
  */
 @Controller('bookings')
 @UseGuards(AuthGuard)
@@ -14,9 +19,13 @@ export class CoachCallController {
   constructor(private readonly callService: CallService) {}
 
   @Get(':id/call')
-  find(@CurrentOrganization() org: { id: string } | undefined, @Param('id') id: string) {
-    if (!org) throw new UnauthorizedException('No active organization');
-    return this.callService.getForCoach(org.id, id);
+  find(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @CurrentUser() user: SessionUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org || !user) throw new UnauthorizedException('No active organization');
+    return this.callService.getForCoach(org.id, user.id, id);
   }
 
   /**
@@ -28,22 +37,34 @@ export class CoachCallController {
    * `credentials: true`. Im Browser braucht es dafür `withCredentials`.
    */
   @Sse(':id/call/events')
-  events(@CurrentOrganization() org: { id: string } | undefined, @Param('id') id: string) {
-    if (!org) throw new UnauthorizedException('No active organization');
-    return this.callService.streamForCoach(org.id, id);
+  events(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @CurrentUser() user: SessionUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org || !user) throw new UnauthorizedException('No active organization');
+    return this.callService.streamForCoach(org.id, user.id, id);
   }
 
   @Post(':id/call/admit')
   @HttpCode(HttpStatus.OK)
-  admit(@CurrentOrganization() org: { id: string } | undefined, @Param('id') id: string) {
-    if (!org) throw new UnauthorizedException('No active organization');
-    return this.callService.admit(org.id, id);
+  admit(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @CurrentUser() user: SessionUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org || !user) throw new UnauthorizedException('No active organization');
+    return this.callService.admit(org.id, user.id, id);
   }
 
   @Post(':id/call/end')
   @HttpCode(HttpStatus.OK)
-  end(@CurrentOrganization() org: { id: string } | undefined, @Param('id') id: string) {
-    if (!org) throw new UnauthorizedException('No active organization');
-    return this.callService.end(org.id, id);
+  end(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @CurrentUser() user: SessionUser | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org || !user) throw new UnauthorizedException('No active organization');
+    return this.callService.end(org.id, user.id, id);
   }
 }

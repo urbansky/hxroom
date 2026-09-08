@@ -6,7 +6,7 @@ import { CallService } from './call.service';
 import { CallEventsService } from './call-events.service';
 
 // Eigenes Modul statt einer Erweiterung von BookingsModule: hier liegt seit A2 der
-// SSE-Kanal, ab B2 kommen LiveKit-Token-Ausgabe und Webhooks dazu.
+// SSE-Kanal (A2) und seit B2 die LiveKit-Token-Ausgabe; die Webhooks kommen in B6 dazu.
 //
 // CallEventsService wird exportiert, damit auch Zustandswechsel außerhalb dieses Moduls
 // gemeldet werden können – etwa die Absage durch den Coach (CoachBookingsService).

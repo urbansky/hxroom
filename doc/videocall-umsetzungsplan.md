@@ -125,9 +125,23 @@ Umgesetzt als `livekit/livekit-server:v1.13.6` in beiden Compose-Dateien, gepinn
 
 **Nicht vergessen beim Deployment:** Die Medien laufen am Reverse Proxy vorbei. In der Hetzner-Cloud-Firewall müssen 7881/tcp und 7882/udp eingehend offen sein; fehlt die Freigabe, verbindet sich der Client und das Bild bleibt trotzdem schwarz.
 
-### B2 · LiveKit-Token-Ausgabe in der API
+### B2 · LiveKit-Token-Ausgabe in der API ✅ *(umgesetzt 2026-09-08)*
 
 Raum `session_${bookingId}`, getrennte Identitäten `coach_${userId}` und `client_${bookingId}`, Token-Laufzeit 10 Minuten (§8). Hängt sich direkt an die Prüfung aus A1 – das Token ist nur die zusätzliche Rückgabe im Zustand „eingelassen". Klein und sicher, weil die Berechtigungslogik bereits steht und getestet ist. Die Prüfung darf hier **nicht** dupliziert werden.
+
+Umgesetzt als `call/livekit-token.ts` (reine Funktionen mit dem `ConfigService` als Parameter, Muster `booking-urls.ts`) plus `mayJoinRoom()` in `call-access.ts`. Kein eigener Endpunkt: Das Token geht als Feld `livekit: { url, token } | null` in der bestehenden `CallAccessResponse` mit – beide Wege dorthin haben ihre Prüfung schon hinter sich, ein zweiter Endpunkt bräuchte sie ein zweites Mal.
+
+**Der Coach bekommt sein Token früher als der Klient**, nämlich ab `open`. Der Klient erst ab `admitted` – für ihn ist der Warteraum ein Zustand, kein Raum, vorher gibt es nichts zu verbinden. Beim Coach ist es umgekehrt: Er ist derjenige, der einlässt; bekäme er sein Token erst danach, träte der Klient in einen leeren Raum und wartete auf jemanden, der sich gerade erst verbindet. Das ist der einzige Punkt, an dem die beiden Rollen unterschiedlich behandelt werden, und er steht als eine Zeile in `mayJoinRoom()`.
+
+**Die TTL löst sich ohne Sonderweg.** Zehn Minuten Token-Laufzeit gegen bis zu 60 Minuten Wartezeit klingt nach einem Widerspruch, ist aber keiner: Da jedes SSE-Ereignis den frisch geladenen Zustand trägt (A2), entsteht das Token genau in dem Ereignis, das den Einlass meldet – und bei jedem Reconnect erneut. Es wird bei jedem Abruf neu ausgestellt, statt irgendwo zwischengelagert zu werden.
+
+**Die userId musste erst bis zum Service kommen.** `coach_${userId}` verlangt etwas, das der Coach-Controller nicht durchreichte – er kannte nur `@CurrentOrganization()`. Alle vier Endpunkte tragen jetzt zusätzlich `@CurrentUser()`. Die organizationId als Identität wäre weniger invasiv und falsch gewesen: Im Studio-Plan teilen sich mehrere Coachs eine Organisation und würden einander mit `DUPLICATE_IDENTITY` aus dem Raum werfen.
+
+Der Anzeigename der Gegenseite geht als `name` mit ins Token, damit die Bühne in B4/B5 Namen zeigen kann, ohne eine eigene Zuordnung zu bauen. `canPublishData` ist gleich mit vergeben – B6 will „Coach beendet die Sitzung" über den Data-Channel schicken, und ein Nachrüsten müsste die Token-Ausgabe erneut anfassen.
+
+**Gefunden dabei:** Das Snippet in §8 zeigte `toJwt()` synchron; die Methode gibt seit dem v2-SDK ein Promise zurück. §8 ist nachgezogen.
+
+Abnahme per HTTP gegen einen Spontan-Termin, ohne Browser: Klient vor dem Einlassen `livekit: null`, Coach im selben Moment mit Token; nach `admit` beide mit Token; nach `end` beide wieder ohne. Falscher `clientAccessToken` 401, fremde Buchung 404, jeweils ohne Token in der Antwort. Der eigentliche Beweis war der Signaling-Endpunkt von LiveKit selbst: Beide Token ergaben ein `101 Switching Protocols`, ein um ein Zeichen verändertes ein `401` – ein selbst dekodiertes JWT hätte nur bestätigt, was wir hineingeschrieben haben.
 
 ### B3 · `packages/livekit` übernehmen und entkernen
 

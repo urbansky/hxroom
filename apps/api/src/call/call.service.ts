@@ -1,4 +1,5 @@
 import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException, type MessageEvent } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Observable, concat, concatMap, defer, finalize, interval, map, merge, of } from 'rxjs';
 import { and, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
@@ -6,12 +7,21 @@ import { bookings } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { tokenMatches } from '../common/client-token';
 import { callWindowClosesAt, callWindowOpensAt } from '@hxroom/shared';
-import { canAdmit, canEnd, resolveCallState } from './call-access';
+import { canAdmit, canEnd, mayJoinRoom, resolveCallState } from './call-access';
 import { CallEventsService } from './call-events.service';
+import { callIdentity, callRoomName, createCallToken, livekitUrl } from './livekit-token';
 import type { CallAccessResponse } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
 
 type BookingRow = typeof bookingsTable.$inferSelect;
+
+/**
+ * Wer fragt. Die Antwortform ist für beide Rollen dieselbe (A1), der LiveKit-Token ist es
+ * nicht: Er trägt eine rollengetrennte Identität und wird zu unterschiedlichen Zeitpunkten
+ * ausgegeben. Als Objekt statt als zwei Parameter, damit die userId nicht ohne Rolle
+ * durchgereicht werden kann.
+ */
+type CallActor = { role: 'coach'; userId: string } | { role: 'client' };
 
 // Abstand der Heartbeats. Kurz genug für die üblichen Leerlaufgrenzen von Proxys
 // (60 Sekunden), lang genug, um nicht selbst ins Gewicht zu fallen.
@@ -23,7 +33,7 @@ const HEARTBEAT_INTERVAL_MS = 25_000;
  * Hier liegt die einzige Mandantengrenze des Calls: Der Raumname entsteht deterministisch
  * aus der Booking-ID und ist damit ratbar (doc/technisches-konzept.md §8) – die Trennung
  * hängt allein an dieser Prüfung. Beim Coach entscheidet die organizationId, beim Klienten
- * der clientAccessToken. Ab B2 hängt die Ausgabe des LiveKit-Tokens an denselben Methoden,
+ * der clientAccessToken. Die Ausgabe des LiveKit-Tokens (B2) hängt an denselben Methoden,
  * damit die Prüfung nicht ein zweites Mal geschrieben wird.
  */
 @Injectable()
@@ -32,13 +42,14 @@ export class CallService {
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly organizationService: OrganizationService,
     private readonly events: CallEventsService,
+    private readonly config: ConfigService,
   ) {}
 
   // --- Klient: Ausweis ist der Token aus dem Mail-Link ---
 
   async getForClient(bookingId: string, token: string): Promise<CallAccessResponse> {
     const booking = await this.loadForClient(bookingId, token);
-    return this.toResponse(booking);
+    return this.toResponse(booking, { role: 'client' });
   }
 
   /**
@@ -71,7 +82,7 @@ export class CallService {
     });
 
     if (changed) this.events.notifyChanged(bookingId);
-    return this.toResponse(booking);
+    return this.toResponse(booking, { role: 'client' });
   }
 
   /**
@@ -99,22 +110,26 @@ export class CallService {
 
   // --- Coach: Ausweis ist die better-auth Session ---
 
-  async getForCoach(organizationId: string, bookingId: string): Promise<CallAccessResponse> {
+  async getForCoach(organizationId: string, userId: string, bookingId: string): Promise<CallAccessResponse> {
     const booking = await this.findOwn(organizationId, bookingId);
-    return this.toResponse(booking);
+    return this.toResponse(booking, { role: 'coach', userId });
   }
 
-  async streamForCoach(organizationId: string, bookingId: string): Promise<Observable<MessageEvent>> {
-    const initial = await this.getForCoach(organizationId, bookingId);
-    return this.stream(bookingId, initial, () => this.getForCoach(organizationId, bookingId));
+  async streamForCoach(
+    organizationId: string,
+    userId: string,
+    bookingId: string,
+  ): Promise<Observable<MessageEvent>> {
+    const initial = await this.getForCoach(organizationId, userId, bookingId);
+    return this.stream(bookingId, initial, () => this.getForCoach(organizationId, userId, bookingId));
   }
 
   /**
    * Einlassen des Klienten. Bewusst ohne die Bedingung, dass er bereits wartet: zwischen
    * dem Klick des Coachs und dem Eintreffen des Klienten läge sonst ein Rennen.
    */
-  async admit(organizationId: string, bookingId: string): Promise<CallAccessResponse> {
-    return this.transition(organizationId, bookingId, {
+  async admit(organizationId: string, userId: string, bookingId: string): Promise<CallAccessResponse> {
+    return this.transition(organizationId, userId, bookingId, {
       // Zweimal einlassen ist kein Fehler, sondern derselbe Zustand – der Coach klickt
       // erfahrungsgemäß nach, wenn beim Klienten nicht sofort etwas passiert.
       alreadyDone: (state) => state === 'admitted',
@@ -129,8 +144,8 @@ export class CallService {
    * die Sitzung erstmals als gehalten (HELD_SESSION_STATUSES) und taucht in der
    * Klientenliste und der Betreiber-Auswertung auf.
    */
-  async end(organizationId: string, bookingId: string): Promise<CallAccessResponse> {
-    return this.transition(organizationId, bookingId, {
+  async end(organizationId: string, userId: string, bookingId: string): Promise<CallAccessResponse> {
+    return this.transition(organizationId, userId, bookingId, {
       alreadyDone: (state) => state === 'ended',
       allowed: canEnd,
       values: () => ({ callEndedAt: new Date(), status: 'completed' as const }),
@@ -182,6 +197,7 @@ export class CallService {
    */
   private async transition(
     organizationId: string,
+    userId: string,
     bookingId: string,
     step: {
       alreadyDone: (state: ReturnType<typeof resolveCallState>) => boolean;
@@ -211,7 +227,7 @@ export class CallService {
     // No-Op-Pfad oben ist der Doppelklick des Coachs; als Ereignis gemeldet, käme er beim
     // Klienten als zweiter Zustandswechsel an.
     if (changed) this.events.notifyChanged(bookingId);
-    return this.toResponse(booking);
+    return this.toResponse(booking, { role: 'coach', userId });
   }
 
   private async loadForClient(bookingId: string, token: string): Promise<BookingRow> {
@@ -236,24 +252,63 @@ export class CallService {
 
   // Eine Antwortform für beide Rollen (doc/videocall-umsetzungsplan.md A1). Der
   // clientAccessToken darf sie nie enthalten – er geht ausschließlich per E-Mail hinaus.
-  private async toResponse(booking: BookingRow): Promise<CallAccessResponse> {
+  private async toResponse(booking: BookingRow, actor: CallActor): Promise<CallAccessResponse> {
     const org = await this.organizationService.findById(booking.organizationId);
     const coach = await this.organizationService.findOwnerContact(booking.organizationId);
+    const state = resolveCallState(booking, new Date());
+    const coachName = coach?.name ?? org.name;
 
     return {
       bookingId:    booking.id,
-      state:        resolveCallState(booking, new Date()),
+      state,
       start:        booking.startTime.toISOString(),
       end:          booking.endTime.toISOString(),
       offerName:    booking.offerName,
       offerId:      booking.offerId,
-      coachName:    coach?.name ?? org.name,
+      coachName,
       clientName:   booking.clientName,
       opensAt:      callWindowOpensAt(booking.startTime).toISOString(),
       closesAt:     callWindowClosesAt(booking.endTime).toISOString(),
       waitingSince: booking.clientTokenUsedAt?.toISOString() ?? null,
       admittedAt:   booking.admittedAt?.toISOString() ?? null,
       clientOnline: this.events.isClientOnline(booking.id),
+      livekit:      await this.livekitAccess(booking, actor, state, coachName),
+    };
+  }
+
+  /**
+   * Der Ausweis für den LiveKit-Raum (B2). Hängt bewusst hier und nicht an einem eigenen
+   * Endpunkt: Beide Wege hierher – der des Klienten über den clientAccessToken, der des
+   * Coachs über die organizationId – haben ihre Prüfung bereits hinter sich. Ein zweiter
+   * Endpunkt bräuchte dieselbe Prüfung ein zweites Mal, und genau dort läuft so etwas
+   * irgendwann auseinander (§8).
+   *
+   * Ausgestellt wird bei jedem Abruf neu. Das klingt verschwenderisch, löst aber die
+   * Spanne zwischen zehn Minuten Token-Laufzeit und bis zu einer Stunde Wartezeit ohne
+   * Sonderweg: Da jedes SSE-Ereignis den frisch geladenen Zustand trägt (siehe stream()),
+   * entsteht der Token genau in dem Ereignis, das den Einlass meldet – und bei jedem
+   * Reconnect erneut.
+   */
+  private async livekitAccess(
+    booking: BookingRow,
+    actor: CallActor,
+    state: ReturnType<typeof resolveCallState>,
+    coachName: string,
+  ): Promise<CallAccessResponse['livekit']> {
+    if (!mayJoinRoom(state, actor.role)) return null;
+
+    const coach = actor.role === 'coach';
+
+    return {
+      url: livekitUrl(this.config),
+      token: await createCallToken(this.config, {
+        room: callRoomName(booking.id),
+        identity: callIdentity(actor.role, coach ? actor.userId : booking.id),
+        // Der Anzeigename der Gegenseite steht damit im Raum, ohne dass die Bühne ihn
+        // gesondert zuordnen muss. Beide kennen ihn ohnehin, und LiveKit läuft
+        // self-hosted – kein neuer Empfänger personenbezogener Daten.
+        displayName: coach ? coachName : booking.clientName,
+      }),
     };
   }
 }
