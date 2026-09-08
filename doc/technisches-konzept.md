@@ -102,10 +102,11 @@ Es gibt zwei Compose-Dateien in `infra/`:
 Die Apps (api, coach, bookingpage, admin, landing) laufen lokal per `pnpm dev`. Docker übernimmt nur die Infrastruktur:
 
 - **PostgreSQL** (Port 5433 auf dem Host, 5432 im Container)
-- **RustFS** als S3-kompatibler Object Store (siehe `docker-compose-test-rustfs.yml`), Console auf Port 9001, S3-API auf Port 9000
+- **RustFS** als S3-kompatibler Object Store (siehe `doc/s3-verzeichnisschema.md`), Console auf Port 9001, S3-API auf Port 9000
 - **Caddy** als Reverse Proxy: routet `*.hxroom.localhost` auf die lokalen pnpm-Dev-Server
+- **LiveKit** (Signaling 7880, Medien 7881/tcp und 7882/udp), erreichbar als `livekit.hxroom.localhost`
 
-Weitere Services (Redis, LiveKit, Whisper) werden ergänzt, wenn sie lokal benötigt werden.
+Weitere Services (Redis, Whisper) werden ergänzt, wenn sie lokal benötigt werden.
 
 ### Produktion (`docker-compose.yml`)
 
@@ -115,16 +116,49 @@ Alle Services laufen als Container auf dem Hetzner-Host:
 services:
   api, coach, bookingpage, admin, landing   # gebuildete App-Images
   postgres:   image: postgres:17-alpine
-  redis:      image: redis:7-alpine
-  livekit:    image: livekit/livekit-server:latest
-  livekit-egress: image: livekit/egress:latest   # Recordings → S3
-  whisper:    build: ./infra/whisper             # faster-whisper HTTP-Wrapper
+  rustfs:     image: rustfs/rustfs:latest        # S3-kompatibel, bis zum Produktiv-Launch
+  livekit:    image: livekit/livekit-server:v1.13.6
   caddy:      build: ./infra/caddy               # mit IONOS-DNS-Plugin für Wildcard-TLS
+
+# Noch nicht gebaut, kommen mit ihrer Phase:
+#  redis:           # erst mit Egress oder einer zweiten API-Instanz (§8)
+#  livekit-egress:  # Recordings → S3 (Phase 6)
+#  whisper:         # faster-whisper HTTP-Wrapper (Phase 6)
 ```
 
 **Object Storage – phasenweiser Ansatz:** Bis zum Produktiv-Launch läuft **RustFS** self-hosted im Compose-Stack (Entwicklung und Pre-Launch-Server identisch konfiguriert). Zum Launch erfolgt der Wechsel auf **Hetzner Object Storage** (extern, S3-kompatibel) – da der S3-Client-Code identisch bleibt, ändern sich nur `S3_ENDPOINT`, `S3_REGION` und `S3_FORCE_PATH_STYLE` in der Umgebungskonfiguration; RustFS entfällt dann aus dem Compose-Stack.
 
 **Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
+
+### Eingehende Ports und Hetzner-Cloud-Firewall
+
+Alles, was von außen erreichbar sein muss, steht hier – die Liste ist die Vorlage für die
+Regeln der **Hetzner-Cloud-Firewall**:
+
+| Port | Protokoll | Dienst | Grund |
+|---|---|---|---|
+| 22 | TCP | SSH | Serverzugang und Tunnel (siehe unten). Nicht Teil des Compose-Stacks. |
+| 80 | TCP | Caddy | HTTP → HTTPS-Weiterleitung und ACME-Fallback |
+| 443 | TCP | Caddy | HTTPS für alle Web-Oberflächen und die API |
+| 443 | UDP | Caddy | HTTP/3 (QUIC) |
+| 7881 | TCP | LiveKit | Medien-Fallback, wenn UDP blockiert ist (Firmennetze) |
+| 7882 | UDP | LiveKit | Medien im Normalfall (ICE/DTLS/SRTP) |
+
+**Der Rest bleibt bewusst zu.** Postgres (5432) und RustFS (9000/9001) sind im Compose an
+`127.0.0.1` gebunden – vom Host aus erreichbar, aus dem Internet nicht; man kommt über
+einen SSH-Tunnel heran. Das LiveKit-Signaling (7880) ist in Produktion gar nicht auf den
+Host veröffentlicht: Caddy erreicht es über das Docker-Netz, von außen führt der einzige
+Weg über `livekit.hxroom.de` (443). Lokal liegt es auf `127.0.0.1:7880`, damit das
+LiveKit-CLI ohne Umweg drankommt (§15).
+
+Die Bindung an `127.0.0.1` ist die eigentliche Schutzschicht – die Firewall ist die
+zweite. Wer einen Port veröffentlichen will, muss beides ändern.
+
+**LiveKit ist der erste Dienst, der an Caddy vorbeigeht.** Bis dahin war die Firewall
+trivial: Was nicht Caddy war, hörte auf `127.0.0.1`. Die Medien lassen sich nicht durch
+einen HTTP-Reverse-Proxy leiten, deshalb brauchen 7881 und 7882 eine eigene Freigabe.
+Fehlt sie, verbindet sich der Client erfolgreich (das Signaling geht ja über 443) und das
+Bild bleibt trotzdem schwarz – ein Fehlerbild, das man leicht im Frontend sucht.
 
 ---
 
@@ -361,17 +395,36 @@ Der Videocall verteilt sich auf mehrere Ebenen:
 LiveKit läuft als Docker-Container auf demselben Hetzner-Server. Die Konfiguration (`livekit.yaml`) definiert TURN-Server, Redis-Verbindung für Cluster-State und API-Keys.
 
 ```yaml
-# infra/livekit/livekit.yaml
+# infra/livekit/livekit.yaml (Produktion)
 port: 7880
 rtc:
   tcp_port: 7881
   udp_port: 7882
   use_external_ip: true
-redis:
-  address: redis:6379
-keys:
-  LIVEKIT_API_KEY: LIVEKIT_API_SECRET
 ```
+
+Die Schlüssel stehen bewusst **nicht** in der Datei, sondern kommen als `LIVEKIT_KEYS`
+(Format `key: secret`) aus der Umgebung – so bleibt die Konfiguration im Repo und das
+Geheimnis in `infra/.env`.
+
+**Kein Redis:** LiveKit braucht Redis erst für mehrere Instanzen oder für Egress
+(Phase 6). Der Stack fährt eine Instanz, ein Redis-Container existiert nicht.
+
+**Zwei Konfigurationsdateien**, analog zu `Caddyfile` / `Caddyfile.dev`: In
+`livekit.dev.yaml` steht statt `use_external_ip: true` ein `node_ip: 127.0.0.1`. Der
+Unterschied ist nicht kosmetisch – LiveKit annonciert dem Client eine IP als
+ICE-Kandidat. Lokal läuft der Browser auf dem Host und LiveKit im Container; annoncierte
+der Server dort seine öffentliche IP, zeigte der Kandidat ins Leere und die Verbindung
+scheiterte ohne brauchbare Fehlermeldung.
+
+**Ein UDP-Mux-Port statt einer Range:** Üblich wäre `port_range_start/end` über
+50000–60000. Unter Docker ist das keine Option – pro gemapptem Port entsteht eine eigene
+Weiterleitung, eine Range dieser Größe macht den Start des Stacks unbrauchbar langsam.
+
+**Caddy trägt nur das Signaling.** Über `livekit.hxroom.de` läuft die HTTP- und
+WebSocket-Verbindung auf Port 7880; die Medien gehen am Reverse Proxy vorbei direkt auf
+7881/tcp und 7882/udp und brauchen deshalb eine eigene Freigabe – die Portliste steht in
+§4, „Eingehende Ports und Hetzner-Cloud-Firewall".
 
 ### Raummodell
 
@@ -950,7 +1003,7 @@ export const organizationBilling = pgTable('organization_billing', {
 ```bash
 # Starten der lokalen Umgebung
 docker compose -f infra/docker-compose.dev.yml up -d
-# Startet: PostgreSQL, Redis, LiveKit (dev-Modus), Whisper-Service
+# Startet: Caddy, PostgreSQL, RustFS (S3) und LiveKit
 
 pnpm dev                    # API + Frontend parallel
 
@@ -960,6 +1013,16 @@ claude "Schreibe Drizzle-Schema und Migration für die bookings-Tabelle"
 claude "Generiere Vue-Composable für LiveKit-Room-Verbindung"
 claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 ```
+
+**LiveKit ohne HxRoom prüfen:** Der Medienserver lässt sich mit dem LiveKit-CLI (`lk`,
+Homebrew) isoliert testen, und zwar in drei Stufen, weil jede eine andere Fehlerquelle
+ausschließt: `curl http://localhost:7880/` → `OK` zeigt, dass Prozess und Konfiguration
+stehen; `lk room list` zeigt, dass die Schlüssel greifen; und zwei parallele
+`lk room join --room session_test --identity a --publish-demo` zeigen, dass Medien
+fließen. Erst die dritte Stufe prüft die ICE-Kandidaten – den Teil, der lokal
+erfahrungsgemäß bricht. Beleg im Serverlog ist `"connectionType": "udp"` samt gewähltem
+Kandidatenpaar. Das CLI gehört dabei auf den **Host**, nicht in einen Container: nur so
+nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` fällt auf.
 
 **Lokale Subdomain-Entwicklung:** `/etc/hosts` Einträge für `app.localhost` und `test.localhost`, Caddy läuft lokal als Reverse Proxy.
 

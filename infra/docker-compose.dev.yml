@@ -12,6 +12,26 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # LiveKit – WebRTC-Server (doc/technisches-konzept.md §8)
+  # Signaling auf 7880 (über Caddy als livekit.hxroom.localhost erreichbar), Medien
+  # direkt auf 7881/tcp und 7882/udp. Die Testschlüssel gelten nur lokal.
+  livekit:
+    image: livekit/livekit-server:v1.13.6
+    command: --config /etc/livekit.yaml
+    environment:
+      LIVEKIT_KEYS: "hxroom_dev: hxroom_dev_livekit_secret_at_least_32_chars"
+    volumes:
+      - ./livekit/livekit.dev.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "127.0.0.1:7880:7880" # Signaling (HTTP + WebSocket)
+      - "127.0.0.1:7881:7881" # RTC über TCP (Fallback)
+      - "127.0.0.1:7882:7882/udp" # RTC über UDP (Normalfall)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7880/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   postgres:
     image: postgres:17-alpine
     ports:

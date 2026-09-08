@@ -1,0 +1,21 @@
+# HxRoom – LiveKit-Server (lokale Entwicklung)
+#
+# Unterschied zur Produktion ist allein der ICE-Kandidat: Der Browser (bzw. das
+# LiveKit-CLI) läuft auf dem Host, LiveKit im Container. Annonciert der Server hier
+# seine öffentliche IP, zeigt der Kandidat ins Leere und die Verbindung scheitert
+# ohne brauchbare Fehlermeldung. `node_ip: 127.0.0.1` zeigt stattdessen auf das
+# Docker-Port-Mapping – denselben Weg, den später der Browser nimmt.
+#
+# Die Testschlüssel stehen in docker-compose.dev.yml, wie bei RustFS.
+
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  use_external_ip: false
+  node_ip: 127.0.0.1
+
+logging:
+  level: debug
+  json: false

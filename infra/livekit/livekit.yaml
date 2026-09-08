@@ -1,0 +1,29 @@
+# HxRoom – LiveKit-Server (Produktion)
+#
+# Die Schlüssel stehen bewusst NICHT hier, sondern kommen als LIVEKIT_KEYS aus der
+# Umgebung (infra/.env, Format "key: secret"). So bleibt diese Datei im Repo und das
+# Geheimnis daneben.
+#
+# Kein Redis: Redis braucht LiveKit erst für mehrere Instanzen oder für Egress
+# (Phase 6). Der Stack fährt eine Instanz.
+
+# Signaling (HTTP + WebSocket). Läuft hinter Caddy auf livekit.hxroom.de.
+port: 7880
+
+rtc:
+  # Medien laufen an Caddy vorbei direkt auf diese Ports – beide müssen in der
+  # Hetzner-Cloud-Firewall offen sein.
+  tcp_port: 7881
+  # Ein einzelner UDP-Mux-Port statt der sonst üblichen Range 50000–60000: Docker legt
+  # pro gemapptem Port eine eigene Weiterleitung an, eine Range dieser Größe macht den
+  # Start des Stacks unbrauchbar langsam.
+  udp_port: 7882
+  # Ermittelt die öffentliche IP des Servers per STUN und annonciert sie als
+  # ICE-Kandidat. Lokal ist das falsch – siehe livekit.dev.yaml.
+  use_external_ip: true
+
+logging:
+  level: info
+  # Kein Logging von Teilnehmer-Identitäten in voller Ausführlichkeit: Die identity
+  # trägt die bookingId bzw. userId (siehe technisches-konzept.md §8).
+  json: false

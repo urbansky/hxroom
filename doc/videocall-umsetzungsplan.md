@@ -109,9 +109,21 @@ Der Coach wählt Klient und Angebot, die Sitzung beginnt im Moment des Aufrufs, 
 
 ## Stufe B – Echtes Video
 
-### B1 · LiveKit-Infrastruktur
+### B1 · LiveKit-Infrastruktur ✅ *(umgesetzt 2026-09-08)*
 
 Server-Container mit `livekit.yaml`, Einbindung in `docker-compose.yml` und `docker-compose.dev.yml`, Schlüssel in die Umgebung, der vorhandene Caddy-Block wird endlich bedient. Isoliert prüfbar über das LiveKit-CLI, ganz ohne HxRoom-Frontend. Kein Egress, kein Redis-Cluster-State in dieser Stufe.
+
+Umgesetzt als `livekit/livekit-server:v1.13.6` in beiden Compose-Dateien, gepinnt statt `:latest` wie `postgres:17-alpine`: Bei einem Medienserver kann ein Minor-Sprung das ICE-Verhalten ändern, und das äußert sich als „Video geht manchmal nicht", nicht als Fehlermeldung. Der Caddy-Block `livekit.hxroom.localhost` zeigte auf `host.docker.internal:7880` und trägt jetzt auf `livekit:7880`, weil der Container im selben Netz liegt; der Produktionsblock ist entkommentiert.
+
+**Zwei Konfigurationsdateien statt einer.** `livekit.yaml` und `livekit.dev.yaml` unterscheiden sich in genau einem Punkt, und der ist der Kern dieses Schritts: Der Server annonciert dem Client eine IP als ICE-Kandidat. Auf Hetzner ist das die öffentliche (`use_external_ip: true`, per STUN ermittelt), lokal wäre das falsch – dort steht `node_ip: 127.0.0.1` und zeigt damit auf das Docker-Port-Mapping. Eine gemeinsame Datei mit Platzhaltern hätte diese Asymmetrie versteckt. Details und Begründung in `technisches-konzept.md` §8.
+
+**Die Schlüssel bleiben aus der YAML heraus** und kommen als `LIVEKIT_KEYS` aus der Umgebung. In der Produktions-Compose-Datei muss der Wert gequotet werden – ohne Anführungszeichen liest YAML den Doppelpunkt in `key: secret` als Mapping, und LiveKit startet ohne Schlüssel.
+
+**Die API bekommt zwei URLs, nicht eine.** `LIVEKIT_URL` (`wss://livekit.hxroom.de`) geht mit dem Access-Token an den Browser, `LIVEKIT_HOST` (`http://livekit:7880`) ist der interne Weg für RoomService und Webhooks. B2 und B6 greifen darauf zu, ohne die Konfiguration noch einmal anzufassen.
+
+**Abnahme in drei Stufen**, jede mit einer eigenen Fehlerquelle: `curl` auf 7880 → `OK` (Prozess und Konfiguration), `lk room list` (Schlüssel greifen), zwei parallele `lk room join --publish-demo` (Medien fließen). Ergebnis: zwei Teilnehmer, zwei Publisher, im Serverlog `"connectionType": "udp"` mit dem Kandidatenpaar `127.0.0.1:7882` und ICE-Aufbau in fünf Millisekunden. Derselbe Durchlauf noch einmal über `ws://livekit.hxroom.localhost`, also über Caddy – das ist der Weg, den ab B4 der Browser nimmt.
+
+**Nicht vergessen beim Deployment:** Die Medien laufen am Reverse Proxy vorbei. In der Hetzner-Cloud-Firewall müssen 7881/tcp und 7882/udp eingehend offen sein; fehlt die Freigabe, verbindet sich der Client und das Bild bleibt trotzdem schwarz.
 
 ### B2 · LiveKit-Token-Ausgabe in der API
 

@@ -30,9 +30,11 @@
 		reverse_proxy host.docker.internal:5175
 	}
 
+	# Nur das Signaling (HTTP + WebSocket) läuft über Caddy. Die Medien gehen an ihm
+	# vorbei direkt auf 7881/tcp und 7882/udp – siehe infra/livekit/livekit.dev.yaml.
 	@livekit host livekit.hxroom.localhost
 	handle @livekit {
-		reverse_proxy host.docker.internal:7880
+		reverse_proxy livekit:7880
 	}
 
 	# Fallback: alle anderen Subdomains ([slug].hxroom.localhost) -> bookingpage

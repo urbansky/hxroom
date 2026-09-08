@@ -22,6 +22,7 @@ services:
       - bookingpage
       - admin
       - api
+      - livekit
     restart: unless-stopped
 
   landing:
@@ -50,6 +51,29 @@ services:
     build:
       context: ..
       dockerfile: apps/admin/Dockerfile
+    restart: unless-stopped
+
+  # LiveKit – WebRTC-Server (doc/technisches-konzept.md §8)
+  # Signaling auf 7880 läuft über Caddy (livekit.hxroom.de), die Medien gehen daran
+  # vorbei direkt auf 7881/tcp und 7882/udp. Beide Ports brauchen eine Freigabe in der
+  # Hetzner-Cloud-Firewall, sonst kommt zwar die Verbindung zustande, aber kein Bild.
+  livekit:
+    image: livekit/livekit-server:v1.13.6
+    command: --config /etc/livekit.yaml
+    environment:
+      # Quotes sind Pflicht: Ohne sie liest YAML den Doppelpunkt als Mapping statt als
+      # Teil des Wertes, und LiveKit startet ohne Schlüssel.
+      - "LIVEKIT_KEYS=${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7880/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   postgres:
@@ -147,9 +171,13 @@ services:
       - S3_SECRET_KEY=${RUSTFS_SECRET_KEY}
       - S3_FORCE_PATH_STYLE=true
       - S3_BUCKET=hxroom-files
-      # Spätere Phasen:
-      # - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
-      # - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      # LiveKit: zwei URLs, die nicht verwechselt werden dürfen. LIVEKIT_URL geht an den
+      # Browser (mit dem Access-Token), LIVEKIT_HOST ist der interne Weg für
+      # Server-zu-Server-Aufrufe (RoomService, Webhooks).
+      - LIVEKIT_URL=${LIVEKIT_URL}
+      - LIVEKIT_HOST=http://livekit:7880
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
     depends_on:
       postgres:
         condition: service_started

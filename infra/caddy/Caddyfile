@@ -40,10 +40,13 @@ admin.hxroom.de {
 	reverse_proxy admin:80
 }
 
-#livekit.hxroom.de {
-#	import ionos-tls
-#	reverse_proxy livekit:7880
-#}
+# Nur das Signaling (HTTP + WebSocket) läuft über Caddy. Die Medien gehen an ihm vorbei
+# direkt auf 7881/tcp und 7882/udp und brauchen deshalb eine Freigabe in der
+# Hetzner-Cloud-Firewall – siehe infra/livekit/livekit.yaml.
+livekit.hxroom.de {
+	import ionos-tls
+	reverse_proxy livekit:7880
+}
 
 *.hxroom.de {
 	import ionos-tls
