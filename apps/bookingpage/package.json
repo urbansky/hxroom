@@ -19,6 +19,7 @@
     "vue-router": "^5.0.0"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.130",
     "@vitejs/plugin-vue": "^6.0.8",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",

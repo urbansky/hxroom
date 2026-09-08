@@ -54,7 +54,9 @@ Die Reihenfolge beim Öffnen ist entscheidend: erst `POST …/waiting-room`, dan
 
 Der Ereignisstrom bleibt über die gesamte Wartezeit offen – daran hängt die Präsenzanzeige des Coachs aus A2 – und schließt bei den Endzuständen und beim Verlassen der Seite. Zeit läuft lokal: Ein Sekundentakt speist den Countdown, und beim Erreichen von `opensAt` tritt die Seite selbsttätig erneut ein. Dafür trägt die Antwort seit A3 neben `opensAt` auch `closesAt`, damit die Oberfläche beide Fenstergrenzen kennt, ohne die serverseitigen Konstanten zu duplizieren.
 
-**Gefunden dabei, nicht behoben:** `apps/bookingpage` ist die einzige App ohne lokale Icon-Sammlung (`@iconify-json/lucide` fehlt, anders als in `coach`, `admin` und `landing`). Nuxt UI lädt die Symbole deshalb zur Laufzeit von `api.iconify.design` nach – auch im Produktions-Build, in dem der Host fest im Bundle steht. Auf der Klientenseite überträgt das die IP jedes Klienten an einen Dritten, während der Footer derselben Seite „DSGVO-konform · Server Deutschland" verspricht. Die Dependency allein genügt nicht: Der Nuxt-UI-Vite-Plugin bündelt in dieser SPA nicht automatisch, es braucht eine bewusste Entscheidung zwischen der vollständigen Sammlung (556 KB) und einer Handauswahl der benutzten Symbole.
+**Gefunden dabei, inzwischen behoben (2026-09-08):** `apps/bookingpage` war die einzige App ohne lokale Icon-Sammlung (`@iconify-json/lucide` fehlte, anders als in `coach`, `admin` und `landing`). Nuxt UI lud die Symbole deshalb zur Laufzeit von `api.iconify.design` nach – auch im Produktions-Build, in dem der Host fest im Bundle steht. Auf der Klientenseite übertrug das die IP jedes Klienten an einen Dritten, während der Footer derselben Seite „DSGVO-konform · Server Deutschland" verspricht.
+
+Statt der Wahl zwischen vollständiger Sammlung (556 KB) und Handauswahl kam ein dritter Weg: `clientBundle.scan` legt genau die Symbole ins Bundle, die im Quelltext stehen – 52 Stück (13 eigene plus die Defaults von Nuxt UI), rund 17 KB roh. Der Schalter sitzt in `hxroomUI()` in `packages/ui/vite.ts`, nicht in der App, damit jede künftige Vite-App ihn erbt; eine App kann eigene `icon`-Optionen setzen, ohne ihn zu verlieren. Beleg: Vor der Änderung enthielt der Produktions-Build **keine** Icon-Definition, danach 52; im Browser kontaktiert die Klientenseite nur noch `anna.hxroom.localhost` und `api.hxroom.localhost`.
 
 ### A4 · Call-Screen des Coachs (`apps/coach`) ✅ *(umgesetzt 2026-08-20)*
 
@@ -148,6 +150,7 @@ Notiz-Seitenleiste, Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Trans
 | **Einmaligkeit des Warteraum-Links** | ✅ Verworfen und in §7 korrigiert: im Zugangsfenster mehrfach nutzbar, `clientTokenUsedAt` hält nur den ersten Eintritt fest. |
 | **Sitzungsstatus `completed`** | ✅ Wird ab A1 durch das Sitzungsende gesetzt und fließt damit erstmals in Klientenliste und Betreiber-Auswertung ein. Deshalb kein Abschluss ohne vorherigen Einlass – der No-Show bekommt in B6 einen eigenen Weg. |
 | **Nur `confirmed` darf warten** | ✅ Umgesetzt: `pending` meldet `expired` (die Buchung verfällt ohnehin), `cancelled` einen eigenen Zustand statt eines Fehlers. |
+| **Zugangstoken im Query-String** | ✅ Geschlossen am 2026-09-08. Der Token steht in der URL (`/call/:id?token=…` und im SSE-Stream) und lief damit in jedes Zugriffslog. Geprüft: Caddy führt kein Zugriffslog, die API kein Request-Logging, OpenTelemetry ist wieder entfernt – offen war allein der nginx-Container der Klientenseite, der mit dem Standardformat `combined` Token und Referer im Klartext in die Docker-Logs schrieb. `bookingpage` und `coach` loggen jetzt mit eigenem Format nur den Pfad. Siehe `technisches-konzept.md` §17. |
 
 ---
 

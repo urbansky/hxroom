@@ -987,6 +987,8 @@ claude "Erstelle BullMQ Job und Worker für Whisper-Transkription"
 - better-auth HttpOnly Cookies, kein Token in LocalStorage
 - Klienten-Buchungstoken: 256 Bit Zufall, Konstantzeit-Vergleich, gültig nur im Zugangsfenster der Sitzung
 - Kein Logging von E-Mail-Adressen oder Namen in Application Logs (nur IDs)
+- **Zugriffslogs ohne Query-String.** Die Zugangslinks tragen ihr Geheimnis in der URL (`/call/:id?token=…`, `/confirm`, `/cancel`, `/auth/reset-password`). Die nginx-Container von `bookingpage` und `coach` loggen deshalb mit einem eigenen Format, das statt `$request` nur den Pfad schreibt und den Referer weglässt; Caddy führt gar kein Zugriffslog, die API kein Request-Logging.
+- **Keine Drittanbieter-Requests von der Klientenseite.** Symbole werden zur Build-Zeit ins Bundle gelegt (`hxroomUI()` in `packages/ui/vite.ts`), statt sie zur Laufzeit von `api.iconify.design` zu holen – sonst ginge die IP jedes Klienten an einen Dritten.
 - AVV automatisch bei Registrierung abgeschlossen
 - DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.
 - Audioaufnahme / Transkription: aktive Klienten-Einwilligung pro Sitzung, dokumentiert mit Timestamp, IP und Version

@@ -22,5 +22,10 @@ export function hxroomUI(options: UIOptions = {}) {
       },
     },
     ...options,
+    // Alle im Quelltext gefundenen Symbole wandern zur Build-Zeit ins Bundle. Ohne das holt
+    // Nuxt UI sie zur Laufzeit von api.iconify.design nach – auf der Klientenseite hieße das,
+    // die IP jedes Klienten an einen Dritten zu geben. Setzt eine App eigene `icon`-Optionen,
+    // gewinnen die; nur der Default für `clientBundle` kommt von hier.
+    icon: { clientBundle: { scan: true }, ...options.icon },
   });
 }
