@@ -10,6 +10,7 @@ import { BookingPageModule } from './booking-page/booking-page.module';
 import { OffersModule } from './offers/offers.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { S3Module } from './storage/s3.module';
+import { LivekitModule } from './livekit/livekit.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { CallModule } from './call/call.module';
 import { ClientsModule } from './clients/clients.module';
@@ -25,6 +26,7 @@ import { AccountModule } from './account/account.module';
     ScheduleModule.forRoot(),
     DbModule,
     S3Module,
+    LivekitModule,
     AuthModule,
     HealthModule,
     MailModule,
