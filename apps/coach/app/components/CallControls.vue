@@ -77,7 +77,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[{
   >
     <!-- Mikrofon -->
     <div class="flex flex-col items-center gap-1">
-      <UButtonGroup size="lg">
+      <UFieldGroup size="lg">
         <UButton
           :icon="micOn ? 'i-lucide-mic' : 'i-lucide-mic-off'"
           :color="micOn ? 'neutral' : 'error'"
@@ -89,15 +89,18 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[{
         <UDropdownMenu :items="micItems" :content="MENU_CONTENT">
           <UButton icon="i-lucide-chevron-down" color="neutral" variant="subtle" aria-label="Mikrofon wechseln" />
         </UDropdownMenu>
-      </UButtonGroup>
+      </UFieldGroup>
       <span class="hidden sm:block text-xs text-dimmed">Mikrofon</span>
     </div>
 
     <!-- Kamera. Der Punkt am Knopf zeigt, dass weichgezeichnet wird – sonst müsste man
          das Menü öffnen, um es zu sehen. -->
     <div class="flex flex-col items-center gap-1">
-      <UButtonGroup size="lg">
-        <UChip :show="coachBlur" color="primary" size="sm">
+      <!-- Der Blur-Punkt sitzt neben der Gruppe, nicht darin: UFieldGroup setzt die
+           Rundungen über first:/last:, und ein UChip als Hülle wäre dann das erste Kind –
+           der Knopf bekäme seine Rundung nicht abgeschliffen. -->
+      <div class="relative">
+        <UFieldGroup size="lg">
           <UButton
             :icon="camOn ? 'i-lucide-video' : 'i-lucide-video-off'"
             :color="camOn ? 'neutral' : 'error'"
@@ -106,11 +109,16 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[{
             :aria-label="camOn ? 'Kamera ausschalten' : 'Kamera einschalten'"
             @click="camOn = !camOn"
           />
-        </UChip>
-        <UDropdownMenu :items="camItems" :content="MENU_CONTENT">
-          <UButton icon="i-lucide-chevron-down" color="neutral" variant="subtle" aria-label="Kamera wechseln" />
-        </UDropdownMenu>
-      </UButtonGroup>
+          <UDropdownMenu :items="camItems" :content="MENU_CONTENT">
+            <UButton icon="i-lucide-chevron-down" color="neutral" variant="subtle" aria-label="Kamera wechseln" />
+          </UDropdownMenu>
+        </UFieldGroup>
+        <span
+          v-if="coachBlur"
+          class="absolute -top-0.5 -left-0.5 size-2.5 rounded-full bg-primary ring-2 ring-default"
+          title="Dein Hintergrund wird weichgezeichnet"
+        />
+      </div>
       <span class="hidden sm:block text-xs text-dimmed">Kamera</span>
     </div>
 
