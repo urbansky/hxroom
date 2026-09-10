@@ -61,7 +61,12 @@ function initials(call: CallAccessResponse): string {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col">
+  <!-- Nach dem Einlassen übernimmt der Call-Screen die ganze Fläche: Er bringt seine eigene
+       Kopfzeile mit, und ein "Zurück zu den Terminen" neben einem laufenden Gespräch lädt
+       nur zum versehentlichen Verlassen ein. -->
+  <CallScreen v-if="call && call.state === 'admitted'" :call="call" :now="now" @end="end" />
+
+  <div v-else class="flex-1 min-h-0 flex flex-col overflow-y-auto">
     <header class="flex items-center justify-between gap-4 px-4 sm:px-6 py-4">
       <UButton to="/bookings" color="neutral" variant="ghost" size="sm" icon="i-lucide-arrow-left" label="Termine" />
       <span v-if="appointmentLabel" class="text-sm text-muted truncate">{{ appointmentLabel }}</span>
@@ -115,8 +120,6 @@ function initials(call: CallAccessResponse): string {
           <p v-if="actionError" class="text-sm text-error">{{ actionError }}</p>
         </div>
       </div>
-
-      <CallStage v-else-if="call && call.state === 'admitted'" :call="call" :now="now" @end="end" />
 
       <div v-else-if="call" class="text-center flex flex-col items-center gap-4">
         <div class="size-12 rounded-full bg-elevated flex items-center justify-center">
