@@ -110,26 +110,44 @@ Warum diese Nische zuerst:
 
 ## 5a. Videokonferenz – Feature-Scope
 
+*Überarbeitet 09.09.2026 nach Konzept-Review: Chat kommt mit differenzierter Begründung rein, Gäste werden auf eine spätere Phase verschoben statt komplett verworfen, Geräteauswahl/Technik-Check/Blur/Mobile werden hochgestuft. Ersetzt den vorherigen Stand.*
+
 ### Core (nicht verhandelbar)
 
 - **Video & Audio** via WebRTC – stabile Peer-to-Peer-Verbindung
 - **Kein Account, kein Download für Klienten** – Browser-Link reicht
-- **1:1 optimiert** – kein Multi-Participant-Overhead, keine Gruppenlogik
+- **1:1 optimiert für den Regelfall** – kein Multi-Participant-Overhead, keine Gruppenlogik (Ausnahme: Gäste, siehe „Spätere Phase")
 - **Auto-Reconnect** – stille Wiederverbindung bei Verbindungsabbruch
+- **Funktioniert auch mobil** – Klienten joinen häufig vom Smartphone, nicht nur vom Desktop; Call-Screen darf keine reine Desktop-Fläche sein
 
-### Raum-Erfahrung
+### Vor der Sitzung / Warteraum
 
 - **Warteraum mit Coach-Branding** – Logo, Foto, persönliche Willkommensnachricht
 - **Einlass durch Coach** – Klient wartet, Coach lässt aktiv rein (kein automatischer Join)
+- **Geräteauswahl** – Kamera/Mikrofon wechseln können, statt auf die Browser-Vorauswahl angewiesen zu sein
+- **Technik-Check** – kurzer Kamera-/Mikrofon-Test vor der eigentlichen Sitzung
+
+  Geräteauswahl und Technik-Check zählen zur Zuverlässigkeits-Basis, nicht zu „später": Bei einem Produkt, das mit „kein Account, kein Download" wirbt, ist für viele Klienten jede Sitzung die erste Berührung mit Browser-Kamera/Mikrofon-Rechten. Scheitert das beim ersten Versuch, ist genau das der Moment, in dem zu Zoom/Meet gewechselt wird. Beide Punkte gehören deshalb vor den ersten echten Kundenstart, nicht in Phase 5/6.
+
+### Im Call – Darstellung
+
 - **Sitzungs-Timer** – sichtbar für den Coach, optional für den Klienten
 - **Minimale UI während des Calls** – keine ablenkenden Toolbars, Fokus auf die Gesichter
+- **Hintergrund-Weichzeichnung (Blur)** – Must-have; bewusst *keine* bunten/virtuellen Hintergründe (Strand, Logo-Wand etc.), das widerspricht der ruhigen Positionierung. Blur ist Datenschutz/Professionalität (viele Klienten callen aus Küche oder Kinderzimmer), kein Spielerei-Feature.
 
 ### Coach-Tools im Call
 
-- **Notiz-Seitenleiste** – nur für den Coach sichtbar, direkt im Call erreichbar
+- **Notiz-Seitenleiste** – nur für den Coach sichtbar, direkt im Call erreichbar, wird **nicht** automatisch an den Klienten weitergegeben (das sind Arbeitsnotizen/Beobachtungen des Coaches, keine Nachricht an den Klienten)
 - **Mikrofon & Kamera toggle** – für beide Seiten
 - **Klient stumm schalten** – für technische Notfälle
 - **Screen-Sharing** – optional zuschaltbar, für beide Seiten
+
+### Kommunikation im Call
+
+- **Chat** – als Fallback bei Tonausfall („kannst du mich hören?") und zum bewussten Teilen von Link oder Dokument, nicht als Konversations-/Plauder-Feature
+  - Inhalt wird gespeichert und rechtlich wie Notizen/Transkript behandelt (Einwilligung/AVV mitdenken – ein gespeicherter Chatverlauf ist inhaltlich so sensibel wie die Audioaufzeichnung)
+  - Kein automatischer 1:1-Export des kompletten Verlaufs in die Zusammenfassungsmail – entweder vom Coach kuratiert oder automatisch gefiltert (z. B. nur Nachrichten mit Link/Anhang), damit kein Betriebsrauschen („Ton geht nicht") in der Mail landet
+  - Eigener, standardmäßig geschlossener Bereich in der Sidebar – kein dauerhaft sichtbares Fenster, das mit dem Gesicht des Gegenübers konkurriert
 
 ### Session-Ende
 
@@ -137,16 +155,21 @@ Warum diese Nische zuerst:
 - **Automatische Weiterleitung des Klienten** – z.B. auf eine Dankesseite oder Buchungsseite
 - **Notizen gespeichert & der Sitzung zugeordnet** – direkt nach dem Call verfügbar
 
+### Spätere Phase (im Scope, aber nicht zum Start)
+
+- **Gäste** – Einladen dritter Personen zur Sitzung (z. B. Paar-Coaching, Geschäftspartner, Supervision), bewusst zurückhaltend platziert, kein prominentes Feature
+- **Teilnehmer-/Gästeliste** – wird erst relevant, sobald Gäste anwesend sind
+- **Echte Videoaufzeichnung** – zum Nachschauen für den Klienten, getrennt von der Whisper-Audio-Transkription für den Coach (§9) und mit eigener, beidseitiger Einwilligung
+
+  Vor dem Bau, insbesondere bei Gästen: tatsächlichen Bedarf bei Coaches validieren. Architektonisch teurer als es aussieht – eigener Einladungs-/Token-Mechanismus (Gäste haben keine Buchungs-ID), Grid-Layout statt Hauptbild+PiP, ggf. eigene Einwilligung pro Gast. Widerspricht sonst dem Core-Punkt „1:1 optimiert" und holt genau die Multi-Party-Komplexität zurück, die beim Übernehmen der Call-Schicht aus HxMeet bewusst rausgeschnitten wird (§8). Günstigere Zwischenstufe, falls der Bedarf sich bestätigt: ein reiner Beobachter-Modus (nur Subscribe, kein eigener Publish-Grant, keine Grid-Layout-Änderung) statt eines vollwertigen dritten Teilnehmers.
+
 ### Bewusst weggelassen
 
 Folgende Features werden nicht gebaut – sie widersprechen der Positionierung als ruhiger, persönlicher Gesprächsraum:
 
-- Chat während des Calls
-- Aufzeichnung (Recording)
-- Virtuelle Hintergründe
 - Reactions / Emojis
 - Breakout Rooms
-- Teilnehmerliste / Gruppenlogik
+- Bunte/virtuelle Hintergründe (nur Weichzeichnung ist vorgesehen)
 
 ---
 
