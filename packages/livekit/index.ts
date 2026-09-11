@@ -1,9 +1,22 @@
-export { default as HxMeeting } from './src/components/HxMeeting.vue'
-export { default as HxToolbar } from './src/components/toolbar/HxToolbar.vue'
-export { default as HxSelectButton } from './src/components/toolbar/HxSelectButton.vue'
+// Geteilte Call-Mechanik: die Verbindung zum LiveKit-Raum, Geräte und Spuren.
+//
+// Das Paket enthält bewusst keine Komponenten. Die Call-Oberfläche liegt in der jeweiligen
+// App und bindet an die Refs aus `useCallRoom()`; was Coach und Klient unterscheidet, sind
+// dort gewöhnliche Props und Slots. Beide Konsumenten sind Bundler (Nuxt-Vite und die
+// Vite-SPA `apps/bookingpage`), deshalb wird die Quelle ausgeliefert und nicht gebaut.
 
-export type { HxMeetingStatus } from './src/types/conference.ts'
+export { configureLivekit, prepareCall, joinCall, leaveCall } from './src/room'
 
-// export { default as HxRoundButton } from './src/components/HxRoundButton.vue'
-// export type { HxRoundButtonProps } from './src/components/HxRoundButton.vue'
+export {
+  setCameraEnabled,
+  setMicrophoneEnabled,
+  toggleCamera,
+  toggleMicrophone,
+  setScreenShareEnabled,
+  sendCallData,
+  classifyDeviceError,
+} from './src/room'
 
+export { useCallRoom } from './src/room'
+
+export type { CallParticipant, RoomStatus, DeviceIssue, JoinFailure } from './src/types'

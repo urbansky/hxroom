@@ -272,12 +272,6 @@ importers:
 
   packages/livekit:
     dependencies:
-      '@nuxt/ui':
-        specifier: ^4.11.0
-        version: 4.11.1(4d3dcb59338f5179840f20dc722c3b31)
-      '@vueuse/core':
-        specifier: ^14.4.0
-        version: 14.4.0(vue@3.5.42(typescript@6.0.3))
       livekit-client:
         specifier: ^2.22.3
         version: 2.22.3(@types/dom-mediacapture-record@1.0.22)
@@ -291,9 +285,6 @@ importers:
       vite:
         specifier: ^8.2.2
         version: 8.2.2(@types/node@26.5.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.13)(yaml@2.9.0)
-      vue-tsc:
-        specifier: ^3.3.11
-        version: 3.3.11(typescript@6.0.3)
 
   packages/shared:
     dependencies:

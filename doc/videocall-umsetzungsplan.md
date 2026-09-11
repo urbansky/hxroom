@@ -143,9 +143,29 @@ Der Anzeigename der Gegenseite geht als `name` mit ins Token, damit die Bühne i
 
 Abnahme per HTTP gegen einen Spontan-Termin, ohne Browser: Klient vor dem Einlassen `livekit: null`, Coach im selben Moment mit Token; nach `admit` beide mit Token; nach `end` beide wieder ohne. Falscher `clientAccessToken` 401, fremde Buchung 404, jeweils ohne Token in der Antwort. Der eigentliche Beweis war der Signaling-Endpunkt von LiveKit selbst: Beide Token ergaben ein `101 Switching Protocols`, ein um ein Zeichen verändertes ein `401` – ein selbst dekodiertes JWT hätte nur bestätigt, was wir hineingeschrieben haben.
 
-### B3 · `packages/livekit` übernehmen und entkernen
+### B3 · `packages/livekit` übernehmen und entkernen ✅ *(umgesetzt 2026-09-11)*
 
-Übernahme aus `hxmeet-core-component` (MIT, eigene Vorarbeit): Verbindungs-Composables, Geräte-Handling, browserspezifische Freigabefehler, Connect-Retry, `prepareConnection()` und der Extension-Seam bleiben; Chat, Reactions, Teilnehmerliste und die Multi-Party-Layouts fallen weg (§8, `project.md` §5a). Nuxt UI v3 → v4 nachziehen. Das Paket muss sowohl von der Vite-SPA `bookingpage` als auch von Nuxt konsumierbar sein – Auto-Imports gibt es in `bookingpage` nicht. Größter Fremdcode-Block, unabhängig gegen einen Testraum prüfbar.
+Übernahme aus `hxmeet-core-component` (MIT, eigene Vorarbeit): Verbindungs-Composables, Geräte-Handling, browserspezifische Freigabefehler, Connect-Retry und `prepareConnection()` bleiben; Chat, Reactions, Teilnehmerliste und die Multi-Party-Layouts fallen weg (§8, `project.md` §5a). Das Paket muss sowohl von der Vite-SPA `bookingpage` als auch von Nuxt konsumierbar sein – Auto-Imports gibt es in `bookingpage` nicht. Größter Fremdcode-Block, unabhängig gegen einen Testraum prüfbar.
+
+Der Schritt zerfiel in zwei Teile: Der Rohstand kam am 2026-09-08 ins Repo (Commit `6e0aee1`), entkernt wurde am 2026-09-11. Aus 50 Dateien wurden fünf – `index.ts`, `src/types.ts`, `src/logger.ts`, `src/state.ts`, `src/room.ts`.
+
+**Die gesamte HxMeet-Oberfläche ist entfallen, nicht nur die Teile außerhalb des Scope.** Zwischen Übernahme und Entkernung entstand die eigene Call-UI in `apps/coach` (Bühne, Steuerleiste, Seitenleiste), die Coach und Klient tragen soll. Damit waren die 24 übernommenen SFCs nicht mehr der Ausgangspunkt, sondern eine zweite Oberfläche im Repo, von der nie eine Zeile laufen würde. Mit ihnen fielen alle 30 `@nuxt/ui`-Importe des Pakets und 24 Icon-Referenzen, von denen ohnehin keine auflösbar war (`i-fluent-*`, `i-heroicons-*`, `i-hugeicons-*` sind im Repo nicht installiert).
+
+**Extension-Seam und Event-Bus sind ersatzlos entfallen.** Sie ergaben Sinn, solange die Oberfläche eine geschlossene Komponente aus dem Fremdpaket war. Mit eigener UI sind Rollenunterschiede gewöhnliche Props und Slots, und der Verbindungszustand ist ein Ref aus `useCallRoom()`. §8 ist nachgezogen.
+
+**Umbenannt auf HxRoom-Begriffe**, weil das Paket null Konsumenten hatte und jede Datei ohnehin angefasst wurde: `provideLivekitConfig` → `configureLivekit`, `usePrepareLivekit` → `prepareCall`, `useEnterConference`/`useConnectLivekit` → `joinCall`, `switchCameraLivekit` → `setCameraEnabled` (der Name des SDK), `useConferenceState` + `useTrackStore` → `useCallRoom`, `HxParticipant` → `CallParticipant`, `HxMeetingStatus` → `RoomStatus`. Das `use`-Präfix trugen in HxMeet auch einmalige Aktionen; im übrigen Repo heißt es „gibt reaktiven Zustand zurück". Zwei Namen waren dabei gesperrt: `CallState` gehört `@hxroom/shared` (Buchungszustand), `useCallState` beiden Apps.
+
+**Aufgelöster Zyklus.** `livekit.ts ↔ conferenceState.ts ↔ conferenceActions.ts` verwiesen im Kreis aufeinander und funktionierten nur, weil jeder Zugriff erst zur Laufzeit stattfand. Jetzt zeigt `room.ts` auf `state.ts` und nicht zurück; `state.ts` importiert nichts außer `vue` und den eigenen Typen.
+
+**Gefunden dabei:** Das Paket hat seit der Übernahme **nie kompiliert**. Zwei Blocker: `conferenceState.ts` importierte `../helper/example`, eine Datei, die nie mitkopiert wurde (gebraucht nur von den Testteilnehmern, also von entfallendem Code); und über 40 Importe endeten auf `.ts`, ohne dass `allowImportingTsExtensions` gesetzt war (TS5097). Beides ist mit dem Entkernen verschwunden, `tsc --noEmit` läuft seitdem durch. Aus den fünf leeren Toast-Rümpfen in `ui.ts` wurde Zustand: `cameraIssue`/`microphoneIssue` mit `classifyDeviceError()`, das die Browserformen auseinanderhält – Chrome meldet „Permission denied", Safari `NotAllowedError`, fehlende Hardware „Requested device not found", ein unsicherer Kontext `NotSupportedError`. Die Sätze dazu gehören in die App, nicht ins Paket.
+
+**Abnahme über ein Playground im Paket** (`packages/livekit/playground/`, `pnpm --filter @hxroom/livekit playground`), weil ein Typecheck nur die Auflösbarkeit belegt und bis B4 nichts diesen Code ausführt: Token aus `lk token create --join`, Gegenstelle aus `lk room join --publish-demo`. Ergebnis über `ws://livekit.hxroom.localhost` – also über Caddy, den Weg des Browsers ab B4: Beitritt, beide Teilnehmer in der Liste, das Demo-Video der Gegenstelle in 1280×720 im `<video>`, die eigene Spur veröffentlicht, Kamera und Mikrofon schaltbar, Verlassen räumt Zustand und Spuren ab. Ohne Gerätefreigabe verbindet sich der Raum trotzdem und vermerkt nur `cameraIssue`/`microphoneIssue` – man soll den anderen sehen können, auch wenn die eigene Kamera klemmt. Das Playground bleibt liegen; in B6 (Reconnect, `DUPLICATE_IDENTITY` mit zwei Tabs) ist es wieder das schnellste Werkzeug.
+
+### B3b · Call-UI in die geteilte Schicht heben
+
+Die rollenneutralen Teile der Coach-Oberfläche (Bühne, Steuerleiste, eigenes Kamerabild, Chat) wandern aus `apps/coach/app/components/` in die geteilte Schicht, damit die Klientenseite dieselbe Oberfläche bekommt statt einer zweiten. Rollenspezifisches – Einlassen, Notizen, Klientenakte, Sitzung beenden, Klient stummschalten – bleibt in der Coach-App und wird als Props und Slots hineingereicht.
+
+Die Arbeit ist überwiegend mechanisch und in `bookingpage` etwas mühsamer als in Nuxt: Auto-Imports gibt es dort nicht (`ref`, `computed`, `useTemplateRef` müssen explizit importiert werden), die beiden Repo-Utils `clientInitials` und `formatDuration` müssen mitziehen, und Tailwind braucht einen `@source`-Eintrag für das neue Verzeichnis, sonst fehlen die Klassen im Build beider Apps.
 
 ### B4 · Klientenseite real machen
 
@@ -154,6 +174,8 @@ Platzhalter-Bühne durch die geteilte Komponente ersetzen, Verbindungs-Warmlauf 
 ### B5 · Coachseite real machen
 
 Gleiche Ersetzung im Call-Screen, „Einlassen" wandert an die echte Token-Vergabe, Sitzungs-Timer.
+
+**Vorgezogen als POC:** Das *eigene* Vorschaubild des Coachs kommt bereits aus der echten Kamera – `useLocalCamera()` (reines `getUserMedia`, kein LiveKit) und `CallCameraView.vue` in `apps/coach`. Der Strom endet im `<video>` der Seite, übertragen wird nichts. Zweck ist die Beurteilung der Oberfläche über einem wirklich bewegten Bild und ein erster Durchlauf durch die Browser-Freigabe samt ihrer Fehlerfälle. Mit B5 tritt das Geräte-Handling aus `packages/livekit` an diese Stelle; das Bild des Klienten und die Bildschirmfreigabe bleiben bis dahin die Andeutungen aus `CallVideoSim`/`CallShareSim`, und „Eigenen Hintergrund weichzeichnen" wirkt am echten Bild noch nicht – dafür braucht es die Personensegmentierung der Track-Processors.
 
 ### B6 · Robustheit und autoritatives Sitzungsende
 
