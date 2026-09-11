@@ -45,8 +45,10 @@ Wichtigste Regeln:
 
 - `apps/bookingpage/` – Klient-Lifecycle Buchung → Warteraum → Videocall, Zugriff über den signierten Buchungstoken
 - `apps/coach/` – Coach-Seite des Calls (Einlassen-Button, Notiz-Seitenleiste, Timer), Zugriff über die better-auth Session
-- `packages/livekit/` – geteilte Call-Schicht: LiveKit-Composables und rollenneutrale Video-Komponenten. Rollenspezifisches wird über Extensions eingehängt, nicht in den Kern gebaut. Herkunft: `hxmeet-core-component` (MIT, eigene Vorarbeit)
+- `packages/livekit/` – geteilte Call-Mechanik: Raum-Verbindung, Geräte und Spuren als reines TypeScript, **ohne Komponenten**. Ein Tor für die Oberfläche: `useCallRoom()` liefert Refs und Aktionen. Herkunft: `hxmeet-core-component` (MIT, eigene Vorarbeit), mit B3 entkernt
 - `apps/api/` – Token-Generierung und LiveKit-Webhooks; `infra/livekit/` – LiveKit-Server
+
+Die Call-Oberfläche liegt in `apps/coach/app/components/Call*.vue` und soll beide Seiten tragen; der Umzug der rollenneutralen Teile in die geteilte Schicht steht als Schritt B3b aus. Rollenspezifisches – Einlassen, Notizen, Klientenakte – wird als Props und Slots hineingereicht, nicht in den Kern gebaut. Einen Extension-Seam oder Event-Bus gibt es dafür bewusst nicht mehr.
 
 Coach und Klient bleiben bewusst auf getrennten Hosts (`app.hxroom.de` vs. `[slug].hxroom.de`), damit die Coach-Session nie auf einer Custom-Domain (CNAME-Pro-Feature) landet. Details in `doc/technisches-konzept.md` §6 und §8.
 
