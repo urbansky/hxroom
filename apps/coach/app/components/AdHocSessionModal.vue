@@ -11,6 +11,12 @@ import type { AdHocBookingResponse, ClientListItem, OfferResponse } from '@hxroo
  * heraus legt zwei überlagernde Ebenen übereinander. Für eine Auswahl aus einer bereits
  * geladenen Liste genügt ein USelectMenu.
  */
+// Eingabeflächen stehen weiß auf dem Modal-Grund. Nuxt UI gibt ihnen sonst bg-default –
+// denselben Token, aus dem auch die Modal-Fläche kommt, das Feld verschwindet dann darin.
+// Zentral in app.config.ts geht das nicht: Dort gewinnt die Varianten-Klasse bg-default
+// über slots.base. Dasselbe Muster steht in ClientFormSlideover und sechs weiteren Stellen.
+const inputUi = { base: 'bg-white dark:bg-neutral-800', content: 'bg-white dark:bg-neutral-900' }
+
 const props = defineProps<{
   /** Vorgegebener Klient (Klientenprofil). */
   client?: { id: string, name: string } | null
@@ -121,7 +127,7 @@ async function copyLink() {
 
         <UFormField label="Zugangslink" help="Falls es schneller gehen muss als die E-Mail.">
           <div class="flex gap-2">
-            <UInput :model-value="created.callUrl" readonly class="flex-1" />
+            <UInput :model-value="created.callUrl" readonly class="flex-1" :ui="inputUi" />
             <UButton icon="i-lucide-copy" color="neutral" variant="outline" aria-label="Link kopieren" @click="copyLink" />
           </div>
         </UFormField>
@@ -141,6 +147,7 @@ async function copyLink() {
             :filter-fields="['label', 'description']"
             placeholder="Klient wählen"
             class="w-full"
+            :ui="inputUi"
           />
         </UFormField>
 
@@ -152,6 +159,7 @@ async function copyLink() {
             placeholder="Angebot wählen (optional)"
             clear
             class="w-full"
+            :ui="inputUi"
             @clear="selectedOfferId = null"
           />
         </UFormField>

@@ -1,5 +1,14 @@
-:root {
-  --ui-bg: rgb(250 248 244 / 0.8);
+/* Der Inhaltsbereich soll einen Hauch heller stehen als die Seitenleiste (#faf8f4).
+   Das war vorher ein Alpha-Wert – und traf damit weit mehr als die Seitenfläche: --ui-bg
+   ist derselbe Token, aus dem Nuxt UI den Grund von Dropdowns, Modals, Slideovers und
+   Popovern nimmt. Deren Inhalt stand dadurch zu 20 % durchscheinend über der Seite.
+   Deckend gesetzt ergibt exakt denselben Ton (0.8 × #faf8f4 über Weiß), ohne die
+   Nebenwirkung.
+
+   :root:not(.dark), weil die Regel sonst auch den dunklen Wert des Themes überschreibt –
+   die Spezifität ist dieselbe wie bei .dark, und diese Datei wird danach geladen. */
+:root:not(.dark) {
+  --ui-bg: #fbf9f6;
 }
 
 .coach-sidebar {
