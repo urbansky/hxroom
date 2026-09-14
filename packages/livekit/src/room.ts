@@ -57,6 +57,49 @@ function resetTracks() {
   screenShareAudioTrack.value = undefined
 }
 
+/**
+ * Ein LiveKit-`Track` als `MediaStream` – die Form, die ein <video>- oder <audio>-Element
+ * erwartet.
+ *
+ * Die Umwandlung gehört hierher und nicht in die Apps: Die Oberfläche in `packages/ui` soll
+ * LiveKit nicht kennen (sie nimmt `MediaStream`), und sonst stünden dieselben drei Zeilen
+ * in der Coach- und in der Klienten-App.
+ *
+ * Der Cache ist kein Geiz, sondern nötig: Ein bei jedem Aufruf neu gebauter Stream wäre für
+ * Vue ein neues Objekt, die Zuweisung an `srcObject` liefe erneut und das Bild setzte bei
+ * jedem Rendern neu auf. Die WeakMap gibt den Eintrag frei, sobald der Track weg ist.
+ */
+const streamCache = new WeakMap<Track, MediaStream>()
+
+function streamFor(track: Track | undefined): MediaStream | null {
+  if (!track) return null
+
+  const cached = streamCache.get(track)
+  if (cached) return cached
+
+  const stream = new MediaStream([track.mediaStreamTrack])
+  streamCache.set(track, stream)
+  return stream
+}
+
+/** Das Kamerabild eines Teilnehmers, oder null solange keines ankommt. */
+export function videoStreamFor(identity: string): MediaStream | null {
+  return streamFor(videoTracks[identity])
+}
+
+/**
+ * Der Ton eines Teilnehmers. Getrennt vom Bild, weil das <video>-Element der eigenen
+ * Vorschau stumm sein muss – ein gemeinsamer Stream nähme auch der Gegenstelle den Ton.
+ */
+export function audioStreamFor(identity: string): MediaStream | null {
+  return streamFor(audioTracks[identity])
+}
+
+/** Die laufende Bildschirmfreigabe, unabhängig davon, von wem sie kommt. */
+export function screenShareStream(): MediaStream | null {
+  return streamFor(screenShareVideoTrack.value)
+}
+
 // ---------------------------------------------------------------------------
 // Konfiguration
 // ---------------------------------------------------------------------------
@@ -471,6 +514,9 @@ export function useCallRoom() {
     videoTracks,
     screenShareVideoTrack,
     screenShareAudioTrack,
+    videoStreamFor,
+    audioStreamFor,
+    screenShareStream,
 
     // Aktionen
     prepareCall,

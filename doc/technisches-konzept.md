@@ -466,11 +466,23 @@ Kein `roomCreate`: Den Raum legt LiveKit beim ersten Join selbst an
 einem Token, das an den Browser geht, nichts zu suchen.
 
 Der Token geht nicht über einen eigenen Endpunkt hinaus, sondern als Feld `livekit` in der
-bestehenden `CallAccessResponse` – zusammen mit der `LIVEKIT_URL`, die der Browser nicht
-selbst kennen darf (lokal `ws://`, im Betrieb `wss://`). Ausgestellt wird er bei jedem
-Abruf neu; wer ihn wann bekommt, entscheidet `mayJoinRoom()` in `call/call-access.ts`:
-der Klient ab `admitted`, der Coach schon ab `open` – er lässt ein und muss vor dem
-Klienten im Raum sein.
+bestehenden `CallAccessResponse`. Das Feld hat zwei Stufen, und die Trennung ist
+beabsichtigt:
+
+```ts
+livekit: { url: string; token: string | null } | null
+```
+
+Die `url` steht ab dem offenen Zugangsfenster bereit (`mayReachRoom()`), damit der Klient
+die Verbindung schon im Warteraum vorwärmen kann – `prepareConnection()` braucht kein
+Token. Sie gehört in die Antwort, weil sie sich zwischen lokal (`ws://`) und Betrieb
+(`wss://`) unterscheidet und eine zweite Konstante im Frontend auseinanderliefe. Eine
+Berechtigung ist sie nicht; das Geheimnis ist allein der Token.
+
+Der `token` kommt erst, wenn dieser Aufrufer beitreten darf (`mayJoinRoom()`): der Klient
+ab `admitted`, der Coach schon ab `open` – er lässt ein und muss vor dem Klienten im Raum
+sein. Ausgestellt wird er bei jedem Abruf neu, wodurch sich die Spanne zwischen zehn
+Minuten Laufzeit und bis zu einer Stunde Wartezeit ohne Sonderweg auflöst.
 
 **Zwei verschiedene Zeitgrenzen, nicht verwechseln:** Das Zugangsfenster aus §7 (Beginn −60 min bis Ende +120 min) entscheidet, wann der Buchungstoken den Warteraum öffnet. Die TTL des LiveKit-Tokens begrenzt dagegen nur das Zeitfenster, in dem er zum *Verbinden* benutzt werden kann, nicht die Gesprächsdauer; eine bestehende Verbindung bleibt darüber hinaus bestehen. 10 Minuten reichen deshalb aus und halten die Gültigkeit eines abgefangenen Tokens kurz.
 

@@ -7,7 +7,7 @@ import { bookings } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { tokenMatches } from '../common/client-token';
 import { callWindowClosesAt, callWindowOpensAt } from '@hxroom/shared';
-import { canAdmit, canEnd, mayJoinRoom, resolveCallState } from './call-access';
+import { canAdmit, canEnd, mayJoinRoom, mayReachRoom, resolveCallState } from './call-access';
 import { CallEventsService } from './call-events.service';
 import { callIdentity, callRoomName, createCallToken, livekitUrl } from './livekit-token';
 import type { CallAccessResponse } from '@hxroom/shared';
@@ -277,14 +277,17 @@ export class CallService {
   }
 
   /**
-   * Der Ausweis für den LiveKit-Raum (B2). Hängt bewusst hier und nicht an einem eigenen
-   * Endpunkt: Beide Wege hierher – der des Klienten über den clientAccessToken, der des
-   * Coachs über die organizationId – haben ihre Prüfung bereits hinter sich. Ein zweiter
-   * Endpunkt bräuchte dieselbe Prüfung ein zweites Mal, und genau dort läuft so etwas
-   * irgendwann auseinander (§8).
+   * Der Zugang zum LiveKit-Raum (B2, aufgeteilt mit B4). Hängt bewusst hier und nicht an
+   * einem eigenen Endpunkt: Beide Wege hierher – der des Klienten über den
+   * clientAccessToken, der des Coachs über die organizationId – haben ihre Prüfung bereits
+   * hinter sich. Ein zweiter Endpunkt bräuchte dieselbe Prüfung ein zweites Mal, und genau
+   * dort läuft so etwas irgendwann auseinander (§8).
    *
-   * Ausgestellt wird bei jedem Abruf neu. Das klingt verschwenderisch, löst aber die
-   * Spanne zwischen zehn Minuten Token-Laufzeit und bis zu einer Stunde Wartezeit ohne
+   * Zwei Stufen: Die URL steht ab dem offenen Fenster bereit, damit der Klient im
+   * Warteraum vorwärmen kann; der Token erst, wenn dieser Aufrufer beitreten darf.
+   *
+   * Der Token wird bei jedem Abruf neu ausgestellt. Das klingt verschwenderisch, löst aber
+   * die Spanne zwischen zehn Minuten Token-Laufzeit und bis zu einer Stunde Wartezeit ohne
    * Sonderweg: Da jedes SSE-Ereignis den frisch geladenen Zustand trägt (siehe stream()),
    * entsteht der Token genau in dem Ereignis, das den Einlass meldet – und bei jedem
    * Reconnect erneut.
@@ -295,12 +298,15 @@ export class CallService {
     state: ReturnType<typeof resolveCallState>,
     coachName: string,
   ): Promise<CallAccessResponse['livekit']> {
-    if (!mayJoinRoom(state, actor.role)) return null;
+    if (!mayReachRoom(state)) return null;
 
     const coach = actor.role === 'coach';
+    const url = livekitUrl(this.config);
+
+    if (!mayJoinRoom(state, actor.role)) return { url, token: null };
 
     return {
-      url: livekitUrl(this.config),
+      url,
       token: await createCallToken(this.config, {
         room: callRoomName(booking.id),
         identity: callIdentity(actor.role, coach ? actor.userId : booking.id),

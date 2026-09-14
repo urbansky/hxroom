@@ -8,6 +8,7 @@ export { default as CallVideoArea } from './components/call/CallVideoArea.vue';
 export { default as CallControls } from './components/call/CallControls.vue';
 export { default as CallChatPanel } from './components/call/CallChatPanel.vue';
 export { default as CallCameraView } from './components/call/CallCameraView.vue';
+export { default as CallAudioOutput } from './components/call/CallAudioOutput.vue';
 
 export { useLocalCamera } from './composables/useLocalCamera';
 

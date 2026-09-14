@@ -1,17 +1,25 @@
 <script setup lang="ts">
-// Das eigene Kamerabild in einer Kachel. Nimmt den Strom aus useLocalCamera entgegen und
-// zeigt ihn an – mehr nicht; die Kamera an- und auszuschalten ist Sache der Steuerleiste.
+// Ein Kamerabild in einer Kachel: den übergebenen Strom anzeigen – mehr nicht; die Kamera
+// an- und auszuschalten ist Sache der Steuerleiste. Seit B4 trägt die Komponente beide
+// Seiten, das eigene Bild und das der Gegenstelle.
 //
-// Gespiegelt, wie jede Selbstansicht: Man ist es aus dem Spiegel so gewohnt, und eine
-// Handbewegung nach rechts soll im eigenen Bild auch nach rechts gehen. Übertragen wird
-// später das ungespiegelte Bild – die Spiegelung sitzt deshalb im CSS und nicht in der Spur.
+// Das eigene Bild ist gespiegelt, wie jede Selbstansicht: Man ist es aus dem Spiegel so
+// gewohnt, und eine Handbewegung nach rechts soll im eigenen Bild auch nach rechts gehen.
+// Das der Gegenstelle darf es nicht sein – dort sähe man Schrift verkehrt. Die Spiegelung
+// sitzt deshalb im CSS und nicht in der Spur; übertragen wird immer ungespiegelt.
 
 // Vue-APIs stehen hier explizit. In einer App nimmt Nuxt bzw. das Nuxt-UI-Plugin sie über
 // Auto-Imports mit; für eine Datei in einem Workspace-Paket gilt das nur, solange die
 // pnpm-Symlinks auf Pfade ohne node_modules zeigen. Explizit ist es unabhängig davon.
 import { onUnmounted, useTemplateRef, watchEffect } from 'vue'
 
-const props = defineProps<{ stream: MediaStream | null }>()
+const props = withDefaults(defineProps<{
+  stream: MediaStream | null
+  /** Selbstansicht spiegeln. Für die Gegenstelle false. */
+  mirrored?: boolean
+  /** Was steht, solange kein Bild da ist. */
+  placeholder?: string
+}>(), { mirrored: true, placeholder: 'Kamera startet …' })
 
 const video = useTemplateRef<HTMLVideoElement>('video')
 
@@ -36,7 +44,8 @@ onUnmounted(() => {
     <video
       v-show="stream"
       ref="video"
-      class="absolute inset-0 size-full object-cover -scale-x-100 bg-elevated"
+      class="absolute inset-0 size-full object-cover bg-elevated"
+      :class="mirrored ? '-scale-x-100' : undefined"
       autoplay
       playsinline
       muted
@@ -44,7 +53,7 @@ onUnmounted(() => {
 
     <!-- Die Sekunden zwischen Klick und Bild: Der Browser fragt erst nach der Freigabe. -->
     <div v-if="!stream" class="absolute inset-0 flex items-center justify-center">
-      <span class="text-[0.625rem] sm:text-xs text-dimmed">Kamera startet …</span>
+      <span class="text-[0.625rem] sm:text-xs text-dimmed">{{ placeholder }}</span>
     </div>
   </div>
 </template>

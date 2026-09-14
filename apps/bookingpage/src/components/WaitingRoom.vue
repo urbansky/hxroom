@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
+import { configureLivekit, prepareCall } from '@hxroom/livekit';
 import { formatCountdown, formatDayTimeRange, formatTime } from '../utils/datetime';
 import { offerColor, type CallAccessResponse } from '@hxroom/shared';
 
@@ -17,6 +18,19 @@ const { call, avatarUrl, now, cancelHref } = defineProps<{
   /** Selbstabsage mit demselben Token, der diese Seite geöffnet hat. */
   cancelHref: string;
 }>();
+
+// Warmlauf, solange noch gewartet wird (B4): DNS, TLS und der erste Kontakt zum
+// Medienserver passieren jetzt, nicht erst beim Einlass – sonst schauten beide Seiten ein
+// paar Sekunden auf ein schwarzes Bild. Dafür genügt die URL; das Token gibt die API erst
+// mit dem Einlass heraus, und `prepareCall()` braucht keines.
+//
+// Ein gescheiterter Warmlauf ist kein Fehler, nur eine verpasste Abkürzung – das Paket
+// schluckt ihn und der Beitritt versucht es später ohnehin erneut.
+watch(() => call.livekit?.url, (url) => {
+  if (!url) return;
+  configureLivekit(url);
+  void prepareCall();
+}, { immediate: true });
 
 // Bewusst der Beginn des Termins, nicht der des Zugangsfensters: Wann der Raum
 // aufschließt, ist Technik – gemerkt hat sich der Klient seine Uhrzeit.

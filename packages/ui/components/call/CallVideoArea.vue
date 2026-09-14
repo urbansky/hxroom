@@ -158,7 +158,11 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
           </div>
 
           <div v-else key="video" class="absolute inset-0">
-            <CallVideoSim :blurred="remote?.blurred" />
+            <!-- Das echte Bild, sobald eine Spur ankommt; sonst die Andeutung. Der Wechsel
+                 ist bewusst hier und nicht in der App: Bis die Gegenstelle ihre Kamera
+                 veröffentlicht, soll die Fläche nicht schwarz bleiben. -->
+            <CallCameraView v-if="remote?.stream" :stream="remote.stream" :mirrored="false" />
+            <CallVideoSim v-else :blurred="remote?.blurred" />
 
           <!-- Name und Zustand des Gegenübers, unten links wie im Entwurf. -->
           <div v-if="remote" class="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex items-center gap-2">
@@ -232,7 +236,8 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
       :inert="videoColumnOpen ? undefined : true"
     >
       <div v-if="remote" class="relative aspect-video rounded-lg overflow-hidden ring-1 ring-accented bg-elevated shadow-sm">
-        <CallVideoSim :blurred="remote.blurred" />
+        <CallCameraView v-if="remote.stream" :stream="remote.stream" :mirrored="false" />
+        <CallVideoSim v-else :blurred="remote.blurred" />
 
         <span
           v-if="remote.mutedLocally"

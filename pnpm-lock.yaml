@@ -161,6 +161,9 @@ importers:
 
   apps/bookingpage:
     dependencies:
+      '@hxroom/livekit':
+        specifier: workspace:*
+        version: link:../../packages/livekit
       '@hxroom/shared':
         specifier: workspace:*
         version: link:../../packages/shared

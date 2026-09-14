@@ -6,7 +6,7 @@ import {
   callWindowClosesAt,
   callWindowOpensAt,
 } from '@hxroom/shared';
-import { canAdmit, canEnd, mayJoinRoom, resolveCallState, type CallBookingState } from './call-access';
+import { canAdmit, canEnd, mayJoinRoom, mayReachRoom, resolveCallState, type CallBookingState } from './call-access';
 
 // Sitzung von 10:00 bis 11:00; Fenster damit 09:00 bis 13:00.
 const START = new Date('2026-08-20T10:00:00.000Z');
@@ -165,6 +165,32 @@ describe('canEnd', () => {
     expect(canEnd('waiting')).toBe(false);
     expect(canEnd('too_early')).toBe(false);
     expect(canEnd('ended')).toBe(false);
+  });
+});
+
+describe('mayReachRoom', () => {
+  // Die URL ist die Adresse, nicht der Ausweis: Der Klient braucht sie schon im Warteraum,
+  // um die Verbindung vorzuwärmen – ohne Token (B4).
+  it('gibt die Adresse ab dem offenen Fenster heraus', () => {
+    expect(mayReachRoom('open')).toBe(true);
+    expect(mayReachRoom('waiting')).toBe(true);
+    expect(mayReachRoom('admitted')).toBe(true);
+  });
+
+  it('schweigt, wo es keinen Raum gibt', () => {
+    expect(mayReachRoom('too_early')).toBe(false);
+    expect(mayReachRoom('expired')).toBe(false);
+    expect(mayReachRoom('ended')).toBe(false);
+    expect(mayReachRoom('cancelled')).toBe(false);
+  });
+
+  // Ohne diese Beziehung gäbe es einen Token ohne Adresse, an die er gehört.
+  it('ist überall dort erfüllt, wo jemand beitreten darf', () => {
+    for (const state of ['too_early', 'open', 'waiting', 'admitted', 'ended', 'cancelled', 'expired'] as const) {
+      for (const role of ['coach', 'client'] as const) {
+        if (mayJoinRoom(state, role)) expect(mayReachRoom(state)).toBe(true);
+      }
+    }
   });
 });
 

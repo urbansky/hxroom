@@ -80,3 +80,18 @@ export function mayJoinRoom(state: CallState, role: CallRole): boolean {
   if (state === 'admitted') return true;
   return role === 'coach' && (state === 'open' || state === 'waiting');
 }
+
+/**
+ * Existiert der Raum in diesem Zustand überhaupt – unabhängig davon, wer schon hinein darf?
+ *
+ * Trennt die Adresse vom Ausweis (B4). Der Klient soll die Verbindung schon im Warteraum
+ * vorwärmen können (`prepareCall()` braucht nur die URL, kein Token) – dafür war der
+ * Warteraum vorne gebaut. Ihm bis zum Einlass auch die URL vorzuenthalten, hätte genau
+ * diese Abkürzung gekostet, ohne etwas zu schützen: Die URL des Medienservers ist keine
+ * Berechtigung, das Geheimnis ist allein der Token.
+ *
+ * Vor dem Fenster und nach dem Ende bleibt beides aus – dann gibt es nichts vorzuwärmen.
+ */
+export function mayReachRoom(state: CallState): boolean {
+  return state === 'open' || state === 'waiting' || state === 'admitted';
+}

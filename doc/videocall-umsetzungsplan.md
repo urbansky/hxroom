@@ -183,9 +183,25 @@ Der Vertrag ist auf B4/B5 hin geschnitten: `CallParticipant` aus `packages/livek
 
 Abnahme im Browser: `/call/prototype` des Coachs verhält sich unverändert; die Klientenseite zeigt über einen Spontan-Termin nach dem Einlassen dieselbe Bühne – mit echtem eigenem Kamerabild, ohne Uhr, mit einem statt drei Bereichen in der Seitenleiste, ohne den Menüeintrag zum Stummschalten und mit „Gespräch verlassen" statt „Sitzung beenden".
 
-### B4 · Klientenseite real machen
+### B4 · Klientenseite real machen ✅ *(umgesetzt 2026-09-14)*
 
-Platzhalter-Bühne durch die geteilte Komponente ersetzen, Verbindungs-Warmlauf schon im Warteraum, Kamera- und Mikrofonfreigabe samt Fehlerfällen. Der Warteraum selbst bleibt unverändert – genau dafür wurde er vorne gebaut. Ab hier wird lokales HTTPS relevant: Safari behandelt `*.localhost` nicht als sicheren Kontext (§15).
+Platzhalter-Bühne durch die geteilte Komponente ersetzen, Verbindungs-Warmlauf schon im Warteraum, Kamera- und Mikrofonfreigabe samt Fehlerfällen. Der Warteraum selbst bleibt unverändert – genau dafür wurde er vorne gebaut.
+
+Die Bühne stand schon (B3b), neu ist die Verbindung dahinter: `useCallRoom()` in `CallStage.vue`, Beitritt in dem Moment, in dem die Antwort erstmals ein Token trägt, `leaveCall()` beim Verlassen der Seite.
+
+**Das Antwortschema musste sich ändern – eine Korrektur an B2.** `livekit` war als `{ url, token }` modelliert, „beides oder nichts". Damit fiel genau die Abkürzung aus, für die der Warteraum vorne gebaut wurde: `prepareCall()` braucht nur die URL, und die kannte der Klient vor dem Einlass nicht. Jetzt ist es `{ url, token: string | null }` – die Adresse steht ab dem offenen Fenster bereit, der Ausweis kommt später. Die Unterscheidung liegt als `mayReachRoom()` neben `mayJoinRoom()` in `call-access.ts`: Die URL des Medienservers ist keine Berechtigung, das Geheimnis ist allein der Token.
+
+**Ton war der wichtigere Teil, nicht das Bild.** Die Bühne hatte kein `<audio>` – nur `CallCameraView` mit `<video muted>`, und `muted` ist dort Pflicht, weil kein Browser ein Video sonst von selbst anlaufen lässt. Bild und Ton in einer Spur hätten der Gegenstelle damit den Ton genommen: ein stummes Gespräch, in dem beide reden. `CallAudioOutput.vue` ist deshalb ein eigenes Element pro Spur.
+
+Dazu die Autoplay-Sperre: Ton ohne vorherige Nutzerinteraktion wird blockiert, und `autoplay` allein meldet das nirgends – die Verweigerung steht nur in der Promise von `play()`. Der erste Versuch prüfte deshalb nur diese Promise, was eine zweite Falle öffnete: `autoplay` startet die Wiedergabe kurz darauf manchmal doch, und dann stand „Kein Ton" auf der Bühne, während der Klient längst hörte. Jetzt entscheidet der Zustand des Elements, und `@playing` räumt die Meldung ab.
+
+**Die Track-Brücke liegt in `packages/livekit`**, nicht in den Apps: `videoStreamFor()`, `audioStreamFor()` und `screenShareStream()` machen aus einem LiveKit-`Track` einen `MediaStream`, den `packages/ui` als `CallPeer.stream` erwartet – so bleibt die Oberfläche frei von LiveKit und B5 schreibt dieselben Zeilen nicht erneut. Der Cache darin ist kein Geiz: Ein bei jedem Aufruf neu gebauter Stream wäre für Vue ein neues Objekt, `srcObject` liefe erneut und das Bild setzte bei jedem Rendern neu auf.
+
+`CallCameraView` trägt jetzt beide Seiten und bekam dafür `mirrored` – die Selbstansicht ist gespiegelt, das Bild der Gegenstelle darf es nicht sein, sonst steht dort Schrift verkehrt.
+
+**Kein lokales HTTPS nötig.** Der Plan vermerkte das als Voraussetzung; gemessen über `http://anna.hxroom.localhost` ist `isSecureContext` in Chromium erfüllt, `getUserMedia` und `getDisplayMedia` funktionieren, und `ws://` ist von einer `http://`-Seite kein Mixed Content. Die Falle aus §15 entsteht erst beim Umstieg auf `https://` – dann muss `livekit.hxroom.localhost` mitziehen. Für Safari bleibt es, wie dort beschrieben.
+
+Abnahme über einen Spontan-Termin, Gegenstelle `lk room join --publish-demo --publish tone.ogg` (eine mit ffmpeg erzeugte Opus-Datei – `--publish-demo` allein sendet nur Video, Ton wäre ungeprüft geblieben): Warmlauf im Warteraum läuft und tritt **nicht** vorzeitig bei; nach dem Einlass Beitritt, Bild der Gegenstelle in 1280×720 auf der Bühne, Audiospur am `<audio>`. Beide Autoplay-Fälle gegengeprüft – mit gelockerter Policy spielt der Ton und die Meldung bleibt aus, mit der Standardpolicy ist es umgekehrt. Der Docker-Build der Klientenseite lokal gebaut, weil `packages/livekit` neu im Image liegen muss.
 
 ### B5 · Coachseite real machen
 

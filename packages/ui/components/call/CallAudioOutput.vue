@@ -1,0 +1,68 @@
+<script setup lang="ts">
+// Der Ton der Gegenseite. Ohne Bild, ohne Bedienelemente – ein <audio>, das spielt.
+//
+// Getrennt vom Video und nicht in einem gemeinsamen Stream: Das <video> der Selbstansicht
+// muss `muted` tragen, sonst lässt kein Browser es von selbst anlaufen. Lägen Bild und Ton
+// in derselben Spur, nähme dieses Attribut auch der Gegenstelle den Ton – und man sitzt in
+// einem stummen Gespräch, ohne zu wissen, warum.
+//
+// Ein eigenes Element pro Spur, statt alle in eines zu mischen: Die Bildschirmfreigabe
+// bringt ihren eigenen Ton mit, und im Mehrteilnehmer-Fall wächst das mit.
+
+// Vue-APIs explizit – siehe die Anmerkung in CallCameraView.vue.
+import { onUnmounted, ref, useTemplateRef, watch, watchEffect } from 'vue'
+
+const props = defineProps<{ stream: MediaStream | null }>()
+
+/**
+ * Ob der Browser die Wiedergabe verweigert hat.
+ *
+ * Autoplay mit Ton ist nur erlaubt, wenn der Nutzer auf der Seite schon etwas getan hat.
+ * Im Regelfall ist das erfüllt – in den Warteraum kommt niemand ohne Klick. Bleibt es doch
+ * hängen, muss die Oberfläche es sagen können: Ein stummes Gespräch, in dem beide reden,
+ * ist der ärgerlichste Fehler dieses Produkts.
+ */
+const blocked = ref(false)
+defineExpose({ blocked })
+
+const audio = useTemplateRef<HTMLAudioElement>('audio')
+
+watchEffect(() => {
+  const el = audio.value
+  if (el && el.srcObject !== props.stream) el.srcObject = props.stream
+})
+
+// `autoplay` allein genügt nicht: Der Browser meldet die Verweigerung nur über die Promise
+// von play(). Ohne diesen Aufruf bliebe es still und niemand erfährt es.
+//
+// Umgekehrt ist ein abgelehntes play() noch kein Beweis für Stille: `autoplay` kann die
+// Wiedergabe kurz danach doch starten. Deshalb entscheidet nicht die Promise allein,
+// sondern der Zustand des Elements – und das `playing`-Ereignis unten räumt die Meldung
+// wieder ab. Sonst läse der Klient „Kein Ton", während er längst hört.
+watch([audio, () => props.stream], async ([el, stream]) => {
+  if (!el || !stream) return
+  try {
+    await el.play()
+    blocked.value = false
+  }
+  catch {
+    blocked.value = el.paused
+  }
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (audio.value) audio.value.srcObject = null
+})
+</script>
+
+<template>
+  <!-- v-show statt v-if, wie beim Video: Das Element muss stehen, bevor der Strom da ist. -->
+  <audio
+    v-show="stream"
+    ref="audio"
+    autoplay
+    playsinline
+    @playing="blocked = false"
+    @pause="blocked = !!stream"
+  />
+</template>

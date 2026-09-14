@@ -12,6 +12,7 @@
     "@nuxt/ui": "^4.11.1",
     "@tiptap/core": "3.31.3",
     "@tiptap/starter-kit": "3.31.3",
+    "@hxroom/livekit": "workspace:*",
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
     "tailwindcss": "^4.2.1",

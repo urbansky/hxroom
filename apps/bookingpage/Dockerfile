@@ -14,6 +14,7 @@ COPY apps/bookingpage/package.json apps/bookingpage/
 COPY apps/admin/package.json apps/admin/
 COPY apps/landing/package.json apps/landing/
 COPY packages/shared/package.json packages/shared/
+COPY packages/livekit/package.json packages/livekit/
 COPY packages/ui/package.json packages/ui/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
@@ -24,6 +25,9 @@ ARG VITE_API_URL=https://api.hxroom.de
 ENV VITE_API_URL=$VITE_API_URL
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
+# Seit B4 hängt die Klientenseite an der Call-Mechanik. Das Paket liefert TypeScript-
+# Quelle, wird also nicht gebaut, muss aber im Kontext liegen.
+COPY packages/livekit/ packages/livekit/
 COPY packages/ui/ packages/ui/
 COPY apps/bookingpage/ apps/bookingpage/
 RUN pnpm --filter @hxroom/shared build
