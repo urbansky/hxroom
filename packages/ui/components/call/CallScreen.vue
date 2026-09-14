@@ -180,7 +180,7 @@ function resizeByKey(event: KeyboardEvent) {
 
 <template>
   <div
-    class="h-full flex flex-col bg-default"
+    class="call-enter h-full flex flex-col bg-default"
     :style="{
       '--call-stage-top': `${stageBounds.top}px`,
       '--call-stage-bottom': `${stageBounds.bottom}px`,
@@ -225,6 +225,7 @@ function resizeByKey(event: KeyboardEvent) {
         @mouseleave="controlsPeek = false"
       >
         <CallControls
+          class="call-enter-controls"
           v-model:mic-on="micOn"
           v-model:cam-on="camOn"
           v-model:self-blur="selfBlur"
@@ -290,3 +291,44 @@ function resizeByKey(event: KeyboardEvent) {
     </USlideover>
   </div>
 </template>
+
+<style scoped>
+/* Der Einstieg in den Call, zusammen mit der Bühne in CallVideoArea.vue. Der Wechsel dorthin
+   ist in beiden Apps ein v-if auf den Zustand „eingelassen" – ohne Bewegung wäre er ein
+   harter Schnitt vom Warteraum auf eine volle Bühne.
+
+   Die Fläche selbst blendet nur ein, sie bewegt sich nicht: Sie ist ein Vorfahre der
+   gemessenen Bühne, und nur die Deckkraft lässt getBoundingClientRect unberührt.
+
+   Die Leiste fährt einen Hauch nach der Bühne herauf. Bewegt wird CallControls und nicht der
+   umgebende Kasten – der trägt bereits translate-y-full für das Vollbild, und eine Animation
+   auf derselben Eigenschaft liefe dagegen. Seine Höhe misst ein ResizeObserver, und den
+   lässt ein Transform ohnehin kalt. */
+.call-enter {
+  animation: call-enter-fade 200ms var(--ease-out, ease-out) backwards;
+}
+
+.call-enter-controls {
+  animation: call-enter-controls 350ms var(--ease-out, ease-out) 120ms backwards;
+}
+
+@keyframes call-enter-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes call-enter-controls {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-enter,
+  .call-enter-controls {
+    animation: none;
+  }
+}
+</style>

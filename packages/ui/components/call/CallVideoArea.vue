@@ -3,7 +3,7 @@
 // Datei in einem Workspace-Paket trägt der nur, solange die pnpm-Symlinks auf Pfade ohne
 // node_modules zeigen. Die U-Komponenten bleiben dagegen bewusst beim Resolver – ein
 // direkter Import aus @nuxt/ui zöge von hier aus eine zweite Kopie der Bibliothek herein.
-import { computed, onMounted, onUnmounted, useTemplateRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { firstName, initials } from '@hxroom/shared'
 import CallCameraView from './CallCameraView.vue'
 import CallShareSim from './CallShareSim.vue'
@@ -58,6 +58,12 @@ const emit = defineEmits<{
 // hohen Fenstern, die Leiste soll dabei stehen bleiben statt bei jeder Größenänderung mit
 // ihm zu wachsen und zu schrumpfen. Es ist die Höhe, die das Bild maximal einnimmt.
 const stage = useTemplateRef<HTMLElement>('stage')
+
+// Die Selbstansicht schwebt nur beim Betreten des Calls herein, nicht jedes Mal, wenn sie
+// neu entsteht: Sie liegt im Zweig „Gespräch" der Überblendung und wird deshalb nach
+// jeder Bildschirmfreigabe neu gemountet. Ohne dieses Flag käme sie dann ein zweites Mal
+// verzögert angeflogen, während die Überblendung längst fertig ist.
+const entering = ref(true)
 
 onMounted(() => {
   const el = stage.value
@@ -193,7 +199,11 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
           <!-- Eigenes Bild. Klein, oben rechts – man soll sich nicht selbst anschauen.
                Die Breite ist ein Anteil des großen Bildes, damit beide zusammen
                schrumpfen. -->
-          <div class="absolute right-3 sm:right-4 top-3 sm:top-4 w-[28%] max-w-56 aspect-video rounded-lg overflow-hidden border border-accented bg-elevated shadow-sm">
+          <div
+            class="absolute right-3 sm:right-4 top-3 sm:top-4 w-[28%] max-w-56 aspect-video rounded-lg overflow-hidden border border-accented bg-elevated shadow-sm"
+            :class="{ 'call-enter-self': entering }"
+            @animationend.self="entering = false"
+          >
             <CallCameraView v-if="local.cameraOn" :stream="local.stream ?? null" />
             <div v-else class="absolute inset-0 flex items-center justify-center">
               <span class="text-[0.625rem] sm:text-xs text-dimmed">Kamera aus</span>
@@ -306,6 +316,46 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
   .call-swap-enter-active,
   .call-swap-leave-active {
     transition: none;
+  }
+}
+
+/* Der Einstieg in den Call. Die Bühne öffnet sich, die Selbstansicht kommt einen Moment
+   später dazu – erst das Gegenüber, dann man selbst, wie beim Betreten eines Raums.
+
+   Bewegt wird nur, was innerhalb der gemessenen Fläche liegt: `stage` meldet seine Maße per
+   getBoundingClientRect an die Seitenleiste, und das rechnet Transforms der Vorfahren mit
+   ein. Eine Skalierung *um* die Bühne herum lieferte beim Mounten verkleinerte Maße – und
+   weil ein Transform keine Größenänderung auslöst, würde danach nie neu gemessen.
+
+   `backwards` statt `both`: Vor dem Start gilt der Anfangszustand (sonst blitzte die
+   verzögerte Selbstansicht kurz auf), danach aber wieder das eigene Styling – ein
+   festgehaltener Endzustand überdeckte spätere Transforms. */
+.video-tile {
+  animation: call-enter-stage 450ms var(--ease-out, ease-out) backwards;
+}
+
+.call-enter-self {
+  animation: call-enter-self 350ms var(--ease-out, ease-out) 220ms backwards;
+}
+
+@keyframes call-enter-stage {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes call-enter-self {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-tile,
+  .call-enter-self {
+    animation: none;
   }
 }
 
