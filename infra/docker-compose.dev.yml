@@ -82,8 +82,15 @@ services:
       start_period: 40s
 
   # Legt einmalig den HxRoom-Bucket an (idempotent) und setzt ihn auf privat
+  #
+  # Bezug über quay.io, nicht Docker Hub: Der minio-Namespace ist dort im Laufe des
+  # Jahres 2025 verschwunden (auch minio/minio), `docker compose pull` lief damit in ein
+  # "repository does not exist" und brach redeploy.sh ab. Auf quay.io liegt das Image
+  # weiter, wird aber nicht mehr gepflegt – daher der feste Tag statt latest.
+  # Das genügt: Der Dienst legt nur einen Bucket an und entfällt ohnehin, sobald RustFS
+  # zum Produktiv-Launch durch Hetzner Object Storage ersetzt wird (§17).
   rustfs-createbuckets:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:RELEASE.2024-01-31T08-59-40Z
     depends_on:
       rustfs:
         condition: service_healthy
