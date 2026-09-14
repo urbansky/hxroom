@@ -1,16 +1,13 @@
 import type { ClientListItem } from '@hxroom/shared'
 
 /**
- * Initialen für den Avatar in Liste und Profil: erster und letzter Namensbestandteil.
- * Fällt auf ein einzelnes Zeichen zurück, wenn nur ein Wort vorhanden ist.
+ * Initialen für den Avatar in Liste und Profil.
+ *
+ * Die Funktion liegt seit dem Umzug der Call-Oberfläche in @hxroom/shared, weil die
+ * geteilten Komponenten sie brauchen. Der Re-Export hält den vertrauten Namen in den
+ * Auto-Imports dieser App, damit die bestehenden Aufrufer unberührt bleiben.
  */
-export function clientInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  const first = parts[0]![0] ?? ''
-  const last = parts.length > 1 ? parts[parts.length - 1]![0] ?? '' : ''
-  return (first + last).toUpperCase()
-}
+export { initials as clientInitials } from '@hxroom/shared'
 
 export function formatSessionCount(count: number): string {
   if (count === 0) return 'Noch keine Sitzung'

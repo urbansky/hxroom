@@ -6,6 +6,11 @@
 // Handbewegung nach rechts soll im eigenen Bild auch nach rechts gehen. Übertragen wird
 // später das ungespiegelte Bild – die Spiegelung sitzt deshalb im CSS und nicht in der Spur.
 
+// Vue-APIs stehen hier explizit. In einer App nimmt Nuxt bzw. das Nuxt-UI-Plugin sie über
+// Auto-Imports mit; für eine Datei in einem Workspace-Paket gilt das nur, solange die
+// pnpm-Symlinks auf Pfade ohne node_modules zeigen. Explizit ist es unabhängig davon.
+import { onUnmounted, useTemplateRef, watchEffect } from 'vue'
+
 const props = defineProps<{ stream: MediaStream | null }>()
 
 const video = useTemplateRef<HTMLVideoElement>('video')

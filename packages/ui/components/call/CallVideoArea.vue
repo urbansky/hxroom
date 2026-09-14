@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import type { CallAccessResponse } from '@hxroom/shared'
+// Vue-APIs und Geschwisterkomponenten stehen hier explizit, ohne Auto-Import: Für eine
+// Datei in einem Workspace-Paket trägt der nur, solange die pnpm-Symlinks auf Pfade ohne
+// node_modules zeigen. Die U-Komponenten bleiben dagegen bewusst beim Resolver – ein
+// direkter Import aus @nuxt/ui zöge von hier aus eine zweite Kopie der Bibliothek herein.
+import { computed, onMounted, onUnmounted, useTemplateRef } from 'vue'
+import { firstName, initials } from '@hxroom/shared'
+import CallCameraView from './CallCameraView.vue'
+import CallShareSim from './CallShareSim.vue'
+import CallVideoSim from './CallVideoSim.vue'
+import type { CallPeer } from './types'
 
 // Die Bühne, in zwei Fassungen:
 //
-//   im Gespräch      – das Bild des Klienten groß, das eigene klein oben rechts darin
+//   im Gespräch      – das Bild des Gegenübers groß, das eigene klein oben rechts darin
 //   bei Freigabe     – der geteilte Bildschirm groß, daneben rechts beide Videos
 //                      untereinander und gleich groß; im Vollbild ohne sie
 //
@@ -16,8 +25,11 @@ import type { CallAccessResponse } from '@hxroom/shared'
 // aufhört und die Anwendung anfängt – und bei einem anderen Fensterformat wäre sie
 // beschnitten.
 //
+// Rollenfrei: Es gibt „local" und „remote". Wer davon der Coach ist und wer der Klient,
+// weiß nur die App, die die Bühne einbindet – für die Bühne ist es dieselbe Fläche.
+//
 // Ein Bild ist echt, die anderen sind es noch nicht: Das eigene Vorschaubild kommt aus der
-// Kamera des Coachs (CallCameraView, POC – der Strom bleibt im Browser). Klient und
+// Kamera (CallCameraView – der Strom bleibt im Browser). Das Gegenüber und die
 // Bildschirmfreigabe bleiben bis B4/B5 die Andeutungen aus CallVideoSim und CallShareSim,
 // damit sich beurteilen lässt, wie die Zustände über einem bewegten Bild liegen: wer da
 // ist, wer stumm ist, wessen Hintergrund weichgezeichnet wird, ob gerade geteilt wird.
@@ -27,15 +39,12 @@ import type { CallAccessResponse } from '@hxroom/shared'
 // verlangt eine Segmentierung der Person, die mit der LiveKit-Anbindung kommt.
 
 const props = defineProps<{
-  call: CallAccessResponse
-  camOn: boolean
-  /** Die eigene Kamera, sofern sie läuft – siehe useLocalCamera. */
-  cameraStream: MediaStream | null
-  micOn: boolean
-  coachBlur: boolean
-  clientBlur: boolean
-  sharing: boolean
-  clientMuted: boolean
+  /** Man selbst. Der Name wird nicht gezeigt – im eigenen Bild steht „Du". */
+  local: CallPeer
+  /** Das Gegenüber, oder null, solange niemand sonst da ist. */
+  remote: CallPeer | null
+  /** Wer gerade teilt – Teilnehmer-ID oder null. Daraus folgen beide Beschriftungen. */
+  sharingBy?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -74,7 +83,13 @@ onMounted(() => {
   })
 })
 
-const initials = computed(() => clientInitials(props.call.clientName))
+const remoteInitials = computed(() => initials(props.remote?.name ?? ''))
+const remoteShort = computed(() => firstName(props.remote?.name ?? '', 'Dein Gegenüber'))
+
+// Ob geteilt wird, und von wem. Beides folgt aus einer Angabe: Wer selbst teilt, sieht den
+// Hinweis in der ersten Person und darf die Freigabe beenden; wer zusieht, nicht.
+const sharing = computed(() => props.sharingBy != null)
+const sharingIsLocal = computed(() => props.sharingBy === props.local.id)
 
 // Bei einer Freigabe zählt manchmal jeder Pixel – eine Tabelle, ein Plan, ein Formular.
 // Dann fallen die beiden Videos weg und mit ihnen die Steuerleiste; der geteilte Bildschirm
@@ -84,7 +99,7 @@ const fullscreen = defineModel<boolean>('fullscreen', { required: true })
 // Die Spalte bleibt immer im Baum und wächst auf null zusammen, statt zu verschwinden – nur
 // so hat sie beim Beginn einer Freigabe eine Breite, aus der heraus sie wachsen kann. inert
 // nimmt sie im eingeklappten Zustand aus Tastatur und Vorlesereihenfolge.
-const videoColumnOpen = computed(() => props.sharing && !fullscreen.value)
+const videoColumnOpen = computed(() => sharing.value && !fullscreen.value)
 
 // Namensschild in den kleinen Bildern. Mit eigenem Grund, nicht als bloßer Text: Ein
 // Kamerabild ist an dieser Stelle mal hell und mal dunkel, blanke Schrift verschwindet darin.
@@ -93,7 +108,7 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
 
 <template>
   <div ref="stage" class="relative h-full w-full overflow-hidden bg-muted flex items-stretch justify-center p-3 sm:p-5">
-    <!-- Die Hauptfläche: im Gespräch der Klient, bei Freigabe der geteilte Bildschirm. -->
+    <!-- Die Hauptfläche: im Gespräch das Gegenüber, bei Freigabe der geteilte Bildschirm. -->
     <div class="main flex-1 min-w-0 grid place-items-center">
       <div class="video-tile relative overflow-hidden rounded-xl ring-1 ring-accented bg-elevated shadow-lg">
         <!-- Der Wechsel zwischen Gespräch und Freigabe ist eine Überblendung: Beide
@@ -104,13 +119,17 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
             <CallShareSim />
 
           <!-- Läuft eine Freigabe, muss das ohne Suchen erkennbar sein: Wer seinen
-               Bildschirm teilt, ohne es zu merken, zeigt im Zweifel die Klientenakte des
+               Bildschirm teilt, ohne es zu merken, zeigt im Zweifel die Akte des
                Nächsten. -->
           <div class="absolute inset-x-0 top-0 z-20 flex items-center justify-center gap-3 px-4 py-2 bg-primary/10 backdrop-blur border-b border-primary/20">
             <UIcon name="i-lucide-monitor-up" class="size-4 text-primary shrink-0" />
-            <span class="text-sm text-primary truncate">Du teilst deinen Bildschirm</span>
+            <span class="text-sm text-primary truncate">
+              {{ sharingIsLocal ? 'Du teilst deinen Bildschirm' : `${remoteShort} teilt den Bildschirm` }}
+            </span>
 
+            <!-- Beenden darf nur, wer auch teilt. -->
             <UButton
+              v-if="sharingIsLocal"
               icon="i-lucide-monitor-x"
               color="primary"
               size="sm"
@@ -139,52 +158,52 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
           </div>
 
           <div v-else key="video" class="absolute inset-0">
-            <CallVideoSim :blurred="clientBlur" />
+            <CallVideoSim :blurred="remote?.blurred" />
 
-          <!-- Name und Zustand des Klienten, unten links wie im Entwurf. -->
-          <div class="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex items-center gap-2">
+          <!-- Name und Zustand des Gegenübers, unten links wie im Entwurf. -->
+          <div v-if="remote" class="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex items-center gap-2">
             <div class="flex items-center gap-2 rounded-lg border border-default bg-default/85 backdrop-blur px-2.5 py-1.5">
               <span class="size-5 rounded-full bg-primary/10 text-primary text-[0.625rem] font-medium flex items-center justify-center">
-                {{ initials }}
+                {{ remoteInitials }}
               </span>
-              <span class="text-xs text-toned">{{ call.clientName }}</span>
+              <span class="text-xs text-toned">{{ remote.name }}</span>
             </div>
 
-            <UTooltip v-if="clientMuted" text="Von dir stummgeschaltet">
+            <UTooltip v-if="remote.mutedLocally" text="Von dir stummgeschaltet">
               <span class="size-7 rounded-full bg-error/10 flex items-center justify-center">
                 <UIcon name="i-lucide-mic-off" class="size-3.5 text-error" />
               </span>
             </UTooltip>
 
             <UBadge
-              v-if="clientBlur"
+              v-if="remote.blurred"
               icon="i-lucide-aperture"
               color="neutral"
               variant="subtle"
               size="sm"
-              :label="`Hintergrund von ${call.clientName.split(' ')[0]} weichgezeichnet`"
+              :label="`Hintergrund von ${remoteShort} weichgezeichnet`"
               class="hidden sm:inline-flex"
             />
           </div>
 
-          <!-- Eigenes Bild. Klein, oben rechts – der Coach soll sich nicht selbst
-               anschauen. Die Breite ist ein Anteil des großen Bildes, damit beide zusammen
+          <!-- Eigenes Bild. Klein, oben rechts – man soll sich nicht selbst anschauen.
+               Die Breite ist ein Anteil des großen Bildes, damit beide zusammen
                schrumpfen. -->
           <div class="absolute right-3 sm:right-4 top-3 sm:top-4 w-[28%] max-w-56 aspect-video rounded-lg overflow-hidden border border-accented bg-elevated shadow-sm">
-            <CallCameraView v-if="camOn" :stream="cameraStream" />
+            <CallCameraView v-if="local.cameraOn" :stream="local.stream ?? null" />
             <div v-else class="absolute inset-0 flex items-center justify-center">
               <span class="text-[0.625rem] sm:text-xs text-dimmed">Kamera aus</span>
             </div>
 
             <span
-              v-if="!micOn"
+              v-if="!local.micOn"
               class="absolute top-1.5 right-1.5 size-4 rounded-full bg-error flex items-center justify-center"
             >
               <UIcon name="i-lucide-mic-off" class="size-2.5 text-inverted" />
             </span>
 
             <span
-              v-if="coachBlur"
+              v-if="local.blurred"
               class="absolute top-1.5 left-1.5 size-4 rounded-full bg-primary flex items-center justify-center"
               title="Dein Hintergrund wird weichgezeichnet"
             >
@@ -212,35 +231,35 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
       :class="videoColumnOpen ? 'w-40 sm:w-56 xl:w-72 ms-3 sm:ms-4 opacity-100' : 'w-0 ms-0 opacity-0'"
       :inert="videoColumnOpen ? undefined : true"
     >
-      <div class="relative aspect-video rounded-lg overflow-hidden ring-1 ring-accented bg-elevated shadow-sm">
-        <CallVideoSim :blurred="clientBlur" />
+      <div v-if="remote" class="relative aspect-video rounded-lg overflow-hidden ring-1 ring-accented bg-elevated shadow-sm">
+        <CallVideoSim :blurred="remote.blurred" />
 
         <span
-          v-if="clientMuted"
+          v-if="remote.mutedLocally"
           class="absolute top-1.5 right-1.5 size-4 rounded-full bg-error flex items-center justify-center"
-          :title="`${call.clientName.split(' ')[0]} ist stummgeschaltet`"
+          :title="`${remoteShort} ist stummgeschaltet`"
         >
           <UIcon name="i-lucide-mic-off" class="size-2.5 text-inverted" />
         </span>
 
-        <span :class="TILE_LABEL">{{ call.clientName }}</span>
+        <span :class="TILE_LABEL">{{ remote.name }}</span>
       </div>
 
       <div class="relative aspect-video rounded-lg overflow-hidden ring-1 ring-accented bg-elevated shadow-sm">
-        <CallCameraView v-if="camOn" :stream="cameraStream" />
+        <CallCameraView v-if="local.cameraOn" :stream="local.stream ?? null" />
         <div v-else class="absolute inset-0 flex items-center justify-center">
           <span class="text-[0.625rem] sm:text-xs text-dimmed">Kamera aus</span>
         </div>
 
         <span
-          v-if="!micOn"
+          v-if="!local.micOn"
           class="absolute top-1.5 right-1.5 size-4 rounded-full bg-error flex items-center justify-center"
         >
           <UIcon name="i-lucide-mic-off" class="size-2.5 text-inverted" />
         </span>
 
         <span
-          v-if="coachBlur"
+          v-if="local.blurred"
           class="absolute top-1.5 left-1.5 size-4 rounded-full bg-primary flex items-center justify-center"
           title="Dein Hintergrund wird weichgezeichnet"
         >

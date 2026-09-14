@@ -1,12 +1,7 @@
 <script setup lang="ts">
-export interface CallChatMessage {
-  id: number
-  from: 'coach' | 'client'
-  text: string
-  time: string
-  /** Nachrichten mit Link oder Anhang gehen in die Zusammenfassungsmail (project.md §5a). */
-  inSummary?: boolean
-}
+import { computed } from 'vue'
+import { firstName } from '@hxroom/shared'
+import type { CallChatMessage } from './types'
 
 // Chat als Rückfallebene, nicht als Plauderkanal (project.md §5a): für den Fall, dass der
 // Ton ausfällt, und zum bewussten Teilen von Link oder Dokument. Deshalb liegt er in einem
@@ -16,8 +11,14 @@ export interface CallChatMessage {
 
 const draft = defineModel<string>('draft', { required: true })
 
-defineProps<{ messages: CallChatMessage[]; clientName: string }>()
+const props = defineProps<{
+  messages: CallChatMessage[]
+  /** Name des Gegenübers – beim Coach der Klient, beim Klienten der Coach. */
+  peerName: string
+}>()
 defineEmits<{ send: [] }>()
+
+const peerShort = computed(() => firstName(props.peerName, 'Gegenüber'))
 
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 </script>
@@ -37,11 +38,11 @@ const inputUi = { base: 'bg-white dark:bg-neutral-800' }
         v-for="message in messages"
         :key="message.id"
         class="flex flex-col gap-1"
-        :class="message.from === 'coach' ? 'items-end' : 'items-start'"
+        :class="message.from === 'self' ? 'items-end' : 'items-start'"
       >
         <div
           class="max-w-[85%] rounded-lg px-3 py-2 text-xs leading-relaxed"
-          :class="message.from === 'coach'
+          :class="message.from === 'self'
             ? 'bg-primary/10 text-toned'
             : 'border border-default bg-white dark:bg-neutral-900 text-toned'"
         >
@@ -50,7 +51,7 @@ const inputUi = { base: 'bg-white dark:bg-neutral-800' }
         <div class="flex items-center gap-1.5 text-[0.625rem] text-dimmed">
           <UIcon v-if="message.inSummary" name="i-lucide-mail" class="size-3" />
           <span v-if="message.inSummary">geht in die Zusammenfassung ·</span>
-          <span>{{ message.from === 'coach' ? 'Du' : clientName.split(' ')[0] }} · {{ message.time }}</span>
+          <span>{{ message.from === 'self' ? 'Du' : peerShort }} · {{ message.time }}</span>
         </div>
       </div>
 

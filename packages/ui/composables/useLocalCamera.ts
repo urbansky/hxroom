@@ -1,20 +1,23 @@
+import { onScopeDispose, ref, shallowRef, watch, type Ref } from 'vue'
+
 /**
  * Das eigene Kamerabild – der erste Schritt aus dem Prototyp heraus.
  *
  * **POC.** Hier steht nur `getUserMedia()`, keine LiveKit-Verbindung: Das Bild bleibt im
- * Browser des Coachs und wird nirgendwohin übertragen. Der Zweck ist der Blick auf die
- * eigene Kamera – wie die Oberfläche über einem wirklich bewegten Bild wirkt und ob die
- * Freigabe im Alltag glatt durchläuft. Mit B4/B5 wandert die Spur in den LiveKit-Room, und
- * der Aufruf hier wird durch das Geräte-Handling aus `packages/livekit` ersetzt.
+ * Browser und wird nirgendwohin übertragen. Beide Seiten benutzen es – eine Kamera ist eine
+ * Kamera. Der Zweck ist der Blick auf das eigene Bild: wie die Oberfläche über einem
+ * wirklich bewegten Bild wirkt und ob die Freigabe im Alltag glatt durchläuft. Mit B4/B5
+ * wandert die Spur in den LiveKit-Raum, und dieser Aufruf wird durch das Geräte-Handling
+ * aus `packages/livekit` ersetzt – dann verschwindet die Datei.
  *
  * Der Strom hängt an einem Schalter (`active`) statt an einem `start()` im Aufrufer: Die
- * Kamera-Leuchte muss ausgehen, sobald der Coach die Kamera ausschaltet, und sie muss
+ * Kamera-Leuchte muss ausgehen, sobald die Kamera ausgeschaltet wird, und sie muss
  * ausgehen, wenn die Seite verlassen wird. Beides ist hier eine Stelle, keine zwei.
  */
 export function useLocalCamera(active: Ref<boolean>) {
   /** shallowRef: Ein MediaStream ist ein lebendes Objekt, kein Datensatz zum Nachverfolgen. */
   const stream = shallowRef<MediaStream | null>(null)
-  /** Gesetzt, sobald die Freigabe scheitert – als fertiger Satz für den Coach. */
+  /** Gesetzt, sobald die Freigabe scheitert – als fertiger Satz für den Bildschirm. */
   const error = ref<string | null>(null)
 
   // Wer schnell zweimal schaltet, hat zwei Anfragen in der Luft. Die Nummer entscheidet,
@@ -71,7 +74,7 @@ export function useLocalCamera(active: Ref<boolean>) {
 }
 
 /**
- * Warum es nicht geklappt hat – in der Sprache des Coachs, nicht in der des Browsers.
+ * Warum es nicht geklappt hat – in der Sprache des Menschen davor, nicht in der des Browsers.
  * Die Namen sind genormt, die Meldungen dahinter nicht: Chrome, Safari und Firefox
  * formulieren denselben Fall verschieden, und "NotReadableError" hilft niemandem weiter.
  */

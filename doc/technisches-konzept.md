@@ -74,7 +74,7 @@ hxroom/
 ├── packages/
 │   ├── shared/       # Gemeinsame Types & Zod-Schemas
 │   ├── livekit/      # Geteilte Call-Mechanik: LiveKit-Composables (ohne Komponenten)
-│   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten
+│   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten (inkl. Call-Oberfläche)
 ├── infra/
 │   ├── docker-compose.yml          # Produktion
 │   ├── docker-compose.dev.yml      # Lokale Entwicklung
@@ -378,13 +378,14 @@ Der Videocall verteilt sich auf mehrere Ebenen:
 |---|---|
 | `infra/livekit/` | LiveKit-Server (Docker-Container) mit `livekit.yaml`/`egress.yaml`. |
 | `apps/api/` | Erzeugt Buchungstokens für Klienten und LiveKit-Access-Tokens, hält den Sitzungszustand (Warteraum, Einlass, Ende), verwaltet Rooms (`session_${bookingId}`), empfängt LiveKit-Webhooks, enqueued nach Sessionende den Whisper-Job. |
-| `packages/livekit/` | **Geteilte Call-Mechanik** – LiveKit-Composables (Room-Verbindung, Tracks, Geräte, Reconnect) als reine TypeScript-Schicht **ohne eigene Komponenten**. Die Call-Oberfläche liegt seit B3 in `apps/coach` und zieht mit einem eigenen Schritt in die geteilte Schicht nach. Nutzt das LiveKit JS SDK (`livekit-client`). |
+| `packages/livekit/` | **Geteilte Call-Mechanik** – LiveKit-Composables (Room-Verbindung, Tracks, Geräte, Reconnect) als reine TypeScript-Schicht **ohne eigene Komponenten**. Nutzt das LiveKit JS SDK (`livekit-client`). |
+| `packages/ui/components/call/` | **Geteilte Call-Oberfläche** – rollenfreie Komponenten (Gerüst, Bühne, Steuerleiste, Chat, eigenes Kamerabild), die Coach und Klient gemeinsam tragen. Liegt hier und nicht in `packages/livekit`, damit die Mechanik komponentenfrei und ohne `@nuxt/ui` bleibt; `packages/ui` hat den Peer ohnehin und wird von beiden Frontends geladen. |
 | `apps/bookingpage/` | **Klienten-Subdomain** (`[slug].hxroom.de`) – Angebote, Verfügbarkeiten, Buchungsseite, E-Mail-Bestätigung sowie Warteraum und Call des Klienten unter `/call/{bookingId}`. Zugriff über den signierten Buchungstoken; enthält das Einwilligungs-Banner und die Weiterleitung auf die Danke-Seite. |
 | `apps/coach/` | Coach-Backoffice (`app.hxroom.de`) – Klientenverwaltung, Angebote, Einstellungen, die „Klient wartet"-Benachrichtigung (Server-Sent Events) und der Call-Screen des Coachs unter `/call/{bookingId}`. Zugriff über die better-auth Session; enthält Einlassen-Button, Notiz-Seitenleiste und Sitzungs-Timer. |
 
-**Geteilte Schicht statt eigener Call-App:** `/call/*` ist in beiden Apps eine interne Route (§6). Gemeinsam ist deshalb nicht die App, sondern die Schicht darunter – zunächst nur die LiveKit-Mechanik, die Video-Bühne kommt mit dem Umzug der Call-UI dazu. Sie liegt in `packages/livekit` und wird von beiden Seiten importiert. Eine eigenständige Call-App bräuchte dagegen einen dritten Container, ein Base-Path-Setup für ihre Assets und eine Host-Header-Weiche für zwei Auth-Schemata.
+**Geteilte Schicht statt eigener Call-App:** `/call/*` ist in beiden Apps eine interne Route (§6). Gemeinsam ist deshalb nicht die App, sondern die Schicht darunter – die LiveKit-Mechanik in `packages/livekit` und die Video-Bühne in `packages/ui/components/call/`. Beide werden von beiden Seiten importiert. Eine eigenständige Call-App bräuchte dagegen einen dritten Container, ein Base-Path-Setup für ihre Assets und eine Host-Header-Weiche für zwei Auth-Schemata.
 
-**Rollenunterschiede über Props und Slots statt über zwei Implementierungen:** Die Call-Oberfläche ist rollenneutral gebaut; was Coach und Klient unterscheidet, wird beim Einbinden hineingereicht – Notiz-Seitenleiste und Einlassen-Button auf Coach-Seite, Einwilligungs-Banner auf Klientenseite. Der Verbindungszustand (`RoomStatus`: `idle` | `connecting` | `connected` | `failed` | `ended`) ist ein Ref aus `useCallRoom()`, das die App beobachtet und daraufhin etwa den Klienten auf die Danke-Seite weiterleitet.
+**Rollenunterschiede über Props und Slots statt über zwei Implementierungen:** Die Call-Oberfläche ist rollenneutral gebaut – sie kennt `local` und `remote`, nicht Coach und Klient; was die beiden unterscheidet, wird beim Einbinden hineingereicht: die Namen als `CallPeer`, die Bereiche der Seitenleiste als `panels` und ihr Inhalt als Slot `#sidebar` (Notizen und Klientenakte beim Coach, nur Chat beim Klienten), die Beschriftung des roten Knopfs als `endLabel` („Sitzung beenden" gegen „Gespräch verlassen"), und über den Slot `#stage-overlay` alles, was über der Bühne liegen soll – beim Klienten die Gerätemeldung, später das Einwilligungs-Banner. Der Verbindungszustand (`RoomStatus`: `idle` | `connecting` | `connected` | `failed` | `ended`) ist ein Ref aus `useCallRoom()`, das die App beobachtet und daraufhin etwa den Klienten auf die Danke-Seite weiterleitet.
 
 Ursprünglich war dafür ein Extension-Seam (eine Registry mit String-Schlüsseln) und ein eigener Event-Bus vorgesehen. Beides stammte aus HxMeet und ergab dort Sinn, weil die Oberfläche eine geschlossene Komponente war, in die man Fremdteile nur von außen hineinreichen konnte. HxRoom hat eine eigene Call-UI und setzt sie in der App selbst zusammen; damit sind Props, Slots und ein Ref der direktere und typsichere Weg. Beides ist mit B3 entfallen.
 

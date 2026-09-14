@@ -59,7 +59,7 @@ function sendIncoming() {
 
 function toggleClientBlur() {
   if (!screen.value) return
-  screen.value.clientBlur = !screen.value.clientBlur
+  screen.value.remoteBlur = !screen.value.remoteBlur
 }
 
 function onEnd() {

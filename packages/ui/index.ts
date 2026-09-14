@@ -1,2 +1,20 @@
-// Shared Vue components – will be added here as they are created
 export { default as Logo } from './components/Logo.vue';
+
+// Die Call-Oberfläche. Rollenfrei gebaut: Was Coach und Klient unterscheidet, kommt beim
+// Einbinden als Props und Slots herein (technisches-konzept.md §8). Beide Frontends
+// importieren von hier – die Nuxt-App wie die Vite-SPA.
+export { default as CallScreen } from './components/call/CallScreen.vue';
+export { default as CallVideoArea } from './components/call/CallVideoArea.vue';
+export { default as CallControls } from './components/call/CallControls.vue';
+export { default as CallChatPanel } from './components/call/CallChatPanel.vue';
+export { default as CallCameraView } from './components/call/CallCameraView.vue';
+
+export { useLocalCamera } from './composables/useLocalCamera';
+
+export type {
+  CallChatMessage,
+  CallConnection,
+  CallDevice,
+  CallPanelDef,
+  CallPeer,
+} from './components/call/types';

@@ -28,13 +28,18 @@ declare module 'vue' {
     UAvatar: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Avatar.vue')['default']
     UBadge: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
+    UChip: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Chip.vue')['default']
+    UDropdownMenu: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
     UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
     UFormField: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
     UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
     UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UInput: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+    UModal: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
+    USlideover: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
     UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
+    UTooltip: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_fcf90f42f8cdc017133e9d4721886070/node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
     WaitingRoom: typeof import('./src/components/WaitingRoom.vue')['default']
   }
 }

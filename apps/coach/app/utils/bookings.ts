@@ -150,23 +150,8 @@ export function formatElapsed(iso: string, now = new Date()): string | null {
   return rest === 0 ? `${hours} Std.` : `${hours} Std. ${rest} Min.`
 }
 
-/**
- * Laufzeit der Sitzung als Uhrenanzeige – "12:04", ab einer Stunde "1:12:04".
- *
- * Sekundengenau und aufsteigend: Der Timer zählt vom Einlass hoch, nicht von der gebuchten
- * Dauer herunter. Ein Countdown auf null würde beide Seiten unter Druck setzen, obwohl
- * niemand die Sitzung automatisch beendet.
- */
-export function formatDuration(fromIso: string, now = new Date()): string {
-  const total = Math.max(0, Math.floor((now.getTime() - new Date(fromIso).getTime()) / 1000))
-  const seconds = String(total % 60).padStart(2, '0')
-  const minutes = Math.floor(total / 60) % 60
-  const hours = Math.floor(total / 3600)
-
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}`
-    : `${minutes}:${seconds}`
-}
+// formatDuration liegt seit dem Umzug der Call-Oberfläche in @hxroom/shared – die
+// Steuerleiste des Calls ist dort ihr einziger Aufrufer, und sie gilt für beide Seiten.
 
 export const STATUS_LABELS: Record<CoachBookingResponse['status'], string> = {
   pending: 'unbestätigt',

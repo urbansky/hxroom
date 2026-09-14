@@ -3,10 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "exports": {
     ".": "./index.ts",
     "./theme": "./theme/main.css",
     "./vite": "./vite.ts"
+  },
+  "dependencies": {
+    "@hxroom/shared": "workspace:*"
   },
   "devDependencies": {
     "vite": "^8.2.2"

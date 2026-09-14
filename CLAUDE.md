@@ -38,7 +38,7 @@ Wichtigste Regeln:
 ## Häufige Tasks
 - Whisper-Job manuell triggern: POST /api/v1/sessions/:id/transcribe
 - Neue Vue-App mit Theme: @hxroom/ui als Dependency, `hxroomUI()` in vite.config.ts, `import '@hxroom/ui/theme'` in main.ts
-- Shared Komponente hinzufügen: in packages/ui/components/ anlegen, aus packages/ui/index.ts exportieren
+- Shared Komponente hinzufügen: in packages/ui/components/ anlegen, aus packages/ui/index.ts exportieren. Dort gelten drei Regeln: Vue-APIs **explizit** importieren (Auto-Imports greifen in einem Workspace-Paket nur zufällig), Nuxt-UI-Komponenten dagegen **nicht** importieren – das erledigt der Resolver, ein direkter Import zöge eine zweite Kopie der Bibliothek herein –, und weder `useToast` noch `<NuxtLink>` benutzen (beide funktionieren aus dem Paket heraus nicht)
 
 ## Videokonferenz
 `/call/*` ist in beiden Frontends eine normale interne Route – kein eigener Container, keine Caddy-Sonderregel.
@@ -48,7 +48,7 @@ Wichtigste Regeln:
 - `packages/livekit/` – geteilte Call-Mechanik: Raum-Verbindung, Geräte und Spuren als reines TypeScript, **ohne Komponenten**. Ein Tor für die Oberfläche: `useCallRoom()` liefert Refs und Aktionen. Herkunft: `hxmeet-core-component` (MIT, eigene Vorarbeit), mit B3 entkernt
 - `apps/api/` – Token-Generierung und LiveKit-Webhooks; `infra/livekit/` – LiveKit-Server
 
-Die Call-Oberfläche liegt in `apps/coach/app/components/Call*.vue` und soll beide Seiten tragen; der Umzug der rollenneutralen Teile in die geteilte Schicht steht als Schritt B3b aus. Rollenspezifisches – Einlassen, Notizen, Klientenakte – wird als Props und Slots hineingereicht, nicht in den Kern gebaut. Einen Extension-Seam oder Event-Bus gibt es dafür bewusst nicht mehr.
+Die Call-Oberfläche liegt rollenfrei in `packages/ui/components/call/` und trägt beide Seiten: `CallScreen` als Gerüst (Bühne, Steuerleiste, Slideover), dazu `CallVideoArea`, `CallControls`, `CallChatPanel`, `CallCameraView`. Rollenspezifisches – Notizen, Klientenakte, Stummschalten, Timer, das Beenden-Modal – bleibt in der jeweiligen App und wird als Props und Slots hineingereicht (`#sidebar`, `#stage-overlay`). Einen Extension-Seam oder Event-Bus gibt es dafür bewusst nicht.
 
 Coach und Klient bleiben bewusst auf getrennten Hosts (`app.hxroom.de` vs. `[slug].hxroom.de`), damit die Coach-Session nie auf einer Custom-Domain (CNAME-Pro-Feature) landet. Details in `doc/technisches-konzept.md` §6 und §8.
 

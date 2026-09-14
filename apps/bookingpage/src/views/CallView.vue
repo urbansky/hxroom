@@ -65,7 +65,14 @@ onMounted(start)
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col items-center justify-center px-6 py-12">
+  <!-- Im Gespräch füllt die Bühne das Fenster: feste Höhe, kein Innenabstand, kein Scrollen.
+       Das Gegenstück zu layouts/call.vue in der Coach-App, das es in dieser SPA nicht gibt –
+       deshalb steht es an der einzigen Stelle, die es braucht. -->
+  <div v-if="call && call.state === 'admitted'" class="h-dvh flex flex-col overflow-hidden bg-default">
+    <CallStage :call="call" :now="now" />
+  </div>
+
+  <div v-else class="min-h-screen flex flex-col items-center justify-center px-6 py-12">
     <LoadingState v-if="phase === 'loading'" text="Dein Raum wird geöffnet …" />
 
     <StatusPanel
@@ -85,8 +92,6 @@ onMounted(start)
       :now="now"
       :cancel-href="cancelHref"
     />
-
-    <CallStage v-else-if="call && call.state === 'admitted'" :call="call" />
 
     <StatusPanel
       v-else-if="call"

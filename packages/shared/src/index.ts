@@ -153,6 +153,53 @@ export function offerColor(offerId: string): string {
   return OFFER_COLORS[hashString(offerId) % OFFER_COLORS.length]!;
 }
 
+// Namen und Zeiten
+//
+// Liegt hier und nicht in einer App, weil die geteilte Call-Oberfläche (packages/ui) es
+// braucht und beide Frontends sie einbinden. Reine Funktionen ohne Vue-Bezug, wie
+// offerColor darüber.
+
+/**
+ * Initialen für einen Avatar: erster und letzter Namensbestandteil.
+ * Fällt auf ein einzelnes Zeichen zurück, wenn nur ein Wort vorhanden ist.
+ */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  const first = parts[0]![0] ?? '';
+  const last = parts.length > 1 ? parts[parts.length - 1]![0] ?? '' : '';
+  return (first + last).toUpperCase();
+}
+
+/**
+ * Der Vorname. "Markus stummschalten" liest sich im Gespräch natürlicher als der volle Name.
+ */
+export function firstName(name: string, fallback = ''): string {
+  return name.trim().split(/\s+/)[0] || fallback;
+}
+
+/**
+ * Laufzeit der Sitzung als Uhrenanzeige – "12:04", ab einer Stunde "1:12:04".
+ *
+ * Sekundengenau und aufsteigend: Der Timer zählt vom Einlass hoch, nicht von der gebuchten
+ * Dauer herunter. Ein Countdown auf null würde beide Seiten unter Druck setzen, obwohl
+ * niemand die Sitzung automatisch beendet.
+ *
+ * `now` nimmt beides: Die Coach-App führt die Jetzt-Zeit als Date, die Klienten-App als
+ * Millisekunden. Eine Signatur für beide erspart es, eine der beiden umzustellen.
+ */
+export function formatDuration(fromIso: string, now: Date | number = Date.now()): string {
+  const nowMs = typeof now === 'number' ? now : now.getTime();
+  const total = Math.max(0, Math.floor((nowMs - new Date(fromIso).getTime()) / 1000));
+  const seconds = String(total % 60).padStart(2, '0');
+  const minutes = Math.floor(total / 60) % 60;
+  const hours = Math.floor(total / 3600);
+
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}`
+    : `${minutes}:${seconds}`;
+}
+
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells)
 const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Uhrzeit muss im Format HH:MM angegeben werden');
 

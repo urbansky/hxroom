@@ -1,6 +1,11 @@
 <script setup lang="ts">
+// Vue-APIs explizit, U-Komponenten beim Resolver – siehe Kommentar in CallVideoArea.
+// DropdownMenuItem ist ein reiner Typ und verschwindet beim Übersetzen; dass er aus der
+// zweiten @nuxt/ui-Kopie dieses Pakets stammt, wirkt sich zur Laufzeit nicht aus.
+import { computed } from 'vue'
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { CallAccessResponse } from '@hxroom/shared'
+import { firstName, formatDuration } from '@hxroom/shared'
+import type { CallConnection, CallDevice, CallPanelDef } from './types'
 
 // Steuerleiste am unteren Rand (doc/poc/videocall-v2.html, Screen 3).
 //
@@ -8,7 +13,7 @@ import type { CallAccessResponse } from '@hxroom/shared'
 // steht und wie lange die Sitzung läuft, mittig die Schalter. Eine eigene Kopfzeile gibt es
 // nicht mehr – sie nahm dem Videobild Höhe, um dieselben drei Dinge zu zeigen.
 //
-// Notizen, Klient und Chat werden hier ausgewählt, nicht in der Seitenleiste selbst: Die
+// Die Bereiche der Seitenleiste werden hier ausgewählt, nicht in der Leiste selbst: Die
 // Leiste liegt als Slideover über der Bühne, und ein Reiter in einer Fläche, die man erst
 // öffnen muss, ist kein Weg dorthin. Sie stehen rechts, auf der Seite, auf der die Leiste
 // aufgeht. Ein Druck auf den bereits offenen Bereich schließt sie wieder – einen eigenen
@@ -23,45 +28,50 @@ import type { CallAccessResponse } from '@hxroom/shared'
 // öffnet die Geräteauswahl. Das erspart den Weg über eine Einstellungsseite, wenn mitten im
 // Gespräch das Headset gewechselt wird (project.md §5a, Geräteauswahl).
 //
-// Prototyp: Keiner dieser Schalter wirkt auf eine echte Verbindung.
+// Rollenfrei: Welche Bereiche es gibt, wer stummgeschaltet werden darf und wie der rote
+// Knopf heißt, kommt von außen – beim Coach „Sitzung beenden", beim Klienten „Gespräch
+// verlassen".
 
 const micOn = defineModel<boolean>('micOn', { required: true })
 const camOn = defineModel<boolean>('camOn', { required: true })
-const coachBlur = defineModel<boolean>('coachBlur', { required: true })
+const selfBlur = defineModel<boolean>('selfBlur', { required: true })
 const sharing = defineModel<boolean>('sharing', { required: true })
-const clientMuted = defineModel<boolean>('clientMuted', { required: true })
-const selectedMic = defineModel<string>('selectedMic', { required: true })
-const selectedCam = defineModel<string>('selectedCam', { required: true })
-
-/** Die Bereiche der Seitenleiste. Ausgewählt wird hier, angezeigt werden sie im Slideover. */
-export type CallPanel = 'notes' | 'client' | 'chat'
+const remoteMutedLocally = defineModel<boolean>('remoteMutedLocally', { required: true })
+const micDeviceId = defineModel<string>('micDeviceId', { required: true })
+const camDeviceId = defineModel<string>('camDeviceId', { required: true })
+const sidebarOpen = defineModel<boolean>('sidebarOpen', { required: true })
+const activePanel = defineModel<string>('activePanel', { required: true })
 
 const props = defineProps<{
-  call: CallAccessResponse
-  now: Date
-  connection: 'live' | 'reconnecting'
-  clientName: string
-  /** Ungelesene Chat-Nachricht – als Punkt am Chat-Knopf. */
-  chatUnread: boolean
+  /** Links in der Leiste: wer einlädt. Auf beiden Seiten die Marke des Coachs. */
+  title: string
+  connection: CallConnection
+  /** Jetzt-Zeit in Millisekunden – eine Form für beide Apps. */
+  now: number
+  /** Beginn der Sitzung (ISO) für die Uhr; null blendet sie aus (project.md §5a). */
+  elapsedSince: string | null
+  /** Ab wann die Uhr warnend färbt (ISO); null = nie. */
+  warnAfter: string | null
+  /** Name des Gegenübers – für "X stummschalten". */
+  peerName: string
+  /** Welche Bereiche die Seitenleiste hat: beim Coach drei, beim Klienten einer. */
+  panels: CallPanelDef[]
+  micDevices: CallDevice[]
+  camDevices: CallDevice[]
+  /** Ob diese Seite die andere lokal stummschalten darf. */
+  canMuteRemote?: boolean
+  /** "Sitzung beenden" beim Coach, "Gespräch verlassen" beim Klienten. */
+  endLabel: string
 }>()
 
 defineEmits<{ end: [] }>()
 
-const sidebarOpen = defineModel<boolean>('sidebarOpen', { required: true })
-const activePanel = defineModel<CallPanel>('activePanel', { required: true })
-
-const PANELS: { value: CallPanel, label: string, icon: string }[] = [
-  { value: 'notes', label: 'Notizen', icon: 'i-lucide-notebook-pen' },
-  { value: 'client', label: 'Klient', icon: 'i-lucide-contact-round' },
-  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square' },
-]
-
 /** Hervorgehoben ist ein Bereich nur, solange die Leiste ihn auch zeigt. */
-function panelShown(panel: CallPanel): boolean {
+function panelShown(panel: string): boolean {
   return sidebarOpen.value && activePanel.value === panel
 }
 
-function selectPanel(panel: CallPanel) {
+function selectPanel(panel: string) {
   if (panelShown(panel)) {
     sidebarOpen.value = false
     return
@@ -70,21 +80,29 @@ function selectPanel(panel: CallPanel) {
   sidebarOpen.value = true
 }
 
+// Ohne elapsedSince keine Uhr: Für den Klienten ist der Timer optional (project.md §5a),
+// und eine mitlaufende Zeit setzt ihn unnötig unter Druck.
 const elapsed = computed(() =>
-  props.call.admittedAt ? formatDuration(props.call.admittedAt, props.now) : '0:00',
+  props.elapsedSince ? formatDuration(props.elapsedSince, props.now) : null,
 )
 
 // Dezenter Hinweis, sobald die gebuchte Zeit überschritten ist – ohne zu drängen. Beendet
 // wird eine Sitzung nur durch den Coach, nie durch eine Uhr.
-const overrun = computed(() => props.now > new Date(props.call.end))
+const overrun = computed(() => props.warnAfter !== null && props.now > Date.parse(props.warnAfter))
 
 // Für das Menü reicht der Vorname – "Markus stummschalten" liest sich im Gespräch
 // natürlicher als der volle Name.
-const clientNameShort = computed(() => props.clientName.split(' ')[0] ?? 'Klient')
+const peerShort = computed(() => firstName(props.peerName, 'Gegenüber'))
 
-// Beispielgeräte. Mit der Anbindung liefert sie enumerateDevices().
-const MIC_DEVICES = ['Standardmikrofon (MacBook Pro)', 'Externes USB-Mikrofon', 'AirPods Pro']
-const CAM_DEVICES = ['Standardkamera (FaceTime HD)', 'Externe Webcam']
+// Wie die Verbindung aussieht. Vier Zustände statt zweier, weil die Anbindung in B4/B5
+// genau diese liefert: Der Aufbau dauert spürbar, und ein endgültiger Abbruch ist etwas
+// anderes als ein Wackeln.
+const CONNECTION: Record<CallConnection, { label: string, pill: string, dot: string, text: string }> = {
+  connecting: { label: 'Verbindet …', pill: 'bg-warning/10', dot: 'bg-warning', text: 'text-warning' },
+  live: { label: 'Live', pill: 'bg-success/10', dot: 'bg-success', text: 'text-success' },
+  reconnecting: { label: 'Verbindung wackelt', pill: 'bg-warning/10', dot: 'bg-warning', text: 'text-warning' },
+  lost: { label: 'Verbindung verloren', pill: 'bg-error/10', dot: 'bg-error', text: 'text-error' },
+}
 
 // Die Menüs öffnen nach oben – sie hängen an der untersten Leiste des Fensters.
 const MENU_CONTENT = { align: 'start', side: 'top' } as const
@@ -126,21 +144,21 @@ const MENU_OFF = 'text-inverted hover:bg-white/15'
 
 const micItems = computed<DropdownMenuItem[][]>(() => [
   [{ label: 'Mikrofon wählen', type: 'label' }],
-  MIC_DEVICES.map(device => ({
-    label: device,
+  props.micDevices.map(device => ({
+    label: device.label,
     type: 'checkbox' as const,
-    checked: selectedMic.value === device,
-    onUpdateChecked: () => { selectedMic.value = device },
+    checked: micDeviceId.value === device.id,
+    onUpdateChecked: () => { micDeviceId.value = device.id },
   })),
 ])
 
 const camItems = computed<DropdownMenuItem[][]>(() => [
   [{ label: 'Kamera wählen', type: 'label' }],
-  CAM_DEVICES.map(device => ({
-    label: device,
+  props.camDevices.map(device => ({
+    label: device.label,
     type: 'checkbox' as const,
-    checked: selectedCam.value === device,
-    onUpdateChecked: () => { selectedCam.value = device },
+    checked: camDeviceId.value === device.id,
+    onUpdateChecked: () => { camDeviceId.value = device.id },
   })),
 ])
 
@@ -151,16 +169,20 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
     label: 'Eigenen Hintergrund weichzeichnen',
     icon: 'i-lucide-aperture',
     type: 'checkbox' as const,
-    checked: coachBlur.value,
-    onUpdateChecked: (value: boolean) => { coachBlur.value = value },
+    checked: selfBlur.value,
+    onUpdateChecked: (value: boolean) => { selfBlur.value = value },
   }],
-  [{
-    label: `${clientNameShort.value} stummschalten`,
-    icon: 'i-lucide-mic-off',
-    type: 'checkbox' as const,
-    checked: clientMuted.value,
-    onUpdateChecked: (value: boolean) => { clientMuted.value = value },
-  }],
+  // Stummschalten wirkt nur hier und wird der Gegenseite nie gemeldet – gedacht für
+  // technische Notfälle wie eine Rückkopplung. Wer das darf, sagt die App.
+  ...(props.canMuteRemote
+    ? [[{
+        label: `${peerShort.value} stummschalten`,
+        icon: 'i-lucide-mic-off',
+        type: 'checkbox' as const,
+        checked: remoteMutedLocally.value,
+        onUpdateChecked: (value: boolean) => { remoteMutedLocally.value = value },
+      }]]
+    : []),
 ])
 </script>
 
@@ -171,30 +193,25 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
          hinsieht. -->
     <div class="min-w-0 flex flex-col gap-0.5 col-start-1 row-start-1">
       <span class="hidden sm:block font-serif text-base lg:text-lg text-highlighted truncate leading-tight">
-        {{ call.coachName }}
+        {{ title }}
       </span>
 
       <div class="flex items-center gap-2 min-w-0">
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 shrink-0"
-          :class="connection === 'live' ? 'bg-success/10' : 'bg-warning/10'"
-        >
-          <span
-            class="size-1.5 rounded-full animate-pulse"
-            :class="connection === 'live' ? 'bg-success' : 'bg-warning'"
-          />
-          <span
-            class="hidden lg:inline text-xs"
-            :class="connection === 'live' ? 'text-success' : 'text-warning'"
-          >
-            {{ connection === 'live' ? 'Live' : 'Verbindung wackelt' }}
+        <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 shrink-0" :class="CONNECTION[connection].pill">
+          <span class="size-1.5 rounded-full animate-pulse" :class="CONNECTION[connection].dot" />
+          <span class="hidden lg:inline text-xs" :class="CONNECTION[connection].text">
+            {{ CONNECTION[connection].label }}
           </span>
         </span>
 
         <!-- lining-nums: Cormorant setzt Ziffern sonst als Minuskeln, und "12:01" liest
              sich dann wie "I2:0I". Bei einer laufenden Uhr ist das keine Frage des
              Geschmacks. -->
-        <span class="font-serif text-base sm:text-lg tabular-nums lining-nums" :class="overrun ? 'text-warning' : 'text-toned'">
+        <span
+          v-if="elapsed"
+          class="font-serif text-base sm:text-lg tabular-nums lining-nums"
+          :class="overrun ? 'text-warning' : 'text-toned'"
+        >
           {{ elapsed }}
         </span>
       </div>
@@ -213,7 +230,8 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
           :aria-label="micOn ? 'Mikrofon ausschalten' : 'Mikrofon einschalten'"
           @click="micOn = !micOn"
         />
-        <UDropdownMenu :items="micItems" :content="MENU_CONTENT">
+        <!-- Der Pfeil erscheint nur, wenn es überhaupt eine Auswahl gibt. -->
+        <UDropdownMenu v-if="micDevices.length" :items="micItems" :content="MENU_CONTENT">
           <UButton
             icon="i-lucide-chevron-down"
             color="neutral"
@@ -237,7 +255,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
           :aria-label="camOn ? 'Kamera ausschalten' : 'Kamera einschalten'"
           @click="camOn = !camOn"
         />
-        <UDropdownMenu :items="camItems" :content="MENU_CONTENT">
+        <UDropdownMenu v-if="camDevices.length" :items="camItems" :content="MENU_CONTENT">
           <UButton
             icon="i-lucide-chevron-down"
             color="neutral"
@@ -266,7 +284,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
            gesetzt, und Stummschalten ist für technische Notfälle gedacht, etwa eine
            Rückkopplung – nichts, was neben dem Kamera-Knopf einladen soll. -->
       <UDropdownMenu :items="moreItems" :content="MENU_CONTENT">
-        <UChip :show="clientMuted" color="error" size="sm" inset>
+        <UChip :show="remoteMutedLocally" color="error" size="sm" inset>
           <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="subtle" size="lg" :class="ROUND_BTN" aria-label="Weitere Optionen" />
         </UChip>
       </UDropdownMenu>
@@ -278,18 +296,18 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
         color="error"
         size="lg"
         :class="ROUND_BTN"
-        aria-label="Sitzung beenden"
+        :aria-label="endLabel"
         @click="$emit('end')"
       />
     </div>
 
-    <!-- Notizen, Klient, Chat – auf der Seite, auf der die Leiste aufgeht. Genau einer ist
-         hervorgehoben, und nur solange die Seitenleiste ihn auch zeigt. -->
+    <!-- Die Bereiche der Seitenleiste – auf der Seite, auf der sie aufgeht. Genau einer ist
+         hervorgehoben, und nur solange die Leiste ihn auch zeigt. -->
     <div class="flex items-center justify-end gap-1 sm:gap-2 col-start-2 row-start-1 sm:col-start-3">
       <UChip
-        v-for="panel in PANELS"
+        v-for="panel in panels"
         :key="panel.value"
-        :show="panel.value === 'chat' && chatUnread"
+        :show="panel.badge ?? false"
         color="primary"
         size="sm"
         inset
