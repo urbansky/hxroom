@@ -20,8 +20,13 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 # ---- Build ----
 FROM deps AS build
 COPY tsconfig.base.json ./
+# packages/ui zieht seit B3b @hxroom/shared nach (die Call-Komponenten nutzen dessen
+# Helfer). Die Landing-Page selbst braucht nur das Logo, der Bundler muss den Import aber
+# trotzdem auflösen können – ohne diese beiden Zeilen bricht `nuxt generate`.
+COPY packages/shared/ packages/shared/
 COPY packages/ui/ packages/ui/
 COPY apps/landing/ apps/landing/
+RUN pnpm --filter @hxroom/shared build
 RUN pnpm --filter landing build
 
 # ---- Production ----
