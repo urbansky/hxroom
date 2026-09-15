@@ -42,3 +42,18 @@ export type DeviceIssue =
 
 /** Woran der Beitritt gescheitert ist, wenn `status` auf `failed` steht. */
 export type JoinFailure = 'network' | 'devices'
+
+/** Welche Art Eingabegerät – die Namen des Browsers, damit sie ohne Übersetzung durchgehen. */
+export type CallDeviceKind = 'audioinput' | 'videoinput'
+
+/**
+ * Ein wählbares Eingabegerät.
+ *
+ * `label` kommt roh vom Browser und kann leer sein: Vor der ersten Freigabe verrät er keine
+ * Gerätenamen. Den Ersatztext setzt die App – Formulierungen gehören dorthin, siehe
+ * DeviceIssue.
+ */
+export interface CallMediaDevice {
+  id: string
+  label: string
+}

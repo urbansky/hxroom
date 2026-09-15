@@ -21,6 +21,9 @@ export {
 // packages/ui frei von LiveKit bleibt und beide Apps dieselbe Umwandlung nutzen (B4).
 export { videoStreamFor, audioStreamFor, screenShareStream } from './src/room'
 
+// Geräte: Liste ohne Chromes Doppelung des Standardgeräts, echter Wechsel der laufenden Spur.
+export { refreshDevices, switchDevice } from './src/room'
+
 export { useCallRoom } from './src/room'
 
-export type { CallParticipant, RoomStatus, DeviceIssue, JoinFailure } from './src/types'
+export type { CallParticipant, RoomStatus, DeviceIssue, JoinFailure, CallDeviceKind, CallMediaDevice } from './src/types'

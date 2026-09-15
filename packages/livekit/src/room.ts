@@ -1,4 +1,4 @@
-import { shallowReactive, shallowRef } from 'vue'
+import { ref, shallowReactive, shallowRef } from 'vue'
 import {
   DisconnectReason,
   type LocalParticipant,
@@ -8,24 +8,30 @@ import {
   Room,
   RoomEvent,
   Track,
+  TrackEvent,
   type TrackPublication,
 } from 'livekit-client'
 import { createLogger } from './logger'
 import {
+  activeCameraId,
+  activeMicrophoneId,
   camera,
   cameraIssue,
+  cameras,
   findParticipant,
   joinFailure,
   loadingCamera,
   localIdentity,
   microphone,
   microphoneIssue,
+  microphones,
   participants,
   remoteParticipants,
   resetState,
   screenSharing,
   status,
 } from './state'
+import type { CallDeviceKind } from './types'
 import type { CallParticipant, DeviceIssue, RoomStatus } from './types'
 
 // Die Verbindung zum LiveKit-Raum.
@@ -67,18 +73,34 @@ function resetTracks() {
  *
  * Der Cache ist kein Geiz, sondern nötig: Ein bei jedem Aufruf neu gebauter Stream wäre für
  * Vue ein neues Objekt, die Zuweisung an `srcObject` liefe erneut und das Bild setzte bei
- * jedem Rendern neu auf. Die WeakMap gibt den Eintrag frei, sobald der Track weg ist.
+ * jedem Rendern neu auf.
+ *
+ * Er hängt an der `MediaStreamTrack`, nicht am `Track`. LiveKit tauscht die Spur innerhalb
+ * desselben Track-Objekts aus – beim Gerätewechsel und auch, wenn die Kamera aus- und wieder
+ * eingeschaltet wird (ausgeschaltet wird sie gestoppt, damit das Kameralicht erlischt). Am
+ * Track-Objekt festgemacht, hing die eigene Vorschau danach an der beendeten Spur und stand
+ * still. Weil sich das Track-Objekt dabei nicht ändert, bekommt Vue davon nichts mit;
+ * `streamVersion` ist der Anstoß, den `TrackEvent.Restarted` gibt.
  */
-const streamCache = new WeakMap<Track, MediaStream>()
+const streamCache = new WeakMap<MediaStreamTrack, MediaStream>()
+const streamVersion = ref(0)
+
+function bumpStreams() {
+  streamVersion.value++
+}
 
 function streamFor(track: Track | undefined): MediaStream | null {
-  if (!track) return null
+  // Gelesen, damit jede berechnete Eigenschaft, die hierher ruft, beim Neustart einer Spur
+  // neu ausgewertet wird.
+  void streamVersion.value
+  const media = track?.mediaStreamTrack
+  if (!media) return null
 
-  const cached = streamCache.get(track)
+  const cached = streamCache.get(media)
   if (cached) return cached
 
-  const stream = new MediaStream([track.mediaStreamTrack])
-  streamCache.set(track, stream)
+  const stream = new MediaStream([media])
+  streamCache.set(media, stream)
   return stream
 }
 
@@ -209,6 +231,8 @@ export async function joinCall(): Promise<void> {
   room.on(RoomEvent.Disconnected, disconnectedListener)
   room.on(RoomEvent.LocalTrackUnpublished, localTrackUnpublishListener)
   room.on(RoomEvent.AudioPlaybackStatusChanged, audioPlaybackStatusListener)
+  room.on(RoomEvent.MediaDevicesChanged, devicesChangedListener)
+  room.on(RoomEvent.ActiveDeviceChanged, activeDeviceChangedListener)
 
   // Ohne Kamera lässt sich sprechen, ohne Mikrofon nicht – trotzdem gilt beides hier als
   // Fehlschlag nur dann, wenn etwas Unerwartetes passiert ist. Eine verweigerte Freigabe
@@ -303,11 +327,163 @@ export async function setCameraEnabled(enabled: boolean): Promise<boolean> {
   if (publication?.track) {
     log.info('Eigene Videospur', { identity: local.identity, sid: publication.track.sid })
     videoTracks[local.identity] = publication.track
+    publication.track.off(TrackEvent.Restarted, bumpStreams)
+    publication.track.on(TrackEvent.Restarted, bumpStreams)
   }
+  // Erst nach der Freigabe nennt der Browser die Geräte beim Namen.
+  void refreshDevices()
   return true
 }
 
 /** Mikrofon an oder aus. Rückgabe wie bei der Kamera. */
+// ---------------------------------------------------------------------------
+// Geräte
+// ---------------------------------------------------------------------------
+
+/** Einträge, mit denen Browser auf ein anderes Gerät verweisen, statt selbst eines zu sein. */
+const PSEUDO_DEVICE_IDS = new Set(['default', 'communications'])
+
+/**
+ * Die Geräteliste neu einlesen und festhalten, welches Gerät gerade sendet.
+ *
+ * Aufgerufen nach jeder Kamera- und Mikrofonfreigabe, bei jeder Änderung an den Geräten und
+ * nach jedem Wechsel. Der erste Punkt ist der wichtige: Vor der Freigabe liefert der Browser
+ * die Geräte ohne Namen. Wer die Liste nur beim Verbinden liest, hat danach dauerhaft
+ * „Mikrofon 1, 2, 3" – der Freigabedialog kommt erst nach dem Verbinden.
+ */
+export async function refreshDevices(): Promise<void> {
+  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) return
+
+  let all: MediaDeviceInfo[]
+  try {
+    all = await navigator.mediaDevices.enumerateDevices()
+  }
+  catch (cause) {
+    log.warn('Geräteliste nicht lesbar', cause)
+    return
+  }
+
+  microphones.value = listDevices(all, 'audioinput')
+  cameras.value = listDevices(all, 'videoinput')
+  activeMicrophoneId.value = resolveActiveDevice(all, 'audioinput', Track.Source.Microphone)
+  activeCameraId.value = resolveActiveDevice(all, 'videoinput', Track.Source.Camera)
+
+  await recoverLostDevice('audioinput', Track.Source.Microphone)
+  await recoverLostDevice('videoinput', Track.Source.Camera)
+}
+
+/**
+ * Chrome führt das Standardgerät zweimal: als Eintrag `default` („Standard – MacBook
+ * Pro-Mikrofon") und noch einmal unter eigenem Namen. Beide haben dieselbe groupId. In einer
+ * Auswahlliste sähe das nach zwei Mikrofonen aus, von denen man nicht weiß, welches man hat.
+ * Der Verweis fällt deshalb weg, sobald das Gerät, auf das er zeigt, selbst in der Liste steht.
+ */
+function listDevices(all: MediaDeviceInfo[], kind: CallDeviceKind) {
+  const ofKind = all.filter(device => device.kind === kind)
+  const realGroups = new Set(ofKind.filter(d => !PSEUDO_DEVICE_IDS.has(d.deviceId)).map(d => d.groupId))
+
+  return ofKind
+    .filter(device => !PSEUDO_DEVICE_IDS.has(device.deviceId) || !realGroups.has(device.groupId))
+    .map(device => ({ id: device.deviceId, label: device.label }))
+}
+
+/**
+ * Welches Gerät aus der Liste gerade sendet.
+ *
+ * Maßgeblich ist die laufende Spur selbst, nicht die Wahl, die man zuletzt getroffen hat:
+ * Zieht jemand das Headset ab, weicht der Browser still auf ein anderes Gerät aus. Weil das
+ * Standardgerät in der Liste unter seinem eigenen Namen steht, die Spur aber womöglich als
+ * `default` läuft, wird zusätzlich über die groupId zugeordnet.
+ */
+function resolveActiveDevice(all: MediaDeviceInfo[], kind: CallDeviceKind, source: Track.Source): string | null {
+  const list = kind === 'audioinput' ? microphones.value : cameras.value
+  const inList = (id: string | undefined) => (id && list.some(device => device.id === id) ? id : null)
+  const byGroup = (groupId: string | undefined) => {
+    if (!groupId) return null
+    return list.find(device => all.find(d => d.deviceId === device.id && d.kind === kind)?.groupId === groupId)?.id ?? null
+  }
+
+  const settings = room?.localParticipant.getTrackPublication(source)?.track?.mediaStreamTrack.readyState === 'live'
+    ? room.localParticipant.getTrackPublication(source)!.track!.mediaStreamTrack.getSettings()
+    : undefined
+  const chosen = room?.getActiveDevice(kind)
+  const chosenGroup = all.find(d => d.kind === kind && d.deviceId === chosen)?.groupId
+
+  return inList(settings?.deviceId)
+    ?? byGroup(settings?.groupId)
+    ?? inList(chosen)
+    ?? byGroup(chosenGroup)
+    ?? list[0]?.id
+    ?? null
+}
+
+/**
+ * Ist das Gerät, auf dem die Spur läuft, verschwunden, auf ein vorhandenes umschalten.
+ *
+ * Eine Spur auf einem abgezogenen Gerät endet, und das Gegenüber hört oder sieht nichts mehr,
+ * ohne dass jemand etwas geändert hätte. Gewechselt wird nur, wenn überhaupt eine Spur gesendet
+ * hat – eine ausgeschaltete Kamera bleibt aus.
+ */
+async function recoverLostDevice(kind: CallDeviceKind, source: Track.Source): Promise<void> {
+  const media = room?.localParticipant.getTrackPublication(source)?.track?.mediaStreamTrack
+  if (!media || media.readyState !== 'ended') return
+  if (source === Track.Source.Camera && !camera.value) return
+  if (source === Track.Source.Microphone && !microphone.value) return
+
+  const fallback = (kind === 'audioinput' ? microphones.value : cameras.value)[0]
+  if (!fallback) return
+
+  log.warn('Gerät verschwunden, weiche aus', { kind, to: fallback.id })
+  await switchDevice(kind, fallback.id)
+}
+
+/**
+ * Auf ein anderes Gerät wechseln – die laufende Spur wird mit ihm neu gestartet, das Gegenüber
+ * bekommt dasselbe Bild bzw. denselben Ton ohne Unterbrechung des Gesprächs. Ist Kamera oder
+ * Mikrofon gerade aus, gilt die Wahl für das nächste Einschalten.
+ *
+ * Die Auswahl springt sofort um, damit das Menü nicht hinter dem Klick herhinkt; scheitert der
+ * Wechsel – das Gerät ist belegt oder inzwischen weg –, springt sie zurück und die Ursache
+ * steht in cameraIssue bzw. microphoneIssue.
+ */
+export async function switchDevice(kind: CallDeviceKind, deviceId: string): Promise<boolean> {
+  const active = kind === 'audioinput' ? activeMicrophoneId : activeCameraId
+  const issue = kind === 'audioinput' ? microphoneIssue : cameraIssue
+  if (!room || active.value === deviceId) return !!room
+
+  const previous = active.value
+  active.value = deviceId
+
+  try {
+    const switched = await room.switchActiveDevice(kind, deviceId)
+    if (!switched) {
+      active.value = previous
+      log.warn('Gerätewechsel ohne Erfolg', { kind, deviceId })
+      return false
+    }
+    issue.value = null
+  }
+  catch (cause) {
+    active.value = previous
+    issue.value = classifyDeviceError(cause)
+    log.warn('Gerätewechsel fehlgeschlagen', { kind, deviceId, issue: issue.value, cause })
+    return false
+  }
+
+  bumpStreams()
+  await refreshDevices()
+  return true
+}
+
+function devicesChangedListener() {
+  void refreshDevices()
+}
+
+function activeDeviceChangedListener() {
+  bumpStreams()
+  void refreshDevices()
+}
+
 export async function setMicrophoneEnabled(enabled: boolean): Promise<boolean> {
   const local = room?.localParticipant
   if (!local) return false
@@ -327,6 +503,7 @@ export async function setMicrophoneEnabled(enabled: boolean): Promise<boolean> {
     }
     log.warn('Mikrofon nicht verfügbar', { issue, cause })
   }
+  void refreshDevices()
   return true
 }
 
@@ -517,6 +694,14 @@ export function useCallRoom() {
     videoStreamFor,
     audioStreamFor,
     screenShareStream,
+
+    // Geräte
+    microphones,
+    cameras,
+    activeMicrophoneId,
+    activeCameraId,
+    refreshDevices,
+    switchDevice,
 
     // Aktionen
     prepareCall,

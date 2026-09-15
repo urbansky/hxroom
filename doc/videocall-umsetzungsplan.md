@@ -223,7 +223,19 @@ Mit der Prototyp-Seite `/call/prototype` sind `useLocalCamera()` und die `define
 
 Abnahme mit zwei echten Browser-Teilnehmern statt CLI-Gegenstelle – Coach über die Coach-App mit Anmeldung, Klient über die Klientenseite: Im Warteraum läuft der Warmlauf des Coachs, im Raum ist niemand; nach „Klient einlassen" sind beide im Raum, jede Seite empfängt das Bild der anderen in 1280×720 mit fortschreitender Wiedergabezeit, dazu je eine Audiospur. Coach schaltet die Kamera aus → beim Klienten „Kamera aus". Coach schaltet den Klienten stumm → nur sein `<audio>` ist stumm. Reload des Coachs → wieder beide im Raum. Coach beendet → Klient auf der Danke-Seite, Raum leer.
 
-**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Die Geräteliste ist echt, die Auswahl wirkt noch nicht. Notizen werden nicht gespeichert.
+**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Notizen werden nicht gespeichert.
+
+#### Nachtrag: Geräteliste und Gerätewechsel *(2026-09-15)*
+
+Die Geräteliste lag zuerst in beiden Apps als eigene `loadDevices()`-Kopie und wurde beim Verbinden gelesen. Das trug im Testbrowser, dessen Freigabe sofort erteilt ist, aber nicht in einem echten Chrome: Dort kommt der Freigabedialog erst nach dem Verbinden, und vorher nennt der Browser keine Gerätenamen – die Liste blieb dauerhaft bei „Mikrofon 1, 2, 3". Sie liegt jetzt einmal in `packages/livekit` (`microphones`, `cameras`, `activeMicrophoneId`, `activeCameraId`, `switchDevice()`) und wird nach jeder Freigabe, bei jedem `devicechange` und nach jedem Wechsel neu gelesen.
+
+Zwei Eigenheiten sind dabei behandelt: Chrome führt das Standardgerät doppelt – als `default` und unter eigenem Namen, mit derselben groupId –, der Verweis fällt deshalb weg, sobald das Gerät selbst in der Liste steht. Und welches Gerät aktiv ist, entscheidet die laufende Spur über `getSettings()`, nicht die zuletzt getroffene Wahl; zieht jemand das Headset ab, weicht der Browser still aus, und eine beendete Spur wird auf ein vorhandenes Gerät umgeschaltet.
+
+Der Wechsel selbst ist `Room.switchActiveDevice()`: Die veröffentlichte Spur startet mit dem neuen Gerät neu, die Gegenseite empfängt ohne Unterbrechung weiter.
+
+**Gefunden dabei, ein Fehler aus B4:** Der Stream-Cache hing am LiveKit-`Track`. LiveKit tauscht aber die `MediaStreamTrack` innerhalb desselben Track-Objekts – beim Gerätewechsel und schon beim Aus- und Wiedereinschalten der Kamera, die ausgeschaltet gestoppt wird. Die eigene Vorschau hing danach an der beendeten Spur und stand still (gemessen: `ended`). Der Cache hängt jetzt an der `MediaStreamTrack`, `TrackEvent.Restarted` stößt die Neuberechnung an.
+
+Abnahme: Vorschau nach Kamera aus → an wieder `live`; Wechsel auf „Fake Audio Input 1" fordert per `getUserMedia` genau dessen ID an, und die neue Spur läuft darauf; eine vorgespielte Chrome-Liste mit doppeltem Standardgerät erscheint ohne Doppelung, ein eingestecktes Headset ohne Neuladen; wechselt der Coach mitten im Gespräch das Mikrofon, bleibt die Tonspur beim Klienten `live` und liefert Pegel. Die Lautsprecherwahl ist nicht dabei – die Oberfläche bietet keine an, und der Ton läuft über eigene `<audio>`-Elemente, auf die `switchActiveDevice('audiooutput')` nicht wirkt.
 
 ### B6 · Robustheit und autoritatives Sitzungsende
 

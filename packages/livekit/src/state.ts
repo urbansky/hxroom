@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { CallParticipant, DeviceIssue, JoinFailure, RoomStatus } from './types'
+import type { CallMediaDevice, CallParticipant, DeviceIssue, JoinFailure, RoomStatus } from './types'
 
 /**
  * Der Zustand des laufenden Calls – reine Refs, ohne Kenntnis von LiveKit.
@@ -33,6 +33,19 @@ export const microphoneIssue = ref<DeviceIssue | null>(null)
 /** Ob die eigene Bildschirmfreigabe läuft. */
 export const screenSharing = ref(false)
 
+/**
+ * Die Eingabegeräte des Browsers, ohne die Doppelung, mit der Chrome das Standardgerät
+ * zusätzlich als `default` führt (siehe refreshDevices in room.ts).
+ *
+ * Bewusst nicht in resetState: Welche Geräte angeschlossen sind, ist eine Tatsache des
+ * Rechners, nicht des Gesprächs, und soll nach dem Verlassen nicht verschwinden.
+ */
+export const microphones = ref<CallMediaDevice[]>([])
+export const cameras = ref<CallMediaDevice[]>([])
+/** Das Gerät, das gerade sendet – eine ID aus der Liste darüber, oder null. */
+export const activeMicrophoneId = ref<string | null>(null)
+export const activeCameraId = ref<string | null>(null)
+
 export function findParticipant(id: string): CallParticipant | undefined {
   return participants.value.find(participant => participant.id === id)
 }
@@ -53,4 +66,6 @@ export function resetState(next: RoomStatus = 'idle') {
   cameraIssue.value = null
   microphoneIssue.value = null
   screenSharing.value = false
+  activeMicrophoneId.value = null
+  activeCameraId.value = null
 }

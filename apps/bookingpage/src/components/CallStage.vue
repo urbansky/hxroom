@@ -45,6 +45,11 @@ const {
   microphoneIssue,
   toggleCamera,
   toggleMicrophone,
+  microphones,
+  cameras,
+  activeMicrophoneId,
+  activeCameraId,
+  switchDevice,
 } = useCallRoom()
 
 // Beitreten, sobald der Coach eingelassen hat – das ist der Moment, in dem die Antwort
@@ -71,31 +76,15 @@ const sidebarOpen = ref(false)
 const activePanel = ref('chat')
 const leaveModalOpen = ref(false)
 
-// Die echten Geräte des Browsers. Vor der ersten Freigabe liefert enumerateDevices() leere
-// Beschriftungen – deshalb erst danach und mit einem Ersatztext, der nicht nach Fehler
-// aussieht.
-const micDevices = ref<CallDevice[]>([])
-const camDevices = ref<CallDevice[]>([])
-const micDeviceId = ref('default')
-const camDeviceId = ref('default')
-
-async function loadDevices() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    micDevices.value = devices
-      .filter(d => d.kind === 'audioinput')
-      .map((d, i) => ({ id: d.deviceId, label: d.label || `Mikrofon ${i + 1}` }))
-    camDevices.value = devices
-      .filter(d => d.kind === 'videoinput')
-      .map((d, i) => ({ id: d.deviceId, label: d.label || `Kamera ${i + 1}` }))
-    micDeviceId.value = micDevices.value[0]?.id ?? 'default'
-    camDeviceId.value = camDevices.value[0]?.id ?? 'default'
-  }
-  catch {
-    // Kein Grund, das Gespräch zu stören: Ohne Liste bleibt es beim Standardgerät.
-  }
-}
-watch(status, (value) => { if (value === 'connected') void loadDevices() }, { immediate: true })
+// Die Geräte des Browsers aus @hxroom/livekit – dort wird die Liste nach jeder Freigabe und
+// bei jeder Änderung neu gelesen, und ein Wechsel startet die laufende Spur mit dem neuen
+// Gerät neu. Hier steht nur der Ersatzname für Geräte, die der Browser (noch) nicht nennt.
+const micDevices = computed<CallDevice[]>(() =>
+  microphones.value.map((device, i) => ({ id: device.id, label: device.label || `Mikrofon ${i + 1}` })),
+)
+const camDevices = computed<CallDevice[]>(() =>
+  cameras.value.map((device, i) => ({ id: device.id, label: device.label || `Kamera ${i + 1}` })),
+)
 
 // Ein Gespräch, ein Gegenüber. `remoteParticipants()` wäre allgemeiner, aber die Bühne
 // zeigt genau eine Gegenstelle – wer mehr will, ändert hier und in CallVideoArea.
@@ -199,8 +188,8 @@ async function leave() {
     v-model:self-blur="selfBlur"
     v-model:sharing="sharing"
     v-model:remote-muted-locally="remoteMutedLocally"
-    v-model:mic-device-id="micDeviceId"
-    v-model:cam-device-id="camDeviceId"
+    :mic-device-id="activeMicrophoneId ?? ''"
+    :cam-device-id="activeCameraId ?? ''"
     v-model:sidebar-open="sidebarOpen"
     v-model:active-panel="activePanel"
     :local="local"
@@ -217,6 +206,8 @@ async function leave() {
     end-label="Gespräch verlassen"
     @update:mic-on="toggleMicrophone()"
     @update:cam-on="toggleCamera()"
+    @update:mic-device-id="(id: string) => switchDevice('audioinput', id)"
+    @update:cam-device-id="(id: string) => switchDevice('videoinput', id)"
     @end="leaveModalOpen = true"
   >
     <template #stage-overlay>
