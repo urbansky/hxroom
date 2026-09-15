@@ -5,6 +5,8 @@ import {
   type LocalTrackPublication,
   type Participant,
   type RemoteParticipant,
+  type RemoteTrack,
+  type RemoteTrackPublication,
   Room,
   RoomEvent,
   Track,
@@ -28,6 +30,8 @@ import {
   participants,
   remoteParticipants,
   resetState,
+  screenShareBy,
+  screenShareIssue,
   screenSharing,
   status,
 } from './state'
@@ -120,6 +124,22 @@ export function audioStreamFor(identity: string): MediaStream | null {
 /** Die laufende Bildschirmfreigabe, unabhängig davon, von wem sie kommt. */
 export function screenShareStream(): MediaStream | null {
   return streamFor(screenShareVideoTrack.value)
+}
+
+/**
+ * Der Ton einer fremden Freigabe – etwa ein Video, das die Gegenseite zeigt. Die eigene
+ * Freigabe liefert hier nichts: Ihren Ton selbst abzuspielen, erzeugte ein Echo.
+ */
+export function screenShareAudioStream(): MediaStream | null {
+  return streamFor(screenShareAudioTrack.value)
+}
+
+/**
+ * Ob dieser Browser überhaupt einen Bildschirm teilen kann. Auf dem iPhone und den meisten
+ * Android-Browsern fehlt getDisplayMedia – der Knopf soll dort gar nicht erst erscheinen.
+ */
+export function screenShareSupported(): boolean {
+  return typeof navigator !== 'undefined' && typeof navigator.mediaDevices?.getDisplayMedia === 'function'
 }
 
 // ---------------------------------------------------------------------------
@@ -223,6 +243,7 @@ export async function joinCall(): Promise<void> {
   }
 
   room.on(RoomEvent.TrackSubscribed, trackSubscribedListener)
+  room.on(RoomEvent.TrackUnsubscribed, trackUnsubscribedListener)
   room.on(RoomEvent.TrackMuted, trackMutedListener)
   room.on(RoomEvent.TrackUnmuted, trackMutedListener)
   room.on(RoomEvent.ParticipantNameChanged, participantNameListener)
@@ -519,26 +540,56 @@ export async function toggleMicrophone(): Promise<boolean> {
  * Bildschirmfreigabe starten oder beenden.
  *
  * Mit Ton: Wer einen Film oder eine Aufnahme zeigt, will nicht danebenreden müssen.
+ *
+ * Teilt die Gegenseite gerade, startet hier nichts. Die Bühne zeigt eine Freigabe, nicht zwei,
+ * und die fremde abzulösen stünde dieser Seite nicht zu – die Oberfläche sperrt den Knopf
+ * dann ohnehin; die Prüfung hier hält auch, wenn eine App das vergisst.
  */
 export async function setScreenShareEnabled(enabled: boolean): Promise<boolean> {
   const local = room?.localParticipant
   if (!local) return false
+  if (enabled && screenShareBy.value && screenShareBy.value !== local.identity) return false
 
+  screenShareIssue.value = null
   try {
     log.info('Bildschirmfreigabe', enabled)
     const publication = await local.setScreenShareEnabled(enabled, { audio: true })
     if (enabled && publication === undefined) return false
-    if (publication?.videoTrack) screenShareVideoTrack.value = publication.videoTrack
-    if (!enabled) screenShareVideoTrack.value = undefined
+    if (enabled && publication?.videoTrack) {
+      screenShareVideoTrack.value = publication.videoTrack
+      screenShareBy.value = local.identity
+    }
+    if (!enabled) clearScreenShare(local.identity)
     screenSharing.value = enabled
   }
   catch (cause) {
-    // Der übliche Fall ist kein Fehler: Der Browser fragt, welches Fenster geteilt werden
-    // soll, und der Coach bricht ab.
-    log.warn('Bildschirmfreigabe nicht gestartet', cause)
+    screenShareIssue.value = classifyScreenShareError(cause)
+    if (screenShareIssue.value) log.warn('Bildschirmfreigabe nicht gestartet', { issue: screenShareIssue.value, cause })
+    else log.info('Bildschirmfreigabe abgebrochen')
     return false
   }
   return true
+}
+
+/**
+ * Abbruch im Auswahldialog ist kein Fehler und liefert null. Chrome meldet ihn und die
+ * fehlende Systemberechtigung unter demselben Namen `NotAllowedError` – nur die Nachricht
+ * unterscheidet sich („Permission denied" gegenüber „Permission denied by system").
+ */
+function classifyScreenShareError(cause: unknown) {
+  const name = (cause as { name?: string })?.name
+  const message = (cause as { message?: string })?.message ?? ''
+  if (/by system/i.test(message)) return 'system' as const
+  if (name === 'NotAllowedError' || name === 'AbortError') return null
+  return 'unknown' as const
+}
+
+/** Die Freigabe von `identity` abräumen – nur, wenn sie es auch ist, die gerade läuft. */
+function clearScreenShare(identity: string) {
+  if (screenShareBy.value !== identity) return
+  screenShareBy.value = null
+  screenShareVideoTrack.value = undefined
+  screenShareAudioTrack.value = undefined
 }
 
 // ---------------------------------------------------------------------------
@@ -568,12 +619,29 @@ function trackSubscribedListener(track: Track, _publication: TrackPublication, p
   log.info('Spur abonniert', { kind: track.kind, source: track.source, identity: participant.identity })
   if (track.kind === 'video') {
     if (track.source === Track.Source.Camera) videoTracks[participant.identity] = track
-    else if (track.source === Track.Source.ScreenShare) screenShareVideoTrack.value = track
+    else if (track.source === Track.Source.ScreenShare) {
+      screenShareVideoTrack.value = track
+      screenShareBy.value = participant.identity
+    }
   }
   else if (track.kind === 'audio') {
     if (track.source === Track.Source.Microphone) audioTracks[participant.identity] = track
     else if (track.source === Track.Source.ScreenShareAudio) screenShareAudioTrack.value = track
   }
+}
+
+/**
+ * Eine fremde Spur ist weg – die Gegenseite hat sie beendet.
+ *
+ * Fehlte dieser Listener, bliebe die Freigabe der Gegenseite nach ihrem Ende als letztes Bild
+ * auf der Bühne stehen: Das Ende einer Spur kommt nur hier an, nicht als eigenes Ereignis.
+ */
+function trackUnsubscribedListener(track: RemoteTrack, _publication: RemoteTrackPublication, participant: RemoteParticipant) {
+  log.info('Spur beendet', { kind: track.kind, source: track.source, identity: participant.identity })
+  if (track.source === Track.Source.ScreenShare) clearScreenShare(participant.identity)
+  else if (track.source === Track.Source.ScreenShareAudio && screenShareAudioTrack.value === track) screenShareAudioTrack.value = undefined
+  else if (track.source === Track.Source.Camera && videoTracks[participant.identity] === track) delete videoTracks[participant.identity]
+  else if (track.source === Track.Source.Microphone && audioTracks[participant.identity] === track) delete audioTracks[participant.identity]
 }
 
 /**
@@ -585,8 +653,8 @@ function trackSubscribedListener(track: Track, _publication: TrackPublication, p
  */
 function localTrackUnpublishListener(publication: LocalTrackPublication) {
   log.info('Eigene Spur beendet', { kind: publication.kind, source: publication.source })
-  if (publication.source === Track.Source.ScreenShare) {
-    screenShareVideoTrack.value = undefined
+  if (publication.source === Track.Source.ScreenShare && room) {
+    clearScreenShare(room.localParticipant.identity)
     screenSharing.value = false
   }
 }
@@ -602,6 +670,7 @@ function participantDisconnectedListener(participant: RemoteParticipant) {
   if (index !== -1) participants.value.splice(index, 1)
   delete audioTracks[participant.identity]
   delete videoTracks[participant.identity]
+  clearScreenShare(participant.identity)
 }
 
 function participantNameListener(name: string | undefined, participant: LocalParticipant | RemoteParticipant) {
@@ -694,6 +763,10 @@ export function useCallRoom() {
     videoStreamFor,
     audioStreamFor,
     screenShareStream,
+    screenShareAudioStream,
+    screenShareBy,
+    screenShareIssue,
+    screenShareSupported,
 
     // Geräte
     microphones,

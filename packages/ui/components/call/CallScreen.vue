@@ -35,8 +35,12 @@ const props = defineProps<{
   camDevices: CallDevice[]
   /** Wer gerade den Bildschirm teilt – Teilnehmer-ID oder null. */
   sharingBy?: string | null
+  /** Das Bild der laufenden Freigabe. */
+  shareStream?: MediaStream | null
+  /** Warum diese Seite gerade nicht teilen kann – etwa weil die andere teilt. Sperrt den Knopf. */
+  shareDisabledReason?: string | null
   canMuteRemote?: boolean
-  /** Bildschirmfreigabe anbieten – aus, bis sie gebaut ist (siehe CallControls). */
+  /** Bildschirmfreigabe anbieten – die App weiß, ob der Browser es kann (siehe CallControls). */
   canShare?: boolean
   /** Weichzeichnen anbieten – aus, bis es wirkt (siehe CallControls). */
   canBlur?: boolean
@@ -203,6 +207,7 @@ function resizeByKey(event: KeyboardEvent) {
           :local="local"
           :remote="remote"
           :sharing-by="sharingBy"
+          :share-stream="shareStream"
           @stop-sharing="sharing = false"
           @bounds="stageBounds = $event"
         />
@@ -250,6 +255,7 @@ function resizeByKey(event: KeyboardEvent) {
           :cam-devices="camDevices"
           :can-mute-remote="canMuteRemote"
           :can-share="canShare"
+          :share-disabled-reason="shareDisabledReason"
           :can-blur="canBlur"
           :end-label="endLabel"
           @end="$emit('end')"

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { CallAccessResponse } from '@hxroom/shared'
+import { firstName, type CallAccessResponse } from '@hxroom/shared'
 import {
   audioStreamFor,
   configureLivekit,
   joinCall,
   leaveCall,
+  screenShareAudioStream,
+  screenShareStream,
+  screenShareSupported,
   useCallRoom,
   videoStreamFor,
   type DeviceIssue,
@@ -50,6 +53,10 @@ const {
   activeMicrophoneId,
   activeCameraId,
   switchDevice,
+  screenSharing,
+  screenShareBy,
+  screenShareIssue,
+  setScreenShareEnabled,
 } = useCallRoom()
 
 // Beitreten, sobald der Coach eingelassen hat – das ist der Moment, in dem die Antwort
@@ -69,7 +76,6 @@ watch(() => props.call.livekit, (livekit) => {
 onBeforeUnmount(() => { void leaveCall() })
 
 const selfBlur = ref(false)
-const sharing = ref(false)
 /** Der Klient schaltet niemanden stumm – das Modell verlangt den Wert trotzdem. */
 const remoteMutedLocally = ref(false)
 const sidebarOpen = ref(false)
@@ -144,13 +150,27 @@ const deviceAlert = computed(() => {
   return null
 })
 const deviceAlertDismissed = ref(false)
+const shareAlertDismissed = ref(false)
+watch(screenShareIssue, () => { shareAlertDismissed.value = false })
 watch(deviceAlert, () => { deviceAlertDismissed.value = false })
 
 // Kein Ton, obwohl beide reden, ist der ärgerlichste Fehler dieses Produkts – deshalb steht
 // er über der Bühne und nicht in der Konsole.
 const audioOut = ref<{ blocked: boolean } | null>(null)
 
-const sharingBy = computed(() => (sharing.value ? local.value.id : null))
+// Bildschirmfreigabe – beide Seiten dürfen teilen (project.md §5a), eine Freigabe zur Zeit.
+// Wer teilt, sagt die Mechanik; teilt die Gegenseite, ist der eigene Knopf gesperrt.
+const shareSupported = screenShareSupported()
+const shareStream = computed(() => (screenShareBy.value ? screenShareStream() : null))
+// Nur der Ton einer fremden Freigabe wird abgespielt – den eigenen zu hören, gäbe ein Echo.
+const shareAudio = computed(() =>
+  screenShareBy.value && screenShareBy.value !== localIdentity.value ? screenShareAudioStream() : null,
+)
+const shareDisabledReason = computed(() =>
+  screenShareBy.value && screenShareBy.value !== localIdentity.value
+    ? `${firstName(props.call.coachName, 'Dein Gegenüber')} teilt gerade den Bildschirm`
+    : null,
+)
 
 const chatDraft = ref('')
 const chatUnread = ref(false)
@@ -186,7 +206,7 @@ async function leave() {
     :mic-on="microphone"
     :cam-on="camera"
     v-model:self-blur="selfBlur"
-    v-model:sharing="sharing"
+    :sharing="screenSharing"
     v-model:remote-muted-locally="remoteMutedLocally"
     :mic-device-id="activeMicrophoneId ?? ''"
     :cam-device-id="activeCameraId ?? ''"
@@ -202,10 +222,14 @@ async function leave() {
     :panels="panels"
     :mic-devices="micDevices"
     :cam-devices="camDevices"
-    :sharing-by="sharingBy"
+    :sharing-by="screenShareBy"
+    :share-stream="shareStream"
+    :can-share="shareSupported"
+    :share-disabled-reason="shareDisabledReason"
     end-label="Gespräch verlassen"
     @update:mic-on="toggleMicrophone()"
     @update:cam-on="toggleCamera()"
+    @update:sharing="(on: boolean) => setScreenShareEnabled(on)"
     @update:mic-device-id="(id: string) => switchDevice('audioinput', id)"
     @update:cam-device-id="(id: string) => switchDevice('videoinput', id)"
     @end="leaveModalOpen = true"
@@ -220,6 +244,19 @@ async function leave() {
           class="max-w-md shadow-lg bg-default"
           title="Kein Ton"
           description="Der Browser hat die Wiedergabe blockiert. Klicke einmal auf die Seite, um sie zu erlauben."
+        />
+
+        <UAlert
+          v-if="screenShareIssue && !shareAlertDismissed"
+          icon="i-lucide-monitor-x"
+          color="warning"
+          variant="subtle"
+          class="max-w-md shadow-lg bg-default"
+          title="Bildschirm lässt sich nicht teilen"
+          :description="screenShareIssue === 'system'
+            ? 'Dein System erlaubt dem Browser keine Bildschirmaufnahme. Auf dem Mac: Systemeinstellungen → Datenschutz & Sicherheit → Bildschirm- & Systemaudioaufnahme, dort den Browser erlauben.'
+            : 'Die Freigabe konnte nicht gestartet werden.'"
+          :close="{ onClick: () => { shareAlertDismissed = true } }"
         />
 
         <UAlert
@@ -249,6 +286,8 @@ async function leave() {
   <!-- Liegt außerhalb der Bühne: Das Element soll weder ein- noch ausgeblendet werden,
        wenn der Klient ins Vollbild wechselt – der Ton darf dabei nicht abreißen. -->
   <CallAudioOutput ref="audioOut" :stream="remoteAudio" />
+  <!-- Der Ton einer Freigabe des Coachs – etwa ein Video, das er zeigt. -->
+  <CallAudioOutput :stream="shareAudio" />
 
   <UModal
     v-model:open="leaveModalOpen"

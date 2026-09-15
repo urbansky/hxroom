@@ -43,6 +43,17 @@ export type DeviceIssue =
 /** Woran der Beitritt gescheitert ist, wenn `status` auf `failed` steht. */
 export type JoinFailure = 'network' | 'devices'
 
+/**
+ * Warum eine Bildschirmfreigabe nicht zustande kam – nur die Fälle, die jemandem etwas sagen.
+ * Wer im Auswahldialog des Browsers abbricht, hat nichts falsch gemacht; dafür gibt es keinen
+ * Wert.
+ *
+ * `system` ist der Fall, für den es diese Unterscheidung überhaupt gibt: Unter macOS braucht
+ * der Browser eine eigene Berechtigung zur Bildschirmaufnahme. Fehlt sie, meldet Chrome
+ * „Permission denied by system", und ohne Hinweis passiert nach dem Klick schlicht nichts.
+ */
+export type ScreenShareIssue = 'system' | 'unknown'
+
 /** Welche Art Eingabegerät – die Namen des Browsers, damit sie ohne Übersetzung durchgehen. */
 export type CallDeviceKind = 'audioinput' | 'videoinput'
 

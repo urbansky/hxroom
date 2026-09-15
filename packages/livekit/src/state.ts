@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { CallMediaDevice, CallParticipant, DeviceIssue, JoinFailure, RoomStatus } from './types'
+import type { CallMediaDevice, CallParticipant, DeviceIssue, JoinFailure, RoomStatus, ScreenShareIssue } from './types'
 
 /**
  * Der Zustand des laufenden Calls – reine Refs, ohne Kenntnis von LiveKit.
@@ -32,6 +32,13 @@ export const microphoneIssue = ref<DeviceIssue | null>(null)
 
 /** Ob die eigene Bildschirmfreigabe läuft. */
 export const screenSharing = ref(false)
+/**
+ * Wer gerade den Bildschirm teilt – die eigene oder eine fremde Identität, oder null.
+ * Gebraucht, weil beide Seiten teilen dürfen (project.md §5a) und die Bühne wissen muss, ob
+ * sie „Du teilst" oder „Miriam teilt" zeigt.
+ */
+export const screenShareBy = ref<string | null>(null)
+export const screenShareIssue = ref<ScreenShareIssue | null>(null)
 
 /**
  * Die Eingabegeräte des Browsers, ohne die Doppelung, mit der Chrome das Standardgerät
@@ -66,6 +73,8 @@ export function resetState(next: RoomStatus = 'idle') {
   cameraIssue.value = null
   microphoneIssue.value = null
   screenSharing.value = false
+  screenShareBy.value = null
+  screenShareIssue.value = null
   activeMicrophoneId.value = null
   activeCameraId.value = null
 }

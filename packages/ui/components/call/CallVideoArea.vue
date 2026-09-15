@@ -6,7 +6,6 @@
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { firstName, initials } from '@hxroom/shared'
 import CallCameraView from './CallCameraView.vue'
-import CallShareSim from './CallShareSim.vue'
 import type { CallPeer } from './types'
 
 // Die Bühne, in zwei Fassungen:
@@ -32,8 +31,9 @@ import type { CallPeer } from './types'
 // Initialen und einem Satz – nie ein angedeutetes Bild. Im Prototyp stand hier eine
 // Silhouette; im echten Gespräch täuschte sie vor, jemand sei im Bild.
 //
-// Die Bildschirmfreigabe ist noch nicht gebaut (Phase 5/6). Ihr Zweig mit CallShareSim
-// bleibt für sie stehen, ist aber nicht erreichbar, solange keine App `can-share` setzt.
+// Die Bildschirmfreigabe kommt als eigener Strom (`shareStream`) und steht, solange sie läuft,
+// groß auf der Bühne – eingepasst statt angeschnitten, weil die Ränder eines Bildschirms
+// Menüleisten und Text sind. Die Kameras beider Seiten rücken in die Spalte daneben.
 
 const props = defineProps<{
   /** Man selbst. Der Name wird nicht gezeigt – im eigenen Bild steht „Du". */
@@ -42,6 +42,8 @@ const props = defineProps<{
   remote: CallPeer | null
   /** Wer gerade teilt – Teilnehmer-ID oder null. Daraus folgen beide Beschriftungen. */
   sharingBy?: string | null
+  /** Das Bild der laufenden Freigabe – von welcher Seite auch immer. */
+  shareStream?: MediaStream | null
 }>()
 
 const emit = defineEmits<{
@@ -126,12 +128,18 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
              harter Schnitt an dieser Stelle liest sich wie ein Verbindungsabbruch. -->
         <Transition name="call-swap">
           <div v-if="sharing" key="share" class="absolute inset-0">
-            <CallShareSim />
+            <CallCameraView
+              :stream="shareStream ?? null"
+              :mirrored="false"
+              fit="contain"
+              placeholder="Freigabe startet …"
+            />
 
           <!-- Läuft eine Freigabe, muss das ohne Suchen erkennbar sein: Wer seinen
                Bildschirm teilt, ohne es zu merken, zeigt im Zweifel die Akte des
-               Nächsten. -->
-          <div class="absolute inset-x-0 top-0 z-20 flex items-center justify-center gap-3 px-4 py-2 bg-primary/10 backdrop-blur border-b border-primary/20">
+               Nächsten. Deshalb ein deckender Grund – darunter liegt ein beliebiger
+               Bildschirm, oft dunkel, und ein durchscheinendes Banner verschwand darin. -->
+          <div class="absolute inset-x-0 top-0 z-20 flex items-center justify-center gap-3 px-4 py-2 bg-default border-b border-default shadow-sm">
             <UIcon name="i-lucide-monitor-up" class="size-4 text-primary shrink-0" />
             <span class="text-sm text-primary truncate">
               {{ sharingIsLocal ? 'Du teilst deinen Bildschirm' : `${remoteShort} teilt den Bildschirm` }}

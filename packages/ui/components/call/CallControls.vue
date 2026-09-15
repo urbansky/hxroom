@@ -61,11 +61,13 @@ const props = defineProps<{
   /** Ob diese Seite die andere lokal stummschalten darf. */
   canMuteRemote?: boolean
   /**
-   * Bildschirmfreigabe anbieten. Aus, solange sie nicht gebaut ist: Der Knopf schaltete
-   * sonst nur eine Anzeige um und zeigte dem Teilenden eine Attrappe, während die Gegenseite
-   * nichts sieht (Screensharing ist Phase 5/6).
+   * Bildschirmfreigabe anbieten. Aus, wo der Browser es nicht kann – auf dem iPhone und den
+   * meisten Android-Browsern fehlt getDisplayMedia, ein Knopf ohne Wirkung wäre schlimmer als
+   * keiner.
    */
   canShare?: boolean
+  /** Warum gerade nicht geteilt werden kann; sperrt den Knopf und steht im Tooltip. */
+  shareDisabledReason?: string | null
   /**
    * „Hintergrund weichzeichnen" anbieten. Aus aus demselben Grund: Ohne die
    * Personensegmentierung der Track-Processors ist es nur ein Häkchen.
@@ -280,17 +282,23 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
         </UDropdownMenu>
       </div>
 
-      <!-- Teilen -->
-      <UButton
-        v-if="canShare"
-        icon="i-lucide-monitor-up"
-        :color="sharing ? 'primary' : 'neutral'"
-        :variant="sharing ? 'solid' : 'subtle'"
-        size="lg"
-        :class="ROUND_BTN"
-        :aria-label="sharing ? 'Bildschirmfreigabe beenden' : 'Bildschirm teilen'"
-        @click="sharing = !sharing"
-      />
+      <!-- Teilen. Gesperrt mit Begründung, solange die Gegenseite teilt: Die Bühne zeigt eine
+           Freigabe, und die fremde abzulösen stünde dieser Seite nicht zu. Der Tooltip hängt
+           an einer Hülle, weil ein gesperrter Knopf keine Zeigerereignisse bekommt. -->
+      <UTooltip v-if="canShare" :text="shareDisabledReason ?? ''" :disabled="!shareDisabledReason">
+        <span class="inline-flex">
+          <UButton
+            icon="i-lucide-monitor-up"
+            :color="sharing ? 'primary' : 'neutral'"
+            :variant="sharing ? 'solid' : 'subtle'"
+            size="lg"
+            :class="ROUND_BTN"
+            :disabled="!!shareDisabledReason"
+            :aria-label="sharing ? 'Bildschirmfreigabe beenden' : 'Bildschirm teilen'"
+            @click="sharing = !sharing"
+          />
+        </span>
+      </UTooltip>
 
       <!-- Selten Gebrauchtes hinter einem Menü: Der Weichzeichner wird einmal zu Beginn
            gesetzt, und Stummschalten ist für technische Notfälle gedacht, etwa eine

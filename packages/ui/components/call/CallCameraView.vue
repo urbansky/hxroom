@@ -19,7 +19,12 @@ const props = withDefaults(defineProps<{
   mirrored?: boolean
   /** Was steht, solange kein Bild da ist. */
   placeholder?: string
-}>(), { mirrored: true, placeholder: 'Kamera startet …' })
+  /**
+   * `cover` füllt die Kachel und schneidet an – für Gesichter richtig. Ein geteilter
+   * Bildschirm braucht `contain`: Angeschnittene Ränder sind dort Menüleisten und Text.
+   */
+  fit?: 'cover' | 'contain'
+}>(), { mirrored: true, placeholder: 'Kamera startet …', fit: 'cover' })
 
 const video = useTemplateRef<HTMLVideoElement>('video')
 
@@ -44,8 +49,8 @@ onUnmounted(() => {
     <video
       v-show="stream"
       ref="video"
-      class="absolute inset-0 size-full object-cover bg-elevated"
-      :class="mirrored ? '-scale-x-100' : undefined"
+      class="absolute inset-0 size-full bg-elevated"
+      :class="[fit === 'contain' ? 'object-contain' : 'object-cover', mirrored ? '-scale-x-100' : undefined]"
       autoplay
       playsinline
       muted

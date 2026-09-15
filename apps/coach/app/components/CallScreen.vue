@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import type { CallAccessResponse } from '@hxroom/shared'
+import { firstName, type CallAccessResponse } from '@hxroom/shared'
 import {
   audioStreamFor,
   configureLivekit,
   joinCall,
   leaveCall,
+  screenShareAudioStream,
+  screenShareStream,
+  screenShareSupported,
   useCallRoom,
   videoStreamFor,
   type DeviceIssue,
@@ -46,6 +49,10 @@ const {
   activeMicrophoneId,
   activeCameraId,
   switchDevice,
+  screenSharing,
+  screenShareBy,
+  screenShareIssue,
+  setScreenShareEnabled,
 } = useCallRoom()
 
 // ---------------------------------------------------------------------------
@@ -72,7 +79,6 @@ watch(() => props.call.livekit, (livekit) => {
 onBeforeUnmount(() => { void leaveCall() })
 
 const selfBlur = ref(false)
-const sharing = ref(false)
 /** Nur hier still, nie an den Klienten gemeldet – für technische Notfälle. */
 const remoteMutedLocally = ref(false)
 
@@ -100,6 +106,17 @@ const DEVICE_TEXT: Record<DeviceIssue, string> = {
 watch(cameraIssue, (issue) => {
   if (!issue) return
   toast.add({ title: 'Kamera nicht verfügbar', description: DEVICE_TEXT[issue], icon: 'i-lucide-video-off', color: 'warning' })
+})
+watch(screenShareIssue, (issue) => {
+  if (!issue) return
+  toast.add({
+    title: 'Bildschirm lässt sich nicht teilen',
+    description: issue === 'system'
+      ? 'Dein System erlaubt dem Browser keine Bildschirmaufnahme. Unter macOS: Systemeinstellungen → Datenschutz & Sicherheit → Bildschirm- & Systemaudioaufnahme, dort den Browser erlauben und ihn neu starten.'
+      : 'Die Freigabe konnte nicht gestartet werden.',
+    icon: 'i-lucide-monitor-x',
+    color: 'warning',
+  })
 })
 watch(microphoneIssue, (issue) => {
   if (!issue) return
@@ -159,7 +176,19 @@ const connection = computed<CallConnection>(() => {
   }
 })
 
-const sharingBy = computed(() => (sharing.value ? local.value.id : null))
+// Bildschirmfreigabe – beide Seiten dürfen teilen (project.md §5a), eine Freigabe zur Zeit.
+// Wer teilt, sagt die Mechanik; teilt die Gegenseite, ist der eigene Knopf gesperrt.
+const shareSupported = screenShareSupported()
+const shareStream = computed(() => (screenShareBy.value ? screenShareStream() : null))
+// Nur der Ton einer fremden Freigabe wird abgespielt – den eigenen zu hören, gäbe ein Echo.
+const shareAudio = computed(() =>
+  screenShareBy.value && screenShareBy.value !== localIdentity.value ? screenShareAudioStream() : null,
+)
+const shareDisabledReason = computed(() =>
+  screenShareBy.value && screenShareBy.value !== localIdentity.value
+    ? `${firstName(props.call.clientName, 'Dein Gegenüber')} teilt gerade den Bildschirm`
+    : null,
+)
 
 // ---------------------------------------------------------------------------
 // Seitenleiste
@@ -206,7 +235,7 @@ function confirmEnd() {
     :mic-on="microphone"
     :cam-on="camera"
     v-model:self-blur="selfBlur"
-    v-model:sharing="sharing"
+    :sharing="screenSharing"
     v-model:remote-muted-locally="remoteMutedLocally"
     :mic-device-id="activeMicrophoneId ?? ''"
     :cam-device-id="activeCameraId ?? ''"
@@ -222,11 +251,15 @@ function confirmEnd() {
     :panels="panels"
     :mic-devices="micDevices"
     :cam-devices="camDevices"
-    :sharing-by="sharingBy"
+    :sharing-by="screenShareBy"
+    :share-stream="shareStream"
+    :can-share="shareSupported"
+    :share-disabled-reason="shareDisabledReason"
     can-mute-remote
     end-label="Sitzung beenden"
     @update:mic-on="toggleMicrophone()"
     @update:cam-on="toggleCamera()"
+    @update:sharing="(on: boolean) => setScreenShareEnabled(on)"
     @update:mic-device-id="(id: string) => switchDevice('audioinput', id)"
     @update:cam-device-id="(id: string) => switchDevice('videoinput', id)"
     @end="endModalOpen = true"
@@ -247,6 +280,9 @@ function confirmEnd() {
 
   <!-- Außerhalb der Bühne, damit der Ton beim Wechsel ins Vollbild nicht abreißt. -->
   <CallAudioOutput ref="audioOut" :stream="remoteAudio" :muted="remoteMutedLocally" />
+  <!-- Der Ton einer Freigabe des Klienten. Stummschalten trifft ihn mit: Auch das ist Ton
+       vom Klienten, und der Knopf ist für Rückkopplungen gedacht. -->
+  <CallAudioOutput :stream="shareAudio" :muted="remoteMutedLocally" />
 
   <!-- Ein Gespräch endet nicht durch einen Fehlklick: Der Klient wird weitergeleitet und
        der Termin gilt als gehalten (project.md §5a, "definiertes Ende"). -->

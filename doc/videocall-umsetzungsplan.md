@@ -214,10 +214,10 @@ Umgesetzt nach dem Muster der Klientenseite: `apps/coach/app/components/CallScre
 **Im echten Call täuscht nichts mehr eine Funktion vor.** Das betraf beide Seiten, auch die seit B4 echte Klientenseite:
 
 - `CallVideoSim` ist entfernt. Die Bühne zeigte eine Silhouette, sobald kein Bild ankam – im Prototyp der Zweck, im Gespräch ein vorgetäuschtes Gegenüber. Jetzt steht dort eine neutrale Kachel mit Initialen und „… verbindet sich" oder „Kamera aus". Dafür wertet `CallVideoArea` erstmals `remote.cameraOn` aus, und zwar vor der Spur: LiveKit schaltet eine ausgeschaltete Kamera nur stumm, die Spur bleibt als Objekt bestehen und stünde sonst als eingefrorenes Bild da.
-- Bildschirmfreigabe und Weichzeichnen sind hinter `can-share`/`can-blur` ausgeblendet, beide im Standard aus. Die Freigabe zeigte dem Teilenden eine Attrappe, während die Gegenseite nichts sah; das Weichzeichnen war ein Häkchen ohne Wirkung. Ohne Einträge fällt das „…"-Menü samt Trenner weg – beim Klienten ist das heute der Fall.
+- Bildschirmfreigabe und Weichzeichnen sind hinter `can-share`/`can-blur` ausgeblendet, beide im Standard aus. Die Freigabe zeigte dem Teilenden eine Attrappe, während die Gegenseite nichts sah; das Weichzeichnen war ein Häkchen ohne Wirkung. Ohne Einträge fällt das „…"-Menü samt Trenner weg – beim Klienten ist das heute der Fall. *(Die Freigabe ist inzwischen gebaut, siehe Nachtrag unten.)*
 - „Klient stummschalten" wirkt jetzt: `CallAudioOutput` hat `muted`, nur auf der Seite des Coachs.
 
-Mit der Prototyp-Seite `/call/prototype` sind `useLocalCamera()` und die `defineExpose`-Handgriffe des Coach-Screens gegangen. `CallShareSim` bleibt für die Freigabe liegen und ist bis dahin nicht erreichbar.
+Mit der Prototyp-Seite `/call/prototype` sind `useLocalCamera()` und die `defineExpose`-Handgriffe des Coach-Screens gegangen. `CallShareSim` blieb zunächst für die Freigabe liegen und ist mit ihr entfallen (siehe Nachtrag unten).
 
 `packages/livekit` liegt jetzt auch im Coach-Image. Offen war, ob Nuxt die TypeScript-Quelle des Pakets ohne `build.transpile` verarbeitet – es tut es, `nuxt generate` und das Image bauen.
 
@@ -237,6 +237,22 @@ Der Wechsel selbst ist `Room.switchActiveDevice()`: Die veröffentlichte Spur st
 
 Abnahme: Vorschau nach Kamera aus → an wieder `live`; Wechsel auf „Fake Audio Input 1" fordert per `getUserMedia` genau dessen ID an, und die neue Spur läuft darauf; eine vorgespielte Chrome-Liste mit doppeltem Standardgerät erscheint ohne Doppelung, ein eingestecktes Headset ohne Neuladen; wechselt der Coach mitten im Gespräch das Mikrofon, bleibt die Tonspur beim Klienten `live` und liefert Pegel. Die Lautsprecherwahl ist nicht dabei – die Oberfläche bietet keine an, und der Ton läuft über eigene `<audio>`-Elemente, auf die `switchActiveDevice('audiooutput')` nicht wirkt.
 
+#### Nachtrag: Bildschirmfreigabe *(2026-09-15)*
+
+Vorgezogen aus Phase 5/6 – `project.md` §5a nennt sie „optional zuschaltbar, für beide Seiten". Umgesetzt so: Beide Seiten können teilen, eine Freigabe zur Zeit, mit Ton.
+
+Die Mechanik in `packages/livekit` konnte starten, hatte aber zwei Lücken. Sie hielt nicht fest, **wer** teilt – eine fremde Freigabe landete in derselben Variable wie die eigene; dafür gibt es jetzt `screenShareBy`. Und es fehlte ein `TrackUnsubscribed`-Listener: Beendete die Gegenseite ihre Freigabe, wäre ihr letztes Bild auf der Bühne stehen geblieben. Das Ende einer fremden Spur kommt nur über dieses Ereignis an.
+
+Teilt die Gegenseite, ist der eigene Knopf gesperrt, mit Begründung im Tooltip. Die Bühne zeigt eine Freigabe, und die fremde abzulösen stünde der eigenen Seite nicht zu. Wo der Browser kein `getDisplayMedia` hat – iPhone, die meisten Android-Browser –, erscheint der Knopf gar nicht. Der Ton einer fremden Freigabe spielt über ein eigenes `CallAudioOutput`; „Klient stummschalten" trifft ihn beim Coach mit.
+
+**Die fehlende macOS-Berechtigung bekommt eine Meldung.** Unter macOS braucht der Browser eine eigene Berechtigung zur Bildschirmaufnahme. Fehlt sie, meldet Chrome „Permission denied by system" – unter demselben Namen `NotAllowedError` wie ein Abbruch im Auswahldialog, nur mit anderer Nachricht. Ohne Unterscheidung passierte nach dem Klick schlicht nichts. Der Abbruch bleibt still, die Systemsperre nennt den Weg in die Systemeinstellungen (`screenShareIssue`).
+
+In der Oberfläche ist `CallShareSim` entfernt; die Bühne zeigt die Freigabe über `CallCameraView` mit `fit="contain"` – ein geteilter Bildschirm darf nicht angeschnitten werden, seine Ränder sind Menüleisten und Text. Das Banner „… teilt den Bildschirm" hat einen deckenden Grund bekommen: Es war für die helle Attrappe halbtransparent angelegt und verschwand über einem echten, dunklen Bildschirm fast vollständig – ausgerechnet das Element, das verhindern soll, dass jemand teilt, ohne es zu merken.
+
+Abnahme mit Coach und Klient; den Auswahldialog ersetzt ein animiertes Canvas mit Ton, alles danach läuft über den echten Weg. Klient teilt → Coach sieht die Freigabe in 1920×1080 laufend, hört ihren Ton, sein Knopf ist gesperrt; Beenden über das Banner räumt beide Seiten ab; dasselbe in umgekehrter Richtung; Beenden über die Browserleiste räumt ebenfalls beide Seiten ab; Abbruch im Dialog zeigt keine Meldung, die Systemsperre schon. Zum Beenden über die Browserleiste: `track.stop()` feuert kein `ended`, das tut nur der Browser, wenn die Quelle von außen endet – der erste Testlauf, der nur `stop()` rief, zeigte deshalb einen Fehler, den es nicht gibt. LiveKit hebt die Veröffentlichung bei `ended` selbst auf.
+
+Weichzeichnen bleibt hinter `can-blur` ausgeblendet; es braucht die Personensegmentierung der Track-Processors.
+
 ### B6 · Robustheit und autoritatives Sitzungsende
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
@@ -245,7 +261,7 @@ LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, d
 
 ## Bewusst nicht Teil dieses Plans
 
-Notiz-Seitenleiste, Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Technik-Check, Warteraum-Branding, konfigurierbare Danke-Seite, Geräteauswahl, Screensharing, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau.
+Notiz-Seitenleiste, Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Technik-Check, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl und Bildschirmfreigabe standen ursprünglich ebenfalls hier; beide sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
 
 ---
 
