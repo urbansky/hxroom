@@ -14,6 +14,7 @@ COPY apps/bookingpage/package.json apps/bookingpage/
 COPY apps/admin/package.json apps/admin/
 COPY apps/landing/package.json apps/landing/
 COPY packages/shared/package.json packages/shared/
+COPY packages/livekit/package.json packages/livekit/
 COPY packages/ui/package.json packages/ui/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
@@ -26,6 +27,9 @@ ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 ENV NUXT_PUBLIC_AUTH_URL=$NUXT_PUBLIC_AUTH_URL
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
+# Seit B5 hängt der Call-Screen an der Call-Mechanik. Das Paket liefert TypeScript-Quelle
+# und wird nicht gebaut, muss aber im Kontext liegen.
+COPY packages/livekit/ packages/livekit/
 COPY packages/ui/ packages/ui/
 COPY apps/coach/ apps/coach/
 RUN pnpm --filter @hxroom/shared build

@@ -115,8 +115,10 @@ const local = computed<CallPeer>(() => ({
 const remote = computed<CallPeer>(() => ({
   id: remotePeer.value?.id ?? 'remote',
   name: remotePeer.value?.name || props.call.coachName,
-  cameraOn: !(remotePeer.value?.cameraMuted ?? true),
-  micOn: !(remotePeer.value?.microphoneMuted ?? true),
+  // Ist der Coach noch nicht im Raum, gilt seine Kamera nicht als aus: Die Bühne zeigt
+  // dann „verbindet sich …" und nicht „Kamera aus" – das eine kommt gleich, das andere nicht.
+  cameraOn: remotePeer.value ? !remotePeer.value.cameraMuted : true,
+  micOn: remotePeer.value ? !remotePeer.value.microphoneMuted : true,
   blurred: false,
   stream: remotePeer.value ? videoStreamFor(remotePeer.value.id) : null,
 }))

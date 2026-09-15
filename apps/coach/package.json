@@ -9,6 +9,7 @@
     "preview": "npx serve .output/public"
   },
   "dependencies": {
+    "@hxroom/livekit": "workspace:*",
     "@hxroom/shared": "workspace:*",
     "@hxroom/ui": "workspace:*",
     "@iconify-json/tabler": "^1.2.38",

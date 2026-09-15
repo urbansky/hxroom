@@ -203,11 +203,27 @@ Dazu die Autoplay-Sperre: Ton ohne vorherige Nutzerinteraktion wird blockiert, u
 
 Abnahme über einen Spontan-Termin, Gegenstelle `lk room join --publish-demo --publish tone.ogg` (eine mit ffmpeg erzeugte Opus-Datei – `--publish-demo` allein sendet nur Video, Ton wäre ungeprüft geblieben): Warmlauf im Warteraum läuft und tritt **nicht** vorzeitig bei; nach dem Einlass Beitritt, Bild der Gegenstelle in 1280×720 auf der Bühne, Audiospur am `<audio>`. Beide Autoplay-Fälle gegengeprüft – mit gelockerter Policy spielt der Ton und die Meldung bleibt aus, mit der Standardpolicy ist es umgekehrt. Der Docker-Build der Klientenseite lokal gebaut, weil `packages/livekit` neu im Image liegen muss.
 
-### B5 · Coachseite real machen
+### B5 · Coachseite real machen ✅ *(umgesetzt 2026-09-15)*
 
 Gleiche Ersetzung im Call-Screen, „Einlassen" wandert an die echte Token-Vergabe, Sitzungs-Timer.
 
-**Vorgezogen als POC:** Das *eigene* Vorschaubild des Coachs kommt bereits aus der echten Kamera – `useLocalCamera()` (reines `getUserMedia`, kein LiveKit) und `CallCameraView.vue` in `apps/coach`. Der Strom endet im `<video>` der Seite, übertragen wird nichts. Zweck ist die Beurteilung der Oberfläche über einem wirklich bewegten Bild und ein erster Durchlauf durch die Browser-Freigabe samt ihrer Fehlerfälle. Mit B5 tritt das Geräte-Handling aus `packages/livekit` an diese Stelle; das Bild des Klienten und die Bildschirmfreigabe bleiben bis dahin die Andeutungen aus `CallVideoSim`/`CallShareSim`, und „Eigenen Hintergrund weichzeichnen" wirkt am echten Bild noch nicht – dafür braucht es die Personensegmentierung der Track-Processors.
+Umgesetzt nach dem Muster der Klientenseite: `apps/coach/app/components/CallScreen.vue` hängt an `useCallRoom()`, Bild über `videoStreamFor()`, Ton über `CallAudioOutput`, Gerätefehler als Toast. Damit sehen und hören sich Coach und Klient zum ersten Mal gegenseitig.
+
+**Der Coach tritt beim Einlassen bei, nicht vorher.** B2 gibt ihm sein Token schon ab `open`, damit er vor dem Klienten im Raum sein könnte. Die Coach-Seite zeigt vor dem Einlassen aber keine Bühne, sondern den Warteraum mit „Klient einlassen" – ein Beitritt dort hätte seine Kamera eingeschaltet, während er auf einen Avatar schaut, ohne es zu merken. Im Warteraum läuft deshalb nur der Warmlauf (URL, keine Kamera), der Beitritt kommt mit dem Klick. Beide Seiten verbinden sich fast gleichzeitig. Das frühe Token bleibt ungenutzt; es trägt eine spätere Variante mit eigener Vorschau im Coach-Warteraum, falls sie kommt.
+
+**Im echten Call täuscht nichts mehr eine Funktion vor.** Das betraf beide Seiten, auch die seit B4 echte Klientenseite:
+
+- `CallVideoSim` ist entfernt. Die Bühne zeigte eine Silhouette, sobald kein Bild ankam – im Prototyp der Zweck, im Gespräch ein vorgetäuschtes Gegenüber. Jetzt steht dort eine neutrale Kachel mit Initialen und „… verbindet sich" oder „Kamera aus". Dafür wertet `CallVideoArea` erstmals `remote.cameraOn` aus, und zwar vor der Spur: LiveKit schaltet eine ausgeschaltete Kamera nur stumm, die Spur bleibt als Objekt bestehen und stünde sonst als eingefrorenes Bild da.
+- Bildschirmfreigabe und Weichzeichnen sind hinter `can-share`/`can-blur` ausgeblendet, beide im Standard aus. Die Freigabe zeigte dem Teilenden eine Attrappe, während die Gegenseite nichts sah; das Weichzeichnen war ein Häkchen ohne Wirkung. Ohne Einträge fällt das „…"-Menü samt Trenner weg – beim Klienten ist das heute der Fall.
+- „Klient stummschalten" wirkt jetzt: `CallAudioOutput` hat `muted`, nur auf der Seite des Coachs.
+
+Mit der Prototyp-Seite `/call/prototype` sind `useLocalCamera()` und die `defineExpose`-Handgriffe des Coach-Screens gegangen. `CallShareSim` bleibt für die Freigabe liegen und ist bis dahin nicht erreichbar.
+
+`packages/livekit` liegt jetzt auch im Coach-Image. Offen war, ob Nuxt die TypeScript-Quelle des Pakets ohne `build.transpile` verarbeitet – es tut es, `nuxt generate` und das Image bauen.
+
+Abnahme mit zwei echten Browser-Teilnehmern statt CLI-Gegenstelle – Coach über die Coach-App mit Anmeldung, Klient über die Klientenseite: Im Warteraum läuft der Warmlauf des Coachs, im Raum ist niemand; nach „Klient einlassen" sind beide im Raum, jede Seite empfängt das Bild der anderen in 1280×720 mit fortschreitender Wiedergabezeit, dazu je eine Audiospur. Coach schaltet die Kamera aus → beim Klienten „Kamera aus". Coach schaltet den Klienten stumm → nur sein `<audio>` ist stumm. Reload des Coachs → wieder beide im Raum. Coach beendet → Klient auf der Danke-Seite, Raum leer.
+
+**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Die Geräteliste ist echt, die Auswahl wirkt noch nicht. Notizen werden nicht gespeichert.
 
 ### B6 · Robustheit und autoritatives Sitzungsende
 

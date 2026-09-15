@@ -60,6 +60,17 @@ const props = defineProps<{
   camDevices: CallDevice[]
   /** Ob diese Seite die andere lokal stummschalten darf. */
   canMuteRemote?: boolean
+  /**
+   * Bildschirmfreigabe anbieten. Aus, solange sie nicht gebaut ist: Der Knopf schaltete
+   * sonst nur eine Anzeige um und zeigte dem Teilenden eine Attrappe, während die Gegenseite
+   * nichts sieht (Screensharing ist Phase 5/6).
+   */
+  canShare?: boolean
+  /**
+   * „Hintergrund weichzeichnen" anbieten. Aus aus demselben Grund: Ohne die
+   * Personensegmentierung der Track-Processors ist es nur ein Häkchen.
+   */
+  canBlur?: boolean
   /** "Sitzung beenden" beim Coach, "Gespräch verlassen" beim Klienten. */
   endLabel: string
 }>()
@@ -165,13 +176,15 @@ const camItems = computed<DropdownMenuItem[][]>(() => [
 const moreItems = computed<DropdownMenuItem[][]>(() => [
   // Weichzeichnen: viele Klienten sitzen in Küche oder Kinderzimmer (project.md §5a).
   // Bunte Hintergründe gibt es bewusst nicht.
-  [{
-    label: 'Eigenen Hintergrund weichzeichnen',
-    icon: 'i-lucide-aperture',
-    type: 'checkbox' as const,
-    checked: selfBlur.value,
-    onUpdateChecked: (value: boolean) => { selfBlur.value = value },
-  }],
+  ...(props.canBlur
+    ? [[{
+        label: 'Eigenen Hintergrund weichzeichnen',
+        icon: 'i-lucide-aperture',
+        type: 'checkbox' as const,
+        checked: selfBlur.value,
+        onUpdateChecked: (value: boolean) => { selfBlur.value = value },
+      }]]
+    : []),
   // Stummschalten wirkt nur hier und wird der Gegenseite nie gemeldet – gedacht für
   // technische Notfälle wie eine Rückkopplung. Wer das darf, sagt die App.
   ...(props.canMuteRemote
@@ -269,6 +282,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
 
       <!-- Teilen -->
       <UButton
+        v-if="canShare"
         icon="i-lucide-monitor-up"
         :color="sharing ? 'primary' : 'neutral'"
         :variant="sharing ? 'solid' : 'subtle'"
@@ -278,16 +292,20 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
         @click="sharing = !sharing"
       />
 
-      <div class="hidden sm:block w-px h-8 bg-accented mx-1 sm:mx-2" />
-
       <!-- Selten Gebrauchtes hinter einem Menü: Der Weichzeichner wird einmal zu Beginn
            gesetzt, und Stummschalten ist für technische Notfälle gedacht, etwa eine
-           Rückkopplung – nichts, was neben dem Kamera-Knopf einladen soll. -->
-      <UDropdownMenu :items="moreItems" :content="MENU_CONTENT">
-        <UChip :show="remoteMutedLocally" color="error" size="sm" inset>
-          <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="subtle" size="lg" :class="ROUND_BTN" aria-label="Weitere Optionen" />
-        </UChip>
-      </UDropdownMenu>
+           Rückkopplung – nichts, was neben dem Kamera-Knopf einladen soll.
+           Ohne Einträge fällt das Menü samt Trenner weg: Beim Klienten ist das heute der
+           Fall, und ein Knopf, der ein leeres Menü öffnet, sieht aus wie ein Fehler. -->
+      <template v-if="moreItems.length">
+        <div class="hidden sm:block w-px h-8 bg-accented mx-1 sm:mx-2" />
+
+        <UDropdownMenu :items="moreItems" :content="MENU_CONTENT">
+          <UChip :show="remoteMutedLocally" color="error" size="sm" inset>
+            <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="subtle" size="lg" :class="ROUND_BTN" aria-label="Weitere Optionen" />
+          </UChip>
+        </UDropdownMenu>
+      </template>
 
       <div class="hidden sm:block w-px h-8 bg-accented mx-1 sm:mx-2" />
 

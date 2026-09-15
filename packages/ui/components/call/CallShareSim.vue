@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Ein angedeuteter geteilter Bildschirm – das Gegenstück zu CallVideoSim.
+// Ein angedeuteter geteilter Bildschirm. Steht für die Bildschirmfreigabe (Phase 5/6) und ist
+// bis dahin nicht erreichbar – keine App setzt `can-share`.
 //
 // Im Prototyp wird nichts übertragen, und eine leere Fläche verriete nicht, ob die
 // Aufteilung bei laufender Freigabe trägt: ob die beiden Videos daneben noch groß genug

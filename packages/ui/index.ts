@@ -10,8 +10,6 @@ export { default as CallChatPanel } from './components/call/CallChatPanel.vue';
 export { default as CallCameraView } from './components/call/CallCameraView.vue';
 export { default as CallAudioOutput } from './components/call/CallAudioOutput.vue';
 
-export { useLocalCamera } from './composables/useLocalCamera';
-
 export type {
   CallChatMessage,
   CallConnection,

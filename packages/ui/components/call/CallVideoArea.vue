@@ -7,7 +7,6 @@ import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { firstName, initials } from '@hxroom/shared'
 import CallCameraView from './CallCameraView.vue'
 import CallShareSim from './CallShareSim.vue'
-import CallVideoSim from './CallVideoSim.vue'
 import type { CallPeer } from './types'
 
 // Die Bühne, in zwei Fassungen:
@@ -28,15 +27,13 @@ import type { CallPeer } from './types'
 // Rollenfrei: Es gibt „local" und „remote". Wer davon der Coach ist und wer der Klient,
 // weiß nur die App, die die Bühne einbindet – für die Bühne ist es dieselbe Fläche.
 //
-// Ein Bild ist echt, die anderen sind es noch nicht: Das eigene Vorschaubild kommt aus der
-// Kamera (CallCameraView – der Strom bleibt im Browser). Das Gegenüber und die
-// Bildschirmfreigabe bleiben bis B4/B5 die Andeutungen aus CallVideoSim und CallShareSim,
-// damit sich beurteilen lässt, wie die Zustände über einem bewegten Bild liegen: wer da
-// ist, wer stumm ist, wessen Hintergrund weichgezeichnet wird, ob gerade geteilt wird.
+// Seit B5 sind beide Bilder echt: Sie kommen als MediaStream aus dem LiveKit-Raum
+// (CallCameraView). Kommt vom Gegenüber keines, zeigt die Bühne eine neutrale Kachel mit
+// Initialen und einem Satz – nie ein angedeutetes Bild. Im Prototyp stand hier eine
+// Silhouette; im echten Gespräch täuschte sie vor, jemand sei im Bild.
 //
-// Der Weichzeichner wirkt deshalb nur auf das simulierte Bild. Am eigenen, echten Bild
-// bleibt das Abzeichen vorerst eine reine Anzeige: Den Hintergrund allein weichzuzeichnen
-// verlangt eine Segmentierung der Person, die mit der LiveKit-Anbindung kommt.
+// Die Bildschirmfreigabe ist noch nicht gebaut (Phase 5/6). Ihr Zweig mit CallShareSim
+// bleibt für sie stehen, ist aber nicht erreichbar, solange keine App `can-share` setzt.
 
 const props = defineProps<{
   /** Man selbst. Der Name wird nicht gezeigt – im eigenen Bild steht „Du". */
@@ -91,6 +88,13 @@ onMounted(() => {
 
 const remoteInitials = computed(() => initials(props.remote?.name ?? ''))
 const remoteShort = computed(() => firstName(props.remote?.name ?? '', 'Dein Gegenüber'))
+
+// Was statt eines Bildes steht. Zwei Lagen, die sich für den Wartenden unterschiedlich
+// anfühlen: Ist die Kamera aus, kommt kein Bild mehr; verbindet sich die Gegenseite noch,
+// kommt es gleich. Wer das eine für das andere hält, wartet vergeblich oder fragt nach.
+const remotePlaceholder = computed(() =>
+  props.remote && !props.remote.cameraOn ? 'Kamera aus' : `${remoteShort.value} verbindet sich …`,
+)
 
 // Ob geteilt wird, und von wem. Beides folgt aus einer Angabe: Wer selbst teilt, sieht den
 // Hinweis in der ersten Person und darf die Freigabe beenden; wer zusieht, nicht.
@@ -164,11 +168,16 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
           </div>
 
           <div v-else key="video" class="absolute inset-0">
-            <!-- Das echte Bild, sobald eine Spur ankommt; sonst die Andeutung. Der Wechsel
-                 ist bewusst hier und nicht in der App: Bis die Gegenstelle ihre Kamera
-                 veröffentlicht, soll die Fläche nicht schwarz bleiben. -->
-            <CallCameraView v-if="remote?.stream" :stream="remote.stream" :mirrored="false" />
-            <CallVideoSim v-else :blurred="remote?.blurred" />
+            <!-- Erst die Kamera, dann die Spur: LiveKit schaltet eine ausgeschaltete Kamera nur
+                 stumm, die Spur bleibt als Objekt bestehen. Mit der umgekehrten Prüfung stünde
+                 hier das letzte Bild eingefroren. -->
+            <CallCameraView v-if="remote?.cameraOn && remote.stream" :stream="remote.stream" :mirrored="false" />
+            <div v-else class="absolute inset-0 flex flex-col items-center justify-center gap-3">
+              <span class="size-16 sm:size-20 rounded-full bg-primary/10 text-primary font-medium text-lg sm:text-xl flex items-center justify-center">
+                {{ remoteInitials }}
+              </span>
+              <span class="text-xs sm:text-sm text-muted">{{ remotePlaceholder }}</span>
+            </div>
 
           <!-- Name und Zustand des Gegenübers, unten links wie im Entwurf. -->
           <div v-if="remote" class="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex items-center gap-2">
@@ -246,8 +255,10 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
       :inert="videoColumnOpen ? undefined : true"
     >
       <div v-if="remote" class="relative aspect-video rounded-lg overflow-hidden ring-1 ring-accented bg-elevated shadow-sm">
-        <CallCameraView v-if="remote.stream" :stream="remote.stream" :mirrored="false" />
-        <CallVideoSim v-else :blurred="remote.blurred" />
+        <CallCameraView v-if="remote.cameraOn && remote.stream" :stream="remote.stream" :mirrored="false" />
+        <div v-else class="absolute inset-0 flex items-center justify-center">
+          <span class="text-[0.625rem] sm:text-xs text-dimmed">{{ remotePlaceholder }}</span>
+        </div>
 
         <span
           v-if="remote.mutedLocally"

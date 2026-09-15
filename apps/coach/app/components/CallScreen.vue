@@ -1,128 +1,196 @@
 <script setup lang="ts">
 import type { CallAccessResponse } from '@hxroom/shared'
 import {
+  audioStreamFor,
+  configureLivekit,
+  joinCall,
+  leaveCall,
+  useCallRoom,
+  videoStreamFor,
+  type DeviceIssue,
+} from '@hxroom/livekit'
+import {
   CallScreen as CallShell,
+  CallAudioOutput,
   CallChatPanel,
-  useLocalCamera,
   type CallChatMessage,
+  type CallConnection,
   type CallDevice,
   type CallPanelDef,
   type CallPeer,
 } from '@hxroom/ui'
 
-// Die Call-Oberfläche aus der Sicht des Coachs.
+// Die Call-Oberfläche aus der Sicht des Coachs, seit B5 am echten LiveKit-Raum.
 //
 // Die Oberfläche selbst liegt in @hxroom/ui und trägt beide Seiten des Gesprächs; hier steht
 // nur, was den Coach ausmacht: Notizen, Klientenakte, das Recht den Klienten stummzuschalten,
 // der Sitzungs-Timer und ein Ende, das die Sitzung wirklich beendet.
-//
-// **Funktionsloser Prototyp.** Es besteht keine LiveKit-Verbindung, kein Schalter wirkt nach
-// außen, nichts wird gespeichert – mit einer Ausnahme: Das eigene Kamerabild ist echt.
-// Alle Zustände liegen als refs in dieser Komponente, damit sich das Zielbild beurteilen
-// lässt, bevor B4/B5 die Mechanik dahinterlegen.
-//
-// Zweite Ausnahme: "Sitzung beenden" reicht das Ereignis nach oben – im echten Ablauf hängt
-// dort die vorhandene end()-Aktion aus useCallState.
 
 const props = defineProps<{ call: CallAccessResponse; now: Date }>()
 const emit = defineEmits<{ end: [] }>()
 
 const toast = useToast()
 
+const {
+  status,
+  participants,
+  localIdentity,
+  camera,
+  microphone,
+  cameraIssue,
+  microphoneIssue,
+  toggleCamera,
+  toggleMicrophone,
+} = useCallRoom()
+
 // ---------------------------------------------------------------------------
-// Zustand des Prototyps
+// Verbindung
 // ---------------------------------------------------------------------------
-const micOn = ref(true)
-const camOn = ref(true)
+// Beitreten, sobald diese Komponente steht – also mit dem Wechsel auf „eingelassen" nach
+// dem Klick auf „Klient einlassen". Der Warmlauf ist im Warteraum schon gelaufen
+// (pages/call/[bookingId].vue), die Verbindung steht deshalb fast unmittelbar.
+//
+// Der Coach bekäme sein Token schon vor dem Einlass (B2). Genutzt wird es erst hier: Ein
+// Beitritt im Warteraum schaltete seine Kamera ein, während er auf einen Avatar schaut –
+// ohne dass er es merkt.
+//
+// Der Token wird bei jedem Abruf neu ausgestellt; configureLivekit() nimmt ihn jedes Mal
+// entgegen, damit ein Reconnect nach längerem Gespräch nicht auf einen abgelaufenen trifft.
+watch(() => props.call.livekit, (livekit) => {
+  if (!livekit?.token) return
+  configureLivekit(livekit.url, livekit.token)
+  if (status.value === 'idle' || status.value === 'failed') void joinCall()
+}, { immediate: true })
+
+// Ob durch „Sitzung beenden", einen Reload oder das Schließen des Tabs: Wer die Seite
+// verlässt, verlässt den Raum. Der Klient folgt über sein SSE-Ereignis.
+onBeforeUnmount(() => { void leaveCall() })
+
 const selfBlur = ref(false)
-/** Ob der Klient seinen Hintergrund weichzeichnet – seine Entscheidung, hier nur Anzeige. */
-const remoteBlur = ref(true)
 const sharing = ref(false)
+/** Nur hier still, nie an den Klienten gemeldet – für technische Notfälle. */
 const remoteMutedLocally = ref(false)
-const connection = ref<'connecting' | 'live' | 'reconnecting' | 'lost'>('live')
 
-// Beispielgeräte. Mit der Anbindung (B5) liefert sie enumerateDevices().
-const MIC_DEVICES: CallDevice[] = [
-  { id: 'default', label: 'Standardmikrofon (MacBook Pro)' },
-  { id: 'usb', label: 'Externes USB-Mikrofon' },
-  { id: 'airpods', label: 'AirPods Pro' },
-]
-const CAM_DEVICES: CallDevice[] = [
-  { id: 'default', label: 'Standardkamera (FaceTime HD)' },
-  { id: 'external', label: 'Externe Webcam' },
-]
-const micDeviceId = ref(MIC_DEVICES[0]!.id)
-const camDeviceId = ref(CAM_DEVICES[0]!.id)
+// Die echten Geräte des Browsers. Vor der ersten Freigabe liefert enumerateDevices() leere
+// Beschriftungen – deshalb erst nach dem Beitritt und mit einem Ersatztext. Die Auswahl
+// wirkt noch nicht; das Umschalten des Geräts ist ein eigener Schritt.
+const micDevices = ref<CallDevice[]>([])
+const camDevices = ref<CallDevice[]>([])
+const micDeviceId = ref('default')
+const camDeviceId = ref('default')
 
-// ---------------------------------------------------------------------------
-// Die eigene Kamera – der eine Teil, der nicht mehr Prototyp ist
-// ---------------------------------------------------------------------------
-// Das Vorschaubild kommt aus der echten Kamera. Übertragen wird nichts: Der Strom endet im
-// <video> dieser Seite. Das Bild des Klienten bleibt bis B4/B5 eine Andeutung.
-const { stream: cameraStream, error: cameraError } = useLocalCamera(camOn)
+async function loadDevices() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    micDevices.value = devices
+      .filter(d => d.kind === 'audioinput')
+      .map((d, i) => ({ id: d.deviceId, label: d.label || `Mikrofon ${i + 1}` }))
+    camDevices.value = devices
+      .filter(d => d.kind === 'videoinput')
+      .map((d, i) => ({ id: d.deviceId, label: d.label || `Kamera ${i + 1}` }))
+    micDeviceId.value = micDevices.value[0]?.id ?? 'default'
+    camDeviceId.value = camDevices.value[0]?.id ?? 'default'
+  }
+  catch {
+    // Ohne Liste bleibt es beim Standardgerät – kein Grund, das Gespräch zu stören.
+  }
+}
+watch(status, (value) => { if (value === 'connected') void loadDevices() }, { immediate: true })
 
-// Scheitert die Freigabe, steht der Schalter sonst auf "an", während nichts kommt.
-watch(cameraError, (message) => {
-  if (!message) return
-  camOn.value = false
-  toast.add({
-    title: 'Kamera nicht verfügbar',
-    description: message,
-    icon: 'i-lucide-video-off',
-    color: 'warning',
-  })
+// Die Ursachen aus @hxroom/livekit in den Worten des Coachs. Anders als beim Klienten als
+// Toast: Der Coach kennt seine Technik, eine Meldung über der Bühne verdeckte ihm das
+// Gesicht des Klienten.
+const DEVICE_TEXT: Record<DeviceIssue, string> = {
+  denied: 'Der Browser hat den Zugriff blockiert – freigeben lässt er sich über das Symbol in der Adresszeile.',
+  notFound: 'Kein Gerät gefunden.',
+  busy: 'Das Gerät wird gerade von einem anderen Programm benutzt.',
+  insecure: 'Die Seite ist nicht sicher genug verbunden, um auf das Gerät zuzugreifen.',
+  unknown: 'Das Gerät ließ sich nicht starten.',
+}
+
+watch(cameraIssue, (issue) => {
+  if (!issue) return
+  toast.add({ title: 'Kamera nicht verfügbar', description: DEVICE_TEXT[issue], icon: 'i-lucide-video-off', color: 'warning' })
+})
+watch(microphoneIssue, (issue) => {
+  if (!issue) return
+  toast.add({ title: 'Mikrofon nicht verfügbar', description: DEVICE_TEXT[issue], icon: 'i-lucide-mic-off', color: 'warning' })
 })
 
 // ---------------------------------------------------------------------------
 // Die beiden Seiten der Bühne
 // ---------------------------------------------------------------------------
+// Ein Gespräch, ein Gegenüber – dieselbe Annahme wie auf der Klientenseite.
+const remotePeer = computed(() =>
+  participants.value.find(p => p.id !== localIdentity.value) ?? null,
+)
+
 const local = computed<CallPeer>(() => ({
-  id: 'local',
+  id: localIdentity.value ?? 'local',
   name: props.call.coachName,
-  cameraOn: camOn.value,
-  micOn: micOn.value,
+  cameraOn: camera.value,
+  micOn: microphone.value,
   blurred: selfBlur.value,
-  stream: cameraStream.value,
+  stream: localIdentity.value ? videoStreamFor(localIdentity.value) : null,
 }))
 
 const remote = computed<CallPeer>(() => ({
-  id: 'remote',
+  id: remotePeer.value?.id ?? 'remote',
   name: props.call.clientName,
-  cameraOn: true,
-  micOn: true,
-  blurred: remoteBlur.value,
+  // Solange der Klient noch nicht im Raum ist, gilt seine Kamera nicht als aus – die Bühne
+  // zeigt dann „verbindet sich …".
+  cameraOn: remotePeer.value ? !remotePeer.value.cameraMuted : true,
+  micOn: remotePeer.value ? !remotePeer.value.microphoneMuted : true,
+  blurred: false,
   mutedLocally: remoteMutedLocally.value,
+  stream: remotePeer.value ? videoStreamFor(remotePeer.value.id) : null,
 }))
 
-// Im Prototyp teilt nur der Coach – mit der Anbindung sagt die Herkunft der Spur, wer es ist.
-const sharingBy = computed(() => (sharing.value ? 'local' : null))
+const remoteAudio = computed(() =>
+  remotePeer.value ? audioStreamFor(remotePeer.value.id) : null,
+)
+
+// Kein Ton, obwohl der Klient spricht – beim Coach wie beim Klienten der ärgerlichste Fehler.
+const audioOut = ref<{ blocked: boolean } | null>(null)
+watch(() => audioOut.value?.blocked, (blocked) => {
+  if (!blocked) return
+  toast.add({
+    title: 'Kein Ton',
+    description: 'Der Browser hat die Wiedergabe blockiert. Ein Klick auf die Seite gibt sie frei.',
+    icon: 'i-lucide-volume-x',
+    color: 'warning',
+  })
+})
+
+const connection = computed<CallConnection>(() => {
+  switch (status.value) {
+    case 'connected': return 'live'
+    case 'failed': return 'lost'
+    default: return 'connecting'
+  }
+})
+
+const sharingBy = computed(() => (sharing.value ? local.value.id : null))
 
 // ---------------------------------------------------------------------------
 // Seitenleiste
 // ---------------------------------------------------------------------------
 // Geschlossen zu Beginn: Die ersten Minuten gehören dem Ankommen, nicht dem Notizfeld.
-// Wer mitschreiben will, hat die drei Knöpfe in der Steuerleiste.
 const sidebarOpen = ref(false)
 const activePanel = ref('notes')
 const notes = ref('')
 const chatDraft = ref('')
-const chatUnread = ref(false)
 const chatMessages = ref<CallChatMessage[]>([])
 const endModalOpen = ref(false)
 
 const panels = computed<CallPanelDef[]>(() => [
   { value: 'notes', label: 'Notizen', icon: 'i-lucide-notebook-pen' },
   { value: 'client', label: 'Klient', icon: 'i-lucide-contact-round' },
-  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square', badge: chatUnread.value },
+  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square' },
 ])
 
-// ---------------------------------------------------------------------------
-// Chat
-// ---------------------------------------------------------------------------
-function currentTime(): string {
-  return new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-}
-
+// Der Chat bleibt vorerst auf dieser Seite: Die Übertragung über den Data-Channel ist ein
+// eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect).
 function sendChatMessage() {
   const text = chatDraft.value.trim()
   if (!text) return
@@ -131,64 +199,23 @@ function sendChatMessage() {
     id: Date.now(),
     from: 'self',
     text,
-    time: currentTime(),
+    time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
     // Grobe Vorschau der Regel aus §5a: In die Zusammenfassung geht nur, was einen Link trägt.
     inSummary: /https?:\/\/|\w+\.\w{2,}\//.test(text),
   })
   chatDraft.value = ''
 }
 
-/**
- * Eine eingehende Nachricht. Im Prototyp löst die Demo-Leiste sie aus; später kommt sie
- * über den Data-Channel. Sichtbar wird sie als Hinweis, nicht als aufspringendes Fenster –
- * der Chat soll nicht mit dem Gesicht des Gegenübers konkurrieren.
- */
-function receiveChatMessage(text: string) {
-  chatMessages.value.push({ id: Date.now(), from: 'peer', text, time: currentTime() })
-
-  if (activePanel.value === 'chat' && sidebarOpen.value) return
-
-  chatUnread.value = true
-  toast.add({
-    title: 'Neue Chat-Nachricht',
-    description: text,
-    icon: 'i-lucide-message-square',
-    color: 'info',
-    actions: [{
-      label: 'Öffnen',
-      color: 'neutral',
-      variant: 'outline',
-      onClick: () => openChat(),
-    }],
-  })
-}
-
-function openChat() {
-  activePanel.value = 'chat'
-  sidebarOpen.value = true
-}
-
-// Gelesen ist, was offen vor einem liegt.
-watch([activePanel, sidebarOpen], ([panel, open]) => {
-  if (panel === 'chat' && open) chatUnread.value = false
-})
-
 function confirmEnd() {
   endModalOpen.value = false
   emit('end')
 }
-
-// Die Demo-Route steuert den Prototyp über diese Handgriffe.
-defineExpose({
-  micOn, camOn, selfBlur, remoteBlur, sharing, remoteMutedLocally, connection,
-  sidebarOpen, activePanel, receiveChatMessage,
-})
 </script>
 
 <template>
   <CallShell
-    v-model:mic-on="micOn"
-    v-model:cam-on="camOn"
+    :mic-on="microphone"
+    :cam-on="camera"
     v-model:self-blur="selfBlur"
     v-model:sharing="sharing"
     v-model:remote-muted-locally="remoteMutedLocally"
@@ -204,11 +231,13 @@ defineExpose({
     :elapsed-since="call.admittedAt"
     :warn-after="call.end"
     :panels="panels"
-    :mic-devices="MIC_DEVICES"
-    :cam-devices="CAM_DEVICES"
+    :mic-devices="micDevices"
+    :cam-devices="camDevices"
     :sharing-by="sharingBy"
     can-mute-remote
     end-label="Sitzung beenden"
+    @update:mic-on="toggleMicrophone()"
+    @update:cam-on="toggleCamera()"
     @end="endModalOpen = true"
   >
     <template #sidebar="{ panel }">
@@ -224,6 +253,9 @@ defineExpose({
       />
     </template>
   </CallShell>
+
+  <!-- Außerhalb der Bühne, damit der Ton beim Wechsel ins Vollbild nicht abreißt. -->
+  <CallAudioOutput ref="audioOut" :stream="remoteAudio" :muted="remoteMutedLocally" />
 
   <!-- Ein Gespräch endet nicht durch einen Fehlklick: Der Klient wird weitergeleitet und
        der Termin gilt als gehalten (project.md §5a, "definiertes Ende"). -->

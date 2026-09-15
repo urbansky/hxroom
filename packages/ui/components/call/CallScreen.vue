@@ -36,6 +36,10 @@ const props = defineProps<{
   /** Wer gerade den Bildschirm teilt – Teilnehmer-ID oder null. */
   sharingBy?: string | null
   canMuteRemote?: boolean
+  /** Bildschirmfreigabe anbieten – aus, bis sie gebaut ist (siehe CallControls). */
+  canShare?: boolean
+  /** Weichzeichnen anbieten – aus, bis es wirkt (siehe CallControls). */
+  canBlur?: boolean
   endLabel: string
 }>()
 
@@ -245,6 +249,8 @@ function resizeByKey(event: KeyboardEvent) {
           :mic-devices="micDevices"
           :cam-devices="camDevices"
           :can-mute-remote="canMuteRemote"
+          :can-share="canShare"
+          :can-blur="canBlur"
           :end-label="endLabel"
           @end="$emit('end')"
         />

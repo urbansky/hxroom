@@ -12,7 +12,15 @@
 // Vue-APIs explizit – siehe die Anmerkung in CallCameraView.vue.
 import { onUnmounted, ref, useTemplateRef, watch, watchEffect } from 'vue'
 
-const props = defineProps<{ stream: MediaStream | null }>()
+const props = defineProps<{
+  stream: MediaStream | null
+  /**
+   * Nur auf dieser Seite still – für „Klient stummschalten" beim Coach. Wird der Gegenseite
+   * nie gemeldet und berührt ihre Spur nicht; gedacht für technische Notfälle wie eine
+   * Rückkopplung (siehe CallPeer.mutedLocally).
+   */
+  muted?: boolean
+}>()
 
 /**
  * Ob der Browser die Wiedergabe verweigert hat.
@@ -62,6 +70,7 @@ onUnmounted(() => {
     ref="audio"
     autoplay
     playsinline
+    :muted="muted"
     @playing="blocked = false"
     @pause="blocked = !!stream"
   />

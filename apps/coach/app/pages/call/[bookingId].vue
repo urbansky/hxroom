@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CallAccessResponse } from '@hxroom/shared'
+import { configureLivekit, prepareCall } from '@hxroom/livekit'
 
 // Eigenes Layout ohne Seitenleiste: Der Coach ist hier im Gespräch, nicht in der
 // Verwaltung. Der Zustand liegt beim Server, ein Reload landet daher wieder richtig.
@@ -9,6 +10,16 @@ const route = useRoute()
 const bookingId = route.params.bookingId as string
 
 const { phase, call, loadError, actionError, pending, now, admit, end } = useCallState(bookingId)
+
+// Warmlauf, solange der Coach im Warteraum steht: DNS, TLS und der erste Kontakt zum
+// Medienserver passieren jetzt, der Beitritt kommt mit dem Klick auf „Klient einlassen"
+// (components/CallScreen.vue). Nur die URL, keine Kamera – beigetreten wird hier bewusst
+// nicht, auch wenn die API das Token dafür schon herausgibt.
+watch(() => call.value?.livekit?.url, (url) => {
+  if (!url) return
+  configureLivekit(url)
+  void prepareCall()
+}, { immediate: true })
 
 const appointmentLabel = computed(() => {
   const c = call.value
