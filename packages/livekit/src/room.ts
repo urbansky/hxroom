@@ -203,22 +203,33 @@ export async function joinCall(): Promise<void> {
   const url = requireUrl()
   const token = requireToken()
 
-  room ??= new Room()
+  // Eine eigene Referenz auf den Raum, den dieser Beitritt betritt. Verlässt der Nutzer das
+  // Gespräch, während wir noch verbinden – beim schnellen Wechsel von einem Call zum
+  // nächsten geschieht genau das –, hängt `room` längst an einem anderen Raum. Ohne diesen
+  // Vergleich schriebe der alte Beitritt seinen Erfolg in den neuen Zustand.
+  const active = (room ??= new Room())
   status.value = 'connecting'
   joinFailure.value = null
 
   const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
   let attempts = 10
   while (status.value !== 'connected') {
+    if (room !== active) return
     try {
       log.info('Raum betreten', { url })
-      await room.connect(url, token)
+      await active.connect(url, token)
+      if (room !== active) {
+        // Verlassen, während die Verbindung zustande kam: Sie gehört niemandem mehr.
+        await active.disconnect()
+        return
+      }
       status.value = 'connected'
     }
     catch (cause) {
       log.error('Beitritt fehlgeschlagen', cause)
       attempts--
       if (attempts === 0) {
+        if (room !== active) return
         await disconnectRoom()
         status.value = 'failed'
         joinFailure.value = 'network'
@@ -227,59 +238,75 @@ export async function joinCall(): Promise<void> {
       await wait(500)
     }
   }
-  log.info(`Raum "${room.name}" betreten`)
+  if (room !== active) return
+  log.info(`Raum "${active.name}" betreten`)
 
   participants.value = []
-  localIdentity.value = room.localParticipant.identity
-  addParticipant(room.localParticipant)
+  localIdentity.value = active.localParticipant.identity
+  addParticipant(active.localParticipant)
 
   // Wer schon da ist, samt allem, was er bereits sendet: Die Ereignisse dafür sind vor dem
   // Beitritt gelaufen und kommen nicht noch einmal.
-  for (const participant of room.remoteParticipants.values()) {
+  for (const participant of active.remoteParticipants.values()) {
     addParticipant(participant)
     for (const publication of participant.getTrackPublications()) {
       if (publication.track) trackSubscribedListener(publication.track, publication, participant)
     }
   }
 
-  room.on(RoomEvent.TrackSubscribed, trackSubscribedListener)
-  room.on(RoomEvent.TrackUnsubscribed, trackUnsubscribedListener)
-  room.on(RoomEvent.TrackMuted, trackMutedListener)
-  room.on(RoomEvent.TrackUnmuted, trackMutedListener)
-  room.on(RoomEvent.ParticipantNameChanged, participantNameListener)
-  room.on(RoomEvent.ParticipantConnected, participantConnectedListener)
-  room.on(RoomEvent.ParticipantDisconnected, participantDisconnectedListener)
-  room.on(RoomEvent.Disconnected, disconnectedListener)
-  room.on(RoomEvent.LocalTrackUnpublished, localTrackUnpublishListener)
-  room.on(RoomEvent.AudioPlaybackStatusChanged, audioPlaybackStatusListener)
-  room.on(RoomEvent.MediaDevicesChanged, devicesChangedListener)
-  room.on(RoomEvent.ActiveDeviceChanged, activeDeviceChangedListener)
+  active.on(RoomEvent.TrackSubscribed, trackSubscribedListener)
+  active.on(RoomEvent.TrackUnsubscribed, trackUnsubscribedListener)
+  active.on(RoomEvent.TrackMuted, trackMutedListener)
+  active.on(RoomEvent.TrackUnmuted, trackMutedListener)
+  active.on(RoomEvent.ParticipantNameChanged, participantNameListener)
+  active.on(RoomEvent.ParticipantConnected, participantConnectedListener)
+  active.on(RoomEvent.ParticipantDisconnected, participantDisconnectedListener)
+  active.on(RoomEvent.Disconnected, disconnectedListener)
+  active.on(RoomEvent.LocalTrackUnpublished, localTrackUnpublishListener)
+  active.on(RoomEvent.AudioPlaybackStatusChanged, audioPlaybackStatusListener)
+  active.on(RoomEvent.MediaDevicesChanged, devicesChangedListener)
+  active.on(RoomEvent.ActiveDeviceChanged, activeDeviceChangedListener)
 
   // Ohne Kamera lässt sich sprechen, ohne Mikrofon nicht – trotzdem gilt beides hier als
   // Fehlschlag nur dann, wenn etwas Unerwartetes passiert ist. Eine verweigerte Freigabe
   // oder fehlende Hardware wird in cameraIssue/microphoneIssue vermerkt, und das Gespräch
   // läuft weiter (siehe setCameraEnabled).
   if (!(await setCameraEnabled(true)) || !(await setMicrophoneEnabled(true))) {
+    if (room !== active) return
     await disconnectRoom()
     status.value = 'failed'
     joinFailure.value = 'devices'
   }
 }
 
-/** Den Raum verlassen und den Zustand zurücksetzen. */
+/**
+ * Den Raum verlassen und den Zustand zurücksetzen.
+ *
+ * Alles Geteilte fällt vor dem ersten `await`: Der Aufruf kommt aus `onBeforeUnmount` und
+ * wird dort nicht abgewartet, das Trennen klingt also noch aus, während die nächste Ansicht
+ * schon steht. Liefe das Aufräumen danach, träfe es den Raum, den der zweite Call
+ * inzwischen aufgebaut hat – und der zweite Call fände eine tote Verbindung vor.
+ */
 export async function leaveCall(next: RoomStatus = 'ended'): Promise<void> {
   log.info('Raum verlassen')
-  await disconnectRoom()
+  const leaving = room
+  room = undefined
   resetTracks()
   resetState(next)
+  await closeRoom(leaving)
 }
 
 async function disconnectRoom(): Promise<void> {
-  if (!room) return
-  log.info('Verbindung trennen')
-  room.removeAllListeners()
-  await room.disconnect()
+  const leaving = room
   room = undefined
+  await closeRoom(leaving)
+}
+
+async function closeRoom(leaving: Room | undefined): Promise<void> {
+  if (!leaving) return
+  log.info('Verbindung trennen')
+  leaving.removeAllListeners()
+  await leaving.disconnect()
 }
 
 // ---------------------------------------------------------------------------

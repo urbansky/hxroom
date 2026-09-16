@@ -68,7 +68,10 @@ const {
 watch(() => props.call.livekit, (livekit) => {
   if (!livekit?.token) return
   configureLivekit(livekit.url, livekit.token)
-  if (status.value === 'idle' || status.value === 'failed') void joinCall()
+  // Jeder Zustand außer „läuft bereits" heißt: betreten. Nach einem vorangegangenen
+  // Gespräch steht hier 'ended' – wer in derselben Sitzung einen zweiten Call öffnet, käme
+  // sonst nie in den Raum, und die Bühne bliebe bei „verbindet sich …" stehen.
+  if (status.value !== 'connecting' && status.value !== 'connected') void joinCall()
 }, { immediate: true })
 
 // Verlässt der Klient die Seite, endet auch die Verbindung – sonst bliebe ein Teilnehmer
