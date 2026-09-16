@@ -157,14 +157,26 @@ const remoteAudio = computed(() =>
 )
 
 // Kein Ton, obwohl der Klient spricht – beim Coach wie beim Klienten der ärgerlichste Fehler.
-const audioOut = ref<{ blocked: boolean } | null>(null)
+const audioOut = ref<{ blocked: boolean, resume: () => void } | null>(null)
 watch(() => audioOut.value?.blocked, (blocked) => {
-  if (!blocked) return
+  if (!blocked) {
+    toast.remove('call-audio-blocked')
+    return
+  }
   toast.add({
+    // Feste id: Hakt der Ton mehrfach, soll nicht ein Stapel gleicher Meldungen wachsen.
+    id: 'call-audio-blocked',
     title: 'Kein Ton',
-    description: 'Der Browser hat die Wiedergabe blockiert. Ein Klick auf die Seite gibt sie frei.',
+    description: 'Der Browser hat die Wiedergabe blockiert.',
     icon: 'i-lucide-volume-x',
     color: 'warning',
+    duration: 0,
+    actions: [{
+      label: 'Ton einschalten',
+      color: 'warning',
+      variant: 'solid',
+      onClick: () => audioOut.value?.resume(),
+    }],
   })
 })
 

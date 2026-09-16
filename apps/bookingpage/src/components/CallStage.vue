@@ -155,8 +155,11 @@ watch(screenShareIssue, () => { shareAlertDismissed.value = false })
 watch(deviceAlert, () => { deviceAlertDismissed.value = false })
 
 // Kein Ton, obwohl beide reden, ist der ärgerlichste Fehler dieses Produkts – deshalb steht
-// er über der Bühne und nicht in der Konsole.
-const audioOut = ref<{ blocked: boolean } | null>(null)
+// er über der Bühne und nicht in der Konsole. Wegklicken darf der Klient ihn trotzdem:
+// Ein Hinweis, der nicht weicht, verdeckt irgendwann das Gespräch, um das es geht.
+const audioOut = ref<{ blocked: boolean, resume: () => void } | null>(null)
+const audioAlertDismissed = ref(false)
+watch(() => audioOut.value?.blocked, (blocked) => { if (blocked) audioAlertDismissed.value = false })
 
 // Bildschirmfreigabe – beide Seiten dürfen teilen (project.md §5a), eine Freigabe zur Zeit.
 // Wer teilt, sagt die Mechanik; teilt die Gegenseite, ist der eigene Knopf gesperrt.
@@ -237,13 +240,15 @@ async function leave() {
     <template #stage-overlay>
       <div class="absolute inset-x-0 top-4 z-20 flex flex-col items-center gap-2 px-4">
         <UAlert
-          v-if="audioOut?.blocked"
+          v-if="audioOut?.blocked && !audioAlertDismissed"
           icon="i-lucide-volume-x"
           color="warning"
           variant="subtle"
           class="max-w-md shadow-lg bg-default"
           title="Kein Ton"
-          description="Der Browser hat die Wiedergabe blockiert. Klicke einmal auf die Seite, um sie zu erlauben."
+          description="Der Browser hat die Wiedergabe blockiert."
+          :actions="[{ label: 'Ton einschalten', color: 'warning', variant: 'solid', onClick: () => audioOut?.resume() }]"
+          :close="{ onClick: () => { audioAlertDismissed = true } }"
         />
 
         <UAlert

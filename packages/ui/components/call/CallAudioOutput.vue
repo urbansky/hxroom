@@ -31,7 +31,6 @@ const props = defineProps<{
  * ist der ärgerlichste Fehler dieses Produkts.
  */
 const blocked = ref(false)
-defineExpose({ blocked })
 
 const audio = useTemplateRef<HTMLAudioElement>('audio')
 
@@ -40,15 +39,13 @@ watchEffect(() => {
   if (el && el.srcObject !== props.stream) el.srcObject = props.stream
 })
 
-// `autoplay` allein genügt nicht: Der Browser meldet die Verweigerung nur über die Promise
-// von play(). Ohne diesen Aufruf bliebe es still und niemand erfährt es.
-//
-// Umgekehrt ist ein abgelehntes play() noch kein Beweis für Stille: `autoplay` kann die
-// Wiedergabe kurz danach doch starten. Deshalb entscheidet nicht die Promise allein,
-// sondern der Zustand des Elements – und das `playing`-Ereignis unten räumt die Meldung
-// wieder ab. Sonst läse der Klient „Kein Ton", während er längst hört.
-watch([audio, () => props.stream], async ([el, stream]) => {
-  if (!el || !stream) return
+/**
+ * Noch ein Versuch, den Ton zu starten. Nach einer Nutzergeste gibt der Browser die
+ * Wiedergabe frei – vorher hilft kein Zureden.
+ */
+async function resume() {
+  const el = audio.value
+  if (!el || !props.stream) return
   try {
     await el.play()
     blocked.value = false
@@ -56,9 +53,41 @@ watch([audio, () => props.stream], async ([el, stream]) => {
   catch {
     blocked.value = el.paused
   }
-}, { immediate: true })
+}
+
+defineExpose({ blocked, resume })
+
+// `autoplay` allein genügt nicht: Der Browser meldet die Verweigerung nur über die Promise
+// von play(). Ohne diesen Aufruf bliebe es still und niemand erfährt es.
+//
+// Umgekehrt ist ein abgelehntes play() noch kein Beweis für Stille: `autoplay` kann die
+// Wiedergabe kurz danach doch starten. Deshalb entscheidet nicht die Promise allein,
+// sondern der Zustand des Elements – und das `playing`-Ereignis unten räumt die Meldung
+// wieder ab. Sonst läse der Klient „Kein Ton", während er längst hört.
+watch([audio, () => props.stream], () => { void resume() }, { immediate: true })
+
+// Die Meldung verspricht, ein Klick auf die Seite gebe den Ton frei – also muss ein Klick
+// das auch tun. Ohne diesen zweiten Anlauf bliebe der Hinweis stehen, solange das Gespräch
+// dauert: Der Browser startet von sich aus nichts nach, und das Element wird nie erneut
+// angefasst. Gehorcht wird der ersten Geste, danach ist der Horchposten wieder frei.
+const GESTURES = ['pointerdown', 'keydown', 'touchend'] as const
+
+function onGesture() {
+  void resume()
+}
+
+function listenForGesture(on: boolean) {
+  if (typeof document === 'undefined') return
+  for (const type of GESTURES) {
+    if (on) document.addEventListener(type, onGesture, { passive: true })
+    else document.removeEventListener(type, onGesture)
+  }
+}
+
+watch(blocked, listenForGesture)
 
 onUnmounted(() => {
+  listenForGesture(false)
   if (audio.value) audio.value.srcObject = null
 })
 </script>
