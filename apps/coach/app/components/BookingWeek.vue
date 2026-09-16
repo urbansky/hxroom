@@ -127,18 +127,34 @@ function availabilityBlocks(weekday: number) {
  * opacity nahm Rahmen und Sitzungsfarbe gleich mit zurück – auf dem Verfügbarkeitsband
  * lösten sich die Blöcke dadurch fast auf. Die gefüllte Fläche bleibt scharf und liest
  * sich trotzdem als abgeschlossen, weil sie dunkler ist als die offene weiße Karte.
+ *
+ * Der Hover ist hier kräftiger als bei der Kachel in BookingAgenda.vue (dort nur
+ * hover:border-accented): Ein Rasterblock ist klein und liegt auf dem getönten
+ * Verfügbarkeitsband, ein etwas dunklerer Rahmen ginge darin unter. Er zeigt deshalb
+ * den Rahmen in der Primärfarbe, dazu einen feinen Ring in derselben Farbe wie der
+ * Fokusrahmen und einen größeren Schatten – der Block ist anklickbar und öffnet die
+ * Termin-Seitenleiste. Der Ring bleibt bei 1px: Zwischen zwei nebeneinanderliegenden
+ * Terminen sind nur 2px Luft, ein breiterer Ring liefe in den Nachbarn.
+ *
+ * Unbestätigte Termine tragen eine diagonale Schraffur (Klasse .booking-pending, in
+ * assets/main.css – dieselbe Klasse nutzen die Terminkacheln der Agenda und der
+ * Klientenakte), wie der vorgeschlagene Eintrag im macOS-Kalender. Zuvor stand dafür ein gelb
+ * gestrichelter Rahmen: Der zog im Raster mehr Aufmerksamkeit auf sich als der
+ * bestätigte Termin daneben, obwohl er nichts Dringendes meldet – ein Termin, auf
+ * dessen Bestätigung der Coach selbst sitzt. Die Schraffur sagt dasselbe über die
+ * Fläche statt über eine Signalfarbe: noch nicht fest.
  */
 function toneFor(booking: CoachBookingResponse, isPast: boolean) {
   return {
     container: [
-      // Unbestätigt: gestrichelt wie in der Kachel. Ein Badge wie dort passt in einen
-      // Rasterblock nicht, deshalb trägt zusätzlich der Rahmen die Warnfarbe.
-      booking.status === 'pending' ? 'border border-dashed border-warning/60' : 'border border-default',
+      'border border-default hover:border-primary hover:ring-1 hover:ring-primary/25',
+      booking.status === 'pending' ? 'booking-pending' : '',
       // Der Schatten hebt kommende Termine vom Raster ab. Ohne ihn war der Kreis um das
       // heutige Datum das kräftigste Element der Ansicht – kräftiger als der Inhalt.
-      isPast
-        ? 'bg-elevated hover:border-accented'
-        : 'bg-white dark:bg-neutral-900 shadow-sm hover:border-accented',
+      // Beim Hover wächst er. Die Fläche bleibt in beiden Fällen unangetastet: Sie sagt,
+      // ob ein Termin vorbei ist, und diese Aussage darf der Mauszeiger nicht umschreiben.
+      // Dass der Block anklickbar ist, trägt allein der Rahmen.
+      isPast ? 'bg-elevated' : 'bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md',
     ].join(' '),
     // Die Uhrzeit ist hier zurückgenommen, anders als in der Kachel: Im Raster sagt
     // schon die Position, wann der Termin liegt – der Name ist die eigentliche Nachricht.
@@ -148,8 +164,62 @@ function toneFor(booking: CoachBookingResponse, isPast: boolean) {
   }
 }
 
+/**
+ * Verteilt Termine, die sich überschneiden, nebeneinander auf Spalten – wie in
+ * gängigen Kalendern. Ohne das lagen gleichzeitige Termine deckungsgleich
+ * übereinander und verdeckten einander bis zur Unlesbarkeit.
+ *
+ * Gerechnet wird mit der gezeichneten Ausdehnung (top/height) statt mit der reinen
+ * Uhrzeit: Ein 15-Minuten-Termin wird durch MIN_BLOCK_HEIGHT höher dargestellt als
+ * seine Dauer und würde sonst den folgenden Termin überdecken, obwohl die Zeiten
+ * sich nicht schneiden.
+ *
+ * Erst werden zusammenhängende Gruppen gebildet (jeder Block überlappt mindestens
+ * einen anderen der Gruppe), dann bekommt jeder Block innerhalb seiner Gruppe die
+ * erste freie Spalte. Alle Blöcke einer Gruppe teilen sich die Spaltenbreite, damit
+ * die Kanten übereinanderliegender Termine bündig sind.
+ */
+function assignColumns<T extends { top: number; height: number }>(blocks: T[]) {
+  const sorted = [...blocks].sort((a, b) => a.top - b.top || b.height - a.height)
+  const placed: (T & { column: number; columnCount: number })[] = []
+
+  let group: (T & { column: number; columnCount: number })[] = []
+  // Untere Kante je Spalte innerhalb der laufenden Gruppe.
+  let columnEnds: number[] = []
+
+  const closeGroup = () => {
+    for (const block of group) block.columnCount = columnEnds.length
+    placed.push(...group)
+    group = []
+    columnEnds = []
+  }
+
+  for (const block of sorted) {
+    // Beginnt der Block unterhalb aller offenen Spalten, startet eine neue Gruppe.
+    if (columnEnds.length > 0 && columnEnds.every(end => end <= block.top)) closeGroup()
+
+    let column = columnEnds.findIndex(end => end <= block.top)
+    if (column === -1) column = columnEnds.length
+
+    columnEnds[column] = block.top + block.height
+    group.push({ ...block, column, columnCount: 0 })
+  }
+  if (group.length > 0) closeGroup()
+
+  return placed
+}
+
+/** Seitlicher Rand der Blöcke in der Tagesspalte bzw. Abstand zwischen zwei Spalten, in Pixeln. */
+const BLOCK_GUTTER = 4
+const BLOCK_GAP = 2
+
+/** Verfügbare Breite einer Gruppe, aufgeteilt auf `count` Spalten. */
+function columnWidth(count: number): string {
+  return `calc((100% - ${2 * BLOCK_GUTTER + (count - 1) * BLOCK_GAP}px) / ${count})`
+}
+
 function bookingBlocks(weekday: number) {
-  return (bookingsByWeekday.value.get(weekday) ?? []).map((booking) => {
+  const blocks = (bookingsByWeekday.value.get(weekday) ?? []).map((booking) => {
     const height = Math.max(booking.durationMinutes * PIXELS_PER_MINUTE, MIN_BLOCK_HEIGHT)
     // Vergangen ist ein Termin erst, wenn er zu Ende ist – ein laufender bleibt hervorgehoben.
     const isPast = new Date(booking.end) < now.value
@@ -157,9 +227,28 @@ function bookingBlocks(weekday: number) {
       booking,
       top: offsetTop(minutesSinceMidnight(booking.start)),
       height,
-      // Der Angebotsname ist die dritte Zeile – nur bei genug Höhe, sonst würde er abschneiden.
-      showOffer: height >= 60,
       tone: toneFor(booking, isPast),
+    }
+  })
+
+  return assignColumns(blocks).map((block) => {
+    // Ab drei Spalten nebeneinander bleibt vom Text ohnehin nur noch ein Rest – dann
+    // trägt der Block nur den Klientennamen, und die Uhrzeit steht im Titel-Tooltip.
+    const narrow = block.columnCount >= 3
+    return {
+      ...block,
+      narrow,
+      showTime: !narrow,
+      // Der Angebotsname ist die dritte Zeile – nur bei genug Höhe und voller Breite,
+      // sonst würde er abschneiden.
+      showOffer: block.height >= 60 && block.columnCount === 1,
+      title: [
+        formatTimeRange(block.booking),
+        block.booking.clientName,
+        block.booking.status === 'pending' ? 'noch nicht bestätigt' : '',
+      ].filter(Boolean).join(' · '),
+      width: columnWidth(block.columnCount),
+      left: `calc(${BLOCK_GUTTER}px + (${columnWidth(block.columnCount)} + ${BLOCK_GAP}px) * ${block.column})`,
     }
   })
 }
@@ -232,9 +321,15 @@ function bookingBlocks(weekday: number) {
           v-for="block in bookingBlocks(day.value)"
           :key="block.booking.id"
           type="button"
-          class="absolute inset-x-1 flex items-stretch gap-1.5 rounded-lg px-1.5 py-1 text-left overflow-hidden transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
-          :class="block.tone.container"
-          :style="{ top: `${block.top}px`, height: `${block.height}px` }"
+          class="absolute flex items-stretch rounded-lg py-1 text-left overflow-hidden transition duration-150 cursor-pointer outline-primary/25 focus-visible:outline-3 hover:z-10 focus-visible:z-10"
+          :class="[block.tone.container, block.narrow ? 'gap-1 px-1' : 'gap-1.5 px-1.5']"
+          :title="block.title"
+          :style="{
+            top: `${block.top}px`,
+            height: `${block.height}px`,
+            left: block.left,
+            width: block.width,
+          }"
           @click="$emit('select', block.booking)"
         >
           <!-- Sitzungsfarbe, identisch zur Terminkachel (offerColor in utils/offers.ts).
@@ -247,7 +342,11 @@ function bookingBlocks(weekday: number) {
           />
 
           <span class="flex-1 min-w-0">
-            <span class="block text-xs leading-tight tabular-nums truncate" :class="block.tone.time">
+            <span
+              v-if="block.showTime"
+              class="block text-xs leading-tight tabular-nums truncate"
+              :class="block.tone.time"
+            >
               {{ formatTimeRange(block.booking) }}
             </span>
             <span class="block text-xs leading-tight font-medium truncate" :class="block.tone.name">
@@ -266,7 +365,7 @@ function bookingBlocks(weekday: number) {
     </div>
 
     <p class="text-xs text-muted mt-4">
-      Der helle Hintergrund zeigt deine Verfügbarkeit, die Blöcke deine Termine. Abgesagte Termine werden hier ausgeblendet.
+      Der helle Hintergrund zeigt deine Verfügbarkeit, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet.
     </p>
   </div>
 </template>

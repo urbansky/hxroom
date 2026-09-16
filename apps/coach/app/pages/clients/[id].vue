@@ -168,7 +168,7 @@ function onSaved(saved: ClientResponse) {
               :key="booking.id"
               class="flex items-start gap-3 rounded-xl border p-4"
               :class="booking.status === 'pending'
-                ? 'border-default border-dashed bg-white dark:bg-neutral-900'
+                ? 'border-default bg-white dark:bg-neutral-900 booking-pending'
                 : 'border-default bg-white dark:bg-neutral-900'"
             >
               <span

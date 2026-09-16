@@ -38,16 +38,21 @@ function canStart(booking: CoachBookingResponse): boolean {
     && isWithinCallWindow(new Date(booking.start), new Date(booking.end), now.value)
 }
 
-// Der Rahmen unterscheidet in der Kachel-Variante die Status; flach übernimmt das
-// allein die Deckkraft. Die Statusangabe selbst geht nicht verloren, sie steht in
-// beiden Varianten als Badge neben dem Namen.
+// Rahmen und Fläche unterscheiden in der Kachel-Variante die Status; flach übernimmt
+// das die Deckkraft bzw. – für Unbestätigtes – dieselbe Schraffur. Die Statusangabe
+// selbst geht in keiner Variante verloren, sie steht als Badge neben dem Namen.
+//
+// Unbestätigt trug hier einen gestrichelten Rahmen. Den ersetzt die Schraffur aus
+// assets/main.css, wie im Wochenraster: Abgesagtes ist ebenfalls gestrichelt, und zwei
+// Status mit derselben Rahmenform untereinander waren nur über das Badge zu trennen.
 function rowClass(booking: CoachBookingResponse): string {
   if (isFlat.value) {
     const base = 'rounded-lg p-3 -mx-3 hover:bg-muted'
-    return booking.status === 'cancelled' ? `${base} opacity-60` : base
+    if (booking.status === 'cancelled') return `${base} opacity-60`
+    return booking.status === 'pending' ? `${base} booking-pending` : base
   }
   if (booking.status === 'cancelled') return 'rounded-xl border p-4 border-default border-dashed bg-transparent opacity-60'
-  if (booking.status === 'pending') return 'rounded-xl border p-4 border-default border-dashed bg-white dark:bg-neutral-900 hover:border-accented'
+  if (booking.status === 'pending') return 'rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 booking-pending hover:border-accented'
   return 'rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 hover:border-accented'
 }
 </script>
