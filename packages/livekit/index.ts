@@ -24,6 +24,10 @@ export { videoStreamFor, audioStreamFor, screenShareStream, screenShareAudioStre
 // Geräte: Liste ohne Chromes Doppelung des Standardgeräts, echter Wechsel der laufenden Spur.
 export { refreshDevices, switchDevice } from './src/room'
 
+// Messung für die Abnahme von Sendeprofilen – nicht für die Oberfläche.
+export { videoQuality, logVideoQuality } from './src/room'
+export type { VideoQuality } from './src/stats'
+
 export { useCallRoom } from './src/room'
 
 export type { CallParticipant, RoomStatus, DeviceIssue, JoinFailure, CallDeviceKind, CallMediaDevice, ScreenShareIssue } from './src/types'

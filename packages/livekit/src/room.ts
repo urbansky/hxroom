@@ -12,6 +12,7 @@ import {
   Track,
   TrackEvent,
   type TrackPublication,
+  VideoQuality as LivekitVideoQuality,
 } from 'livekit-client'
 import { createLogger } from './logger'
 import {
@@ -37,6 +38,8 @@ import {
 } from './state'
 import type { CallDeviceKind } from './types'
 import type { CallParticipant, DeviceIssue, RoomStatus } from './types'
+import { collectVideoQuality, formatVideoQuality, type VideoQuality } from './stats'
+import { SCREEN_SHARE_PUBLISH, screenShareCaptureOptions } from './quality'
 
 // Die Verbindung zum LiveKit-Raum.
 //
@@ -377,6 +380,8 @@ export async function setCameraEnabled(enabled: boolean): Promise<boolean> {
     videoTracks[local.identity] = publication.track
     publication.track.off(TrackEvent.Restarted, bumpStreams)
     publication.track.on(TrackEvent.Restarted, bumpStreams)
+    // Aus und wieder an käme sonst in voller Auflösung zurück, mitten in einer Freigabe.
+    if (screenSharing.value) setCameraBudget(true)
   }
   // Erst nach der Freigabe nennt der Browser die Geräte beim Namen.
   void refreshDevices()
@@ -564,6 +569,25 @@ export async function toggleMicrophone(): Promise<boolean> {
 }
 
 /**
+ * Wie viel Uplink die eigene Kamera beanspruchen darf.
+ *
+ * Wer teilt, sendet zwei Videospuren über dieselbe Leitung, und die Kamera ist in diesem
+ * Moment eine Daumennagel-Kachel neben der Freigabe. Ohne diesen Griff nimmt sie sich
+ * trotzdem ihre volle Bitrate – gemessen an einer echten Sitzung mehr als die Freigabe
+ * selbst.
+ *
+ * `setPublishingQuality` schaltet die oberen Simulcast-Ebenen ab, ohne die Spur neu zu
+ * veröffentlichen: Das Bild der Gegenseite wird kleiner, reißt aber nicht ab. Es greift,
+ * weil die Kamera weiterhin mit Simulcast sendet – abgeschaltet ist er nur für die Freigabe
+ * (siehe quality.ts), und beides sind Angaben je Spur.
+ */
+function setCameraBudget(sharing: boolean) {
+  const track = room?.localParticipant.getTrackPublication(Track.Source.Camera)?.videoTrack
+  if (!track) return
+  track.setPublishingQuality(sharing ? LivekitVideoQuality.LOW : LivekitVideoQuality.HIGH)
+}
+
+/**
  * Bildschirmfreigabe starten oder beenden.
  *
  * Mit Ton: Wer einen Film oder eine Aufnahme zeigt, will nicht danebenreden müssen.
@@ -580,7 +604,7 @@ export async function setScreenShareEnabled(enabled: boolean): Promise<boolean> 
   screenShareIssue.value = null
   try {
     log.info('Bildschirmfreigabe', enabled)
-    const publication = await local.setScreenShareEnabled(enabled, { audio: true })
+    const publication = await local.setScreenShareEnabled(enabled, screenShareCaptureOptions(), SCREEN_SHARE_PUBLISH)
     if (enabled && publication === undefined) return false
     if (enabled && publication?.videoTrack) {
       screenShareVideoTrack.value = publication.videoTrack
@@ -588,6 +612,7 @@ export async function setScreenShareEnabled(enabled: boolean): Promise<boolean> 
     }
     if (!enabled) clearScreenShare(local.identity)
     screenSharing.value = enabled
+    setCameraBudget(enabled)
   }
   catch (cause) {
     screenShareIssue.value = classifyScreenShareError(cause)
@@ -683,6 +708,7 @@ function localTrackUnpublishListener(publication: LocalTrackPublication) {
   if (publication.source === Track.Source.ScreenShare && room) {
     clearScreenShare(room.localParticipant.identity)
     screenSharing.value = false
+    setCameraBudget(false)
   }
 }
 
@@ -753,6 +779,26 @@ function addParticipant(participant: LocalParticipant | RemoteParticipant): Call
   }
   participants.value.push(entry)
   return entry
+}
+
+// ---------------------------------------------------------------------------
+// Messung
+// ---------------------------------------------------------------------------
+
+/**
+ * Was die Videospuren gerade wirklich übertragen – Auflösung, Bildrate, Bitrate, Codec.
+ *
+ * Für die Abnahme eines Sendeprofils und für den Fall, dass jemand fragt, woran ein weiches
+ * Bild liegt. Zweimal hintereinander aufrufen: Die Bitrate ist eine Differenz und steht erst
+ * beim zweiten Aufruf.
+ */
+export function videoQuality(): Promise<VideoQuality[]> {
+  return collectVideoQuality(room)
+}
+
+/** Dasselbe als eine Zeile je Spur, zum Hineinschauen in der Konsole. */
+export async function logVideoQuality(): Promise<void> {
+  log.info('Videoqualität\n' + formatVideoQuality(await collectVideoQuality(room)))
 }
 
 // ---------------------------------------------------------------------------

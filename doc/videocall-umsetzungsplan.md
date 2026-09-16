@@ -253,6 +253,35 @@ Abnahme mit Coach und Klient; den Auswahldialog ersetzt ein animiertes Canvas mi
 
 Weichzeichnen bleibt hinter `can-blur` ausgeblendet; es braucht die Personensegmentierung der Track-Processors.
 
+#### Nachtrag: Qualität der Bildschirmfreigabe *(2026-09-16)*
+
+Die Freigabe lief auf den Voreinstellungen von `livekit-client`. Die sind für Gesichter gemacht: 1080p, 2,5 Mbit/s, zwei Simulcast-Ebenen, VP8. Was ein Coach teilt, sind aber Folien, Tabellen und Formulare – dort entscheidet die Auflösung darüber, ob der Klient mitliest oder nachfragen muss.
+
+Das Sendeprofil steht jetzt in `packages/livekit/src/quality.ts`, rein deklarativ wie `state.ts`: **1440p** statt 1080p (als `ideal`, also ein Deckel und kein Zwang – ein 1080p-Bildschirm liefert weiter seine native Auflösung), **8 Mbit/s** als Obergrenze bei 15 Bildern je Sekunde, und **kein Simulcast**. Die zweite, halb aufgelöste Ebene diente allein dazu, dem Empfänger etwas Schlechteres anbieten zu können; ohne sie sinkt bei Engpass die Bildrate statt der Auflösung.
+
+**Die Kamera tritt zurück, solange geteilt wird.** Die Messung zeigte, woran es tatsächlich lag: Die Kamera sendete über drei Simulcast-Ebenen zusammen **1242 kbit/s** und damit mehr als die Freigabe mit 710 kbit/s – für eine Kachel, die neben dem geteilten Bildschirm daumennagelgroß steht. `setPublishingQuality(VideoQuality.LOW)` schaltet die oberen Ebenen ab, ohne die Spur neu zu veröffentlichen, das Bild reißt also nicht ab. Zurückgenommen wird das an drei Stellen: beim Beenden über den Knopf, beim Beenden über die Browserleiste (`localTrackUnpublishListener`) und beim Wiedereinschalten der Kamera während laufender Freigabe – sonst käme sie in voller Auflösung zurück.
+
+**Safari bleibt ausgenommen.** WebKit-Bug 263015: Safari 17 liefert bei *jeder* Auflösungsvorgabe eine niedrig aufgelöste Aufnahme. Dort bleibt die Vorgabe weg, und der Browser gibt die native Auflösung – `livekit-client` verfährt aus demselben Grund ebenso.
+
+**`videoQuality()` in `packages/livekit`** liest Auflösung, Bildrate, Bitrate, Codec und `qualityLimitationReason` aller Spuren aus den RTC-Statistiken. Für die Abnahme eines Sendeprofils und für die Frage, woran ein weiches Bild liegt – nicht für die Oberfläche.
+
+Abnahme mit Coach und Klient über die Caddy-Subdomains, gemessen beim Sender und beim Empfänger:
+
+| | vorher | nachher |
+|---|---|---|
+| Freigabe beim Empfänger | 1874×1062, 16 fps, 774 kbit/s | **2540×1440**, 15 fps, 1044 kbit/s |
+| Gesendete Ebenen der Freigabe | 2 (voll + halb) | **1** |
+| Kamera des Teilenden | 3 Ebenen, zusammen 1242 kbit/s | **1 Ebene, 142 kbit/s** |
+| Uplink gesamt | ~2310 kbit/s | **~1190 kbit/s** |
+
+Also mehr als die doppelte Pixelzahl bei etwa halbem Uplink. Nach dem Ende der Freigabe sendet die Kamera wieder auf allen drei Ebenen, das Banner beim Klienten verschwindet.
+
+Zwei Dinge sind bewusst nicht geprüft: Das Verhalten bei knapper Leitung – über Loopback entsteht kein Engpass, `qualityLimitationReason` blieb durchweg `none` – und das Beenden über die Browserleiste, das sich nicht automatisieren lässt (siehe die Anmerkung zu `track.stop()` oben).
+
+**`adaptiveStream` und `dynacast` bleiben aus.** Beide klingen nach der bequemeren Lösung, taugen hier aber nicht: `adaptiveStream` braucht `track.attach(element)`, um Größe und Sichtbarkeit zu kennen. HxRoom hängt Spuren nicht so an – `streamFor()` baut einen eigenen `MediaStream`, den `CallCameraView` per `srcObject` setzt, damit `packages/ui` frei von LiveKit bleibt. Ohne `attach()` bleibt `elementInfos` leer, `updateVisibility()` hält jede Spur für unsichtbar und pausiert sie. `dynacast` wiederum stoppt nur Ebenen, die niemand abonniert; ohne `adaptiveStream` fordert der einzige Abonnent im Gespräch immer die höchste an.
+
+Offen für später: VP9 (`scalabilityMode: 'L1T3'`) ist bei Bildschirminhalten pro Bit deutlich schärfer als VP8, verlangt aber Dekodierung beim Empfänger, oft in Software. Das gehört mit eigener Abnahme auf Safari und einem älteren Gerät geprüft.
+
 ### B6 · Robustheit und autoritatives Sitzungsende
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
