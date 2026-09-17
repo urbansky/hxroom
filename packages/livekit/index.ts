@@ -7,6 +7,9 @@
 
 export { configureLivekit, prepareCall, joinCall, leaveCall } from './src/room'
 
+// Geräte einrichten im Warteraum: Kamera und Mikrofon vor dem Beitritt, übernommen beim Einlass.
+export { startPreview, stopPreview, localVideoStream, localAudioStream } from './src/room'
+
 export {
   setCameraEnabled,
   setMicrophoneEnabled,

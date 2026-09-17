@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { CallAccessResponse } from '@hxroom/shared'
-import { configureLivekit, prepareCall } from '@hxroom/livekit'
+import { configureLivekit, prepareCall, useCallRoom } from '@hxroom/livekit'
+import { CallDeviceSetup, namedDevices } from '@hxroom/ui'
 
 // Eigenes Layout ohne Seitenleiste: Der Coach ist hier im Gespräch, nicht in der
 // Verwaltung. Der Zustand liegt beim Server, ein Reload landet daher wieder richtig.
@@ -66,6 +67,46 @@ const ending = computed(() => {
   }
 })
 
+// Geräte einrichten, bevor der Klient hereinkommt. Die Spuren übernimmt der Beitritt beim
+// Einlassen (components/CallScreen.vue) – deshalb endet die Vorschau nicht mit dem Warteraum,
+// sondern erst mit dieser Seite oder einem Termin, der ohne Einlass zu Ende geht. Der Coach
+// betritt den Raum weiterhin erst mit dem Klick; sein frühes Token bleibt ungenutzt.
+const {
+  previewing,
+  camera,
+  microphone,
+  loadingCamera,
+  cameraIssue,
+  microphoneIssue,
+  microphones,
+  cameras,
+  activeMicrophoneId,
+  activeCameraId,
+  localVideoStream,
+  localAudioStream,
+  startPreview,
+  stopPreview,
+  toggleCamera,
+  toggleMicrophone,
+  switchDevice,
+} = useCallRoom()
+
+const micDevices = computed(() => namedDevices(microphones.value, 'Mikrofon'))
+const camDevices = computed(() => namedDevices(cameras.value, 'Kamera'))
+
+// Im Warteraum inline statt als Toast wie im Gespräch: Hier verdeckt eine Meldung kein
+// Gesicht, und wer gerade die Kamera einrichtet, soll den Grund neben ihr lesen.
+const deviceNotice = computed(() => {
+  if (cameraIssue.value) return { title: 'Kamera nicht verfügbar', text: DEVICE_TEXT[cameraIssue.value] }
+  if (microphoneIssue.value) return { title: 'Mikrofon nicht verfügbar', text: DEVICE_TEXT[microphoneIssue.value] }
+  return null
+})
+
+watch(() => call.value?.state, (state) => {
+  if (state && !waitingStates.includes(state) && state !== 'admitted') stopPreview()
+})
+onBeforeUnmount(stopPreview)
+
 function initials(call: CallAccessResponse): string {
   return clientInitials(call.clientName)
 }
@@ -117,6 +158,38 @@ function initials(call: CallAccessResponse): string {
             {{ clientStatus.text }}
           </span>
         </div>
+
+        <CallDeviceSetup
+          :started="previewing"
+          :mic-on="microphone"
+          :cam-on="camera"
+          :mic-device-id="activeMicrophoneId ?? ''"
+          :cam-device-id="activeCameraId ?? ''"
+          :stream="localVideoStream()"
+          :audio-stream="localAudioStream()"
+          :mic-devices="micDevices"
+          :cam-devices="camDevices"
+          :loading-camera="loadingCamera"
+          :name="call.coachName"
+          @update:mic-on="toggleMicrophone()"
+          @update:cam-on="toggleCamera()"
+          @update:mic-device-id="(id: string) => switchDevice('audioinput', id)"
+          @update:cam-device-id="(id: string) => switchDevice('videoinput', id)"
+          @start="startPreview()"
+          @stop="stopPreview()"
+        >
+          <template #notice>
+            <UAlert
+              v-if="deviceNotice"
+              icon="i-lucide-triangle-alert"
+              color="warning"
+              variant="subtle"
+              class="text-left"
+              :title="deviceNotice.title"
+              :description="deviceNotice.text"
+            />
+          </template>
+        </CallDeviceSetup>
 
         <div class="flex flex-col items-center gap-2 w-full">
           <UButton

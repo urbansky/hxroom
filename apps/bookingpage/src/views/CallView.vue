@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, type Ref } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, watch, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { stopPreview } from '@hxroom/livekit'
 import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach'
 import { useCallState } from '../composables/useCallState'
 import { formatDayTimeRange } from '../utils/datetime'
@@ -60,6 +61,15 @@ const ending = computed(() => {
       }
   }
 })
+
+// Die Geräte-Einrichtung im Warteraum lebt über den Warteraum hinaus, damit der Beitritt
+// ihre Spuren übernehmen kann (WaitingRoom.vue). Beendet wird sie deshalb hier: wenn der
+// Termin endet, ohne dass eingelassen wurde, und wenn die Seite verlassen wird. Nach der
+// Übernahme ist beides wirkungslos.
+watch(() => call.value?.state, (state) => {
+  if (state && !inWaitingRoom.value && state !== 'admitted') stopPreview()
+})
+onBeforeUnmount(stopPreview)
 
 onMounted(start)
 </script>

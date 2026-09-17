@@ -30,6 +30,13 @@ export const loadingCamera = ref(false)
 export const cameraIssue = ref<DeviceIssue | null>(null)
 export const microphoneIssue = ref<DeviceIssue | null>(null)
 
+/**
+ * Ob die Geräte gerade im Warteraum eingerichtet werden. Kamera und Mikrofon laufen dann
+ * schon, gehören aber noch keinem Raum – `camera` und `microphone` oben gelten für sie
+ * genauso. Beim Beitritt übernimmt der Raum die Spuren, und das Flag fällt.
+ */
+export const previewing = ref(false)
+
 /** Ob die eigene Bildschirmfreigabe läuft. */
 export const screenSharing = ref(false)
 /**
@@ -72,6 +79,7 @@ export function resetState(next: RoomStatus = 'idle') {
   loadingCamera.value = false
   cameraIssue.value = null
   microphoneIssue.value = null
+  previewing.value = false
   screenSharing.value = false
   screenShareBy.value = null
   screenShareIssue.value = null

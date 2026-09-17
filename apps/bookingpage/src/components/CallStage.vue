@@ -7,23 +7,24 @@ import {
   configureLivekit,
   joinCall,
   leaveCall,
+  localVideoStream,
   screenShareAudioStream,
   screenShareStream,
   screenShareSupported,
   useCallRoom,
   videoStreamFor,
-  type DeviceIssue,
 } from '@hxroom/livekit'
 import {
   CallScreen as CallShell,
   CallAudioOutput,
   CallChatPanel,
+  namedDevices,
   type CallChatMessage,
   type CallConnection,
-  type CallDevice,
   type CallPanelDef,
   type CallPeer,
 } from '@hxroom/ui'
+import { deviceNotice } from '../utils/deviceText'
 
 // Die Call-Oberfläche aus der Sicht des Klienten, seit B4 am echten LiveKit-Raum.
 //
@@ -88,12 +89,8 @@ const leaveModalOpen = ref(false)
 // Die Geräte des Browsers aus @hxroom/livekit – dort wird die Liste nach jeder Freigabe und
 // bei jeder Änderung neu gelesen, und ein Wechsel startet die laufende Spur mit dem neuen
 // Gerät neu. Hier steht nur der Ersatzname für Geräte, die der Browser (noch) nicht nennt.
-const micDevices = computed<CallDevice[]>(() =>
-  microphones.value.map((device, i) => ({ id: device.id, label: device.label || `Mikrofon ${i + 1}` })),
-)
-const camDevices = computed<CallDevice[]>(() =>
-  cameras.value.map((device, i) => ({ id: device.id, label: device.label || `Kamera ${i + 1}` })),
-)
+const micDevices = computed(() => namedDevices(microphones.value, 'Mikrofon'))
+const camDevices = computed(() => namedDevices(cameras.value, 'Kamera'))
 
 // Ein Gespräch, ein Gegenüber. `remoteParticipants()` wäre allgemeiner, aber die Bühne
 // zeigt genau eine Gegenstelle – wer mehr will, ändert hier und in CallVideoArea.
@@ -107,7 +104,8 @@ const local = computed<CallPeer>(() => ({
   cameraOn: camera.value,
   micOn: microphone.value,
   blurred: selfBlur.value,
-  stream: localIdentity.value ? videoStreamFor(localIdentity.value) : null,
+  // Auch während des Verbindens: Kommt die Kamera aus dem Warteraum, läuft ihr Bild durch.
+  stream: localVideoStream(),
 }))
 
 const remote = computed<CallPeer>(() => ({
@@ -137,21 +135,7 @@ const connection = computed<CallConnection>(() => {
   }
 })
 
-// Die Ursachen aus @hxroom/livekit in Klientensprache. Bewusst ohne Fachbegriffe: Für
-// viele ist das hier die erste Berührung mit einer Kamerafreigabe (project.md §5a).
-const DEVICE_TEXT: Record<DeviceIssue, string> = {
-  denied: 'Der Browser hat den Zugriff blockiert. Über das Symbol in der Adresszeile kannst du ihn erlauben.',
-  notFound: 'Es wurde kein Gerät gefunden. Prüfe, ob es angeschlossen ist.',
-  busy: 'Ein anderes Programm benutzt das Gerät gerade. Schließe es und versuche es erneut.',
-  insecure: 'Diese Seite ist nicht sicher genug verbunden, um auf das Gerät zuzugreifen.',
-  unknown: 'Das Gerät konnte nicht gestartet werden.',
-}
-
-const deviceAlert = computed(() => {
-  if (cameraIssue.value) return { title: 'Kamera nicht verfügbar', text: DEVICE_TEXT[cameraIssue.value] }
-  if (microphoneIssue.value) return { title: 'Mikrofon nicht verfügbar', text: DEVICE_TEXT[microphoneIssue.value] }
-  return null
-})
+const deviceAlert = computed(() => deviceNotice(cameraIssue.value, microphoneIssue.value))
 const deviceAlertDismissed = ref(false)
 const shareAlertDismissed = ref(false)
 watch(screenShareIssue, () => { shareAlertDismissed.value = false })

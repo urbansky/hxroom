@@ -1,8 +1,12 @@
 import { ref, shallowReactive, shallowRef } from 'vue'
 import {
+  createLocalTracks,
   DisconnectReason,
+  type LocalAudioTrack,
   type LocalParticipant,
+  type LocalTrack,
   type LocalTrackPublication,
+  type LocalVideoTrack,
   type Participant,
   type RemoteParticipant,
   type RemoteTrack,
@@ -29,6 +33,7 @@ import {
   microphoneIssue,
   microphones,
   participants,
+  previewing,
   remoteParticipants,
   resetState,
   screenShareBy,
@@ -214,6 +219,11 @@ export async function joinCall(): Promise<void> {
   status.value = 'connecting'
   joinFailure.value = null
 
+  // Die gemerkten Geräte gelten für alles, was der Raum selbst anlegt – ohne Vorschau beim
+  // Beitritt, mit ihr beim späteren Wiedereinschalten einer im Warteraum ausgeschalteten Kamera.
+  if (preferredDevice.audioinput) active.options.audioCaptureDefaults!.deviceId = preferredDevice.audioinput.id
+  if (preferredDevice.videoinput) active.options.videoCaptureDefaults!.deviceId = preferredDevice.videoinput.id
+
   const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
   let attempts = 10
   while (status.value !== 'connected') {
@@ -257,6 +267,8 @@ export async function joinCall(): Promise<void> {
     }
   }
 
+  active.on(RoomEvent.TrackPublished, trackPublishedListener)
+  active.on(RoomEvent.TrackUnpublished, trackUnpublishedListener)
   active.on(RoomEvent.TrackSubscribed, trackSubscribedListener)
   active.on(RoomEvent.TrackUnsubscribed, trackUnsubscribedListener)
   active.on(RoomEvent.TrackMuted, trackMutedListener)
@@ -273,13 +285,21 @@ export async function joinCall(): Promise<void> {
   // Ohne Kamera lässt sich sprechen, ohne Mikrofon nicht – trotzdem gilt beides hier als
   // Fehlschlag nur dann, wenn etwas Unerwartetes passiert ist. Eine verweigerte Freigabe
   // oder fehlende Hardware wird in cameraIssue/microphoneIssue vermerkt, und das Gespräch
-  // läuft weiter (siehe setCameraEnabled).
-  if (!(await setCameraEnabled(true)) || !(await setMicrophoneEnabled(true))) {
+  // läuft weiter (siehe setCameraEnabled). Was im Warteraum eingerichtet wurde, gilt hier.
+  const adoption = adoptPreview(active)
+  adopting = adoption
+  const adopted = await adoption.finally(() => {
+    if (adopting === adoption) adopting = undefined
+  })
+  if (!adopted) {
     if (room !== active) return
     await disconnectRoom()
     status.value = 'failed'
     joinFailure.value = 'devices'
+    return
   }
+  await refreshDevices()
+  if (room === active) await restorePreferredDevices()
 }
 
 /**
@@ -294,6 +314,7 @@ export async function leaveCall(next: RoomStatus = 'ended'): Promise<void> {
   log.info('Raum verlassen')
   const leaving = room
   room = undefined
+  stopPreview()
   resetTracks()
   resetState(next)
   await closeRoom(leaving)
@@ -310,6 +331,362 @@ async function closeRoom(leaving: Room | undefined): Promise<void> {
   log.info('Verbindung trennen')
   leaving.removeAllListeners()
   await leaving.disconnect()
+}
+
+// ---------------------------------------------------------------------------
+// Vorschau im Warteraum
+// ---------------------------------------------------------------------------
+// Kamera und Mikrofon laufen schon vor dem Beitritt, damit man sich sehen, die Geräte wählen
+// und den Pegel prüfen kann. Die Spuren entstehen außerhalb eines Raums und werden beim
+// Beitritt veröffentlicht, nicht neu geholt: kein zweiter Freigabedialog, kein Kameralicht,
+// das kurz aus- und wieder angeht, kein schwarzer Moment beim Einlass.
+//
+// „Aus" heißt hier: Die Spur wird gestoppt und verworfen, nicht stummgeschaltet. Das
+// Kameralicht soll ausgehen, und eine gestoppte Kamera ließe sich ohnehin nicht
+// veröffentlichen – LiveKit wartet dafür auf die Maße des ersten Bildes.
+
+const previewCamera = shallowRef<LocalVideoTrack | undefined>(undefined)
+const previewMicrophone = shallowRef<LocalAudioTrack | undefined>(undefined)
+
+/**
+ * Was im Warteraum eingestellt ist – die Absicht, nicht das Ergebnis. Die Kamera kann gewollt
+ * und trotzdem aus sein, wenn der Browser sie verweigert; das steht dann in `camera` und
+ * `cameraIssue`. Beim Beitritt zählt die Absicht: Eine verweigerte Kamera wird dort noch
+ * einmal versucht, eine ausgeschaltete nicht.
+ */
+const wanted = { camera: true, microphone: true }
+
+/**
+ * Hochgezählt bei jedem Start und Ende der Vorschau. Eine Spur, deren Freigabedialog noch
+ * offen war, als die Vorschau endete, kommt danach an und gehört niemandem mehr.
+ */
+let previewRun = 0
+
+/**
+ * Läuft gerade die Übernahme der Vorschau in den Raum, warten Schalter und Gerätewechsel auf
+ * ihr Ende. Ein Klick in diese Lücke legte sonst eine zweite Kamera an, während die erste
+ * noch veröffentlicht wird.
+ */
+let adopting: Promise<unknown> | undefined
+
+/** Die Kamera- bzw. Mikrofonspur – aus der Vorschau oder aus dem Raum. */
+function localTrack(source: Track.Source): LocalTrack | undefined {
+  if (source === Track.Source.Camera && previewCamera.value) return previewCamera.value
+  if (source === Track.Source.Microphone && previewMicrophone.value) return previewMicrophone.value
+  return room?.localParticipant.getTrackPublication(source)?.track
+}
+
+/**
+ * Das eigene Kamerabild, im Warteraum wie im Gespräch. Weil die Vorschauspur beim Beitritt
+ * dieselbe bleibt, liefert der Stream-Cache dasselbe Objekt – das Bild läuft durch.
+ */
+export function localVideoStream(): MediaStream | null {
+  return streamFor(previewCamera.value) ?? (localIdentity.value ? videoStreamFor(localIdentity.value) : null)
+}
+
+/** Der eigene Mikrofonton – für die Pegelanzeige, nie zum Abspielen. */
+export function localAudioStream(): MediaStream | null {
+  // Gelesen, damit ein Wechsel zwischen Vorschau und Raum neu ausgewertet wird.
+  void previewMicrophone.value
+  return streamFor(localTrack(Track.Source.Microphone))
+}
+
+/**
+ * Kamera und Mikrofon für die Einrichtung im Warteraum starten.
+ *
+ * Nur auf Klick: Der Warteraum steht schon ab dem Tag der Buchung offen, und ein
+ * Freigabedialog, den niemand angefordert hat, liest sich wie ein Übergriff.
+ */
+export async function startPreview(): Promise<void> {
+  if (previewing.value || status.value === 'connecting' || status.value === 'connected') return
+
+  log.info('Vorschau starten')
+  previewing.value = true
+  const run = ++previewRun
+  // Direkt am Browser, nicht über den Raum: Den Warmlauf gibt es erst ab dem Zugangsfenster.
+  navigator.mediaDevices?.addEventListener('devicechange', devicesChangedListener)
+
+  // Vorab auf die Absicht gesetzt: Bis der Browser antwortet, stünden die Schalter sonst auf
+  // „aus" und leuchteten rot, obwohl gleich beides angeht. Scheitert es, korrigiert
+  // acquirePreview den Zustand samt Ursache.
+  camera.value = wanted.camera
+  microphone.value = wanted.microphone
+  loadingCamera.value = wanted.camera
+  try {
+    await acquirePreview(wanted.camera, wanted.microphone, run)
+  }
+  finally {
+    if (run === previewRun) loadingCamera.value = false
+  }
+  if (run !== previewRun) return
+  await refreshDevices()
+  await restorePreferredDevices()
+}
+
+/** Die Einrichtung beenden, ohne den Raum zu betreten. Mehrfach aufrufbar. */
+export function stopPreview(): void {
+  // Auch nach dem Flag: Während der Übernahme ist es schon gefallen, die Spuren sind aber
+  // noch nicht beim Raum angekommen.
+  if (!previewing.value && !previewCamera.value && !previewMicrophone.value) return
+
+  log.info('Vorschau beenden')
+  previewRun++
+  previewing.value = false
+  navigator.mediaDevices?.removeEventListener('devicechange', devicesChangedListener)
+  releasePreview()
+  camera.value = false
+  microphone.value = false
+  loadingCamera.value = false
+  cameraIssue.value = null
+  microphoneIssue.value = null
+}
+
+function releasePreview() {
+  previewCamera.value?.stop()
+  previewMicrophone.value?.stop()
+  previewCamera.value = undefined
+  previewMicrophone.value = undefined
+}
+
+/**
+ * Die Spuren der Vorschau anfordern.
+ *
+ * Erst beide in einem Aufruf – so fragt der Browser einmal statt zweimal. Scheitert das,
+ * einzeln: Eine verweigerte Kamera soll das Mikrofon nicht mitreißen, und nur so landet die
+ * Ursache beim richtigen Gerät.
+ */
+async function acquirePreview(video: boolean, audio: boolean, run: number): Promise<void> {
+  if (!video && !audio) return
+  try {
+    const tracks = await createLocalTracks({
+      video: video ? captureOptions('videoinput') : false,
+      audio: audio ? captureOptions('audioinput') : false,
+    })
+    if (run !== previewRun) {
+      for (const track of tracks) track.stop()
+      return
+    }
+    for (const track of tracks) holdPreviewTrack(track)
+  }
+  catch (cause) {
+    if (run !== previewRun) return
+    if (video && audio) {
+      await acquirePreview(true, false, run)
+      await acquirePreview(false, true, run)
+      return
+    }
+    const issue = classifyDeviceError(cause)
+    log.warn(video ? 'Kamera nicht verfügbar' : 'Mikrofon nicht verfügbar', { issue, cause })
+    if (video) {
+      cameraIssue.value = issue
+      camera.value = false
+    }
+    else {
+      microphoneIssue.value = issue
+      microphone.value = false
+    }
+  }
+}
+
+function holdPreviewTrack(track: LocalTrack) {
+  // Während der Freigabedialog offen war, wieder aus- oder schon zum zweiten Mal
+  // eingeschaltet: Diese Spur kommt zu spät und gehört niemandem.
+  const isCamera = track.source === Track.Source.Camera
+  const held = isCamera ? previewCamera.value : previewMicrophone.value
+  if (held || (isCamera ? !wanted.camera : !wanted.microphone)) {
+    track.stop()
+    return
+  }
+  track.on(TrackEvent.Restarted, bumpStreams)
+  if (isCamera) {
+    previewCamera.value = track as LocalVideoTrack
+    camera.value = true
+    cameraIssue.value = null
+  }
+  else {
+    previewMicrophone.value = track as LocalAudioTrack
+    microphone.value = true
+    microphoneIssue.value = null
+  }
+}
+
+async function setPreviewEnabled(source: Track.Source, enabled: boolean): Promise<boolean> {
+  const isCamera = source === Track.Source.Camera
+  const held = isCamera ? previewCamera : previewMicrophone
+  if (isCamera) wanted.camera = enabled
+  else wanted.microphone = enabled
+
+  if (!enabled) {
+    held.value?.stop()
+    held.value = undefined
+    if (isCamera) {
+      camera.value = false
+      cameraIssue.value = null
+    }
+    else {
+      microphone.value = false
+      microphoneIssue.value = null
+    }
+    return true
+  }
+
+  if (held.value) return true
+  const run = previewRun
+  if (isCamera) {
+    camera.value = true
+    loadingCamera.value = true
+  }
+  else {
+    microphone.value = true
+  }
+  try {
+    await acquirePreview(isCamera, !isCamera, run)
+  }
+  finally {
+    if (isCamera) loadingCamera.value = false
+  }
+  void refreshDevices()
+  return true
+}
+
+/**
+ * Die Vorschau in den eben betretenen Raum übernehmen – oder, ohne Vorschau, Kamera und
+ * Mikrofon einschalten wie bisher.
+ *
+ * Rückgabe wie bei setCameraEnabled: `false` nur, wenn etwas Unerwartetes passiert ist.
+ */
+async function adoptPreview(active: Room): Promise<boolean> {
+  const fromPreview = previewing.value
+  const want = fromPreview ? { ...wanted } : { camera: true, microphone: true }
+  if (fromPreview) {
+    log.info('Vorschau übernehmen', want)
+    previewing.value = false
+    navigator.mediaDevices?.removeEventListener('devicechange', devicesChangedListener)
+  }
+
+  const cameraOk = await adoptTrack(active, Track.Source.Camera, want.camera)
+  if (room !== active) return true
+  const microphoneOk = await adoptTrack(active, Track.Source.Microphone, want.microphone)
+  return cameraOk && microphoneOk
+}
+
+async function adoptTrack(active: Room, source: Track.Source, want: boolean): Promise<boolean> {
+  const isCamera = source === Track.Source.Camera
+  const held = isCamera ? previewCamera : previewMicrophone
+  const track = held.value
+
+  if (!want) {
+    track?.stop()
+    held.value = undefined
+    if (isCamera) camera.value = false
+    else microphone.value = false
+    return true
+  }
+
+  if (track?.mediaStreamTrack.readyState === 'live') {
+    try {
+      await active.localParticipant.publishTrack(track)
+      held.value = undefined
+      if (room !== active) return true
+      if (isCamera) {
+        registerLocalCamera(active.localParticipant)
+        camera.value = true
+      }
+      else {
+        microphone.value = true
+      }
+      return true
+    }
+    catch (cause) {
+      log.warn('Vorschauspur ließ sich nicht veröffentlichen, starte neu', { source, cause })
+    }
+  }
+
+  track?.stop()
+  held.value = undefined
+  if (room !== active) return true
+  // Zurückgesetzt, damit dieselbe Ursache beim erneuten Versuch wieder als Änderung ankommt –
+  // die Coach-App meldet sie über einen watch.
+  if (isCamera) cameraIssue.value = null
+  else microphoneIssue.value = null
+  return isCamera ? enableRoomCamera(true) : enableRoomMicrophone(true)
+}
+
+// ---------------------------------------------------------------------------
+// Gemerkte Geräte
+// ---------------------------------------------------------------------------
+// Wer einmal das Headset gewählt hat, will es beim nächsten Termin wieder. Gemerkt werden nur
+// die Geräte, nicht an oder aus: Eine vor Tagen ausgeschaltete Kamera soll nicht still
+// ausgeschaltet in ein Gespräch gehen.
+//
+// Gemerkt wird die ID *und* der Name. Die ID allein trägt nicht: Chrome vergibt sie bei jedem
+// Laden neu, solange die Freigabe nicht dauerhaft erteilt ist („nur dieses Mal erlauben").
+// Der Name – „AirPods Pro", „Logitech BRIO" – bleibt derselbe.
+
+const DEVICE_STORAGE_KEY = 'hxroom:devices'
+
+interface PreferredDevice {
+  id: string
+  label: string
+}
+
+const preferredDevice: Partial<Record<CallDeviceKind, PreferredDevice>> = loadPreferredDevices()
+
+function loadPreferredDevices(): Partial<Record<CallDeviceKind, PreferredDevice>> {
+  try {
+    const stored = JSON.parse(globalThis.localStorage?.getItem(DEVICE_STORAGE_KEY) ?? '{}')
+    const result: Partial<Record<CallDeviceKind, PreferredDevice>> = {}
+    for (const kind of ['audioinput', 'videoinput'] as const) {
+      const entry = stored?.[kind]
+      if (typeof entry?.id === 'string' && typeof entry?.label === 'string') result[kind] = { id: entry.id, label: entry.label }
+    }
+    return result
+  }
+  catch {
+    return {}
+  }
+}
+
+function rememberDevice(kind: CallDeviceKind, deviceId: string) {
+  const list = kind === 'audioinput' ? microphones.value : cameras.value
+  preferredDevice[kind] = { id: deviceId, label: list.find(device => device.id === deviceId)?.label ?? '' }
+  try {
+    globalThis.localStorage?.setItem(DEVICE_STORAGE_KEY, JSON.stringify(preferredDevice))
+  }
+  catch {
+    // Privater Modus oder volles Kontingent: Dann gilt die Wahl eben nur für diesen Besuch.
+  }
+}
+
+/**
+ * Läuft eine Spur nicht auf dem gemerkten Gerät, jetzt noch dorthin wechseln.
+ *
+ * Nötig, weil die gemerkte ID veraltet sein kann (siehe oben) – LiveKit nimmt dann nach dem
+ * exakten Versuch das Standardgerät. Nach der Freigabe nennt der Browser die Geräte beim
+ * Namen, das gemerkte lässt sich darüber wiederfinden, und der Wechsel gelingt ohne weiteren
+ * Dialog. Die neue ID wird gemerkt. Nur für Geräte, die angeschlossen sind und senden.
+ */
+async function restorePreferredDevices(): Promise<void> {
+  const kinds = [
+    { kind: 'audioinput', source: Track.Source.Microphone, active: activeMicrophoneId, list: microphones },
+    { kind: 'videoinput', source: Track.Source.Camera, active: activeCameraId, list: cameras },
+  ] as const
+  for (const { kind, source, active, list } of kinds) {
+    const preferred = preferredDevice[kind]
+    if (!preferred) continue
+    const match = list.value.find(device => device.id === preferred.id)
+      ?? list.value.find(device => preferred.label !== '' && device.label === preferred.label)
+    if (!match || active.value === match.id) continue
+    if (localTrack(source)?.mediaStreamTrack.readyState !== 'live') continue
+    log.info('Gemerktes Gerät nachträglich wählen', { kind })
+    await changeDevice(kind, match.id, true)
+  }
+}
+
+/** Das gemerkte Gerät als String – LiveKit versucht es exakt und nimmt sonst das nächstbeste. */
+function captureOptions(kind: CallDeviceKind): { deviceId: string } | true {
+  const deviceId = preferredDevice[kind]?.id
+  return deviceId ? { deviceId } : true
 }
 
 // ---------------------------------------------------------------------------
@@ -351,6 +728,13 @@ export function classifyDeviceError(cause: unknown): DeviceIssue {
  * `cameraIssue` sichtbar werden, ohne das Gespräch zu beenden.
  */
 export async function setCameraEnabled(enabled: boolean): Promise<boolean> {
+  await adopting
+  if (previewing.value) return setPreviewEnabled(Track.Source.Camera, enabled)
+  return enableRoomCamera(enabled)
+}
+
+/** Ohne das Warten auf die Übernahme – die ruft selbst hierher und wartete sonst auf sich. */
+async function enableRoomCamera(enabled: boolean): Promise<boolean> {
   const local = room?.localParticipant
   if (!local) return false
 
@@ -374,21 +758,24 @@ export async function setCameraEnabled(enabled: boolean): Promise<boolean> {
     loadingCamera.value = false
   }
 
-  const publication = local.getTrackPublication(Track.Source.Camera)
-  if (publication?.track) {
-    log.info('Eigene Videospur', { identity: local.identity, sid: publication.track.sid })
-    videoTracks[local.identity] = publication.track
-    publication.track.off(TrackEvent.Restarted, bumpStreams)
-    publication.track.on(TrackEvent.Restarted, bumpStreams)
-    // Aus und wieder an käme sonst in voller Auflösung zurück, mitten in einer Freigabe.
-    if (screenSharing.value) setCameraBudget(true)
-  }
+  registerLocalCamera(local)
   // Erst nach der Freigabe nennt der Browser die Geräte beim Namen.
   void refreshDevices()
   return true
 }
 
-/** Mikrofon an oder aus. Rückgabe wie bei der Kamera. */
+/** Die eigene Kameraspur für Bühne und Stream-Cache bekannt machen. */
+function registerLocalCamera(local: LocalParticipant) {
+  const publication = local.getTrackPublication(Track.Source.Camera)
+  if (!publication?.track) return
+  log.info('Eigene Videospur', { identity: local.identity, sid: publication.track.sid })
+  videoTracks[local.identity] = publication.track
+  publication.track.off(TrackEvent.Restarted, bumpStreams)
+  publication.track.on(TrackEvent.Restarted, bumpStreams)
+  // Aus und wieder an käme sonst in voller Auflösung zurück, mitten in einer Freigabe.
+  if (screenSharing.value) setCameraBudget(true)
+}
+
 // ---------------------------------------------------------------------------
 // Geräte
 // ---------------------------------------------------------------------------
@@ -456,10 +843,9 @@ function resolveActiveDevice(all: MediaDeviceInfo[], kind: CallDeviceKind, sourc
     return list.find(device => all.find(d => d.deviceId === device.id && d.kind === kind)?.groupId === groupId)?.id ?? null
   }
 
-  const settings = room?.localParticipant.getTrackPublication(source)?.track?.mediaStreamTrack.readyState === 'live'
-    ? room.localParticipant.getTrackPublication(source)!.track!.mediaStreamTrack.getSettings()
-    : undefined
-  const chosen = room?.getActiveDevice(kind)
+  const media = localTrack(source)?.mediaStreamTrack
+  const settings = media?.readyState === 'live' ? media.getSettings() : undefined
+  const chosen = previewing.value ? preferredDevice[kind]?.id : room?.getActiveDevice(kind) ?? preferredDevice[kind]?.id
   const chosenGroup = all.find(d => d.kind === kind && d.deviceId === chosen)?.groupId
 
   return inList(settings?.deviceId)
@@ -478,7 +864,7 @@ function resolveActiveDevice(all: MediaDeviceInfo[], kind: CallDeviceKind, sourc
  * hat – eine ausgeschaltete Kamera bleibt aus.
  */
 async function recoverLostDevice(kind: CallDeviceKind, source: Track.Source): Promise<void> {
-  const media = room?.localParticipant.getTrackPublication(source)?.track?.mediaStreamTrack
+  const media = localTrack(source)?.mediaStreamTrack
   if (!media || media.readyState !== 'ended') return
   if (source === Track.Source.Camera && !camera.value) return
   if (source === Track.Source.Microphone && !microphone.value) return
@@ -487,7 +873,7 @@ async function recoverLostDevice(kind: CallDeviceKind, source: Track.Source): Pr
   if (!fallback) return
 
   log.warn('Gerät verschwunden, weiche aus', { kind, to: fallback.id })
-  await switchDevice(kind, fallback.id)
+  await changeDevice(kind, fallback.id, false)
 }
 
 /**
@@ -498,17 +884,34 @@ async function recoverLostDevice(kind: CallDeviceKind, source: Track.Source): Pr
  * Die Auswahl springt sofort um, damit das Menü nicht hinter dem Klick herhinkt; scheitert der
  * Wechsel – das Gerät ist belegt oder inzwischen weg –, springt sie zurück und die Ursache
  * steht in cameraIssue bzw. microphoneIssue.
+ *
+ * Im Warteraum gilt dasselbe für die Vorschauspur. Die Wahl wird gemerkt, für den Beitritt
+ * und für den nächsten Termin.
  */
 export async function switchDevice(kind: CallDeviceKind, deviceId: string): Promise<boolean> {
+  await adopting
+  return changeDevice(kind, deviceId, true)
+}
+
+/**
+ * Der Wechsel selbst. `remember` nur, wenn jemand gewählt hat: Weicht die Spur einem
+ * abgezogenen Headset aus, soll das Headset beim nächsten Termin trotzdem wieder vorn stehen.
+ */
+async function changeDevice(kind: CallDeviceKind, deviceId: string, remember: boolean): Promise<boolean> {
   const active = kind === 'audioinput' ? activeMicrophoneId : activeCameraId
   const issue = kind === 'audioinput' ? microphoneIssue : cameraIssue
-  if (!room || active.value === deviceId) return !!room
+  const current = room
+  if (!previewing.value && !current) return false
+  if (active.value === deviceId) return true
 
   const previous = active.value
   active.value = deviceId
 
   try {
-    const switched = await room.switchActiveDevice(kind, deviceId)
+    const previewTrack = kind === 'audioinput' ? previewMicrophone.value : previewCamera.value
+    const switched = previewing.value
+      ? await (previewTrack?.setDeviceId({ exact: deviceId }) ?? true)
+      : await current!.switchActiveDevice(kind, deviceId)
     if (!switched) {
       active.value = previous
       log.warn('Gerätewechsel ohne Erfolg', { kind, deviceId })
@@ -523,6 +926,7 @@ export async function switchDevice(kind: CallDeviceKind, deviceId: string): Prom
     return false
   }
 
+  if (remember) rememberDevice(kind, deviceId)
   bumpStreams()
   await refreshDevices()
   return true
@@ -537,7 +941,14 @@ function activeDeviceChangedListener() {
   void refreshDevices()
 }
 
+/** Mikrofon an oder aus. Rückgabe wie bei der Kamera. */
 export async function setMicrophoneEnabled(enabled: boolean): Promise<boolean> {
+  await adopting
+  if (previewing.value) return setPreviewEnabled(Track.Source.Microphone, enabled)
+  return enableRoomMicrophone(enabled)
+}
+
+async function enableRoomMicrophone(enabled: boolean): Promise<boolean> {
   const local = room?.localParticipant
   if (!local) return false
 
@@ -771,14 +1182,54 @@ function addParticipant(participant: LocalParticipant | RemoteParticipant): Call
   const existing = findParticipant(participant.identity)
   if (existing) return existing
 
+  const camera = participant.getTrackPublication(Track.Source.Camera)
+  const microphone = participant.getTrackPublication(Track.Source.Microphone)
   const entry: CallParticipant = {
     id: participant.identity,
     name: participant.name || participant.identity,
-    cameraMuted: false,
-    microphoneMuted: false,
+    cameraMuted: camera?.isMuted ?? false,
+    microphoneMuted: microphone?.isMuted ?? false,
   }
   participants.value.push(entry)
+  if (!participant.isLocal) watchForMissingTracks(participant.identity)
   return entry
+}
+
+/**
+ * Wer ohne Kamera beitritt – im Warteraum ausgeschaltet oder vom Browser verweigert –,
+ * veröffentlicht gar keine Spur, und dann kommt auch kein „stummgeschaltet". Ohne diese
+ * Prüfung stünde beim Gegenüber dauerhaft „… verbindet sich".
+ *
+ * Mit Schonfrist: Wer normal beitritt, veröffentlicht erst kurz nach dem Verbinden. Ohne sie
+ * blitzte bei jedem Beitritt „Kamera aus" auf, bevor das Bild kommt.
+ */
+const MISSING_TRACK_GRACE_MS = 2500
+
+function watchForMissingTracks(identity: string) {
+  const active = room
+  setTimeout(() => {
+    if (room !== active) return
+    const participant = active?.remoteParticipants.get(identity)
+    const entry = findParticipant(identity)
+    if (!participant || !entry) return
+    if (!participant.getTrackPublication(Track.Source.Camera)) entry.cameraMuted = true
+    if (!participant.getTrackPublication(Track.Source.Microphone)) entry.microphoneMuted = true
+  }, MISSING_TRACK_GRACE_MS)
+}
+
+function trackPublishedListener(publication: RemoteTrackPublication, participant: RemoteParticipant) {
+  const entry = findParticipant(participant.identity)
+  if (!entry) return
+  if (publication.source === Track.Source.Camera) entry.cameraMuted = publication.isMuted
+  else if (publication.source === Track.Source.Microphone) entry.microphoneMuted = publication.isMuted
+}
+
+/** Eine zurückgezogene Kamera ist für das Gegenüber dasselbe wie eine ausgeschaltete. */
+function trackUnpublishedListener(publication: RemoteTrackPublication, participant: RemoteParticipant) {
+  const entry = findParticipant(participant.identity)
+  if (!entry) return
+  if (publication.source === Track.Source.Camera) entry.cameraMuted = true
+  else if (publication.source === Track.Source.Microphone) entry.microphoneMuted = true
 }
 
 // ---------------------------------------------------------------------------
@@ -826,6 +1277,7 @@ export function useCallRoom() {
     loadingCamera,
     cameraIssue,
     microphoneIssue,
+    previewing,
     screenSharing,
 
     // Spuren
@@ -840,6 +1292,8 @@ export function useCallRoom() {
     screenShareBy,
     screenShareIssue,
     screenShareSupported,
+    localVideoStream,
+    localAudioStream,
 
     // Geräte
     microphones,
@@ -850,6 +1304,8 @@ export function useCallRoom() {
     switchDevice,
 
     // Aktionen
+    startPreview,
+    stopPreview,
     prepareCall,
     joinCall,
     leaveCall,

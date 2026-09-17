@@ -282,6 +282,35 @@ Zwei Dinge sind bewusst nicht geprüft: Das Verhalten bei knapper Leitung – ü
 
 Offen für später: VP9 (`scalabilityMode: 'L1T3'`) ist bei Bildschirminhalten pro Bit deutlich schärfer als VP8, verlangt aber Dekodierung beim Empfänger, oft in Software. Das gehört mit eigener Abnahme auf Safari und einem älteren Gerät geprüft.
 
+#### Nachtrag: Geräte einrichten im Warteraum *(2026-09-16)*
+
+Vorgezogen aus dem Technik-Check (`project.md` §5a: „Geräteauswahl und Technik-Check zählen zur Zuverlässigkeits-Basis"). Klient und Coach können im Warteraum sich selbst sehen, Kamera und Mikrofon wählen und an- oder ausschalten und am Pegel prüfen, ob das richtige Mikrofon spricht. Die Oberfläche ist eine geteilte Komponente, `CallDeviceSetup` in `packages/ui`, einspaltig nach Screen 1 der Vorlage `doc/poc/videocall-v2.html`; der Pegel ist `CallMicLevel` (Web Audio API, ohne LiveKit).
+
+**Nur auf Klick.** Der Warteraum steht ab dem Tag der Buchung offen. Die Kachel „Kamera und Mikrofon einrichten" startet die Vorschau, vorher gibt es keinen einzigen `getUserMedia`-Aufruf. Wer nichts einrichtet, tritt wie bisher mit Kamera und Mikrofon bei. Der Coach betritt den Raum weiterhin erst mit „Klient einlassen"; die Vorschau ist keine Anwesenheit im Raum.
+
+**„Hintergrund weichzeichnen" steht da, ist aber gesperrt** und trägt „Bald verfügbar". Ein bedienbarer Schalter ohne Personensegmentierung ließe jemanden glauben, die eigene Küche sei nicht zu sehen.
+
+**Die Vorschauspuren werden übernommen, nicht neu geholt.** `startPreview()` in `packages/livekit` legt die Spuren mit `createLocalTracks` außerhalb eines Raums an, `joinCall()` veröffentlicht sie mit `publishTrack`. Kein zweiter Freigabedialog, kein Kameralicht, das beim Einlass aus- und wieder angeht, und das eigene Bild läuft über den Stream-Cache ohne schwarzen Moment durch (`localVideoStream()`). Ein späterer Blur-Processor kann bereits an der Vorschauspur hängen. Schalter und Gerätewechsel sind dieselben Funktionen wie im Gespräch; sie verzweigen über `previewing`.
+
+Drei Punkte, die den Weg bestimmt haben:
+
+- *„Aus" heißt in der Vorschau: Spur stoppen und verwerfen.* LiveKit wartet beim Veröffentlichen einer Videospur auf die Maße des ersten Bildes; eine gestoppte Kamera ließe sich nicht übernehmen, und das Kameralicht soll ohnehin ausgehen. Beim Einlass wird eine ausgeschaltete Kamera nicht veröffentlicht, späteres Einschalten im Gespräch holt eine neue Spur mit dem gewählten Gerät.
+- *Die Vorschau lebt nicht im Warteraum, sondern auf Seitenebene.* Beim `v-if`-Tausch baut Vue den Warteraum ab, bevor die Bühne steht; ein `onBeforeUnmount(stopPreview)` dort nähme dem Beitritt die Kamera weg. Beendet wird sie in `CallView.vue` bzw. `pages/call/[bookingId].vue` – beim Verlassen der Seite und wenn der Termin ohne Einlass endet – sowie in `leaveCall()`. Schalter, die während der Übernahme gedrückt werden, warten auf sie.
+- *Gemerkt werden Gerät-ID und Name* (`localStorage['hxroom:devices']`, nur lokal). Die ID allein trägt nicht: Chrome vergibt sie bei jedem Laden neu, solange die Freigabe nicht dauerhaft erteilt ist, und die exakte Anforderung scheitert dann mit `OverconstrainedError`. LiveKit fällt auf das Standardgerät zurück; nach der Freigabe sucht `restorePreferredDevices()` das gemerkte Gerät über den Namen und wechselt ohne weiteren Dialog. An oder aus wird nicht gemerkt. Weicht eine Spur einem abgezogenen Gerät aus, bleibt die gemerkte Wahl bestehen.
+
+**Gefunden dabei, ein Fehler aus B5:** Wer ohne Kamera beitritt – verweigert oder jetzt im Warteraum ausgeschaltet –, veröffentlicht gar keine Spur, und dann kommt auch kein „stummgeschaltet". `addParticipant()` setzte `cameraMuted: false`, beim Gegenüber stand dauerhaft „… verbindet sich". Der Zustand kommt jetzt aus den Publications, `TrackPublished`/`TrackUnpublished` werden ausgewertet, und ohne Publication gilt die Kamera nach 2,5 s Schonfrist als aus – ohne die Frist blitzte bei jedem normalen Beitritt kurz „Kamera aus" auf.
+
+Die Gerätetexte liegen je App einmal in `utils/deviceText.ts`, der Ersatzname unbenannter Geräte („Mikrofon 1") als `namedDevices()` in `packages/ui`. Gerätemeldungen stehen im Warteraum beider Seiten inline über dem Technik-Check; im Gespräch bleibt es beim Coach der Toast.
+
+Abnahme mit Coach und Klient über die Caddy-Subdomains, Chromium mit Fake-Geräten, `getUserMedia` gezählt:
+
+- Warteraum offen, nichts geklickt: kein Aufruf. Nach dem Klick genau einer für Kamera und Mikrofon, Pegel schlägt aus, Weichzeichnen gesperrt.
+- Wechsel auf „Fake Audio Input 2": exakt angefordert, gemerkt. Kamera aus: Spur `ended`, „Kamera aus".
+- Einlass mit Kamera aus und Mikrofon an: beim Klienten kein weiterer Aufruf, die Mikrofonspur aus der Vorschau läuft weiter; beim Coach steht „Kamera aus" statt „verbindet sich". Coach mit Vorschau: dieselbe Kameraspur läuft im Gespräch weiter, der Klient empfängt sie. Kamera im Gespräch einschalten: neue Spur, der Coach sieht das Bild.
+- „Einrichtung beenden": alle Spuren `ended`. Einlass ohne Einrichtung: Kamera und Mikrofon an wie bisher, das gemerkte Mikrofon über den Namen wiedergefunden, die neue ID gemerkt.
+
+Nicht automatisiert geprüft: der echte Freigabedialog und das Kameralicht in Chrome und Firefox.
+
 ### B6 · Robustheit und autoritatives Sitzungsende
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
@@ -290,7 +319,7 @@ LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, d
 
 ## Bewusst nicht Teil dieses Plans
 
-Notiz-Seitenleiste, Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Technik-Check, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl und Bildschirmfreigabe standen ursprünglich ebenfalls hier; beide sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
+Notiz-Seitenleiste, Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl, Bildschirmfreigabe und der Technik-Check (als Geräte-Einrichtung im Warteraum) standen ursprünglich ebenfalls hier; alle drei sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
 
 ---
 

@@ -5,20 +5,20 @@ import {
   configureLivekit,
   joinCall,
   leaveCall,
+  localVideoStream,
   screenShareAudioStream,
   screenShareStream,
   screenShareSupported,
   useCallRoom,
   videoStreamFor,
-  type DeviceIssue,
 } from '@hxroom/livekit'
 import {
   CallScreen as CallShell,
   CallAudioOutput,
   CallChatPanel,
+  namedDevices,
   type CallChatMessage,
   type CallConnection,
-  type CallDevice,
   type CallPanelDef,
   type CallPeer,
 } from '@hxroom/ui'
@@ -88,23 +88,12 @@ const remoteMutedLocally = ref(false)
 // Die Geräte des Browsers aus @hxroom/livekit – dort wird die Liste nach jeder Freigabe und
 // bei jeder Änderung neu gelesen, und ein Wechsel startet die laufende Spur mit dem neuen
 // Gerät neu. Hier steht nur der Ersatzname für Geräte, die der Browser (noch) nicht nennt.
-const micDevices = computed<CallDevice[]>(() =>
-  microphones.value.map((device, i) => ({ id: device.id, label: device.label || `Mikrofon ${i + 1}` })),
-)
-const camDevices = computed<CallDevice[]>(() =>
-  cameras.value.map((device, i) => ({ id: device.id, label: device.label || `Kamera ${i + 1}` })),
-)
+const micDevices = computed(() => namedDevices(microphones.value, 'Mikrofon'))
+const camDevices = computed(() => namedDevices(cameras.value, 'Kamera'))
 
-// Die Ursachen aus @hxroom/livekit in den Worten des Coachs. Anders als beim Klienten als
-// Toast: Der Coach kennt seine Technik, eine Meldung über der Bühne verdeckte ihm das
-// Gesicht des Klienten.
-const DEVICE_TEXT: Record<DeviceIssue, string> = {
-  denied: 'Der Browser hat den Zugriff blockiert – freigeben lässt er sich über das Symbol in der Adresszeile.',
-  notFound: 'Kein Gerät gefunden.',
-  busy: 'Das Gerät wird gerade von einem anderen Programm benutzt.',
-  insecure: 'Die Seite ist nicht sicher genug verbunden, um auf das Gerät zuzugreifen.',
-  unknown: 'Das Gerät ließ sich nicht starten.',
-}
+// Gerätemeldungen (DEVICE_TEXT aus utils/deviceText.ts) anders als beim Klienten als Toast:
+// Der Coach kennt seine Technik, eine Meldung über der Bühne verdeckte ihm das Gesicht des
+// Klienten.
 
 watch(cameraIssue, (issue) => {
   if (!issue) return
@@ -140,7 +129,8 @@ const local = computed<CallPeer>(() => ({
   cameraOn: camera.value,
   micOn: microphone.value,
   blurred: selfBlur.value,
-  stream: localIdentity.value ? videoStreamFor(localIdentity.value) : null,
+  // Auch während des Verbindens: Kommt die Kamera aus dem Warteraum, läuft ihr Bild durch.
+  stream: localVideoStream(),
 }))
 
 const remote = computed<CallPeer>(() => ({

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
-import { configureLivekit, prepareCall } from '@hxroom/livekit';
+import { configureLivekit, prepareCall, useCallRoom } from '@hxroom/livekit';
+import { CallDeviceSetup, namedDevices } from '@hxroom/ui';
+import { deviceNotice } from '../utils/deviceText';
 import { formatCountdown, formatDayTimeRange, formatTime } from '../utils/datetime';
 import { offerColor, type CallAccessResponse } from '@hxroom/shared';
 
@@ -51,6 +53,34 @@ const canCancel = computed(() => beforeStart.value);
 const durationMinutes = computed(() =>
   Math.round((Date.parse(call.end) - startsAt.value) / 60_000),
 );
+
+// Geräte einrichten, solange gewartet wird. Die Spuren gehören @hxroom/livekit und nicht
+// dieser Ansicht: Beim Einlass verschwindet der Warteraum, bevor die Bühne steht – wer die
+// Vorschau hier beim Abbauen stoppte, nähme dem Beitritt die Kamera weg. Beendet wird sie
+// deshalb in CallView.vue.
+const {
+  previewing,
+  camera,
+  microphone,
+  loadingCamera,
+  cameraIssue,
+  microphoneIssue,
+  microphones,
+  cameras,
+  activeMicrophoneId,
+  activeCameraId,
+  localVideoStream,
+  localAudioStream,
+  startPreview,
+  stopPreview,
+  toggleCamera,
+  toggleMicrophone,
+  switchDevice,
+} = useCallRoom();
+
+const micDevices = computed(() => namedDevices(microphones.value, 'Mikrofon'));
+const camDevices = computed(() => namedDevices(cameras.value, 'Kamera'));
+const notice = computed(() => deviceNotice(cameraIssue.value, microphoneIssue.value));
 </script>
 
 <template>
@@ -75,6 +105,38 @@ const durationMinutes = computed(() =>
       <span class="size-1.5 rounded-full bg-primary animate-pulse" />
       <span class="text-xs text-muted">{{ status }}</span>
     </div>
+
+    <CallDeviceSetup
+      :started="previewing"
+      :mic-on="microphone"
+      :cam-on="camera"
+      :mic-device-id="activeMicrophoneId ?? ''"
+      :cam-device-id="activeCameraId ?? ''"
+      :stream="localVideoStream()"
+      :audio-stream="localAudioStream()"
+      :mic-devices="micDevices"
+      :cam-devices="camDevices"
+      :loading-camera="loadingCamera"
+      :name="call.clientName"
+      @update:mic-on="toggleMicrophone()"
+      @update:cam-on="toggleCamera()"
+      @update:mic-device-id="(id) => switchDevice('audioinput', id)"
+      @update:cam-device-id="(id) => switchDevice('videoinput', id)"
+      @start="startPreview()"
+      @stop="stopPreview()"
+    >
+      <template #notice>
+        <UAlert
+          v-if="notice"
+          icon="i-lucide-triangle-alert"
+          color="warning"
+          variant="subtle"
+          class="text-left"
+          :title="notice.title"
+          :description="notice.text"
+        />
+      </template>
+    </CallDeviceSetup>
 
     <!-- Dieselbe Terminkachel wie in der Agenda der Coach-App (BookingAgenda.vue):
          Farbbalken des Angebots, darüber die Zeit, darunter Gegenüber und Dauer. Beide
