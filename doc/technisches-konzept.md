@@ -800,19 +800,19 @@ export const bookings = pgTable('bookings', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Umgesetzt (2026-09-17): eine Notiz pro Sitzung, Inhalt als Tiptap-JSON aus demselben
+// Editor wie die Angebotsbeschreibung, geprüft gegen sessionNoteSchema (@hxroom/shared).
+// Eigene Tabelle statt Spalte an bookings, damit der Inhalt in keiner Buchungsabfrage
+// mitläuft. Zugriff nur über die Coach-Session: GET/PUT /api/v1/bookings/:id/notes.
 export const sessionNotes = pgTable('session_notes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  bookingId: uuid('booking_id').references(() => bookings.id, { onDelete: 'cascade' }),
-  coachId: text('coach_id').notNull(), // better-auth userId des Coaches
-  content: text('content'),
-  // aiSummary: entfernt – keine KI-Zusammenfassung im MVP
-  transcript: text('transcript'),
-  transcriptStatus: text('transcript_status')
-    .$type<'pending' | 'processing' | 'done' | 'error'>()
-    .default('pending'),
-  transcriptCreatedAt: timestamp('transcript_created_at'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  id:             text('id').primaryKey(),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  bookingId:      text('booking_id').notNull().unique().references(() => bookings.id, { onDelete: 'cascade' }),
+  content:        jsonb('content'), // Tiptap/ProseMirror-Dokument, null = keine Notiz
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+  updatedAt:      timestamp('updated_at').notNull().defaultNow(),
+  // Kommt mit der Transkription (§9), noch nicht angelegt:
+  // transcript, transcriptStatus ('pending' | 'processing' | 'done' | 'error'), transcriptCreatedAt
 });
 
 export const availabilitySlots = pgTable('availability_slots', {
@@ -1068,6 +1068,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 | # | Thema | Beschreibung | Priorität |
 |---|---|---|---|
 | 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.hxroom.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
+| 02 | **Verschlüsselung der Sitzungsnotizen** | `session_notes.content` liegt als JSONB im Klartext, geschützt wie die übrigen Fachdaten (Server, Netz, Backups). Coaching-Notizen können Gesundheitsdaten nach Art. 9 DSGVO enthalten; eine zusätzliche Verschlüsselung auf Anwendungsebene (z. B. AES-256-GCM, Schlüssel außerhalb der DB) wurde bei der Umsetzung bewusst zurückgestellt. Nachrüsten heißt: Spalte umschreiben, Schlüsselverwaltung und Backup-Wiederherstellung mitdenken, Suche im Inhalt entfällt. | Vor dem Start mit echten Coaches entscheiden |
 
 ---
 

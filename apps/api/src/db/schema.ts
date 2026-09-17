@@ -220,6 +220,22 @@ export const bookings = pgTable('bookings', {
     .where(sql`status != 'cancelled'`),
 ]);
 
+// Sitzungsnotizen des Coachs (doc/technisches-konzept.md §8, doc/project.md §5a): im Call
+// geschrieben, danach im Termin weiter bearbeitbar, nie für den Klienten sichtbar.
+//
+// Eigene Tabelle statt Spalte an `bookings`: Buchungen werden an vielen Stellen vollständig
+// geladen (Mapper, Call-Zustand, Mails) – der sensibelste Inhalt der Plattform liefe dort
+// sonst überall still mit. Eine Notiz pro Sitzung; die Transkript-Spalten aus dem Konzept
+// kommen erst mit der Transkription (§9).
+export const sessionNotes = pgTable('session_notes', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  bookingId:      text('booking_id').notNull().unique().references(() => bookings.id, { onDelete: 'cascade' }),
+  content:        jsonb('content'), // Tiptap/ProseMirror-Dokument (JSON), gleiche Knotenmenge wie offers.description
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+  updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
+});
+
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
 // doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit
 // bestimmten Angeboten (Stufe 2, offer_availability_slots) ist bewusst noch nicht

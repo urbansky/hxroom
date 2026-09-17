@@ -175,23 +175,6 @@ async function deleteDraft() {
 
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
-// Array von Arrays = Gruppen; UEditorToolbar fügt den Trenner automatisch
-// zwischen den Gruppen ein (kein eigenes "separator"-Item nötig/vorgesehen).
-const editorToolbarItems: any[] = [
-  [
-    { kind: 'mark', mark: 'bold', icon: 'i-lucide-bold', tooltip: { text: 'Fett' } },
-    { kind: 'mark', mark: 'italic', icon: 'i-lucide-italic', tooltip: { text: 'Kursiv' } },
-  ],
-  [
-    { kind: 'heading', level: 2, icon: 'i-lucide-heading-2', tooltip: { text: 'Überschrift' } },
-    { kind: 'bulletList', icon: 'i-lucide-list', tooltip: { text: 'Liste' } },
-    { kind: 'orderedList', icon: 'i-lucide-list-ordered', tooltip: { text: 'Nummerierte Liste' } },
-  ],
-  [
-    { kind: 'link', icon: 'i-lucide-link', tooltip: { text: 'Link' } },
-  ],
-]
-
 const plannedFeatures = [
   {
     icon: 'i-lucide-clock-4',
@@ -369,21 +352,10 @@ const plannedFeatures = [
           <div>
             <label class="text-sm font-medium text-highlighted block">Beschreibung</label>
             <p class="text-sm text-muted mb-2">Erscheint als Angebotstext auf deiner Buchungsseite.</p>
-            <div class="rounded-lg border border-default overflow-hidden bg-white dark:bg-neutral-800">
-              <UEditor
-                v-model="draft.description"
-                content-type="json"
-                :image="false"
-                :mention="false"
-                :starter-kit="{ heading: { levels: [2, 3] } }"
-                placeholder="Was Klient:innen erwartet, für wen dieses Angebot geeignet ist …"
-                :ui="{ base: `min-h-32 py-3 sm:px-4 ${descriptionProseClasses}` }"
-              >
-                <template #default="{ editor }">
-                  <UEditorToolbar :editor="editor" :items="editorToolbarItems" class="border-b border-default px-2 py-1.5" />
-                </template>
-              </UEditor>
-            </div>
+            <RichTextEditor
+              v-model="draft.description"
+              placeholder="Was Klient:innen erwartet, für wen dieses Angebot geeignet ist …"
+            />
           </div>
 
           <p v-if="saveError" class="text-sm text-error">{{ saveError }}</p>

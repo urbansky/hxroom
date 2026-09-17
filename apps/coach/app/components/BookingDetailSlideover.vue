@@ -28,6 +28,12 @@ watch(open, (isOpen) => {
   }
 })
 
+// Sitzungsnotizen – dieselben wie im Call, hier vor und nach der Sitzung bearbeitbar
+// (funktionen/backoffice-coach.md 4.01). Geladen erst beim Öffnen, nicht für jede Buchung
+// der Liste; beim Schließen oder beim Wechsel des Termins wird gespeichert.
+const notes = useSessionNotes(() => (open.value ? props.booking?.id ?? null : null))
+const { content: notesContent, ready: notesReady, loadError: notesLoadError, status: notesStatus } = notes
+
 const isCancelled = computed(() => props.booking?.status === 'cancelled')
 // Altbestand hat keinen Urheber – dann bleibt es beim reinen Zeitpunkt.
 const cancelledByLabel = computed(() => props.booking?.cancelledBy ? CANCELLED_BY_LABELS[props.booking.cancelledBy] : null)
@@ -197,6 +203,31 @@ async function cancelBooking() {
           >
             {{ booking.cancellationReason }}
           </p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <p class="text-xs uppercase tracking-wide text-muted">Notizen</p>
+            <div class="flex items-center gap-2">
+              <SaveStatusHint :status="notesStatus" />
+              <UBadge icon="i-lucide-lock" color="secondary" variant="subtle" size="sm" label="privat" />
+            </div>
+          </div>
+          <RichTextEditor
+            v-if="notesReady"
+            :key="booking.id"
+            v-model="notesContent"
+            placeholder="Vorbereitung, Beobachtungen, nächste Schritte – nur für dich."
+          />
+          <UAlert
+            v-else-if="notesLoadError"
+            icon="i-lucide-alert-circle"
+            color="error"
+            variant="subtle"
+            description="Die Notizen konnten nicht geladen werden."
+            :actions="[{ label: 'Erneut versuchen', color: 'error', variant: 'outline', onClick: () => notes.reload() }]"
+          />
+          <USkeleton v-else class="h-44 rounded-lg" />
         </div>
 
         <div class="text-xs text-muted flex flex-col gap-0.5">

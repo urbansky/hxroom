@@ -223,7 +223,7 @@ Mit der Prototyp-Seite `/call/prototype` sind `useLocalCamera()` und die `define
 
 Abnahme mit zwei echten Browser-Teilnehmern statt CLI-Gegenstelle – Coach über die Coach-App mit Anmeldung, Klient über die Klientenseite: Im Warteraum läuft der Warmlauf des Coachs, im Raum ist niemand; nach „Klient einlassen" sind beide im Raum, jede Seite empfängt das Bild der anderen in 1280×720 mit fortschreitender Wiedergabezeit, dazu je eine Audiospur. Coach schaltet die Kamera aus → beim Klienten „Kamera aus". Coach schaltet den Klienten stumm → nur sein `<audio>` ist stumm. Reload des Coachs → wieder beide im Raum. Coach beendet → Klient auf der Danke-Seite, Raum leer.
 
-**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Notizen werden nicht gespeichert.
+**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Notizen werden nicht gespeichert. *(Inzwischen schon, siehe Nachtrag „Notizen im Call".)*
 
 #### Nachtrag: Geräteliste und Gerätewechsel *(2026-09-15)*
 
@@ -311,6 +311,27 @@ Abnahme mit Coach und Klient über die Caddy-Subdomains, Chromium mit Fake-Gerä
 
 Nicht automatisiert geprüft: der echte Freigabedialog und das Kameralicht in Chrome und Firefox.
 
+#### Nachtrag: Notizen im Call *(2026-09-17)*
+
+Vorgezogen aus Phase 5 (`project.md` §5a, `funktionen/backoffice-coach.md` 4.01). Die Notiz-Seitenleiste des Coachs speichert jetzt, und zwar mit demselben Rich-Text-Editor wie die Angebotsbeschreibung. Dafür ist der Editor aus `pages/bookings/offers.vue` als `components/RichTextEditor.vue` herausgelöst; beide Stellen nutzen ihn.
+
+**Gespeichert in `session_notes`, eine Notiz pro Buchung** (`technisches-konzept.md` §11). Die Notiz liegt in einer eigenen Tabelle statt in einer Spalte an `bookings`, weil Buchungen an vielen Stellen vollständig geladen werden (Mapper, Call-Zustand, Mails) – der sensibelste Inhalt liefe dort sonst still mit. Der Inhalt ist Tiptap-JSON und wird gegen dieselbe Knotenmenge geprüft wie die Angebotsbeschreibung (`richTextDoc()` in `@hxroom/shared`), nur mit höherer Längengrenze: 90 000 Zeichen JSON, knapp unter dem Body-Limit der API von 100 kB, damit ein zu langes Dokument als 400 ankommt und nicht als 413.
+
+`GET`/`PUT /api/v1/bookings/:id/notes` im eigenen `SessionNotesModule`, nicht im `CallModule`: Das Termin-Slideover nutzt dieselben Endpunkte und später die Notizen-Chronik. Erlaubt für jede eigene Buchung unabhängig vom Zustand – Vorbereitung vor und Nachtrag nach der Sitzung gehören dazu. Weder `CallAccessResponse` noch der SSE-Strom noch `CoachBookingResponse` tragen den Inhalt.
+
+**Automatisch speichern, nichts verlieren** (`composables/useSessionNotes.ts`):
+
+- Eine Sekunde nach dem letzten Tastendruck, nie zwei Anfragen gleichzeitig, nach einem Fehler von selbst erneut nach fünf Sekunden. Ein Dokument ohne Buchstaben gilt als keine Notiz, sonst legte schon das Anklicken des Feldes eine Zeile an.
+- Der Zustand liegt in `CallScreen.vue`, nicht im Panel: Der Tab-Wechsel der Seitenleiste baut das Panel ab.
+- Kein Editor, solange geladen wird oder das Laden gescheitert ist – ein leeres Feld überschriebe sonst beim ersten Tastendruck die gespeicherte Notiz. UEditor übernimmt seinen Inhalt nur beim Mounten verlässlich (ein späteres `null` ignoriert er); beim Wechsel des Termins wird er deshalb neu gemountet.
+- „Sitzung beenden" speichert zuerst. Scheitert das, bleibt das Modal offen mit „Erneut versuchen" und „Trotzdem beenden" – das Modal verspricht, dass die Notizen der Sitzung zugeordnet bleiben, und nach dem Ende ist der Screen samt Text weg. Schließen oder Neuladen mit ungespeichertem Stand löst die Nachfrage des Browsers aus.
+
+**Im Termin-Slideover** steht die Notiz für jeden Termin zum Lesen und Bearbeiten, geladen erst beim Öffnen. Beim Schließen oder beim Wechsel des Termins wird gespeichert; scheitert das, meldet ein Toast den Verlust.
+
+Bewusst nicht dabei: die Notizen-Chronik im Klientenprofil und die früheren Notizen im Panel „Klient" (dort weiter Beispielwerte), eine Verschlüsselung auf Anwendungsebene (offener Punkt in `technisches-konzept.md` §16). Schreiben zwei Tabs gleichzeitig, gewinnt der letzte.
+
+Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Termin: Notiz mit Fett und Liste → „Gespeichert", Tab-Wechsel und Reload im Call behalten den Text; getippt und sofort beendet → der letzte Stand liegt in der Datenbank. PUT im Browser abgefangen → „Fehler beim Speichern" in der Seitenleiste, Fehlerzeile im Beenden-Modal, „Erneut versuchen" speichert und beendet. Slideover: Notiz der beendeten Sitzung sichtbar und nachträglich bearbeitbar, ein anderer Termin zeigt ein leeres Feld, vor Ablauf der Speicherpause geschlossen → trotzdem gespeichert. API per `curl`: fremde Buchung 404, Knotentyp `image` und `javascript:`-Link 400, zu langes Dokument 400. Die Angebotsbeschreibung funktioniert unverändert.
+
 ### B6 · Robustheit und autoritatives Sitzungsende
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
@@ -319,7 +340,7 @@ LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, d
 
 ## Bewusst nicht Teil dieses Plans
 
-Notiz-Seitenleiste, Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl, Bildschirmfreigabe und der Technik-Check (als Geräte-Einrichtung im Warteraum) standen ursprünglich ebenfalls hier; alle drei sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
+Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl, Bildschirmfreigabe, der Technik-Check (als Geräte-Einrichtung im Warteraum) und die Notiz-Seitenleiste standen ursprünglich ebenfalls hier; alle vier sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
 
 ---
 

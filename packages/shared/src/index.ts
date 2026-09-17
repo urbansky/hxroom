@@ -44,7 +44,7 @@ export type BookingPageDto = z.infer<typeof bookingPageSchema>;
 //
 // Sicherheitsrelevant: Es werden nur die Knoten-/Mark-Typen zugelassen, die der
 // UEditor mit eingeschränkter Extension-Konfiguration überhaupt erzeugen kann
-// (siehe apps/coach/app/pages/bookings/offers.vue). Das JSON ist reine Struktur
+// (siehe apps/coach/app/components/RichTextEditor.vue). Das JSON ist reine Struktur
 // ohne Markup – nicht erlaubte Knotentypen (z. B. Bilder, Raw-HTML) werden schon
 // hier abgelehnt statt erst beim Rendern herausgefiltert zu werden.
 const richTextMarkSchema = z.union([
@@ -68,12 +68,35 @@ const richTextNodeSchema: z.ZodType<unknown> = z.lazy(() => z.object({
   content: z.array(richTextNodeSchema).optional(),
 }));
 
-export const richTextDocSchema = z.object({
-  type:    z.literal('doc'),
-  content: z.array(richTextNodeSchema).optional(),
-}).nullable()
-  .refine((doc) => !doc || JSON.stringify(doc).length <= 20_000, 'Beschreibung ist zu lang');
+// Die Längengrenze hängt am Einsatz: Eine Angebotsbeschreibung ist ein Absatz, eine
+// Mitschrift aus einer Stunde Gespräch ein Vielfaches davon. Gemessen wird das JSON, also
+// mitsamt der Struktur – nicht nur der sichtbare Text.
+function richTextDoc(maxLength: number, message: string) {
+  return z.object({
+    type:    z.literal('doc'),
+    content: z.array(richTextNodeSchema).optional(),
+  }).nullable()
+    .refine((doc) => !doc || JSON.stringify(doc).length <= maxLength, message);
+}
+
+export const richTextDocSchema = richTextDoc(20_000, 'Beschreibung ist zu lang');
 export type RichTextDoc = z.infer<typeof richTextDocSchema>;
+
+// Sitzungsnotizen des Coachs (project.md §5a) – dieselbe Knotenmenge wie die
+// Angebotsbeschreibung, weil beide im selben Editor entstehen.
+//
+// Die Grenze liegt knapp unter dem Body-Limit der API (Express: 100 kB), damit ein zu langes
+// Dokument als Validierungsfehler ankommt und nicht als 413. Rund 90 000 Zeichen JSON sind
+// mehrere tausend Wörter – mehr, als in einer Sitzung mitgeschrieben wird.
+export const sessionNoteSchema = z.object({
+  content: richTextDoc(90_000, 'Notizen sind zu lang'),
+});
+export type SessionNoteDto = z.infer<typeof sessionNoteSchema>;
+
+export interface SessionNoteResponse {
+  content:   RichTextDoc;
+  updatedAt: string | null; // null = noch nie gespeichert
+}
 
 // Sitzungsangebote (Einzelsitzungen)
 export const createOfferSchema = z.object({

@@ -1,27 +1,45 @@
 <script setup lang="ts">
 // Notizen zur laufenden Sitzung – nur für den Coach sichtbar (project.md §5a).
 //
-// Prototyp: Der Text wird nirgends gespeichert und ist nach einem Reload weg.
+// Nur die Anzeige: Laden und Speichern liegen in useSessionNotes beim Call-Screen, weil der
+// Tab-Wechsel der Seitenleiste dieses Panel abbaut.
 
-const notes = defineModel<string>({ required: true })
+defineProps<{
+  status: 'saving' | 'saved' | 'error' | null
+  ready: boolean
+  loadError: boolean
+}>()
+defineEmits<{ retry: [] }>()
 
-const inputUi = { base: 'bg-white dark:bg-neutral-800' }
+const notes = defineModel<any>({ required: true })
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="h-full flex flex-col gap-3">
     <div class="flex items-center justify-between gap-2">
       <h2 class="text-sm font-medium text-highlighted">Notizen – diese Sitzung</h2>
-      <UBadge icon="i-lucide-lock" color="secondary" variant="subtle" size="sm" label="privat" />
+      <div class="flex items-center gap-2">
+        <SaveStatusHint :status="status" />
+        <UBadge icon="i-lucide-lock" color="secondary" variant="subtle" size="sm" label="privat" />
+      </div>
     </div>
 
-    <UTextarea
+    <RichTextEditor
+      v-if="ready"
       v-model="notes"
-      :rows="10"
-      class="w-full"
-      :ui="inputUi"
+      fill
+      class="flex-1 min-h-60"
       placeholder="Gedanken, Beobachtungen, nächste Schritte …"
     />
+    <UAlert
+      v-else-if="loadError"
+      icon="i-lucide-alert-circle"
+      color="error"
+      variant="subtle"
+      description="Die Notizen konnten nicht geladen werden."
+      :actions="[{ label: 'Erneut versuchen', color: 'error', variant: 'outline', onClick: () => $emit('retry') }]"
+    />
+    <USkeleton v-else class="flex-1 min-h-60 rounded-lg" />
 
     <!-- Der Hinweis steht hier, weil die Verwechslung teuer wäre: Was als Arbeitsnotiz
          gedacht ist, darf nicht versehentlich beim Klienten landen. -->

@@ -16,6 +16,7 @@ import { CallModule } from './call/call.module';
 import { ClientsModule } from './clients/clients.module';
 import { AdminModule } from './admin/admin.module';
 import { AccountModule } from './account/account.module';
+import { SessionNotesModule } from './session-notes/session-notes.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { AccountModule } from './account/account.module';
     ClientsModule,
     AdminModule,
     AccountModule,
+    SessionNotesModule,
   ],
 })
 export class AppModule {}

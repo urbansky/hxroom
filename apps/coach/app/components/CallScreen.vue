@@ -201,7 +201,10 @@ const shareDisabledReason = computed(() =>
 // Geschlossen zu Beginn: Die ersten Minuten gehören dem Ankommen, nicht dem Notizfeld.
 const sidebarOpen = ref(false)
 const activePanel = ref('notes')
-const notes = ref('')
+// Geladen wird sofort, nicht erst beim Öffnen der Seitenleiste: Wer mitten im Gespräch
+// hineinklickt, soll nicht auf den Text warten.
+const notes = useSessionNotes(() => props.call.bookingId)
+const { content: notesContent, ready: notesReady, loadError: notesLoadError, status: notesStatus } = notes
 const chatDraft = ref('')
 const chatMessages = ref<CallChatMessage[]>([])
 const endModalOpen = ref(false)
@@ -229,7 +232,23 @@ function sendChatMessage() {
   chatDraft.value = ''
 }
 
-function confirmEnd() {
+// Das Modal verspricht, dass die Notizen der Sitzung zugeordnet bleiben. Nach dem Ende wird
+// dieser Screen abgebaut – was bis dahin nicht beim Server liegt, wäre weg. Deshalb erst
+// speichern und bei einem Fehler fragen, statt still zu beenden.
+const endSaving = ref(false)
+const endSaveFailed = ref(false)
+watch(endModalOpen, (open) => { if (open) endSaveFailed.value = false })
+
+async function confirmEnd(force = false) {
+  if (!force) {
+    endSaving.value = true
+    const saved = await notes.flush()
+    endSaving.value = false
+    if (!saved) {
+      endSaveFailed.value = true
+      return
+    }
+  }
   endModalOpen.value = false
   emit('end')
 }
@@ -270,7 +289,14 @@ function confirmEnd() {
     @end="endModalOpen = true"
   >
     <template #sidebar="{ panel }">
-      <CallNotesPanel v-if="panel === 'notes'" v-model="notes" />
+      <CallNotesPanel
+        v-if="panel === 'notes'"
+        v-model="notesContent"
+        :status="notesStatus"
+        :ready="notesReady"
+        :load-error="notesLoadError"
+        @retry="notes.reload()"
+      />
       <CallClientPanel v-else-if="panel === 'client'" :call="call" />
       <CallChatPanel
         v-else
@@ -297,9 +323,16 @@ function confirmEnd() {
     :description="`${call.clientName} wird automatisch weitergeleitet. Deine Notizen bleiben der Sitzung zugeordnet.`"
   >
     <template #footer>
-      <div class="flex gap-3 justify-end w-full">
+      <div v-if="endSaveFailed" class="flex flex-col gap-3 w-full">
+        <p class="text-sm text-error">Deine Notizen konnten nicht gespeichert werden.</p>
+        <div class="flex flex-wrap gap-3 justify-end">
+          <UButton color="neutral" variant="outline" label="Erneut versuchen" :loading="endSaving" @click="confirmEnd()" />
+          <UButton color="error" variant="subtle" icon="i-lucide-phone-off" label="Trotzdem beenden" @click="confirmEnd(true)" />
+        </div>
+      </div>
+      <div v-else class="flex gap-3 justify-end w-full">
         <UButton color="neutral" variant="outline" label="Abbrechen" @click="endModalOpen = false" />
-        <UButton color="error" icon="i-lucide-phone-off" label="Sitzung beenden" @click="confirmEnd" />
+        <UButton color="error" icon="i-lucide-phone-off" label="Sitzung beenden" :loading="endSaving" @click="confirmEnd()" />
       </div>
     </template>
   </UModal>
