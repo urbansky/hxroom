@@ -12,7 +12,7 @@ const { $api } = useApi()
 
 const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`)
 
-const navItems: NavItem[][] = [
+const baseNavItems: NavItem[][] = [
   [
     { type: 'label', label: 'Übersicht' },
     { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: '/', description: 'Nächste Termine und Kennzahlen' },
@@ -42,6 +42,23 @@ const navItems: NavItem[][] = [
     { label: 'Datenschutz', icon: 'i-lucide-shield', to: '/settings/privacy', description: 'DSGVO und Datenverwaltung' },
   ],
 ]
+
+// Ein Menüpunkt bleibt auch auf seinen Unterseiten markiert (Klientenliste auf
+// /clients/:id). Von sich aus markiert ULink nur exakte Treffer, weil die Detailseiten
+// keine verschachtelten Routen sind. Es gewinnt der längste passende Pfad – sonst stünde
+// „Kalender“ (/bookings) auf /bookings/offers neben „Sitzungsangebote“.
+const activeNavPath = computed(() => {
+  const paths = baseNavItems.flat().map(item => item.to).filter((to): to is string => typeof to === 'string')
+  return paths
+    .filter(to => route.path === to || (to !== '/' && route.path.startsWith(`${to}/`)))
+    .sort((a, b) => b.length - a.length)[0] ?? null
+})
+
+const navItems = computed<NavItem[][]>(() =>
+  baseNavItems.map(group => group.map(item =>
+    typeof item.to === 'string' ? { ...item, active: item.to === activeNavPath.value } : item,
+  )),
+)
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [

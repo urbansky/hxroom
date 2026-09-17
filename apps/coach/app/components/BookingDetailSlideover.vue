@@ -10,6 +10,7 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 
 const { $api } = useApi()
+const route = useRoute()
 
 const confirmingCancel = ref(false)
 const cancelReason = ref('')
@@ -33,6 +34,12 @@ watch(open, (isOpen) => {
 // der Liste; beim Schließen oder beim Wechsel des Termins wird gespeichert.
 const notes = useSessionNotes(() => (open.value ? props.booking?.id ?? null : null))
 const { content: notesContent, ready: notesReady, loadError: notesLoadError, status: notesStatus } = notes
+
+// Im Klientenprofil selbst führte „Klientenprofil öffnen“ nur auf die Seite, auf der man
+// schon steht.
+const isOnClientProfile = computed(() =>
+  !!props.booking?.clientId && route.path === `/clients/${props.booking.clientId}`,
+)
 
 const isCancelled = computed(() => props.booking?.status === 'cancelled')
 // Altbestand hat keinen Urheber – dann bleibt es beim reinen Zeitpunkt.
@@ -162,7 +169,7 @@ async function cancelBooking() {
 
           <div class="mt-3 flex items-center gap-2 flex-wrap">
             <UButton
-              v-if="booking.clientId"
+              v-if="booking.clientId && !isOnClientProfile"
               :to="`/clients/${booking.clientId}`"
               label="Klientenprofil öffnen"
               icon="i-lucide-user-round"

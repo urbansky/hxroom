@@ -65,6 +65,28 @@ const past = computed<CoachBookingResponse[]>(() => {
 // relativer Zeitangabe versehen.
 const nextBookingId = computed(() => upcoming.value[0]?.id ?? null)
 
+// Termin-Detail wie im Kalender (pages/bookings/index.vue): dasselbe Slideover mit
+// Absage, Klientenzuordnung, Kalendereintrag und den Sitzungsnotizen.
+const selectedBooking = ref<CoachBookingResponse | null>(null)
+const isDetailOpen = ref(false)
+
+function openDetail(booking: CoachBookingResponse) {
+  selectedBooking.value = booking
+  isDetailOpen.value = true
+}
+
+// Absage oder neue Klientenzuordnung: Zeile ersetzen. Gehört der Termin danach zu einem
+// anderen Klienten, verschwindet er aus diesem Profil – das Slideover bleibt offen, damit
+// der Coach das Ergebnis seiner Änderung sieht.
+function applyBookingChange(updated: CoachBookingResponse) {
+  if (!client.value) return
+  const bookings = updated.clientId === client.value.id
+    ? client.value.bookings.map(b => (b.id === updated.id ? updated : b))
+    : client.value.bookings.filter(b => b.id !== updated.id)
+  client.value = { ...client.value, bookings }
+  if (selectedBooking.value?.id === updated.id) selectedBooking.value = updated
+}
+
 const isFormOpen = ref(false)
 
 function onSaved(saved: ClientResponse) {
@@ -157,19 +179,18 @@ function onSaved(saved: ClientResponse) {
            gleiche Rahmen-/Hintergrundlogik je Status, gleiche dreizeilige Hierarchie.
            Statt der Uhrzeit allein steht hier das Datum mit davor, weil es auf dieser
            Seite keine Tagesgruppierung gibt. Der Klientenname entfällt – wir sind
-           bereits in seinem Profil. Die Kacheln sind bewusst nicht klickbar: auf dieser
-           Seite gibt es keine Termin-Detailansicht. -->
+           bereits in seinem Profil. Ein Klick öffnet wie dort das Termin-Detail. -->
       <template v-else>
         <template v-if="upcoming.length">
           <p class="text-xs font-medium uppercase tracking-wide text-muted mb-2">Anstehend</p>
           <div class="flex flex-col gap-2 mb-6">
-            <div
+            <button
               v-for="booking in upcoming"
               :key="booking.id"
-              class="flex items-start gap-3 rounded-xl border p-4"
-              :class="booking.status === 'pending'
-                ? 'border-default bg-white dark:bg-neutral-900 booking-pending'
-                : 'border-default bg-white dark:bg-neutral-900'"
+              type="button"
+              class="w-full text-left flex items-start gap-3 rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 hover:border-accented transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+              :class="booking.status === 'pending' && 'booking-pending'"
+              @click="openDetail(booking)"
             >
               <span
                 v-if="booking.offerId"
@@ -204,20 +225,22 @@ function onSaved(saved: ClientResponse) {
                   <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         </template>
 
         <template v-if="past.length">
           <p class="text-xs font-medium uppercase tracking-wide text-muted mb-2">Vergangen</p>
           <div class="flex flex-col gap-2">
-            <div
+            <button
               v-for="booking in past"
               :key="booking.id"
-              class="flex items-start gap-3 rounded-xl border p-4"
+              type="button"
+              class="w-full text-left flex items-start gap-3 rounded-xl border p-4 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
               :class="booking.status === 'cancelled'
                 ? 'border-default border-dashed bg-transparent opacity-60'
-                : 'border-default bg-white dark:bg-neutral-900'"
+                : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
+              @click="openDetail(booking)"
             >
               <span
                 v-if="booking.offerId"
@@ -245,7 +268,7 @@ function onSaved(saved: ClientResponse) {
                   <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         </template>
       </template>
@@ -258,6 +281,13 @@ function onSaved(saved: ClientResponse) {
           description="Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe."
         />
       </div>
+
+      <BookingDetailSlideover
+        v-model:open="isDetailOpen"
+        :booking="selectedBooking"
+        @cancelled="applyBookingChange"
+        @updated="applyBookingChange"
+      />
 
       <ClientFormSlideover
         v-model:open="isFormOpen"
