@@ -513,6 +513,37 @@ export const callAccessResponseSchema = z.object({
 });
 export type CallAccessResponse = z.infer<typeof callAccessResponseSchema>;
 
+// Seitenleiste „Klient“ im Call des Coachs. Ein eigener Abruf statt weiterer Felder in
+// CallAccessResponse: Jene Antwort geht auch an den Klienten, und aus seinem Zugangslink
+// soll nicht mehr hervorgehen, als in seiner Mail ohnehin steht.
+export const callClientContextSchema = z.object({
+  // Null, wenn die Buchung keinem Klienten zugeordnet ist.
+  client: z.object({
+    id:        z.string(),
+    name:      z.string(),
+    email:     z.string(),
+    phone:     z.string().nullable(),
+    note:      z.string().nullable(),
+    createdAt: z.string(),
+  }).nullable(),
+  // Was der Klient beim Buchen dieses Termins eingetragen hat.
+  bookingNote:   z.string().nullable(),
+  // Gehaltene Sitzungen vor diesem Termin plus diese. Null ohne Klient.
+  sessionNumber: z.number().nullable(),
+  // Nächster bestätigter Termin nach diesem.
+  nextSessionAt: z.string().nullable(),
+  // Die letzten gehaltenen Sitzungen vor diesem Termin, neueste zuerst.
+  previousSessions: z.array(z.object({
+    bookingId:       z.string(),
+    start:           z.string(),
+    durationMinutes: z.number(),
+    offerName:       z.string(),
+    // Klartext der Sitzungsnotiz, null = keine Notiz
+    note:            z.string().nullable(),
+  })),
+});
+export type CallClientContext = z.infer<typeof callClientContextSchema>;
+
 // Betreten des Warteraums. Wie beim Bestätigen und Absagen ist der Token aus dem
 // Mail-Link der einzige Ausweis des Klienten.
 export const enterWaitingRoomSchema = z.object({

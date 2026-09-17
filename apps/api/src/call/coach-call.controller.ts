@@ -3,6 +3,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
 import { CallService } from './call.service';
+import { CallClientContextService } from './call-client-context.service';
 
 /**
  * Call-Screen des Coachs (doc/videocall-umsetzungsplan.md A1). Zugriff über die
@@ -16,7 +17,10 @@ import { CallService } from './call.service';
 @Controller('bookings')
 @UseGuards(AuthGuard)
 export class CoachCallController {
-  constructor(private readonly callService: CallService) {}
+  constructor(
+    private readonly callService: CallService,
+    private readonly clientContextService: CallClientContextService,
+  ) {}
 
   @Get(':id/call')
   find(
@@ -26,6 +30,20 @@ export class CoachCallController {
   ) {
     if (!org || !user) throw new UnauthorizedException('No active organization');
     return this.callService.getForCoach(org.id, user.id, id);
+  }
+
+  /**
+   * Seitenleiste „Klient“: Stammdaten, Sitzungsnummer, nächster Termin und die letzten
+   * Sitzungen mit Notiz. Nur hier, nicht im ClientCallController – der Klient hat keinen
+   * Weg zu diesen Angaben.
+   */
+  @Get(':id/call/client')
+  clientContext(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.clientContextService.getForCoach(org.id, id);
   }
 
   /**

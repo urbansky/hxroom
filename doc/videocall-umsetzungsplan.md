@@ -328,9 +328,23 @@ Vorgezogen aus Phase 5 (`project.md` §5a, `funktionen/backoffice-coach.md` 4.01
 
 **Im Termin-Slideover** steht die Notiz für jeden Termin zum Lesen und Bearbeiten, geladen erst beim Öffnen. Beim Schließen oder beim Wechsel des Termins wird gespeichert; scheitert das, meldet ein Toast den Verlust.
 
-Bewusst nicht dabei: die Notizen-Chronik im Klientenprofil und die früheren Notizen im Panel „Klient" (dort weiter Beispielwerte), eine Verschlüsselung auf Anwendungsebene (offener Punkt in `technisches-konzept.md` §16). Schreiben zwei Tabs gleichzeitig, gewinnt der letzte.
+Bewusst nicht dabei: die Notizen-Chronik im Klientenprofil und die früheren Notizen im Panel „Klient" (dort weiter Beispielwerte; *inzwischen echt, siehe Nachtrag „Klient im Call"*), eine Verschlüsselung auf Anwendungsebene (offener Punkt in `technisches-konzept.md` §16). Schreiben zwei Tabs gleichzeitig, gewinnt der letzte.
 
 Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Termin: Notiz mit Fett und Liste → „Gespeichert", Tab-Wechsel und Reload im Call behalten den Text; getippt und sofort beendet → der letzte Stand liegt in der Datenbank. PUT im Browser abgefangen → „Fehler beim Speichern" in der Seitenleiste, Fehlerzeile im Beenden-Modal, „Erneut versuchen" speichert und beendet. Slideover: Notiz der beendeten Sitzung sichtbar und nachträglich bearbeitbar, ein anderer Termin zeigt ein leeres Feld, vor Ablauf der Speicherpause geschlossen → trotzdem gespeichert. API per `curl`: fremde Buchung 404, Knotentyp `image` und `javascript:`-Link 400, zu langes Dokument 400. Die Angebotsbeschreibung funktioniert unverändert.
+
+#### Nachtrag: Klient im Call *(2026-09-17)*
+
+Das Panel „Klient" der Seitenleiste zeigt echte Angaben statt der Beispielwerte aus dem Prototyp: Name, E-Mail und Telefon, die wievielte Sitzung das ist, den nächsten Termin, „Klient seit", die interne Notiz des Coachs zum Klienten, was der Klient beim Buchen notiert hat, und die letzten drei gehaltenen Sitzungen mit einem Auszug ihrer Notiz. Ein Link öffnet das Klientenprofil in einem neuen Tab.
+
+**Eigener Abruf `GET /api/v1/bookings/:id/call/client`** (`call/call-client-context.service.ts`, nur im `CoachCallController`). Die Felder stecken nicht in `CallAccessResponse`: Jene Antwortform geht auch an den Klienten, und aus seinem Zugangslink soll nicht mehr hervorgehen, als in seiner Mail steht. Der Abruf gilt für jede eigene Buchung; eine fremde ergibt 404.
+
+- **Bezugspunkt ist der Beginn dieses Termins, nicht „jetzt"**: Die Sitzungsnummer zählt die gehaltenen Sitzungen (`HELD_SESSION_STATUSES`, dieselbe Definition wie in der Klientenliste) vor ihm, und nur sie gelten als „frühere". Wer den Call nach dem Ende noch einmal öffnet, sieht dieselben Zahlen, und die laufende Sitzung taucht nie unter „frühere" auf.
+- **Notizen als Klartext** (`common/rich-text-plain.ts`): Absätze und Listeneinträge werden zu Zeilen, Formatierungen und Link-Ziele fallen weg. Die Umwandlung passiert auf dem Server, damit nicht drei vollständige Dokumente über die Leitung gehen. Im Panel ist die Notiz auf vier Zeilen gekürzt, ein Klick zeigt sie ganz.
+- Geladen wird einmal in `CallScreen.vue`, wie die Notizen: Der Tab-Wechsel baut das Panel ab. Einen Abgleich über den Ereigniskanal gibt es nicht; im Gespräch ändern sich die Angaben nicht.
+
+**Entfallen** sind „Pro Plan", „Transkription" und „Datenschutz: AVV vorhanden" samt dem Hinweis auf Beispielwerte. Pakete, Transkription und AVV gibt es noch nicht, und im echten Gespräch soll nichts eine Wirkung vortäuschen; die Zeilen kommen mit ihren Features zurück.
+
+Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klient mit langer Historie (Sitzung 39, nächster Termin, interne Notiz, drei Kacheln mit gekürzter und aufklappbarer Notiz, eine davon „Keine Notiz") und ein Klient ohne Historie („Sitzung 1", „Keiner geplant", „Das ist die erste Sitzung"). Ein Tab-Wechsel löst keinen zweiten Abruf aus. API per `curl`: Buchungsnotiz und nächster Termin am anstehenden Seed-Termin, fremde und unbekannte Buchung 404. Die Umwandlung in Klartext ist per Spec abgedeckt.
 
 ### B6 · Robustheit und autoritatives Sitzungsende
 

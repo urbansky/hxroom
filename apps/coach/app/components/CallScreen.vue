@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { firstName, type CallAccessResponse } from '@hxroom/shared'
+import { firstName, type CallAccessResponse, type CallClientContext } from '@hxroom/shared'
 import {
   audioStreamFor,
   configureLivekit,
@@ -205,6 +205,22 @@ const activePanel = ref('notes')
 // hineinklickt, soll nicht auf den Text warten.
 const notes = useSessionNotes(() => props.call.bookingId)
 const { content: notesContent, ready: notesReady, loadError: notesLoadError, status: notesStatus } = notes
+// Die Angaben zum Klienten ebenso: einmal beim Betreten, ohne Abgleich über den
+// Ereigniskanal – im Gespräch ändern sie sich nicht.
+const { $api } = useApi()
+const clientContext = ref<CallClientContext | null>(null)
+const clientContextError = ref(false)
+
+async function loadClientContext() {
+  clientContextError.value = false
+  try {
+    clientContext.value = await $api<CallClientContext>(`/bookings/${props.call.bookingId}/call/client`)
+  } catch {
+    clientContextError.value = true
+  }
+}
+void loadClientContext()
+
 const chatDraft = ref('')
 const chatMessages = ref<CallChatMessage[]>([])
 const endModalOpen = ref(false)
@@ -297,7 +313,13 @@ async function confirmEnd(force = false) {
         :load-error="notesLoadError"
         @retry="notes.reload()"
       />
-      <CallClientPanel v-else-if="panel === 'client'" :call="call" />
+      <CallClientPanel
+        v-else-if="panel === 'client'"
+        :call="call"
+        :context="clientContext"
+        :load-error="clientContextError"
+        @retry="loadClientContext()"
+      />
       <CallChatPanel
         v-else
         v-model:draft="chatDraft"
