@@ -223,7 +223,7 @@ Mit der Prototyp-Seite `/call/prototype` sind `useLocalCamera()` und die `define
 
 Abnahme mit zwei echten Browser-Teilnehmern statt CLI-Gegenstelle – Coach über die Coach-App mit Anmeldung, Klient über die Klientenseite: Im Warteraum läuft der Warmlauf des Coachs, im Raum ist niemand; nach „Klient einlassen" sind beide im Raum, jede Seite empfängt das Bild der anderen in 1280×720 mit fortschreitender Wiedergabezeit, dazu je eine Audiospur. Coach schaltet die Kamera aus → beim Klienten „Kamera aus". Coach schaltet den Klienten stumm → nur sein `<audio>` ist stumm. Reload des Coachs → wieder beide im Raum. Coach beendet → Klient auf der Danke-Seite, Raum leer.
 
-**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Notizen werden nicht gespeichert. *(Inzwischen schon, siehe Nachtrag „Notizen im Call".)*
+**Noch nicht echt:** Der Chat bleibt auf der eigenen Seite, `sendCallData()` liegt bereit, die Übertragung ist ein eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect). Notizen werden nicht gespeichert. *(Inzwischen schon, siehe Nachtrag „Notizen im Call". Der Chat ist als B7 geplant, dort über die API statt über `sendCallData()`.)*
 
 #### Nachtrag: Geräteliste und Gerätewechsel *(2026-09-15)*
 
@@ -349,6 +349,117 @@ Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klien
 ### B6 · Robustheit und autoritatives Sitzungsende
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
+
+### B7 · Chat im Call, mit geteilten Dateien *(geplant)*
+
+Der Chat aus `project.md` §5a wird echt: Nachrichten erreichen die Gegenseite, und **Chatverlauf und geteilte Dateien werden gespeichert** und bleiben der Sitzung zugeordnet. Unabhängig von B6, kann auch davor gebaut werden.
+
+**Getroffene Entscheidungen** *(2026-09-17)*
+
+- Nachrichten laufen über die API, zugestellt wird über den SSE-Strom.
+- Dateitypen: PDF, Bilder und Office ohne Makros, **je höchstens 25 MB**.
+- **Auf dem Server wird Hetzner Object Storage aktiviert, lokal bleibt RustFS.** Dateien werden über Presigned URLs heruntergeladen, nicht über die API. RustFS wird dafür nicht selbst ins Internet gestellt: Diese Variante ist verworfen, weil der Wechsel zu Hetzner ohnehin ansteht (`technisches-konzept.md` §4, §10) und schneller geht.
+
+Zweck laut §5a: der Fall, dass der Ton ausfällt („kannst du mich hören?"), und das bewusste Teilen eines Links oder Dokuments. Das bestimmt den Schnitt: Zuverlässigkeit vor Geschwindigkeit, keine Tipp-Anzeige, keine Lesebestätigungen, keine Reaktionen.
+
+**Der Weg einer Nachricht führt über die API, nicht über den LiveKit-Datenkanal.**
+
+- Senden ist ein `POST` an die API. Sie prüft den Zugang, speichert die Nachricht und meldet sie auf dem Ereigniskanal der Buchung. Die Gegenseite empfängt über den SSE-Strom, den beide Seiten seit A2 während des ganzen Gesprächs offen halten.
+- Warum nicht `sendCallData()`: Beim Datenkanal läge die Speicherung beim Browser des Senders. Eine Nachricht, die ankommt, aber nie gespeichert wird (oder umgekehrt), wäre bei einem gespeicherten Verlauf ein Fehler. Dateien brauchen ohnehin HTTP, und LiveKit hebt nichts auf, was ein Teilnehmer während einer Unterbrechung verpasst. Genau diesen Fall soll der Chat aber abdecken.
+- Die etwas höhere Laufzeit spielt für einen Notbehelf keine Rolle.
+- `sendCallData()` bleibt für B6. Sein Kommentar („einen Chat gibt es in HxRoom nicht") wird korrigiert: Gemeint war der Chat aus HxMeet.
+
+**Zustellung ohne Inhalt auf dem Ereigniskanal.**
+
+- Der Bus trägt weiter nur die `bookingId`, dazu jetzt eine Art: Zustand oder Chat.
+- Der Strom sendet für den Chat ein benanntes Ereignis `chat` ohne Nutzlast. Die Oberfläche holt daraufhin mit ihrem eigenen Ausweis alles ab, was nach der letzten bekannten Nachricht kam (`?after=<seq>`).
+- Ein benanntes Ereignis erreicht `onmessage` nicht. Der Zustandsabruf läuft also nicht bei jeder Nachricht mit.
+- Nachholen nach einem Abbruch geschieht von selbst: Verbindet sich der Strom neu, kommt als Erstes der vollständige Zustand, und darauf holt die Oberfläche die Nachrichten nach. Dasselbe geschieht beim Laden der Seite.
+
+**Datenmodell** (`technisches-konzept.md` §11 wird nachgezogen):
+
+- `session_chat_messages`: `id`, `organizationId`, `bookingId` (beide `onDelete: 'cascade'`), `seq` (fortlaufend, dient als Cursor, weil Zeitstempel bei zwei Nachrichten in derselben Millisekunde nicht eindeutig sind), `sender` (`coach` | `client`), `senderUserId` (nur beim Coach, denn im Studio-Plan teilen sich mehrere Coachs eine Organisation), `clientMessageId`, `text`, `createdAt`.
+- `clientMessageId` erzeugt der Browser. Eindeutig je Buchung macht es das Senden wiederholbar: Ein Retry nach einem Netzfehler ergibt keine doppelte Nachricht.
+- `session_chat_files`: `id` (= `fileId`), `messageId`, `organizationId`, `bookingId`, `fileName`, `mimeType`, `size`, `createdAt`. Eine Datei pro Nachricht, ein Begleittext ist optional.
+- Wie bei den Notizen eine eigene Tabelle statt Spalten an `bookings`: Der Inhalt soll nicht still in Mapper, Call-Zustand und Mails mitlaufen.
+- Der Text ist Klartext mit höchstens 2000 Zeichen. Links werden erst beim Anzeigen erkannt, und zwar nur `http`/`https`, mit `rel="noopener noreferrer"`.
+- Die Markierung „geht in die Zusammenfassung" wird nicht gespeichert. Sie ist eine Regel der künftigen Mail und keine Eigenschaft der Nachricht.
+
+**Dateien** (`s3-verzeichnisschema.md`):
+
+- Die Datei geht als Multipart-Upload an die API, nach dem Muster des Profilbilds (`FileInterceptor` mit `limits`). Abgelegt wird sie unter `{organizationId}/sessions/{bookingId}/attachments/{fileId}`, ohne echten Dateinamen.
+- Das oberste Segment ist wie beim Avatar die Organisation. Die Kontolöschung (`deletePrefix`) erfasst die Anhänge damit ohne weiteres Zutun.
+- Erlaubt: PDF, JPG, PNG, WebP, DOCX, XLSX und PPTX, **je höchstens 25 MB** (`limits.fileSize` im `FileInterceptor`). Geprüft werden Endung **und** Dateisignatur, denn den `mimetype` von multer liefert der Browser. Formate mit Makros (`.docm` usw.) sind ausgeschlossen.
+- Bilder werden über `sharp` ohne Metadaten abgelegt. Ein Handyfoto trägt sonst den Aufnahmeort des Klienten.
+- Obergrenzen je Buchung, weil der Klient ohne Konto hochlädt: 20 Dateien und 500 Nachrichten. Eine Sitzung belegt damit höchstens 500 MB.
+- **Hochladen bleibt über die API**, obwohl S3 jetzt erreichbar ist. Ein direkter Upload per Presigned PUT würde erst prüfen, wenn die Datei schon im Bucket liegt: Signatur, Makros und Metadaten dann nachträglich, samt Aufräumen abgelehnter Objekte. 25 MB im Speicher der API sind für einen Chat vertretbar.
+- **Herunterladen läuft über Presigned URLs**, wie es das Zugriffskonzept in `s3-verzeichnisschema.md` vorsieht (15 Minuten).
+  - Der Link in der Nachricht zeigt nicht direkt auf S3, sondern auf den Datei-Endpunkt der API. Die API prüft den Zugang in dem Moment, in dem jemand klickt, und leitet mit `302` auf eine frisch signierte URL weiter.
+  - So liegt keine ablaufende URL im Verlauf, und ein Link aus dem Termin-Slideover funktioniert auch am nächsten Tag.
+- Die Signatur legt die Antwort fest: `ResponseContentDisposition: attachment` mit dem ursprünglichen Dateinamen, `ResponseContentType` mit dem gespeicherten statt des mitgeschickten Typs, `ResponseCacheControl: private, no-store`. Eine hochgeladene Datei wird damit nie als Seite geöffnet. `X-Content-Type-Options: nosniff` lässt sich so nicht setzen, und davor sitzt kein eigener Proxy mehr. Das trägt die Prüfung der Dateisignatur beim Hochladen: Eine HTML-Datei kommt gar nicht erst in den Bucket.
+- Signiert wird mit demselben `S3Client`, der auch schreibt. Ein zweiter Endpunkt ist nicht nötig, denn die Adresse ist auf beiden Seiten vom Browser aus erreichbar: lokal `http://localhost:9000` (RustFS, Port an `127.0.0.1` gebunden), auf dem Server der öffentliche Endpunkt von Hetzner.
+
+**Voraussetzung: Hetzner Object Storage auf dem Server** (`technisches-konzept.md` §4, §10, §13 und §17 sowie `s3-verzeichnisschema.md` werden nachgezogen)
+
+- **Bucket anlegen**, privat, ohne Versionierung, am Standort des Servers (Falkenstein `fsn1` oder Nürnberg `nbg1`). Helsinki kommt nicht in Frage, denn §17 sagt „ausschließlich Deutschland". Nebenbei korrigieren: Die Dokumente sprechen von „EU-Frankfurt", einen Standort Frankfurt hat Hetzner Object Storage nicht.
+- **Schlüssel** über die Hetzner Console, eigens für die API. Prüfen, ob Hetzner ihn auf den Bucket beschränken kann; wenn nicht, gehört das Projekt allein HxRoom.
+- **Compose:** In `infra/docker-compose.yml` kommen `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE` und `S3_BUCKET` aus der `.env`, statt fest auf `rustfs:9000` zu zeigen. `rustfs`, `rustfs-perms` und `rustfs-createbuckets` entfallen dort samt `depends_on` und Volume. `infra/.env.example` bekommt die S3-Werte statt `RUSTFS_*`. `docker-compose.dev.yml` und `apps/api/.env.example` bleiben bei RustFS.
+- **Bestand umziehen:** Auf dem Server liegen bisher nur Profilbilder. Sie kommen einmalig per `rclone sync` von RustFS zu Hetzner, danach wird umgestellt. Erst wenn die Profilbilder über die Buchungsseite wieder laden, wird das RustFS-Volume gelöscht.
+- **CORS ist nicht nötig:** Der Download ist eine Navigation, kein `fetch`.
+- **AVV:** Prüfen, ob der bestehende AVV mit Hetzner Object Storage umfasst. In §17 und der Liste externer Dienste (§2) steht es dann als in Betrieb.
+- Der Avatar bleibt beim Weg über die API. Von den beiden Gründen in `s3-verzeichnisschema.md` gilt auf dem Server nur noch der erste (Crawler und anonyme Besucher brauchen eine dauerhafte URL); der zweite, RustFS nur an `127.0.0.1`, wird dort gestrichen.
+- Nicht Teil von B7: die tägliche Off-Site-Kopie in einen zweiten Bucket aus §13. Mit Chat-Dateien liegen erstmals Klientendaten im Speicher; sie kommt deshalb als offener Punkt nach §16, falls sie nicht vorher eingerichtet wird.
+
+**Endpunkte**, die Paare getrennt nach dem Muster aus A1 (Coach mit `AuthGuard`, Klient über den Token):
+
+| Coach | Klient | Zweck |
+|---|---|---|
+| `GET /bookings/:id/call/messages?after=` | `GET /bookings/:id/waiting-room/messages?token=&after=` | Verlauf bzw. Nachholen, samt Dateiangaben |
+| `POST /bookings/:id/call/messages` | `POST /bookings/:id/waiting-room/messages` | Textnachricht (Token im Body) |
+| `POST /bookings/:id/call/messages/files` | `POST /bookings/:id/waiting-room/messages/files` | Datei mit optionalem Text |
+| `GET /bookings/:id/call/files/:fileId` | `GET /bookings/:id/waiting-room/files/:fileId?token=` | Zugang prüfen, `302` auf die Presigned URL |
+
+- Service `call/call-chat.service.ts` im `CallModule`, denn dort liegen Ereigniskanal und Zugangsprüfung. Die Schemas liegen in `@hxroom/shared`.
+- **Schreiben** dürfen beide nur im Zustand `admitted`. Der Chat ist Teil des Gesprächs, nicht des Warteraums.
+- **Lesen** darf der Coach jederzeit bei jeder eigenen Buchung, der Klient nur, solange sein Zugang gilt (`mayReachRoom()`). Nach dem Ende landet er ohnehin auf der Danke-Seite.
+- Eine fremde Buchung oder Datei ergibt 404. Der Token steht wie beim Ereignisstrom in der Query, denn ein Download-Link kann keinen Header setzen. Geloggt wird er nirgends (§17).
+
+**Oberfläche:**
+
+- `CallChatPanel` in `packages/ui` bekommt Anhänge: eine Büroklammer neben dem Eingabefeld, in der Blase eine Dateizeile mit Name und Größe als schlichter Link. Hochladen und Laden bleiben in den Apps; das Panel meldet nur `send` und `attach`.
+- `CallChatMessage` bekommt eine Text-ID, einen Sendestatus (`sending` | `failed`, mit „Erneut senden") und optional `file`.
+- Je App ein `useCallChat()` neben dem vorhandenen `useCallState()`. Die beiden unterscheiden sich wie dort nur im Ausweis (Cookie gegen Token). Der Zustand liegt in `CallScreen.vue` bzw. `CallStage.vue`, denn der Tab-Wechsel baut das Panel ab.
+- Kommt eine Nachricht an, während der Chat nicht zu sehen ist, erscheint ein Punkt am Reiter und kurz ein Hinweis auf der Bühne mit dem Anfang der Nachricht. Ein Klick öffnet den Chat. Wer den Ton verloren hat, schaut auf das Bild und nicht in die Seitenleiste (Vorlage `doc/poc/videocall-v2.html`).
+- **Nichts täuscht eine Wirkung vor.** Der Hinweis im Panel verspricht heute eine Zusammenfassungsmail, die es nicht gibt. Er sagt künftig nur, dass Verlauf und Dateien gespeichert werden und dass der Coach sie nach dem Gespräch einsehen kann. Aus demselben Grund entfällt das Mail-Symbol an den Nachrichten.
+- Nach dem Ende ist das Eingabefeld gesperrt, mit Begründung.
+- **Im Termin-Slideover** sieht der Coach den Verlauf einer Sitzung samt Dateien zum Nachlesen, wenn es einen gibt. Geladen wird er erst beim Öffnen, wie die Notiz.
+
+**Bewusst nicht dabei:** die Zusammenfassungsmail samt Filterregel (Phase 5/6), Bearbeiten oder Löschen einzelner Nachrichten und Dateien, ein Virenscan, eine Verschlüsselung auf Anwendungsebene (gleicher offener Punkt wie bei den Notizen, `technisches-konzept.md` §16) und eine Einwilligung zur Speicherung.
+
+Die offenen Punkte kommen in §16:
+
+- Chat und Dateien liegen im Klartext wie die Notizen.
+- Löschen durch den Coach: Ein versehentlich geteiltes Dokument bleibt sonst bis zur Kontolöschung liegen.
+- Virenscan (etwa ClamAV), bevor Coachs Dateien von Klienten öffnen.
+- Aufbewahrungsfristen (`legal.md`).
+
+Ob die Speicherung eine Einwilligung braucht oder wie die Notizen unter den AVV fällt, gehört zur rechtlichen Klärung aus §5a. Hier wird es nicht entschieden.
+
+**Abnahme** mit Coach und Klient über die Caddy-Subdomains, Spontan-Termin:
+
+- Nachrichten in beide Richtungen. Der Hinweis auf der Bühne erscheint bei geschlossener Seitenleiste.
+- Reload auf beiden Seiten: Der Verlauf ist vollständig da.
+- Den Ereignisstrom einer Seite kappen und in der Zeit schreiben: Nach dem Wiederverbinden ist die Nachricht da, genau einmal.
+- Ein `POST` mit derselben `clientMessageId` doppelt: eine Zeile.
+- PDF und Handyfoto teilen: Beide Seiten laden herunter, das Foto hat keine EXIF-Daten mehr.
+- Umbenannte `.html` als `.pdf`, 26 MB und die 21. Datei: jeweils 400. Eine Datei mit knapp 25 MB geht durch.
+- Die Weiterleitung führt auf `localhost:9000`, und der Browser lädt mit dem ursprünglichen Dateinamen herunter. Dieselbe URL nach Ablauf: 403. Dieselbe URL ohne Signatur: 403.
+- Auf dem Server nach dem Umstieg: Profilbilder laden über die Buchungsseite, ein Chat-Anhang lässt sich über die Weiterleitung von Hetzner herunterladen, der Bucket ist ohne Signatur nicht lesbar.
+- Schreiben vor dem Einlass und nach dem Ende: abgelehnt.
+- Fremde Buchung, fremde `fileId` und falscher Token: 404 bzw. 401.
+- Nach dem Ende zeigt das Termin-Slideover den Verlauf mit Dateien.
+- Kontolöschung einer Test-Organisation: Nachrichten und Objekte sind weg.
+- Ein Upload über Caddy prüft, dass keine Obergrenze für den Request-Body dazwischen liegt.
 
 ---
 
