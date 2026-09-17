@@ -3,7 +3,7 @@
 // Datei in einem Workspace-Paket trägt der nur, solange die pnpm-Symlinks auf Pfade ohne
 // node_modules zeigen. Die U-Komponenten bleiben dagegen bewusst beim Resolver – ein
 // direkter Import aus @nuxt/ui zöge von hier aus eine zweite Kopie der Bibliothek herein.
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { firstName, initials } from '@hxroom/shared'
 import CallCameraView from './CallCameraView.vue'
 import type { CallPeer } from './types'
@@ -21,7 +21,9 @@ import type { CallPeer } from './types'
 // Die Hauptfläche ist eine eigene Kachel im Seitenverhältnis 16:9 mit Rahmen und Schatten,
 // nicht die ganze Bühne. Füllte sie alles aus, wäre nicht zu erkennen, wo die Kamera
 // aufhört und die Anwendung anfängt – und bei einem anderen Fensterformat wäre sie
-// beschnitten.
+// beschnitten. Bei einer Freigabe übernimmt die Kachel das Seitenverhältnis des geteilten
+// Bildes: Ein Ultrawide-Monitor in einer 16:9-Kachel ließe oben und unten breite Leerflächen
+// und bliebe kleiner, als das Fenster hergibt.
 //
 // Rollenfrei: Es gibt „local" und „remote". Wer davon der Coach ist und wer der Klient,
 // weiß nur die App, die die Bühne einbindet – für die Bühne ist es dieselbe Fläche.
@@ -113,6 +115,17 @@ const fullscreen = defineModel<boolean>('fullscreen', { required: true })
 // nimmt sie im eingeklappten Zustand aus Tastatur und Vorlesereihenfolge.
 const videoColumnOpen = computed(() => sharing.value && !fullscreen.value)
 
+// Seitenverhältnis des geteilten Bildes – unbekannt, bis das erste Bild da ist; bis dahin
+// bleibt die Kachel bei 16:9. Ein neuer Strom kann ein ganz anderes Format haben.
+const shareRatio = ref<number | null>(null)
+watch(() => props.shareStream, () => { shareRatio.value = null })
+
+// Die Maße der Kachel als CSS-Variablen, gerechnet wird im Stylesheet (siehe .video-tile).
+const tileStyle = computed(() => ({
+  '--tile-ratio': sharing.value && shareRatio.value ? shareRatio.value : 16 / 9,
+  '--tile-bar': sharing.value ? 'var(--share-bar)' : '0px',
+}))
+
 // Namensschild in den kleinen Bildern. Mit eigenem Grund, nicht als bloßer Text: Ein
 // Kamerabild ist an dieser Stelle mal hell und mal dunkel, blanke Schrift verschwindet darin.
 const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate rounded bg-default/85 backdrop-blur px-1.5 py-0.5 text-[0.625rem] text-toned'
@@ -122,24 +135,29 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
   <div ref="stage" class="relative h-full w-full overflow-hidden bg-muted flex items-stretch justify-center p-3 sm:p-5">
     <!-- Die Hauptfläche: im Gespräch das Gegenüber, bei Freigabe der geteilte Bildschirm. -->
     <div class="main flex-1 min-w-0 grid place-items-center">
-      <div class="video-tile relative overflow-hidden rounded-xl ring-1 ring-accented bg-elevated shadow-lg">
+      <div class="video-tile relative overflow-hidden rounded-xl ring-1 ring-accented bg-elevated shadow-lg" :style="tileStyle">
         <!-- Der Wechsel zwischen Gespräch und Freigabe ist eine Überblendung: Beide
              Fassungen liegen deckungsgleich übereinander und tauschen die Deckkraft. Ein
              harter Schnitt an dieser Stelle liest sich wie ein Verbindungsabbruch. -->
         <Transition name="call-swap">
           <div v-if="sharing" key="share" class="absolute inset-0">
-            <CallCameraView
-              :stream="shareStream ?? null"
-              :mirrored="false"
-              fit="contain"
-              placeholder="Freigabe startet …"
-            />
+            <!-- Das Bild steht unter dem Banner, nicht dahinter: Die Kachel hat genau das
+                 Format der Freigabe, ein überlagerndes Banner deckte deren Menüleiste zu. -->
+            <div class="absolute inset-x-0 bottom-0 top-(--share-bar)">
+              <CallCameraView
+                :stream="shareStream ?? null"
+                :mirrored="false"
+                fit="contain"
+                placeholder="Freigabe startet …"
+                @dimensions="shareRatio = $event.width / $event.height"
+              />
+            </div>
 
           <!-- Läuft eine Freigabe, muss das ohne Suchen erkennbar sein: Wer seinen
                Bildschirm teilt, ohne es zu merken, zeigt im Zweifel die Akte des
                Nächsten. Deshalb ein deckender Grund – darunter liegt ein beliebiger
                Bildschirm, oft dunkel, und ein durchscheinendes Banner verschwand darin. -->
-          <div class="absolute inset-x-0 top-0 z-20 flex items-center justify-center gap-3 px-4 py-2 bg-default border-b border-default shadow-sm">
+          <div class="absolute inset-x-0 top-0 z-20 h-(--share-bar) flex items-center justify-center gap-3 px-4 bg-default border-b border-default">
             <UIcon name="i-lucide-monitor-up" class="size-4 text-primary shrink-0" />
             <span class="text-sm text-primary truncate">
               {{ sharingIsLocal ? 'Du teilst deinen Bildschirm' : `${remoteShort} teilt den Bildschirm` }}
@@ -381,9 +399,16 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
 /* Bewusst ohne eigene Transition: Die Breite folgt aus dem Platz, den die Videospalte und
    das Polster der Steuerleiste freigeben – und die beiden bewegen sich bereits weich. Eine
    zweite Transition darüber liefe einem bewegten Ziel hinterher, käme verspätet an und
-   hinkte beim Ziehen am Fensterrand mit. */
+   hinkte beim Ziehen am Fensterrand mit.
+
+   Das Bild hat das Verhältnis --tile-ratio, darüber sitzt bei einer Freigabe die Leiste mit
+   dem Banner (--tile-bar). Ein aspect-ratio für die ganze Kachel ginge deshalb nicht auf;
+   Breite und Höhe sind je ein min(): entweder begrenzt die Breite des Platzes und die Höhe
+   folgt aus ihr, oder umgekehrt – beide min() entscheiden sich dabei stets für denselben
+   Fall. */
 .video-tile {
-  aspect-ratio: 16 / 9;
-  width: min(100%, calc(100cqh * 16 / 9));
+  --share-bar: 2.75rem;
+  width: min(100cqw, calc((100cqh - var(--tile-bar)) * var(--tile-ratio)));
+  height: min(100cqh, calc(100cqw / var(--tile-ratio) + var(--tile-bar)));
 }
 </style>

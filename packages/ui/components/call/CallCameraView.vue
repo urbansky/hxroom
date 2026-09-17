@@ -26,6 +26,11 @@ const props = withDefaults(defineProps<{
   fit?: 'cover' | 'contain'
 }>(), { mirrored: true, placeholder: 'Kamera startet …', fit: 'cover' })
 
+const emit = defineEmits<{
+  /** Pixelmaße des Bildes, sobald sie bekannt sind und bei jeder Änderung. */
+  dimensions: [{ width: number, height: number }]
+}>()
+
 const video = useTemplateRef<HTMLVideoElement>('video')
 
 // srcObject ist keine Eigenschaft, die sich binden ließe – sie will zugewiesen werden.
@@ -33,6 +38,14 @@ watchEffect(() => {
   const el = video.value
   if (el && el.srcObject !== props.stream) el.srcObject = props.stream
 })
+
+// Das Seitenverhältnis steht erst im Bild, nicht im Strom: Eine entfernte Spur kennt ihre
+// Maße nicht. `resize` kommt beim ersten Bild und immer dann, wenn sich die Maße ändern –
+// etwa wenn die teilende Seite ihr Fenster zieht.
+function reportDimensions() {
+  const el = video.value
+  if (el?.videoWidth && el.videoHeight) emit('dimensions', { width: el.videoWidth, height: el.videoHeight })
+}
 
 // Ohne das behält das Element den Strom, und der Browser hält ihn für in Benutzung.
 onUnmounted(() => {
@@ -54,6 +67,8 @@ onUnmounted(() => {
       autoplay
       playsinline
       muted
+      @loadedmetadata="reportDimensions"
+      @resize="reportDimensions"
     />
 
     <!-- Die Sekunden zwischen Klick und Bild: Der Browser fragt erst nach der Freigabe. -->
