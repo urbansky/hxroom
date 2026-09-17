@@ -9,27 +9,33 @@ const { activeOrganization } = useAuth()
 const route = useRoute()
 const router = useRouter()
 
-// Die Ansicht steht in der URL: nur so kann das Dashboard gezielt auf die
-// Wochenansicht verlinken, und ein Reload landet wieder dort, wo der Coach war.
-// Agenda ist der Standard und bleibt deshalb ohne Query-Parameter.
+// Ansicht und Filter stehen in der URL: nur so kann das Dashboard gezielt auf die
+// Wochenansicht verlinken, und ein Reload oder der Zurück-Knopf aus dem Klientenprofil
+// landet wieder dort, wo der Coach war. Die Standardwerte (Agenda, Kommend) bleiben ohne
+// Query-Parameter.
 const viewMode = ref<'agenda' | 'week'>(route.query.view === 'week' ? 'week' : 'agenda')
 
-watch(viewMode, (mode) => {
-  // replace statt push: das Umschalten der Ansicht ist kein Navigationsschritt,
-  // der Zurück-Knopf soll auf die vorherige Seite führen.
-  router.replace({ query: mode === 'week' ? { view: 'week' } : {} })
-})
-
 type FilterValue = 'upcoming' | 'past' | 'cancelled'
-const FILTER_ITEMS = [
-  { label: 'Kommende Termine', value: 'upcoming' as const },
-  { label: 'Vergangene Termine', value: 'past' as const },
-  { label: 'Abgesagte Termine', value: 'cancelled' as const },
+// Drei Schalter statt eines Auswahlfelds: Der Wechsel zwischen kommenden und vergangenen
+// Terminen ist die häufigste Bewegung auf dieser Seite und soll einen Klick kosten, nicht zwei.
+const FILTER_ITEMS: { label: string, value: FilterValue }[] = [
+  { label: 'Kommend', value: 'upcoming' },
+  { label: 'Vergangen', value: 'past' },
+  { label: 'Abgesagt', value: 'cancelled' },
 ]
-const filter = ref<FilterValue>('upcoming')
+const filter = ref<FilterValue>(
+  route.query.filter === 'past' || route.query.filter === 'cancelled' ? route.query.filter : 'upcoming',
+)
 
-// --ui-bg ist im Hauptbereich transluzent (siehe assets/main.css) – im Dropdown deckend erzwingen.
-const opaqueSelectContentUi = { content: 'bg-[#faf8f4] dark:bg-[#141814]' }
+watch([viewMode, filter], ([mode, value]) => {
+  // replace statt push: Umschalten ist kein Navigationsschritt, der Zurück-Knopf soll auf
+  // die vorherige Seite führen. Der Filter gilt nur für die Agenda – die Wochenansicht
+  // zeigt immer die volle Woche.
+  const query: Record<string, string> = {}
+  if (mode === 'week') query.view = 'week'
+  else if (value !== 'upcoming') query.filter = value
+  router.replace({ query })
+})
 
 const bookings = ref<CoachBookingResponse[]>([])
 const availability = ref<AvailabilitySlotResponse[]>([])
@@ -42,7 +48,10 @@ const weekStart = ref(startOfWeek(new Date()))
 
 function queryForFilter(): Record<string, string> {
   const now = new Date()
-  if (filter.value === 'past') return { to: now.toISOString(), status: 'confirmed' }
+  // Vergangen heißt: gehalten und vorbei. 'completed' gehört dazu – so steht jede Sitzung da,
+  // die über „Sitzung beenden“ abgeschlossen wurde. Absteigend, damit das Limit der API die
+  // ältesten Termine abschneidet und nicht die jüngsten.
+  if (filter.value === 'past') return { to: now.toISOString(), status: 'confirmed,completed', order: 'desc' }
   if (filter.value === 'cancelled') return { status: 'cancelled' }
 
   // Das Ladefenster reicht bewusst in die Vergangenheit: Die API filtert auf den Beginn,
@@ -86,13 +95,15 @@ await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
 
 watch([viewMode, filter, weekStart], loadBookings)
 
-// "Kommend" heißt: noch nicht vorbei. Ein Termin, der gerade läuft, gehört hierher – nicht
-// in die Vergangenheit (siehe queryForFilter). Die übrigen Filter tragen ihre Auswahl
-// bereits in der Abfrage.
+// Kommend und vergangen trennt das Ende des Termins, nicht sein Beginn: Ein Termin, der
+// gerade läuft, gehört zu den kommenden (siehe queryForFilter) und steht deshalb nicht
+// zugleich in der Vergangenheit, obwohl er dort über `to: now` mitgeladen wird.
 const visibleBookings = computed(() => {
-  if (viewMode.value === 'week' || filter.value !== 'upcoming') return bookings.value
+  if (viewMode.value === 'week' || filter.value === 'cancelled') return bookings.value
   const now = Date.now()
-  return bookings.value.filter(b => new Date(b.end).getTime() >= now)
+  return filter.value === 'upcoming'
+    ? bookings.value.filter(b => new Date(b.end).getTime() >= now)
+    : bookings.value.filter(b => new Date(b.end).getTime() < now)
 })
 
 // Der nächste anstehende Termin wird in der Agenda hervorgehoben.
@@ -152,7 +163,7 @@ const emptyStateText = computed(() => {
     <h1 class="font-serif text-3xl text-highlighted mb-2">Kalender</h1>
     <p class="text-muted mb-6">Alle Termine, die Klienten bei dir gebucht haben.</p>
 
-    <div class="flex items-center justify-between gap-4 mb-4">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
       <div class="inline-flex items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
         <button
           type="button"
@@ -176,14 +187,21 @@ const emptyStateText = computed(() => {
 
       <BookingWeekNav v-if="viewMode === 'week'" v-model:week-start="weekStart" />
 
-      <USelect
-        v-else
-        v-model="filter"
-        :items="FILTER_ITEMS"
-        :ui="opaqueSelectContentUi"
-        size="sm"
-        class="w-48"
-      />
+      <!-- Bewusst leiser als der Umschalter der Ansicht links – ohne Rahmen und Icons –, damit
+           die beiden Leisten nicht wie zwei gleichrangige Hauptauswahlen nebeneinanderstehen. -->
+      <div v-else role="group" aria-label="Termine filtern" class="flex items-center gap-1">
+        <button
+          v-for="item in FILTER_ITEMS"
+          :key="item.value"
+          type="button"
+          class="px-2.5 py-1.5 rounded-md text-sm transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+          :class="filter === item.value ? 'bg-elevated text-highlighted font-medium' : 'text-muted hover:text-highlighted'"
+          :aria-pressed="filter === item.value"
+          @click="filter = item.value"
+        >
+          {{ item.label }}
+        </button>
+      </div>
     </div>
 
     <p v-if="loadError" class="text-sm text-error mb-4">{{ loadError }}</p>

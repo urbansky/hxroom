@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
-import { and, asc, eq, gte, lte, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings, clients, offers } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
@@ -34,17 +34,19 @@ export class CoachBookingsService {
     private readonly callEvents: CallEventsService,
   ) {}
 
+  // `from`/`to` begrenzen den Beginn, nicht das Ende – ob ein Termin schon vorbei ist,
+  // entscheidet die Oberfläche (pages/bookings/index.vue).
   async list(organizationId: string, query: ListCoachBookingsQuery): Promise<CoachBookingResponse[]> {
     const filters: SQL[] = [eq(bookings.organizationId, organizationId)];
     if (query.from) filters.push(gte(bookings.startTime, new Date(query.from)));
     if (query.to) filters.push(lte(bookings.startTime, new Date(query.to)));
-    if (query.status) filters.push(eq(bookings.status, query.status));
+    if (query.status) filters.push(inArray(bookings.status, query.status));
 
     const rows = await this.db
       .select(coachBookingColumns)
       .from(bookings)
       .where(and(...filters))
-      .orderBy(asc(bookings.startTime))
+      .orderBy(query.order === 'desc' ? desc(bookings.startTime) : asc(bookings.startTime))
       .limit(query.limit);
 
     return rows.map(toCoachBookingResponse);

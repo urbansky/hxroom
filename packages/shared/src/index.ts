@@ -356,10 +356,21 @@ export const coachBookingResponseSchema = z.object({
 export type CoachBookingResponse = z.infer<typeof coachBookingResponseSchema>;
 
 // Query-Parameter kommen als Strings an, daher z.coerce statt z.number.
+//
+// `status` nimmt mehrere Werte, kommagetrennt (`status=confirmed,completed`) oder wiederholt
+// (`status=confirmed&status=completed`): „Vergangene Termine“ sind gehaltene Sitzungen, und
+// die tragen je nachdem, ob der Call beendet wurde, 'confirmed' oder 'completed'.
+//
+// `order` entscheidet mit, welche Termine das Limit abschneidet: Vergangenes wird
+// absteigend geladen, sonst fielen bei vielen Terminen ausgerechnet die jüngsten weg.
 export const listCoachBookingsQuerySchema = z.object({
   from:   z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
   to:     z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
-  status: BookingStatus.optional(),
+  status: z.preprocess(
+    (value) => (typeof value === 'string' ? value.split(',') : value),
+    z.array(BookingStatus).min(1),
+  ).optional(),
+  order:  z.enum(['asc', 'desc']).default('asc'),
   limit:  z.coerce.number().int().min(1).max(500).default(200),
 });
 export type ListCoachBookingsQuery = z.infer<typeof listCoachBookingsQuerySchema>;
