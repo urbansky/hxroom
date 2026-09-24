@@ -56,11 +56,20 @@ export interface CallDevice {
 export type CallConnection = 'connecting' | 'live' | 'reconnecting' | 'lost'
 
 export interface CallChatMessage {
-  id: number
+  /**
+   * Die vom Browser erzeugte Kennung der Nachricht (`clientMessageId`), nicht die der
+   * Datenbank: Sie steht schon fest, während die Nachricht noch unterwegs ist, und bleibt
+   * dieselbe, wenn die gespeicherte Fassung sie ersetzt.
+   */
+  id: string
   /** 'self' = ich, 'peer' = das Gegenüber. */
   from: 'self' | 'peer'
   text: string
   time: string
-  /** Nachrichten mit Link oder Anhang gehen in die Zusammenfassung (project.md §5a). */
-  inSummary?: boolean
+  /**
+   * Nur für eigene Nachrichten: unterwegs oder nicht angekommen. Fehlt der Wert, liegt sie
+   * beim Server. Eine Nachricht, von der man glaubt, sie sei zugestellt, ist im Tonausfall
+   * das Schlimmste – deshalb steht der Zustand an der Blase.
+   */
+  status?: 'sending' | 'failed'
 }

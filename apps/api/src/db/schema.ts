@@ -1,6 +1,6 @@
-import { pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
+import { bigserial, index, pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { BookingOrigin, BookingStatus, CancelledBy } from '@hxroom/shared';
+import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -235,6 +235,34 @@ export const sessionNotes = pgTable('session_notes', {
   createdAt:      timestamp('created_at').notNull().defaultNow(),
   updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
+
+// Chat einer Sitzung (doc/project.md §5a, doc/videocall-umsetzungsplan.md B7). Rückfallebene
+// bei Tonausfall und Weg für einen Link oder ein Dokument – kein Plauderkanal. Der Verlauf
+// wird gespeichert und ist rechtlich wie die Notizen zu behandeln.
+//
+// Eigene Tabelle aus demselben Grund wie session_notes: Der Inhalt soll nicht still
+// mitlaufen, wenn eine Buchung geladen wird. Anhänge kommen im zweiten Teil von B7 dazu.
+export const sessionChatMessages = pgTable('session_chat_messages', {
+  id:              text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:  text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  bookingId:       text('booking_id').notNull().references(() => bookings.id, { onDelete: 'cascade' }),
+  // Fortlaufende Nummer über alle Sitzungen, Cursor für „was kam nach …“. Ein Zeitstempel
+  // taugt dafür nicht: Zwei Nachrichten in derselben Millisekunde wären nicht zu ordnen,
+  // und genau darauf beruht das Nachholen nach einem Verbindungsabbruch.
+  seq:             bigserial('seq', { mode: 'number' }).notNull(),
+  sender:          text('sender').$type<CallChatSender>().notNull(),
+  // Nur beim Coach gesetzt: Im Studio-Plan teilen sich mehrere Coachs eine Organisation,
+  // und wer geschrieben hat, wäre sonst nicht mehr zu erkennen.
+  senderUserId:    text('sender_user_id').references(() => user.id, { onDelete: 'set null' }),
+  // Vom Browser erzeugt. Macht das Senden wiederholbar: Ein zweiter Versuch nach einem
+  // Netzfehler trifft auf diesen Schlüssel und legt keine zweite Nachricht an.
+  clientMessageId: text('client_message_id').notNull(),
+  text:            text('text').notNull(),
+  createdAt:       timestamp('created_at').notNull().defaultNow(),
+}, (table) => [
+  unique().on(table.bookingId, table.clientMessageId),
+  index('session_chat_messages_booking_seq_idx').on(table.bookingId, table.seq),
+]);
 
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
 // doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit

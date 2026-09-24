@@ -51,7 +51,14 @@ export function useCallState(bookingId: string) {
       const next = JSON.parse(event.data) as CallAccessResponse
       call.value = next
       if (isFinal(next.state)) closeStream()
+      // Auch hier nachhören (B7): Nach einem Abbruch schickt der Strom als Erstes den
+      // vollständigen Zustand – das ist der Moment, in dem verpasste Nachrichten nachkommen.
+      notifyCallChatEvent()
     }
+
+    // Neue Chatnachricht. Benanntes Ereignis, erreicht onmessage bewusst nicht: Es trägt
+    // keinen Inhalt, der Chat holt sich die neuen Nachrichten selbst.
+    source.addEventListener('chat', () => notifyCallChatEvent())
 
     // Der Browser verbindet von sich aus neu, und jedes Ereignis trägt den vollständigen
     // Zustand – ein währenddessen verpasster Wechsel heilt beim nächsten.

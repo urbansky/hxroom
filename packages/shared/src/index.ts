@@ -551,6 +551,51 @@ export const enterWaitingRoomSchema = z.object({
 });
 export type EnterWaitingRoomDto = z.infer<typeof enterWaitingRoomSchema>;
 
+// Chat im Call (doc/videocall-umsetzungsplan.md B7). Gespeichert wird der Verlauf, gesendet
+// wird über die API – nicht über den LiveKit-Datenkanal, damit keine Nachricht ankommt, die
+// nirgends liegt, und damit ein Abbruch nachgeholt werden kann.
+export const CallChatSender = z.enum(['coach', 'client']);
+export type CallChatSender = z.infer<typeof CallChatSender>;
+
+/** Höchstlänge einer Nachricht. Ein Notbehelf und ein Link – kein Aufsatz. */
+export const CALL_MESSAGE_MAX_LENGTH = 2000;
+/** Obergrenze je Sitzung. Der Klient schreibt ohne Konto, deshalb überhaupt eine Grenze. */
+export const CALL_MESSAGES_PER_BOOKING_LIMIT = 500;
+
+export const sendCallMessageSchema = z.object({
+  // Vom Browser erzeugt, damit ein zweiter Versuch nach einem Netzfehler keine zweite
+  // Nachricht anlegt (unique je Buchung).
+  clientMessageId: z.string().uuid('clientMessageId muss eine UUID sein'),
+  text: z.string().trim().min(1, 'Nachricht ist erforderlich').max(CALL_MESSAGE_MAX_LENGTH, 'Nachricht ist zu lang'),
+});
+export type SendCallMessageDto = z.infer<typeof sendCallMessageSchema>;
+
+// Der Klient hat kein Konto; sein Ausweis ist wie überall der Token aus dem Mail-Link.
+export const sendClientCallMessageSchema = sendCallMessageSchema.extend({
+  token: z.string().min(1, 'Token ist erforderlich'),
+});
+export type SendClientCallMessageDto = z.infer<typeof sendClientCallMessageSchema>;
+
+export const callChatMessageSchema = z.object({
+  id:        z.string(),
+  // Cursor für das Nachholen: Die Oberfläche fragt „was kam nach dieser Nummer?".
+  seq:       z.number(),
+  sender:    CallChatSender,
+  text:      z.string(),
+  createdAt: z.string(),
+  // Geht mit hinaus, damit der Absender seine eigene, längst angezeigte Nachricht
+  // wiedererkennt: Holt die Oberfläche neue Nachrichten nach, während die Antwort auf ihr
+  // eigenes POST noch unterwegs ist, stünde sie sonst zweimal auf dem Schirm. Für die
+  // Gegenseite ist der Wert eine bedeutungslose UUID.
+  clientMessageId: z.string(),
+});
+export type CallChatMessageResponse = z.infer<typeof callChatMessageSchema>;
+
+export const callChatMessagesResponseSchema = z.object({
+  messages: z.array(callChatMessageSchema),
+});
+export type CallChatMessagesResponse = z.infer<typeof callChatMessagesResponseSchema>;
+
 // Klientenverwaltung (CRM, siehe doc/funktionen/backoffice-coach.md Abschnitt 3).
 // Die E-Mail ist Pflicht, weil sie der Matching-Schlüssel für spätere Online-Buchungen
 // ist – ein Klient ohne Adresse wäre für den automatischen Weg unauffindbar.

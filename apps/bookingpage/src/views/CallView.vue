@@ -79,7 +79,7 @@ onMounted(start)
        Das Gegenstück zu layouts/call.vue in der Coach-App, das es in dieser SPA nicht gibt –
        deshalb steht es an der einzigen Stelle, die es braucht. -->
   <div v-if="call && call.state === 'admitted'" class="h-dvh flex flex-col overflow-hidden bg-default">
-    <CallStage :call="call" :now="now" />
+    <CallStage :call="call" :now="now" :token="token" />
   </div>
 
   <div v-else class="min-h-screen flex flex-col items-center justify-center px-6 py-12">

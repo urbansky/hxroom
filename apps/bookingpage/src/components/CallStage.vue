@@ -19,11 +19,11 @@ import {
   CallAudioOutput,
   CallChatPanel,
   namedDevices,
-  type CallChatMessage,
   type CallConnection,
   type CallPanelDef,
   type CallPeer,
 } from '@hxroom/ui'
+import { useCallChat } from '../composables/useCallChat'
 import { deviceNotice } from '../utils/deviceText'
 
 // Die Call-Oberfläche aus der Sicht des Klienten, seit B4 am echten LiveKit-Raum.
@@ -35,7 +35,9 @@ import { deviceNotice } from '../utils/deviceText'
 // Der Timer bleibt aus: Für den Klienten ist er laut project.md §5a optional, und eine
 // mitlaufende Uhr macht aus einem Gespräch eine Sitzung mit Restzeit.
 
-const props = defineProps<{ call: CallAccessResponse; now: number }>()
+// Der Token geht mit, weil der Chat ihn braucht (B7): Er ist der einzige Ausweis des
+// Klienten, hier wie beim Betreten des Warteraums.
+const props = defineProps<{ call: CallAccessResponse; now: number; token: string }>()
 
 const router = useRouter()
 
@@ -162,25 +164,34 @@ const shareDisabledReason = computed(() =>
     : null,
 )
 
-const chatDraft = ref('')
-const chatUnread = ref(false)
-const chatMessages = ref<CallChatMessage[]>([])
+// Der Chat läuft über die API und wird gespeichert (B7). Der Ausweis ist derselbe Token, mit
+// dem der Klient hereingekommen ist.
+const chatVisible = () => sidebarOpen.value && activePanel.value === 'chat'
+const chat = useCallChat({
+  bookingId: props.call.bookingId,
+  token: props.token,
+  self: 'client',
+  canSend: () => props.call.state === 'admitted',
+  visible: chatVisible,
+})
+const chatHintDismissed = ref(false)
+watch(() => chat.unread.value, (unread) => { if (unread) chatHintDismissed.value = false })
+
+// Über der Bühne und nicht nur als Punkt am Reiter: Wer den Ton verloren hat, schaut auf das
+// Bild. Genau dafür ist der Chat da.
+const chatHint = computed(() =>
+  chat.unread.value && !chatHintDismissed.value ? chat.latestPeerText.value : null,
+)
+
+function openChat() {
+  chatHintDismissed.value = true
+  activePanel.value = 'chat'
+  sidebarOpen.value = true
+}
 
 const panels = computed<CallPanelDef[]>(() => [
-  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square', badge: chatUnread.value },
+  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square', badge: chat.unread.value },
 ])
-
-function sendChatMessage() {
-  const text = chatDraft.value.trim()
-  if (!text) return
-  chatMessages.value.push({
-    id: Date.now(),
-    from: 'self',
-    text,
-    time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-  })
-  chatDraft.value = ''
-}
 
 // Der Klient beendet keine Sitzung, er verlässt sie: Solange der Coach nicht beendet hat,
 // führt derselbe Link wieder herein.
@@ -261,16 +272,32 @@ async function leave() {
           :description="deviceAlert.text"
           :close="{ onClick: () => { deviceAlertDismissed = true } }"
         />
+
+        <UAlert
+          v-if="chatHint"
+          icon="i-lucide-message-square"
+          color="info"
+          variant="subtle"
+          class="max-w-md shadow-lg bg-default"
+          title="Neue Chat-Nachricht"
+          :description="chatHint"
+          :ui="{ description: 'line-clamp-2' }"
+          :actions="[{ label: 'Chat öffnen', color: 'info', variant: 'solid', onClick: openChat }]"
+          :close="{ onClick: () => { chatHintDismissed = true } }"
+        />
       </div>
     </template>
 
     <template #sidebar>
       <CallChatPanel
-        v-model:draft="chatDraft"
-        :messages="chatMessages"
+        v-model:draft="chat.draft.value"
+        :messages="chat.messages.value"
         :peer-name="call.coachName"
+        :can-send="call.state === 'admitted'"
+        disabled-reason="Schreiben ist nur im laufenden Gespräch möglich."
         class="h-full"
-        @send="sendChatMessage"
+        @send="chat.send()"
+        @retry="chat.retry"
       />
     </template>
   </CallShell>

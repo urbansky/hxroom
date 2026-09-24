@@ -187,7 +187,15 @@ export class CallService {
       map((): MessageEvent => ({ type: 'ping', data: '' })),
     );
 
-    return merge(state, heartbeat);
+    // Neue Chatnachricht (B7), ebenfalls benannt und ohne Inhalt: Der Empfänger holt sie mit
+    // seinem eigenen Ausweis über den Nachrichten-Endpunkt und weiß dabei selbst, was er
+    // schon hat. Den Inhalt hier mitzuschicken, hieße ihn zweimal zu verteilen – und der
+    // Strom trägt bereits alles, was beide Rollen sehen dürfen, nichts Rollenspezifisches.
+    const chat = this.events.chatFor(bookingId).pipe(
+      map((): MessageEvent => ({ type: 'chat', data: '' })),
+    );
+
+    return merge(state, chat, heartbeat);
   }
 
   /**
@@ -230,7 +238,14 @@ export class CallService {
     return this.toResponse(booking, { role: 'coach', userId });
   }
 
-  private async loadForClient(bookingId: string, token: string): Promise<BookingRow> {
+  /**
+   * Die Buchung zum Token des Klienten – die Mandantengrenze seiner Seite.
+   *
+   * Öffentlich, weil der Chat (B7) denselben Ausweis prüft. Bewusst kein zweites
+   * Vorkommen dieser Prüfung: „die eine Stelle, an der ein Fehler teuer wird" (§8) soll
+   * genau eine bleiben.
+   */
+  async loadForClient(bookingId: string, token: string): Promise<BookingRow> {
     const [booking] = await this.db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
     if (!booking) throw new NotFoundException('Booking not found');
     if (!tokenMatches(token, booking.clientAccessToken)) throw new UnauthorizedException('Invalid access token');
@@ -239,7 +254,8 @@ export class CallService {
 
   // Ownership über die organizationId – eine fremde Buchung ist für diesen Coach nicht
   // vorhanden, nicht verboten (gleiches Verhalten wie CoachBookingsService.findOwn).
-  private async findOwn(organizationId: string, bookingId: string): Promise<BookingRow> {
+  // Öffentlich aus demselben Grund wie loadForClient: Der Chat prüft damit dieselbe Grenze.
+  async findOwn(organizationId: string, bookingId: string): Promise<BookingRow> {
     const [booking] = await this.db
       .select()
       .from(bookings)

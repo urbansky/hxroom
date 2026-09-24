@@ -350,9 +350,11 @@ Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klien
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
 
-### B7 · Chat im Call, mit geteilten Dateien *(geplant)*
+### B7 · Chat im Call, mit geteilten Dateien *(Nachrichten umgesetzt 2026-09-24, Dateien folgen)*
 
 Der Chat aus `project.md` §5a wird echt: Nachrichten erreichen die Gegenseite, und **Chatverlauf und geteilte Dateien werden gespeichert** und bleiben der Sitzung zugeordnet. Unabhängig von B6, kann auch davor gebaut werden.
+
+Gebaut in zwei Teilen. **Teil 1 – Textnachrichten – steht**, siehe den Nachtrag am Ende dieses Abschnitts; der übrige Plan beschreibt weiterhin auch Teil 2 (Dateien).
 
 **Getroffene Entscheidungen** *(2026-09-17)*
 
@@ -470,6 +472,26 @@ Ob die Speicherung eine Einwilligung braucht oder wie die Notizen unter den AVV 
 - Nach dem Ende zeigt das Termin-Slideover den Verlauf mit Dateien.
 - Kontolöschung einer Test-Organisation: Nachrichten und Objekte sind weg.
 - Ein Upload über Caddy prüft, dass keine Obergrenze für den Request-Body dazwischen liegt.
+
+#### Nachtrag: Teil 1 – Nachrichten *(umgesetzt 2026-09-24)*
+
+Der Chat trägt echte Nachrichten. Sie gehen über die API, werden gespeichert und erreichen die Gegenseite über den Ereigniskanal. Dateien sind noch nicht dabei, ebenso wenig der Verlauf im Termin-Slideover.
+
+**Tabelle `session_chat_messages`** mit `seq` als fortlaufender Nummer. Sie ist der Cursor: Gefragt wird stets „was kam nach der Nummer, die ich habe?". Ein Zeitstempel taugte dafür nicht, zwei Nachrichten in derselben Millisekunde wären nicht zu ordnen. `sender_user_id` hängt nur an Nachrichten des Coachs – im Studio-Plan teilen sich mehrere Coachs eine Organisation.
+
+**Zustellung ohne Inhalt.** `CallEventsService` unterscheidet jetzt zwei Arten von Meldungen, und der Strom schickt für den Chat ein benanntes Ereignis `chat` ohne Nutzlast. Liefe eine Nachricht über den Zustandsweg, baute der Server für jede Zeile die vollständige Antwort samt frischem LiveKit-Token. Die Oberfläche holt sich stattdessen, was ihr fehlt.
+
+**Nachgeholt statt gepuffert.** Ein benanntes Ereignis erreicht `onmessage` nicht; beide Apps hören zusätzlich darauf. Und weil der Strom nach einem Abbruch als Erstes den vollständigen Zustand schickt, stößt auch jedes Zustandsereignis das Nachholen an – damit heilt ein Netzaussetzer von selbst, ohne Wiedergabepuffer auf dem Server.
+
+**Wiederholbar durch `clientMessageId`.** Die Kennung entsteht im Browser und ist je Buchung eindeutig. Ein zweiter Versuch legt deshalb keine zweite Nachricht an, sondern bekommt die vorhandene zurück. Sie geht auch in der Antwort wieder hinaus: Ohne sie stünde die eigene Nachricht doppelt auf dem Schirm, sobald das Nachholen die Antwort auf das eigene POST überholt.
+
+**Geschrieben wird nur im laufenden Gespräch** (`admitted`), gelesen je nach Rolle: der Coach jederzeit, auch nach der Sitzung – für ihn wird gespeichert –, der Klient nur, solange sein Zugang gilt. Danach ist er ohnehin auf der Danke-Seite. Die Mandantengrenze prüft nicht der Chat, sondern weiterhin `CallService` (`findOwn`, `loadForClient`); beide Methoden sind dafür öffentlich geworden, statt die Prüfung ein zweites Mal zu schreiben (§8).
+
+**In der Oberfläche** liegt der Zustand je App in `useCallChat()` neben `useCallState()` – dieselbe Teilung wie bei den Notizen, denn der Tab-Wechsel baut das Panel ab. Eine eigene Nachricht steht sofort da und trägt „sendet …", bis die gespeicherte Fassung sie ersetzt; scheitert das Senden, steht „Nicht gesendet" mit „Erneut senden". Eine Nachricht, von der man glaubt, sie sei angekommen, wäre im Tonausfall das Schlimmste. Kommt etwas an, während der Chat zu ist, erscheint ein Punkt am Reiter **und** ein kurzer Hinweis über der Bühne mit „Chat öffnen" – wer den Ton verloren hat, schaut auf das Bild und nicht in die Seitenleiste. Der Hinweis im Panel verspricht keine Zusammenfassungsmail mehr, und das Mail-Symbol an den Nachrichten ist weg: Beides gibt es nicht.
+
+Abnahme in zwei Läufen. **Auf API-Ebene** mit Spontan-Termin: Schreiben vor dem Einlass und nach dem Ende je 409; nach dem Einlass Nachrichten in beide Richtungen; genau ein `chat`-Ereignis im Strom des Klienten, ohne den Text darin; derselbe `clientMessageId` zweimal ergibt eine Zeile; `after=` liefert nur das Neue; ohne Anmeldung 401, mit falschem Token 401; 2001 Zeichen, leerer Text und eine Kennung ohne UUID je 400; nach dem Ende liest der Coach weiter, der Klient nicht mehr. **Im Browser** mit Coach und Klient in zwei Kontexten: Nachricht des Coachs erscheint beim Klienten als Hinweis über der Bühne und im Chat, die Antwort beim Coach; nach einem Reload des Klienten steht der Verlauf vollständig; bei geschlossener Seitenleiste erscheinen Punkt und Hinweis. Der Fehlerfall gesondert, indem das POST im Browser abgefangen wurde: „Nicht gesendet", dann „Erneut senden" – danach genau eine gespeicherte Nachricht und genau eine auf dem Schirm.
+
+Zwei Dinge, die beim Prüfen Zeit gekostet haben und nicht am Code lagen: Ein `reader.read()` mit Zeitlimit abzubrechen verliert das gerade anstehende SSE-Ereignis (im Hintergrund mitlesen und nur warten), und „Nicht gesendet" verschwindet schon beim zweiten Versuch – wer direkt danach die API fragt, sieht die Nachricht noch nicht.
 
 ---
 

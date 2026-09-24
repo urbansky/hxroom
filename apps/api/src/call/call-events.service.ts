@@ -13,9 +13,17 @@ import { Observable, Subject, filter, map } from 'rxjs';
  * auf derselben Instanz hängt – dieselbe Einschränkung wie beim ScheduleModule in
  * app.module.ts. Das Deployment fährt heute genau eine Instanz und hat kein Redis.
  */
+/**
+ * Was gemeldet wird. `state` heißt „lade den Stand neu", `chat` heißt „hole die Nachrichten
+ * nach der letzten bekannten" (B7). Zwei Arten statt eines Ereignisses, weil ein
+ * Zustandsabruf die vollständige Antwort baut – bei jeder Chatnachricht wäre das Verschwendung,
+ * und die Klientenseite bekäme den LiveKit-Token ohne Anlass neu.
+ */
+export type CallEventKind = 'state' | 'chat';
+
 @Injectable()
 export class CallEventsService {
-  private readonly changes = new Subject<string>();
+  private readonly changes = new Subject<{ bookingId: string; kind: CallEventKind }>();
 
   // Anzahl offener Klienten-Streams je Buchung. Ein Zähler und keine Menge von IDs, weil
   // die einzige Frage lautet: hält gerade noch jemand die Verbindung? Zwei Tabs desselben
@@ -24,13 +32,27 @@ export class CallEventsService {
 
   /** Meldet, dass sich am Zustand dieser Buchung etwas geändert hat. */
   notifyChanged(bookingId: string): void {
-    this.changes.next(bookingId);
+    this.changes.next({ bookingId, kind: 'state' });
   }
 
-  /** Ereignisse genau einer Buchung – ohne Nutzlast, der Abonnent lädt den Stand selbst. */
+  /** Meldet eine neue Chatnachricht – ohne ihren Inhalt, der Abonnent holt sie mit seinem Ausweis. */
+  notifyChat(bookingId: string): void {
+    this.changes.next({ bookingId, kind: 'chat' });
+  }
+
+  /** Zustandsereignisse genau einer Buchung – ohne Nutzlast, der Abonnent lädt den Stand selbst. */
   changesFor(bookingId: string): Observable<void> {
+    return this.of(bookingId, 'state');
+  }
+
+  /** Chatereignisse genau einer Buchung. */
+  chatFor(bookingId: string): Observable<void> {
+    return this.of(bookingId, 'chat');
+  }
+
+  private of(bookingId: string, kind: CallEventKind): Observable<void> {
     return this.changes.pipe(
-      filter((id) => id === bookingId),
+      filter((event) => event.bookingId === bookingId && event.kind === kind),
       map(() => undefined),
     );
   }

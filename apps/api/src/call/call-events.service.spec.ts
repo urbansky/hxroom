@@ -28,6 +28,34 @@ describe('CallEventsService – Zustellung', () => {
     expect(received).not.toHaveBeenCalled();
   });
 
+  // Die beiden Arten sind getrennt, weil ein Zustandsereignis die vollständige Antwort baut
+  // (samt frischem LiveKit-Token). Liefe jede Chatnachricht darüber, wäre das Verschwendung.
+  it('trennt Chat- von Zustandsereignissen', () => {
+    const state = vi.fn();
+    const chat = vi.fn();
+    events.changesFor('booking-1').subscribe(state);
+    events.chatFor('booking-1').subscribe(chat);
+
+    events.notifyChat('booking-1');
+
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(state).not.toHaveBeenCalled();
+
+    events.notifyChanged('booking-1');
+
+    expect(state).toHaveBeenCalledTimes(1);
+    expect(chat).toHaveBeenCalledTimes(1);
+  });
+
+  it('stellt ein Chatereignis einer anderen Buchung nicht zu', () => {
+    const received = vi.fn();
+    events.chatFor('booking-1').subscribe(received);
+
+    events.notifyChat('booking-2');
+
+    expect(received).not.toHaveBeenCalled();
+  });
+
   it('erreicht alle Abonnenten derselben Buchung', () => {
     const coach = vi.fn();
     const client = vi.fn();

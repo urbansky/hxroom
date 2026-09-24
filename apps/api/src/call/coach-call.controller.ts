@@ -1,8 +1,11 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Post, Sse, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Sse, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { sendCallMessageSchema, type SendCallMessageDto } from '@hxroom/shared';
 import { CallService } from './call.service';
+import { CallChatService } from './call-chat.service';
 import { CallClientContextService } from './call-client-context.service';
 
 /**
@@ -20,6 +23,7 @@ export class CoachCallController {
   constructor(
     private readonly callService: CallService,
     private readonly clientContextService: CallClientContextService,
+    private readonly chatService: CallChatService,
   ) {}
 
   @Get(':id/call')
@@ -73,6 +77,33 @@ export class CoachCallController {
   ) {
     if (!org || !user) throw new UnauthorizedException('No active organization');
     return this.callService.admit(org.id, user.id, id);
+  }
+
+  /**
+   * Chat der Sitzung (B7). Lesen darf der Coach jederzeit – auch nach dem Gespräch, der
+   * Verlauf ist für ihn gespeichert. `after` ist die Nummer der letzten bekannten Nachricht.
+   */
+  @Get(':id/call/messages')
+  messages(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+    @Query('after', new ParseIntPipe({ optional: true })) after?: number,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.chatService.listForCoach(org.id, id, after);
+  }
+
+  // Die userId geht mit, weil sie an der Nachricht hängt: Im Studio-Plan teilen sich mehrere
+  // Coachs eine Organisation.
+  @Post(':id/call/messages')
+  sendMessage(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @CurrentUser() user: SessionUser | undefined,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(sendCallMessageSchema)) dto: SendCallMessageDto,
+  ) {
+    if (!org || !user) throw new UnauthorizedException('No active organization');
+    return this.chatService.sendAsCoach(org.id, user.id, id, dto);
   }
 
   @Post(':id/call/end')

@@ -4,6 +4,7 @@ import { ClientCallController } from './client-call.controller';
 import { CoachCallController } from './coach-call.controller';
 import { CallService } from './call.service';
 import { CallEventsService } from './call-events.service';
+import { CallChatService } from './call-chat.service';
 import { CallClientContextService } from './call-client-context.service';
 
 // Eigenes Modul statt einer Erweiterung von BookingsModule: hier liegt seit A2 der
@@ -14,7 +15,7 @@ import { CallClientContextService } from './call-client-context.service';
 @Module({
   imports: [OrganizationModule],
   controllers: [ClientCallController, CoachCallController],
-  providers: [CallService, CallEventsService, CallClientContextService],
+  providers: [CallService, CallEventsService, CallChatService, CallClientContextService],
   exports: [CallEventsService],
 })
 export class CallModule {}

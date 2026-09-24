@@ -1,7 +1,13 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Sse } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Sse } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { enterWaitingRoomSchema, type EnterWaitingRoomDto } from '@hxroom/shared';
+import {
+  enterWaitingRoomSchema,
+  sendClientCallMessageSchema,
+  type EnterWaitingRoomDto,
+  type SendClientCallMessageDto,
+} from '@hxroom/shared';
 import { CallService } from './call.service';
+import { CallChatService } from './call-chat.service';
 
 /**
  * Warteraum des Klienten (doc/videocall-umsetzungsplan.md A1). Bewusst ohne AuthGuard:
@@ -14,7 +20,10 @@ import { CallService } from './call.service';
  */
 @Controller('bookings')
 export class ClientCallController {
-  constructor(private readonly callService: CallService) {}
+  constructor(
+    private readonly callService: CallService,
+    private readonly chatService: CallChatService,
+  ) {}
 
   // Der Token steht in der Query, weil er im Mail-Link ohnehin dort steht – geloggt
   // wird er nirgends.
@@ -42,5 +51,31 @@ export class ClientCallController {
   @Sse(':id/waiting-room/events')
   events(@Param('id') id: string, @Query('token') token: string) {
     return this.callService.streamForClient(id, token ?? '');
+  }
+
+  /**
+   * Chat der Sitzung (B7). Unter demselben Pfadsegment wie der übrige Zugang des Klienten –
+   * `waiting-room` benennt seinen Weg herein, nicht die Wartezeit.
+   *
+   * Lesen darf er, solange sein Zugang gilt; schreiben nur im laufenden Gespräch. Der Token
+   * steht beim Lesen in der Query und beim Senden im Body, wie beim Betreten des Warteraums.
+   */
+  @Get(':id/waiting-room/messages')
+  messages(
+    @Param('id') id: string,
+    @Query('token') token: string,
+    @Query('after', new ParseIntPipe({ optional: true })) after?: number,
+  ) {
+    return this.chatService.listForClient(id, token ?? '', after);
+  }
+
+  @Post(':id/waiting-room/messages')
+  @HttpCode(HttpStatus.CREATED)
+  sendMessage(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(sendClientCallMessageSchema)) dto: SendClientCallMessageDto,
+  ) {
+    const { token, ...message } = dto;
+    return this.chatService.sendAsClient(id, token, message);
   }
 }

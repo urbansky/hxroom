@@ -17,7 +17,6 @@ import {
   CallAudioOutput,
   CallChatPanel,
   namedDevices,
-  type CallChatMessage,
   type CallConnection,
   type CallPanelDef,
   type CallPeer,
@@ -221,32 +220,37 @@ async function loadClientContext() {
 }
 void loadClientContext()
 
-const chatDraft = ref('')
-const chatMessages = ref<CallChatMessage[]>([])
 const endModalOpen = ref(false)
+
+// Der Chat läuft über die API und wird gespeichert (B7). Geschrieben wird nur im laufenden
+// Gespräch; gelesen werden darf immer, auch danach.
+const chatVisible = () => sidebarOpen.value && activePanel.value === 'chat'
+const chat = useCallChat({
+  bookingId: props.call.bookingId,
+  self: 'coach',
+  canSend: () => props.call.state === 'admitted',
+  visible: chatVisible,
+})
+const chatHintDismissed = ref(false)
+watch(() => chat.unread.value, (unread) => { if (unread) chatHintDismissed.value = false })
+
+// Wer den Ton verloren hat, schaut auf das Bild und nicht in die Seitenleiste – deshalb steht
+// eine neue Nachricht kurz über der Bühne und nicht nur als Punkt am Reiter.
+const chatHint = computed(() =>
+  chat.unread.value && !chatHintDismissed.value ? chat.latestPeerText.value : null,
+)
+
+function openChat() {
+  chatHintDismissed.value = true
+  activePanel.value = 'chat'
+  sidebarOpen.value = true
+}
 
 const panels = computed<CallPanelDef[]>(() => [
   { value: 'notes', label: 'Notizen', icon: 'i-lucide-notebook-pen' },
   { value: 'client', label: 'Klient', icon: 'i-lucide-contact-round' },
-  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square' },
+  { value: 'chat', label: 'Chat', icon: 'i-lucide-message-square', badge: chat.unread.value },
 ])
-
-// Der Chat bleibt vorerst auf dieser Seite: Die Übertragung über den Data-Channel ist ein
-// eigener Schritt (Zusammenfassung nach §5a, Zustellung beim Reconnect).
-function sendChatMessage() {
-  const text = chatDraft.value.trim()
-  if (!text) return
-
-  chatMessages.value.push({
-    id: Date.now(),
-    from: 'self',
-    text,
-    time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-    // Grobe Vorschau der Regel aus §5a: In die Zusammenfassung geht nur, was einen Link trägt.
-    inSummary: /https?:\/\/|\w+\.\w{2,}\//.test(text),
-  })
-  chatDraft.value = ''
-}
 
 // Das Modal verspricht, dass die Notizen der Sitzung zugeordnet bleiben. Nach dem Ende wird
 // dieser Screen abgebaut – was bis dahin nicht beim Server liegt, wäre weg. Deshalb erst
@@ -322,12 +326,33 @@ async function confirmEnd(force = false) {
       />
       <CallChatPanel
         v-else
-        v-model:draft="chatDraft"
-        :messages="chatMessages"
+        v-model:draft="chat.draft.value"
+        :messages="chat.messages.value"
         :peer-name="call.clientName"
+        :can-send="call.state === 'admitted'"
+        disabled-reason="Schreiben ist nur im laufenden Gespräch möglich."
         class="h-full"
-        @send="sendChatMessage"
+        @send="chat.send()"
+        @retry="chat.retry"
       />
+    </template>
+
+    <!-- Der Slot bringt keine Positionierung mit – der Rahmen hier legt den Hinweis über die
+         Bühne, wie auf der Klientenseite. -->
+    <template #stage-overlay>
+      <div v-if="chatHint" class="absolute inset-x-0 top-4 z-20 flex justify-center px-4">
+        <UAlert
+          icon="i-lucide-message-square"
+          color="info"
+          variant="subtle"
+          class="max-w-md shadow-lg bg-default"
+          title="Neue Chat-Nachricht"
+          :description="chatHint"
+          :ui="{ description: 'line-clamp-2' }"
+          :actions="[{ label: 'Chat öffnen', color: 'info', variant: 'solid', onClick: openChat }]"
+          :close="{ onClick: () => { chatHintDismissed = true } }"
+        />
+      </div>
     </template>
   </CallShell>
 
