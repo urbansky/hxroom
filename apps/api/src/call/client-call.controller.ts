@@ -1,9 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Sse } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Redirect, Res, Sse, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
+  CALL_FILE_MAX_BYTES,
   enterWaitingRoomSchema,
+  sendClientCallFileSchema,
   sendClientCallMessageSchema,
   type EnterWaitingRoomDto,
+  type SendClientCallFileDto,
   type SendClientCallMessageDto,
 } from '@hxroom/shared';
 import { CallService } from './call.service';
@@ -77,5 +82,37 @@ export class ClientCallController {
   ) {
     const { token, ...message } = dto;
     return this.chatService.sendAsClient(id, token, message);
+  }
+
+  // Der Token steht im Formular neben der Datei – ein Multipart-Upload trägt keinen Body,
+  // in dem er sonst stünde.
+  @Post(':id/waiting-room/messages/files')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: CALL_FILE_MAX_BYTES } }))
+  sendFile(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(sendClientCallFileSchema)) dto: SendClientCallFileDto,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) throw new BadRequestException('No file provided');
+    const { token, ...message } = dto;
+    return this.chatService.sendFileAsClient(id, token, message, file);
+  }
+
+  /**
+   * Weiterleitung auf einen frisch signierten Link. Der Token steht in der Query, weil ein
+   * Download-Link keine Kopfzeilen setzen kann – wie beim Ereignisstrom.
+   */
+  @Get(':id/waiting-room/files/:fileId')
+  @Redirect(undefined, HttpStatus.FOUND)
+  async downloadFile(
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+    @Query('token') token: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const url = await this.chatService.downloadUrlForClient(id, token ?? '', fileId);
+    res.set({ 'Cache-Control': 'private, no-store' });
+    return { url };
   }
 }

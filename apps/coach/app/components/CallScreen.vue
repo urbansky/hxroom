@@ -234,6 +234,17 @@ const chat = useCallChat({
 const chatHintDismissed = ref(false)
 watch(() => chat.unread.value, (unread) => { if (unread) chatHintDismissed.value = false })
 
+// Eine Datei, die nicht durchkommt, meldet der Toast – im Panel bliebe die Meldung unter dem
+// Verlauf stehen, und der Coach schaut beim Teilen ohnehin auf das Gespräch.
+function chatProblem(message: string) {
+  toast.add({ title: 'Datei nicht gesendet', description: message, icon: 'i-lucide-alert-circle', color: 'error' })
+}
+watch(() => chat.errorMessage.value, (message) => {
+  if (!message) return
+  chatProblem(message)
+  chat.errorMessage.value = null
+})
+
 // Wer den Ton verloren hat, schaut auf das Bild und nicht in die Seitenleiste – deshalb steht
 // eine neue Nachricht kurz über der Bühne und nicht nur als Punkt am Reiter.
 const chatHint = computed(() =>
@@ -334,6 +345,8 @@ async function confirmEnd(force = false) {
         class="h-full"
         @send="chat.send()"
         @retry="chat.retry"
+        @attach="chat.sendFile"
+        @attach-rejected="chatProblem"
       />
     </template>
 

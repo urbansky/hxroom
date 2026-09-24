@@ -39,14 +39,19 @@ export function useCallChat(options: {
   const draft = ref('');
   const messages = ref<CallChatMessage[]>([]);
   const loadError = ref(false);
+  /** Meldung, die der Aufrufer zeigen soll – etwa eine Datei, die nicht durchkommt. */
+  const errorMessage = ref<string | null>(null);
   const unread = ref(false);
   const latestPeerText = ref<string | null>(null);
 
   let lastSeq = 0;
   let loading = false;
   let again = false;
+  /** Dateien, deren Nachricht noch nicht beim Server liegt – für den zweiten Versuch. */
+  const pendingFiles = new Map<string, File>();
 
   const base = `${apiUrl}/api/v1/bookings/${options.bookingId}/waiting-room/messages`;
+  const fileBase = `${apiUrl}/api/v1/bookings/${options.bookingId}/waiting-room/files`;
 
   /**
    * Gespeicherte Nachrichten einsortieren. Die eigene, längst angezeigte Nachricht wird über
@@ -64,6 +69,15 @@ export function useCallChat(options: {
         from: row.sender === options.self ? 'self' : 'peer',
         text: row.text,
         time: formatTime(row.createdAt),
+        // Der Link zeigt auf die API, nicht auf den Speicher: Sie prüft beim Klick und leitet
+        // dann auf einen signierten, kurzlebigen Link weiter.
+        file: row.file
+          ? {
+              name: row.file.name,
+              size: row.file.size,
+              href: `${fileBase}/${row.file.id}?token=${encodeURIComponent(options.token)}`,
+            }
+          : undefined,
       };
 
       const index = messages.value.findIndex((known) => known.id === message.id);
@@ -108,6 +122,13 @@ export function useCallChat(options: {
     }
   }
 
+  // „Unterwegs" darf nicht stehen bleiben: Wer schreibt, weil der Ton fehlt, muss sehen, dass
+  // seine Nachricht nicht angekommen ist.
+  function markFailed(clientMessageId: string): void {
+    const index = messages.value.findIndex((known) => known.id === clientMessageId);
+    if (index >= 0) messages.value[index] = { ...messages.value[index]!, status: 'failed' };
+  }
+
   async function deliver(clientMessageId: string, text: string): Promise<void> {
     try {
       const res = await fetch(base, {
@@ -118,11 +139,57 @@ export function useCallChat(options: {
       if (!res.ok) throw new Error('failed');
       apply([(await res.json()) as CallChatMessageResponse]);
     } catch {
-      const index = messages.value.findIndex((known) => known.id === clientMessageId);
-      // „Unterwegs" darf nicht stehen bleiben: Wer schreibt, weil der Ton fehlt, muss sehen,
-      // dass seine Nachricht nicht angekommen ist.
-      if (index >= 0) messages.value[index] = { ...messages.value[index]!, status: 'failed' };
+      markFailed(clientMessageId);
     }
+  }
+
+  /**
+   * Eine Datei teilen. Sie geht über die API, nicht direkt in den Speicher: Erst dort wird
+   * geprüft, was für eine Datei es wirklich ist – und ein Bild verliert seine Metadaten,
+   * bevor es liegen bleibt.
+   */
+  async function deliverFile(clientMessageId: string, text: string, file: File): Promise<void> {
+    const form = new FormData();
+    form.append('token', options.token);
+    form.append('clientMessageId', clientMessageId);
+    if (text) form.append('text', text);
+    form.append('file', file);
+
+    try {
+      const res = await fetch(`${base}/files`, { method: 'POST', body: form });
+      if (!res.ok) {
+        // 400 heißt: Diese Datei kommt auch beim zweiten Versuch nicht durch.
+        errorMessage.value = res.status === 400
+          ? 'Diese Datei lässt sich nicht teilen. Erlaubt sind PDF, Bilder und Office-Dateien bis 25 MB.'
+          : 'Die Datei konnte nicht gesendet werden.';
+        markFailed(clientMessageId);
+        return;
+      }
+      pendingFiles.delete(clientMessageId);
+      apply([(await res.json()) as CallChatMessageResponse]);
+    } catch {
+      errorMessage.value = 'Die Datei konnte nicht gesendet werden.';
+      markFailed(clientMessageId);
+    }
+  }
+
+  function sendFile(file: File): void {
+    if (!options.canSend()) return;
+
+    const clientMessageId = crypto.randomUUID();
+    const text = draft.value.trim();
+    pendingFiles.set(clientMessageId, file);
+    messages.value.push({
+      id: clientMessageId,
+      from: 'self',
+      text,
+      time: formatTime(new Date().toISOString()),
+      status: 'sending',
+      // Ohne href: Bis die Datei liegt, gibt es nichts herunterzuladen.
+      file: { name: file.name, size: file.size },
+    });
+    draft.value = '';
+    void deliverFile(clientMessageId, text, file);
   }
 
   function send(): void {
@@ -149,7 +216,12 @@ export function useCallChat(options: {
     if (!message || message.status !== 'failed') return;
 
     messages.value[index] = { ...message, status: 'sending' };
-    void deliver(id, message.text);
+
+    // Bei einer Datei liegt der zweite Versuch nur an, solange sie noch im Speicher des
+    // Browsers liegt – nach einem Reload ist sie weg, und die Nachricht auch.
+    const file = pendingFiles.get(id);
+    if (file) void deliverFile(id, message.text, file);
+    else void deliver(id, message.text);
   }
 
   watch(chatSignal, () => void fetchSince());
@@ -162,5 +234,5 @@ export function useCallChat(options: {
 
   onMounted(() => void fetchSince());
 
-  return { draft, messages, unread, latestPeerText, loadError, send, retry };
+  return { draft, messages, unread, latestPeerText, loadError, errorMessage, send, sendFile, retry };
 }

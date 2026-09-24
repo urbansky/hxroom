@@ -101,7 +101,7 @@ Sitzungs-Assets. Die Zuordnung `sessionId → clientId` erfolgt ausschließlich 
 |---|---|---|
 | `recording.{ext}` | Video/Audio (mp4/webm) | LiveKit Egress → BullMQ-Job |
 | `transcript.txt` | Transkription (UTF-8 Plaintext) | Whisper-Dienst → BullMQ-Job |
-| `attachments/{fileId}.{ext}` | Im Videocall geteilte Dateien | Upload während der Sitzung |
+| `attachments/{fileId}.{ext}` | Im Videocall geteilte Dateien (implementiert mit B7) | Upload während der Sitzung, über die API geprüft |
 
 > Aufzeichnungen und Transkripte werden **nicht sofort** angelegt – sie entstehen asynchron nach Sitzungsende über die Job-Queue.
 
@@ -140,7 +140,7 @@ Wenn ein Klient innerhalb eines Studios von Coach A zu Coach B übergeben wird, 
 
 ## Pfad-Konstanten im Code (NestJS)
 
-> **Stand:** In dieser Monorepo-Struktur gibt es kein `libs/`-Verzeichnis. Tatsächlich implementiert ist bisher nur `coachAvatar`, in `apps/api/src/storage/paths.ts` (als einzelne `coachAvatarKey(organizationId)`-Funktion, da das Zielformat immer `webp` ist und kein `ext`-Parameter aus User-Input mehr nötig ist). Der Rest dieses Blocks (Klienten-Assets, Sitzungs-Assets, Studio-Assets) ist weiterhin **geplantes Schema**, noch nicht implementiert.
+> **Stand:** In dieser Monorepo-Struktur gibt es kein `libs/`-Verzeichnis. Tatsächlich implementiert sind in `apps/api/src/storage/paths.ts` zwei Funktionen: `coachAvatarKey(organizationId)` (ohne `ext`-Parameter, das Zielformat ist immer `webp`) und seit B7 `sessionAttachmentKey(organizationId, bookingId, fileId, extension)` für die im Call geteilten Dateien – die Sitzung ist dort die Buchung, eine eigene Sitzungs-ID gibt es nicht. Der Rest dieses Blocks (Klienten-Assets, Aufzeichnungen, Transkripte, Studio-Assets) ist weiterhin **geplantes Schema**, noch nicht implementiert.
 
 ```typescript
 // libs/storage/paths.ts (geplant – aktueller Stand: apps/api/src/storage/paths.ts, nur coachAvatar)

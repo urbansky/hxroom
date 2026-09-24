@@ -72,4 +72,17 @@ export interface CallChatMessage {
    * das Schlimmste – deshalb steht der Zustand an der Blase.
    */
   status?: 'sending' | 'failed'
+  /** Die geteilte Datei, falls die Nachricht eine trägt. */
+  file?: CallChatFile
+}
+
+/**
+ * Eine im Chat geteilte Datei. `href` zeigt auf die API, nicht auf den Speicher: Sie prüft
+ * den Zugang beim Klick und leitet dann auf einen kurzlebigen, signierten Link weiter.
+ * Fehlt `href`, ist die Datei noch unterwegs.
+ */
+export interface CallChatFile {
+  name: string
+  size: number
+  href?: string
 }

@@ -6,8 +6,19 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { Readable } from 'node:stream';
 import { S3, S3_BUCKET } from './s3.tokens';
+
+/**
+ * Der Ersatzname für `filename=` – dort ist nur ASCII zulässig. Der vollständige Name steht
+ * daneben in `filename*`, das jeder aktuelle Browser bevorzugt.
+ */
+function asciiFallback(fileName: string): string {
+  // eslint-disable-next-line no-control-regex
+  const ascii = fileName.replace(/[^\u0020-\u007e]/g, '_').replace(/["\\]/g, '_');
+  return ascii.trim() || 'download';
+}
 
 export interface S3Object {
   body: Readable;
@@ -37,6 +48,39 @@ export class S3Service {
 
   async deleteObject(key: string): Promise<void> {
     await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+  }
+
+  /**
+   * Signierter Link zum Herunterladen, gültig für kurze Zeit
+   * (doc/s3-verzeichnisschema.md, doc/videocall-umsetzungsplan.md B7).
+   *
+   * Die Antwort steht in der Signatur, nicht beim Speicher: Dateiname, der hier übergebene
+   * geprüfte Typ und `no-store`. Damit lädt der Browser die Datei herunter, statt sie zu
+   * öffnen – auf dem Objektspeicher liegt sie unter ihrer ID, ohne Namen und ohne Typ aus
+   * dem Upload.
+   *
+   * Der Bucket bleibt privat; nur dieser Link kommt hinein, und nur für die Dauer von
+   * `expiresInSeconds`.
+   */
+  async presignedDownloadUrl(
+    key: string,
+    options: { fileName: string; contentType: string; expiresInSeconds: number },
+  ): Promise<string> {
+    return getSignedUrl(
+      this.s3,
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        // Der Name wird zusätzlich als filename* (RFC 5987) gesetzt: Ohne das verliert ein
+        // Name mit Umlauten beim Herunterladen seine Zeichen.
+        ResponseContentDisposition:
+          `attachment; filename="${asciiFallback(options.fileName)}"; `
+          + `filename*=UTF-8''${encodeURIComponent(options.fileName)}`,
+        ResponseContentType: options.contentType,
+        ResponseCacheControl: 'private, no-store',
+      }),
+      { expiresIn: options.expiresInSeconds },
+    );
   }
 
   /**

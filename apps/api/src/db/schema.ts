@@ -264,6 +264,30 @@ export const sessionChatMessages = pgTable('session_chat_messages', {
   index('session_chat_messages_booking_seq_idx').on(table.bookingId, table.seq),
 ]);
 
+// Im Chat geteilte Dateien (B7, zweiter Teil). Eine Datei je Nachricht, ein Begleittext ist
+// optional. Das Objekt liegt in S3 unter {organizationId}/sessions/{bookingId}/attachments/
+// {id}.{ext} – ohne echten Dateinamen, der steht hier (doc/s3-verzeichnisschema.md).
+//
+// Eigene Tabelle statt Spalten an der Nachricht: Die Angaben zur Datei werden auch gebraucht,
+// wo es um Dateien geht und nicht um den Verlauf – beim Zählen der Obergrenze und später beim
+// Löschen eines versehentlich geteilten Dokuments.
+export const sessionChatFiles = pgTable('session_chat_files', {
+  // Zugleich der Name des Objekts in S3.
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  messageId:      text('message_id').notNull().unique().references(() => sessionChatMessages.id, { onDelete: 'cascade' }),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  bookingId:      text('booking_id').notNull().references(() => bookings.id, { onDelete: 'cascade' }),
+  // Der Name, unter dem die Datei hochgeladen wurde und wieder herunterkommt.
+  fileName:       text('file_name').notNull(),
+  // Der geprüfte Typ, nicht der vom Browser gemeldete: Er bestimmt die Antwort beim Download.
+  mimeType:       text('mime_type').notNull(),
+  extension:      text('extension').notNull(),
+  sizeBytes:      integer('size_bytes').notNull(),
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+}, (table) => [
+  index('session_chat_files_booking_idx').on(table.bookingId),
+]);
+
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
 // doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit
 // bestimmten Angeboten (Stufe 2, offer_availability_slots) ist bewusst noch nicht

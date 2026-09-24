@@ -177,6 +177,15 @@ const chat = useCallChat({
 const chatHintDismissed = ref(false)
 watch(() => chat.unread.value, (unread) => { if (unread) chatHintDismissed.value = false })
 
+// Eine Datei, die nicht durchkommt, steht über der Bühne – diese App hat keine Toasts, und
+// die anderen Meldungen (Ton, Geräte, Freigabe) stehen ohnehin dort.
+const chatProblem = ref<string | null>(null)
+watch(() => chat.errorMessage.value, (message) => {
+  if (!message) return
+  chatProblem.value = message
+  chat.errorMessage.value = null
+})
+
 // Über der Bühne und nicht nur als Punkt am Reiter: Wer den Ton verloren hat, schaut auf das
 // Bild. Genau dafür ist der Chat da.
 const chatHint = computed(() =>
@@ -274,6 +283,17 @@ async function leave() {
         />
 
         <UAlert
+          v-if="chatProblem"
+          icon="i-lucide-alert-circle"
+          color="error"
+          variant="subtle"
+          class="max-w-md shadow-lg bg-default"
+          title="Datei nicht gesendet"
+          :description="chatProblem"
+          :close="{ onClick: () => { chatProblem = null } }"
+        />
+
+        <UAlert
           v-if="chatHint"
           icon="i-lucide-message-square"
           color="info"
@@ -298,6 +318,8 @@ async function leave() {
         class="h-full"
         @send="chat.send()"
         @retry="chat.retry"
+        @attach="chat.sendFile"
+        @attach-rejected="(message: string) => { chatProblem = message }"
       />
     </template>
   </CallShell>

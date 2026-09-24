@@ -561,6 +561,31 @@ export type CallChatSender = z.infer<typeof CallChatSender>;
 export const CALL_MESSAGE_MAX_LENGTH = 2000;
 /** Obergrenze je Sitzung. Der Klient schreibt ohne Konto, deshalb überhaupt eine Grenze. */
 export const CALL_MESSAGES_PER_BOOKING_LIMIT = 500;
+/** Höchstgröße einer geteilten Datei. */
+export const CALL_FILE_MAX_BYTES = 25 * 1024 * 1024;
+/** Dateien je Sitzung – aus demselben Grund wie die Nachrichtengrenze. */
+export const CALL_FILES_PER_BOOKING_LIMIT = 20;
+
+/**
+ * Was geteilt werden darf (doc/videocall-umsetzungsplan.md B7): Dokumente und Bilder, mit
+ * denen ein Coach arbeitet. Formate mit Makros (`.docm` und Verwandte) sind nicht dabei.
+ *
+ * Endung und Typ gehören zusammen; der Server prüft zusätzlich die Dateisignatur, denn den
+ * gemeldeten Typ liefert der Browser.
+ */
+export const CALL_FILE_TYPES: { extension: string; mimeType: string }[] = [
+  { extension: 'pdf',  mimeType: 'application/pdf' },
+  { extension: 'jpg',  mimeType: 'image/jpeg' },
+  { extension: 'jpeg', mimeType: 'image/jpeg' },
+  { extension: 'png',  mimeType: 'image/png' },
+  { extension: 'webp', mimeType: 'image/webp' },
+  { extension: 'docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+  { extension: 'xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  { extension: 'pptx', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' },
+];
+
+/** Für das `accept` des Dateifelds. */
+export const CALL_FILE_ACCEPT = CALL_FILE_TYPES.map((type) => `.${type.extension}`).join(',');
 
 export const sendCallMessageSchema = z.object({
   // Vom Browser erzeugt, damit ein zweiter Versuch nach einem Netzfehler keine zweite
@@ -569,6 +594,19 @@ export const sendCallMessageSchema = z.object({
   text: z.string().trim().min(1, 'Nachricht ist erforderlich').max(CALL_MESSAGE_MAX_LENGTH, 'Nachricht ist zu lang'),
 });
 export type SendCallMessageDto = z.infer<typeof sendCallMessageSchema>;
+
+// Datei mit optionalem Begleittext. Die Felder kommen als Multipart-Formular, also als
+// Zeichenketten – der Text darf hier leer sein, die Datei ist die Nachricht.
+export const sendCallFileSchema = z.object({
+  clientMessageId: z.string().uuid('clientMessageId muss eine UUID sein'),
+  text: z.string().trim().max(CALL_MESSAGE_MAX_LENGTH, 'Nachricht ist zu lang').optional(),
+});
+export type SendCallFileDto = z.infer<typeof sendCallFileSchema>;
+
+export const sendClientCallFileSchema = sendCallFileSchema.extend({
+  token: z.string().min(1, 'Token ist erforderlich'),
+});
+export type SendClientCallFileDto = z.infer<typeof sendClientCallFileSchema>;
 
 // Der Klient hat kein Konto; sein Ausweis ist wie überall der Token aus dem Mail-Link.
 export const sendClientCallMessageSchema = sendCallMessageSchema.extend({
@@ -588,6 +626,15 @@ export const callChatMessageSchema = z.object({
   // eigenes POST noch unterwegs ist, stünde sie sonst zweimal auf dem Schirm. Für die
   // Gegenseite ist der Wert eine bedeutungslose UUID.
   clientMessageId: z.string(),
+  // Die geteilte Datei, falls die Nachricht eine trägt. Kein Link auf S3: Der Download läuft
+  // über die API, die den Zugang beim Klick prüft und dann auf eine frisch signierte URL
+  // weiterleitet (B7). Ein Link im Verlauf liefe sonst nach 15 Minuten ins Leere.
+  file: z.object({
+    id:       z.string(),
+    name:     z.string(),
+    mimeType: z.string(),
+    size:     z.number(),
+  }).nullable(),
 });
 export type CallChatMessageResponse = z.infer<typeof callChatMessageSchema>;
 
