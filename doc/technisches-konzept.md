@@ -24,7 +24,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **Whisper (faster-whisper)** | Speech-to-Text – self-hosted, kein externer API-Aufruf |
 | **Brevo** | Transaktionale E-Mails **und** Newsletter/Marketing – ein Anbieter für den gesamten Versand (französisch, Server in der EU) |
 | **BullMQ + Redis** | Job-Queue für Erinnerungen, Transkription & Async-Tasks |
-| **Object Storage** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos. Phasenweise: **RustFS** self-hosted (Entwicklung & Pre-Launch) → **Hetzner Object Storage** (EU-Frankfurt, ab Produktiv-Launch). |
+| **Object Storage** | S3-kompatibler Datei-Speicher – Uploads, Recordings, Logos. Produktiv **Hetzner Object Storage** (Falkenstein), in der Entwicklung **RustFS** self-hosted. |
 | **Stripe** | Zahlungsabwicklung & Subscription-Management (Billing Portal, Webhooks) – EU-Entities, SCCs |
 
 ### Frontend
@@ -43,7 +43,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **LiveKit Server** | Self-hosted Docker-Container auf Hetzner |
 | **Whisper Service** | Self-hosted Docker-Container auf Hetzner |
 | **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.hxroom.de`) |
-| **Object Storage** | **RustFS** self-hosted als Docker-Container (Entwicklung & Pre-Launch) → Wechsel auf **Hetzner Object Storage** (S3-kompatibel, EU-Frankfurt) zum Produktiv-Launch |
+| **Object Storage** | **Hetzner Object Storage** (S3-kompatibel, Falkenstein) in Produktion; **RustFS** self-hosted als Docker-Container in der Entwicklung |
 | **Deployment** | Docker Compose (Entwicklung & Produktion) |
 
 ### Externe Dienste – EU-Übersicht
@@ -56,7 +56,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | Zertifikate | Let's Encrypt via Caddy | – | Kein Datentransfer |
 | Video / Audio | LiveKit self-hosted | Hetzner DE | Vollständig EU |
 | Transkription | Whisper self-hosted | Hetzner DE | Vollständig EU |
-| Datei-Speicher | RustFS (Dev/Pre-Launch) → Hetzner Object Storage (ab Launch) | Hetzner DE (Frankfurt), RustFS zunächst self-hosted | S3-kompatibel, vollständig EU in beiden Phasen |
+| Datei-Speicher | Hetzner Object Storage (produktiv), RustFS (Entwicklung) | Hetzner DE (Falkenstein) | S3-kompatibel, vollständig EU |
 | Web-Analytics | Plausible Cloud | EU (Estland/Deutschland) | Cookie-frei, kein Consent-Banner; AVV via Plausible-Dashboard |
 
 ---
@@ -116,7 +116,6 @@ Alle Services laufen als Container auf dem Hetzner-Host:
 services:
   api, coach, bookingpage, admin, landing   # gebuildete App-Images
   postgres:   image: postgres:17-alpine
-  rustfs:     image: rustfs/rustfs:latest        # S3-kompatibel, bis zum Produktiv-Launch
   livekit:    image: livekit/livekit-server:v1.13.6
   caddy:      build: ./infra/caddy               # mit IONOS-DNS-Plugin für Wildcard-TLS
 
@@ -126,7 +125,7 @@ services:
 #  whisper:         # faster-whisper HTTP-Wrapper (Phase 6)
 ```
 
-**Object Storage – phasenweiser Ansatz:** Bis zum Produktiv-Launch läuft **RustFS** self-hosted im Compose-Stack (Entwicklung und Pre-Launch-Server identisch konfiguriert). Zum Launch erfolgt der Wechsel auf **Hetzner Object Storage** (extern, S3-kompatibel) – da der S3-Client-Code identisch bleibt, ändern sich nur `S3_ENDPOINT`, `S3_REGION` und `S3_FORCE_PATH_STYLE` in der Umgebungskonfiguration; RustFS entfällt dann aus dem Compose-Stack.
+**Object Storage – zwei Umgebungen, ein Client:** In Produktion liegt der Speicher außerhalb des Stacks, bei **Hetzner Object Storage**; `docker-compose.yml` enthält deshalb keinen Object-Store-Container, und `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE` und `S3_BUCKET` kommen aus der `.env`. In der Entwicklung läuft weiter **RustFS** in `docker-compose.dev.yml`, mit festen Testschlüsseln. Der Client-Code ist in beiden Fällen derselbe, ebenso Bucket-Struktur und Key-Schema.
 
 **Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
 
@@ -144,9 +143,9 @@ Regeln der **Hetzner-Cloud-Firewall**:
 | 7881 | TCP | LiveKit | Medien-Fallback, wenn UDP blockiert ist (Firmennetze) |
 | 7882 | UDP | LiveKit | Medien im Normalfall (ICE/DTLS/SRTP) |
 
-**Der Rest bleibt bewusst zu.** Postgres (5432) und RustFS (9000/9001) sind im Compose an
-`127.0.0.1` gebunden – vom Host aus erreichbar, aus dem Internet nicht; man kommt über
-einen SSH-Tunnel heran. Das LiveKit-Signaling (7880) ist in Produktion gar nicht auf den
+**Der Rest bleibt bewusst zu.** Postgres (5432) ist im Compose an `127.0.0.1` gebunden –
+vom Host aus erreichbar, aus dem Internet nicht; man kommt über einen SSH-Tunnel heran.
+Dasselbe gilt lokal für RustFS (9000/9001), das in Produktion gar nicht läuft. Das LiveKit-Signaling (7880) ist in Produktion gar nicht auf den
 Host veröffentlicht: Caddy erreicht es über das Docker-Netz, von außen führt der einzige
 Weg über `livekit.hxroom.de` (443). Lokal liegt es auf `127.0.0.1:7880`, damit das
 LiveKit-CLI ohne Umweg drankommt (§15).
@@ -583,25 +582,27 @@ Das Modell `small` liefert für deutschsprachige Coaching-Gespräche sehr gute E
 
 ### Überblick
 
-Der Objektspeicher wird phasenweise betrieben:
+Der Objektspeicher läuft je Umgebung verschieden, mit derselben S3-API:
 
-- **Entwicklung & Pre-Launch-Server:** **RustFS**, self-hosted als Docker-Container (siehe `docker-compose-test-rustfs.yml`). S3-kompatibel, kein externer Vertrag nötig, identisches Client- und Bucket-Schema wie später produktiv.
-- **Produktiv-Launch:** Wechsel auf **Hetzner Object Storage** (S3-kompatibel, EU-Frankfurt). Da beide Dienste dieselbe S3-API sprechen, bleiben Client-Code, Bucket-Struktur und Key-Schema unverändert – es ändern sich nur `S3_ENDPOINT`, `S3_REGION` und `S3_FORCE_PATH_STYLE` in der Umgebungskonfiguration.
+- **Produktion:** **Hetzner Object Storage** (S3-kompatibel, Falkenstein `fsn1`; alternativ Nürnberg `nbg1` – Helsinki ist wegen §17 ausgeschlossen). Extern betrieben, deshalb kein Container im Compose-Stack. Bucket privat, gelesen wird über die API und signierte URLs.
+- **Entwicklung:** **RustFS**, self-hosted als Docker-Container in `infra/docker-compose.dev.yml`. Kein externer Vertrag nötig, identisches Client- und Bucket-Schema.
 
-Die Anbindung erfolgt in beiden Phasen über AWS SDK v3 (`@aws-sdk/client-s3`); Endpoint und Credentials kommen aus Umgebungsvariablen.
+Umgestellt wurde am 2026-09-24, als Voraussetzung für die Chat-Dateien (`videocall-umsetzungsplan.md` B7). RustFS lief bis dahin auch auf dem Server; die dort liegenden Testdateien wurden nicht migriert.
+
+Die Anbindung erfolgt in beiden Umgebungen über AWS SDK v3 (`@aws-sdk/client-s3`); Endpoint und Credentials kommen aus Umgebungsvariablen.
 
 ```typescript
 // apps/api/src/storage/s3.client.ts
 import { S3Client } from '@aws-sdk/client-s3';
 
 export const s3 = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,                // Dev/Pre-Launch: http://rustfs:9000; Produktion: z.B. https://fsn1.your-objectstorage.com
-  region: process.env.S3_REGION ?? 'eu-central',    // Hetzner-Region; bei RustFS: 'us-east-1'
+  endpoint: process.env.S3_ENDPOINT,                // Produktion: https://fsn1.your-objectstorage.com; lokal: http://localhost:9000
+  region: process.env.S3_REGION ?? 'us-east-1',     // Hetzner: Standort ('fsn1'); bei RustFS: 'us-east-1'
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY,
     secretAccessKey: process.env.S3_SECRET_KEY,
   },
-  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // true für RustFS, optional bei Hetzner
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true', // true für RustFS, false bei Hetzner
 });
 ```
 
@@ -635,8 +636,8 @@ Key-Schema: recordings/{organizationId}/{bookingId}/{timestamp}.ogg
 s3:
   access_key: ${S3_ACCESS_KEY}
   secret: ${S3_SECRET_KEY}
-  region: ${S3_REGION}                 # Hetzner-Region, z.B. eu-central
-  endpoint: ${S3_ENDPOINT}             # Dev/Pre-Launch: http://rustfs:9000; Produktion: Hetzner Object Storage
+  region: ${S3_REGION}                 # Hetzner-Standort, z.B. fsn1
+  endpoint: ${S3_ENDPOINT}             # Produktion: Hetzner Object Storage; lokal: RustFS
   bucket: hxroom-recordings
   force_path_style: ${S3_FORCE_PATH_STYLE}   # true für RustFS
 ```
@@ -992,8 +993,8 @@ export const organizationBilling = pgTable('organization_billing', {
 - Restore-Test monatlich in Staging-Umgebung
 
 **Object Storage**
-- **Entwicklung & Pre-Launch (RustFS, self-hosted)**: Daten liegen im Docker Volume `rustfs_data`. Es greift das **Hetzner Server Backup** (täglich, letzte 7 Snapshots) und zusätzlich ein `rclone sync` auf einen Zweitserver.
-- **Ab Produktiv-Launch (Hetzner Object Storage)**: Hetzner verantwortet Redundanz und Replikation innerhalb Frankfurts. Zusätzlich läuft täglich ein `rclone sync` in einen zweiten Bucket (separates Hetzner-Projekt) als Off-Site-Kopie.
+- **Produktion (Hetzner Object Storage)**: Hetzner verantwortet Redundanz und Replikation innerhalb des Standorts. Die zusätzliche Off-Site-Kopie – täglich ein `rclone sync` in einen zweiten Bucket, separates Hetzner-Projekt – ist noch **nicht eingerichtet** und steht als offener Punkt in §16. Das Server-Backup deckt den Speicher seit dem Wechsel nicht mehr mit ab; ein Löschen im Bucket ist ohne diese Kopie endgültig.
+- **Entwicklung (RustFS)**: Daten liegen im Docker Volume `rustfs_dev_data` und sind Testdaten – kein Backup nötig, der Seed legt sie neu an.
 
 ```bash
 # Beispiel rclone Cron (täglich 03:00) – gilt für beide Varianten
@@ -1069,6 +1070,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 |---|---|---|---|
 | 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.hxroom.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
 | 02 | **Verschlüsselung der Sitzungsnotizen** | `session_notes.content` liegt als JSONB im Klartext, geschützt wie die übrigen Fachdaten (Server, Netz, Backups). Coaching-Notizen können Gesundheitsdaten nach Art. 9 DSGVO enthalten; eine zusätzliche Verschlüsselung auf Anwendungsebene (z. B. AES-256-GCM, Schlüssel außerhalb der DB) wurde bei der Umsetzung bewusst zurückgestellt. Nachrüsten heißt: Spalte umschreiben, Schlüsselverwaltung und Backup-Wiederherstellung mitdenken, Suche im Inhalt entfällt. | Vor dem Start mit echten Coaches entscheiden |
+| 03 | **Off-Site-Kopie des Objektspeichers** | Seit dem Wechsel auf Hetzner Object Storage (§10) deckt das Server-Backup die Dateien nicht mehr mit ab, und die in §13 vorgesehene tägliche Kopie in einen zweiten Bucket läuft noch nicht. Ein versehentliches Löschen ist damit endgültig. Mit den Chat-Dateien aus B7 liegen dort erstmals Daten von Klienten. | Vor dem Start mit echten Coaches |
 
 ---
 
@@ -1077,7 +1079,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 - **Server ausschließlich Hetzner Deutschland** (Nürnberg / Falkenstein)
 - **LiveKit self-hosted** auf demselben Hetzner-Projekt → Mediendaten verlassen nie Deutschland
 - **Whisper self-hosted** → Audiodaten und Transkripte bleiben auf Hetzner
-- **Object Storage** → alle Dateien (Logos, Recordings, Exports) in der EU, S3-kompatibel. Entwicklung & Pre-Launch: **RustFS** self-hosted auf Hetzner; ab Produktiv-Launch: **Hetzner Object Storage** (EU-Frankfurt). Gleiches Key-Schema in beiden Phasen.
+- **Object Storage** → alle Dateien (Logos, Recordings, Exports) in Deutschland, S3-kompatibel: **Hetzner Object Storage** (Falkenstein) in Produktion, **RustFS** self-hosted in der Entwicklung. Gleiches Key-Schema in beiden Umgebungen, Bucket in beiden privat.
 - **Brevo (französisch, EU-Server)** → E-Mail-Versand (transaktional + Newsletter) vollständig in der EU, AVV abgeschlossen
 - **Ionos Mail Business (Deutschland)** → E-Mail-Empfang / Postfächer für `kontakt@hxroom.de` etc., vollständig EU
 - **Stripe** mit EU-Entities und SCCs → DSGVO-konform für Zahlungsdaten

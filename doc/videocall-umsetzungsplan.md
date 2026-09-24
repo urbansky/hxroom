@@ -399,16 +399,26 @@ Zweck laut §5a: der Fall, dass der Ton ausfällt („kannst du mich hören?"), 
 - Die Signatur legt die Antwort fest: `ResponseContentDisposition: attachment` mit dem ursprünglichen Dateinamen, `ResponseContentType` mit dem gespeicherten statt des mitgeschickten Typs, `ResponseCacheControl: private, no-store`. Eine hochgeladene Datei wird damit nie als Seite geöffnet. `X-Content-Type-Options: nosniff` lässt sich so nicht setzen, und davor sitzt kein eigener Proxy mehr. Das trägt die Prüfung der Dateisignatur beim Hochladen: Eine HTML-Datei kommt gar nicht erst in den Bucket.
 - Signiert wird mit demselben `S3Client`, der auch schreibt. Ein zweiter Endpunkt ist nicht nötig, denn die Adresse ist auf beiden Seiten vom Browser aus erreichbar: lokal `http://localhost:9000` (RustFS, Port an `127.0.0.1` gebunden), auf dem Server der öffentliche Endpunkt von Hetzner.
 
-**Voraussetzung: Hetzner Object Storage auf dem Server** (`technisches-konzept.md` §4, §10, §13 und §17 sowie `s3-verzeichnisschema.md` werden nachgezogen)
+#### Voraussetzung: Hetzner Object Storage statt RustFS *(im Repo umgesetzt 2026-09-24, Server steht aus)*
 
-- **Bucket anlegen**, privat, ohne Versionierung, am Standort des Servers (Falkenstein `fsn1` oder Nürnberg `nbg1`). Helsinki kommt nicht in Frage, denn §17 sagt „ausschließlich Deutschland". Nebenbei korrigieren: Die Dokumente sprechen von „EU-Frankfurt", einen Standort Frankfurt hat Hetzner Object Storage nicht.
-- **Schlüssel** über die Hetzner Console, eigens für die API. Prüfen, ob Hetzner ihn auf den Bucket beschränken kann; wenn nicht, gehört das Projekt allein HxRoom.
-- **Compose:** In `infra/docker-compose.yml` kommen `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE` und `S3_BUCKET` aus der `.env`, statt fest auf `rustfs:9000` zu zeigen. `rustfs`, `rustfs-perms` und `rustfs-createbuckets` entfallen dort samt `depends_on` und Volume. `infra/.env.example` bekommt die S3-Werte statt `RUSTFS_*`. `docker-compose.dev.yml` und `apps/api/.env.example` bleiben bei RustFS.
-- **Bestand umziehen:** Auf dem Server liegen bisher nur Profilbilder. Sie kommen einmalig per `rclone sync` von RustFS zu Hetzner, danach wird umgestellt. Erst wenn die Profilbilder über die Buchungsseite wieder laden, wird das RustFS-Volume gelöscht.
-- **CORS ist nicht nötig:** Der Download ist eine Navigation, kein `fetch`.
-- **AVV:** Prüfen, ob der bestehende AVV mit Hetzner Object Storage umfasst. In §17 und der Liste externer Dienste (§2) steht es dann als in Betrieb.
-- Der Avatar bleibt beim Weg über die API. Von den beiden Gründen in `s3-verzeichnisschema.md` gilt auf dem Server nur noch der erste (Crawler und anonyme Besucher brauchen eine dauerhafte URL); der zweite, RustFS nur an `127.0.0.1`, wird dort gestrichen.
-- Nicht Teil von B7: die tägliche Off-Site-Kopie in einen zweiten Bucket aus §13. Mit Chat-Dateien liegen erstmals Klientendaten im Speicher; sie kommt deshalb als offener Punkt nach §16, falls sie nicht vorher eingerichtet wird.
+Vorgezogen, weil der Chat als erstes Feature Dateien von Klienten ablegt und Presigned URLs einen erreichbaren Speicher brauchen. **Ohne Datenmigration** – auf dem Server lagen nur Testdateien.
+
+Im Repo erledigt:
+
+- **`infra/docker-compose.yml`:** `rustfs`, `rustfs-perms` und `rustfs-createbuckets` sind entfallen, samt `depends_on` und Volume `rustfs_data`. Die sechs `S3_*`-Variablen der API kommen jetzt aus der `.env`, statt fest auf `rustfs:9000` zu zeigen. `docker-compose.dev.yml` und `apps/api/.env.example` bleiben unverändert bei RustFS – lokal ändert sich nichts.
+- **`infra/.env.example`:** `RUSTFS_ACCESS_KEY`/`RUSTFS_SECRET_KEY` sind den sechs `S3_*`-Variablen gewichen, mit `fsn1` als Vorgabe.
+- **Doku nachgezogen:** `technisches-konzept.md` §2, §4, §10, §13, §16 und §17 sowie `s3-verzeichnisschema.md`. Dabei zwei Dinge korrigiert: Der Standort hieß dort „EU-Frankfurt", den Hetzner für Object Storage nicht anbietet, und der zweite Grund für den Avatar-Endpunkt (RustFS nur an `127.0.0.1`) gilt nur noch lokal.
+- **`S3_FORCE_PATH_STYLE=false`** in Produktion: Hetzner empfiehlt den Bucket-Namen im Hostnamen. Lokal bleibt es bei `true`.
+
+Auf dem Server noch zu tun:
+
+- **Bucket** `hxroom-files` anlegen, privat, ohne Versionierung, am Standort des Servers (`fsn1` Falkenstein oder `nbg1` Nürnberg). Helsinki kommt nicht in Frage, §17 sagt „ausschließlich Deutschland".
+- **Schlüssel** in der Hetzner Console erzeugen und die sechs Werte in `infra/.env` eintragen. Prüfen, ob Hetzner den Schlüssel auf den Bucket beschränken kann; wenn nicht, gehört das Projekt allein HxRoom.
+- **Redeploy**, danach `booking_page.avatar_updated_at` einmalig auf `NULL` setzen. Die alten Profilbilder ziehen nicht mit um; ohne diesen Schritt erwartet die Oberfläche ein Bild, das es nicht mehr gibt. Der Endpunkt selbst antwortet in dem Fall schon richtig mit 404.
+- **RustFS-Volume** auf dem Server löschen (`docker volume rm hxroom_rustfs_data`), wenn der Stack ohne Fehler läuft.
+- **AVV:** Prüfen, ob der bestehende AVV mit Hetzner Object Storage umfasst.
+- **CORS** ist nicht nötig: Der Download ist eine Navigation, kein `fetch`.
+- Nicht Teil davon: die tägliche Off-Site-Kopie in einen zweiten Bucket aus §13. Sie steht als offener Punkt in §16 – seit dem Wechsel deckt das Server-Backup die Dateien nicht mehr mit ab.
 
 **Endpunkte**, die Paare getrennt nach dem Muster aus A1 (Coach mit `AuthGuard`, Klient über den Token):
 

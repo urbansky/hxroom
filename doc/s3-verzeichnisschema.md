@@ -1,5 +1,5 @@
 # HxRoom – S3-Verzeichnisschema
-*Version 1.2 · Stand: Juli 2026 · S3-kompatibel; Entwicklung & Pre-Launch-Server: RustFS self-hosted, ab Produktiv-Launch: Hetzner Object Storage*
+*Version 1.3 · Stand: September 2026 · S3-kompatibel; Produktion: Hetzner Object Storage (Falkenstein), Entwicklung: RustFS self-hosted*
 
 ---
 
@@ -66,7 +66,7 @@ Enthält die öffentlich sichtbaren Assets des Coachs. Wird beim Anlegen des Coa
 
 Ein Überschreiben ersetzt die Datei unter demselben Pfad – kein Versioning nötig.
 
-> **Avatar-Zugriff (implementiert):** Coach-Profilbilder werden bewusst **nicht** per Presigned URL ausgeliefert, sondern über einen dedizierten öffentlichen Endpoint der NestJS-API (`GET /api/v1/booking-page/avatar/:organizationId`), der das Objekt intern von S3 liest und streamt. Gründe: (1) diese Assets müssen auf der öffentlichen Buchungsseite für anonyme Besucher und für Social-Preview-Crawler sichtbar sein, wofür ablaufende Presigned URLs ungeeignet sind; (2) RustFS ist in Produktion nur an `127.0.0.1:9000` gebunden, ein Presigned-URL-Ansatz würde einen zusätzlichen öffentlichen Reverse-Proxy auf das Storage-Backend erfordern. Cache-Busting erfolgt über einen `?v=`-Query-Parameter (Zeitstempel des letzten Uploads), nicht über URL-Ablauf.
+> **Avatar-Zugriff (implementiert):** Coach-Profilbilder werden bewusst **nicht** per Presigned URL ausgeliefert, sondern über einen dedizierten öffentlichen Endpoint der NestJS-API (`GET /api/v1/booking-page/avatar/:organizationId`), der das Objekt intern von S3 liest und streamt. Grund: Diese Assets müssen auf der öffentlichen Buchungsseite für anonyme Besucher und für Social-Preview-Crawler sichtbar sein, wofür ablaufende Presigned URLs ungeeignet sind. Ein zweiter Grund – RustFS war in Produktion nur an `127.0.0.1:9000` gebunden – ist mit dem Wechsel auf Hetzner Object Storage entfallen; er bleibt für die lokale Entwicklung richtig. Cache-Busting erfolgt über einen `?v=`-Query-Parameter (Zeitstempel des letzten Uploads), nicht über URL-Ablauf.
 
 ---
 
@@ -249,7 +249,11 @@ Alle Dateien im Bucket sind **nicht öffentlich**. Zugriff erfolgt über **Presi
 - Versioning: **deaktiviert** (Überschreiben bei Profilbildern gewünscht)
 - Lifecycle-Regeln: noch offen – ggf. automatisches Löschen alter Aufzeichnungen nach X Monaten
 
-### Phasenmodell
+### Zwei Umgebungen
 
-- **Entwicklung & Pre-Launch-Server:** RustFS, self-hosted als Docker-Container (siehe `docker-compose-test-rustfs.yml`). Bucket `hxroom-files` wird beim Start automatisch angelegt.
-- **Ab Produktiv-Launch:** Wechsel auf Hetzner Object Storage (S3-kompatibel, EU-Frankfurt). Verzeichnisschema, Bucket-Name und Zugriffskonzept bleiben unverändert – Migration erfolgt über einen einmaligen Objekt-Sync (z. B. `rclone`) von RustFS nach Hetzner, anschließend Umstellung von `S3_ENDPOINT`/`S3_REGION`/`S3_FORCE_PATH_STYLE`.
+- **Produktion:** Hetzner Object Storage (S3-kompatibel, Falkenstein `fsn1`; Nürnberg `nbg1` wäre die Alternative, Helsinki ist wegen `technisches-konzept.md` §17 ausgeschlossen). Bucket und Schlüssel werden in der Hetzner Console angelegt, die Werte stehen in `infra/.env`.
+- **Entwicklung:** RustFS, self-hosted als Docker-Container in `infra/docker-compose.dev.yml`. Bucket `hxroom-files` wird beim Start automatisch angelegt, die Testschlüssel stehen fest in der Compose-Datei.
+
+Verzeichnisschema, Bucket-Name und Zugriffskonzept sind in beiden Umgebungen gleich; es unterscheiden sich nur `S3_ENDPOINT`, `S3_REGION`, `S3_FORCE_PATH_STYLE` und die Schlüssel.
+
+> **Umstellung am 2026-09-24:** Bis dahin lief RustFS auch auf dem Server. Der Wechsel geschah ohne Datenmigration – die dort liegenden Testdateien (Profilbilder) sind nicht mitgekommen. Ein Profilbild, dessen Objekt fehlt, liefert `GET /api/v1/booking-page/avatar/:organizationId` als 404 aus; die Spalte `booking_page.avatar_updated_at` gehört auf dem Server einmalig auf `NULL` gesetzt, damit die Oberfläche kein Bild erwartet.
