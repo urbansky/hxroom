@@ -25,7 +25,26 @@ const TOKEN_TTL = '10m';
  * Zugangsprüfung des CallService.
  */
 export function callRoomName(bookingId: string): string {
-  return `session_${bookingId}`;
+  return `${ROOM_PREFIX}${bookingId}`;
+}
+
+const ROOM_PREFIX = 'session_';
+
+/**
+ * Der Rückweg für die Webhooks (B6): Aus welchem Raum meldet LiveKit? Null für Räume, die
+ * nicht von HxRoom stammen – etwa ein Testraum aus dem LiveKit-CLI.
+ */
+export function bookingIdFromRoomName(room: string | undefined): string | null {
+  if (!room?.startsWith(ROOM_PREFIX)) return null;
+  const bookingId = room.slice(ROOM_PREFIX.length);
+  return bookingId || null;
+}
+
+/** Welche Rolle trägt diese Identität? Null für fremde, etwa die Gegenstelle des CLI. */
+export function roleFromIdentity(identity: string | undefined): CallRole | null {
+  if (identity?.startsWith('coach_')) return 'coach';
+  if (identity?.startsWith('client_')) return 'client';
+  return null;
 }
 
 /**

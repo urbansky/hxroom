@@ -1,0 +1,1 @@
+ALTER TABLE "bookings" ADD COLUMN "coach_left_at" timestamp;

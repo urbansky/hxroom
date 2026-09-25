@@ -27,3 +27,16 @@ logging:
   # Kein Logging von Teilnehmer-Identitäten in voller Ausführlichkeit: Die identity
   # trägt die bookingId bzw. userId (siehe technisches-konzept.md §8).
   json: false
+
+# Webhooks an die API (B6): Beitritt, Verlassen, Raum geschlossen – daraus entsteht das
+# Sitzungsende, wenn der Coach den Tab schließt. Intern über das Docker-Netz, nicht über
+# Caddy.
+#
+# api_key ist Pflicht (ohne ihn startet LiveKit nicht) und muss der Name eines Schlüssels
+# aus LIVEKIT_KEYS sein. Der steht in der .env, und LiveKit ersetzt in dieser Datei keine
+# Umgebungsvariablen – deshalb der Platzhalter, den docker-compose.yml beim Start des
+# Containers einsetzt.
+webhook:
+  api_key: __LIVEKIT_API_KEY__
+  urls:
+    - http://api:3000/api/v1/livekit/webhooks

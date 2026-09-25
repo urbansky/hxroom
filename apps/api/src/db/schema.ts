@@ -203,6 +203,11 @@ export const bookings = pgTable('bookings', {
   // clientTokenUsedAt (oben) hält den ersten Warteraum-Eintritt fest.
   admittedAt:         timestamp('admitted_at'),
   callEndedAt:        timestamp('call_ended_at'),
+  // Wann der Coach den LiveKit-Raum verlassen hat, ohne die Sitzung zu beenden (B6). Kommt
+  // er innerhalb der Nachfrist zurück, wird die Spalte wieder geleert; sonst beendet ein
+  // Lauf die Sitzung. In der Datenbank statt in einem Timer, damit die Nachfrist einen
+  // Neustart der API übersteht.
+  coachLeftAt:        timestamp('coach_left_at'),
   // Absagedetails. Ohne sie wäre 'cancelled' ein Sammelstatus, in dem eine Absage des
   // Coachs, eine Absage des Klienten und der TTL-Verfall nicht mehr auseinanderzuhalten
   // sind – der Coach sieht so im Kalender, was tatsächlich passiert ist.

@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { raw } from 'express';
 import { AppModule } from './app.module';
 import { toNodeHandler } from 'better-auth/node';
 import { AUTH, type Auth } from './auth/auth.module';
@@ -37,6 +38,10 @@ async function bootstrap() {
     credentials: true,
   });
   app.use('/api/auth', toNodeHandler(auth));
+  // LiveKit-Webhooks (B6): Die Signatur gilt für die Bytes, wie LiveKit sie geschickt hat.
+  // Deshalb hier der unveränderte Body, nur für diesen Pfad – und für den Typ, den LiveKit
+  // setzt; `application/webhook+json` erkennt der JSON-Parser von Nest ohnehin nicht.
+  app.use('/api/v1/livekit/webhooks', raw({ type: 'application/webhook+json', limit: '1mb' }));
   app.setGlobalPrefix('api/v1');
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port).catch((err: NodeJS.ErrnoException) => {

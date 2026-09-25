@@ -346,15 +346,31 @@ Das Panel „Klient" der Seitenleiste zeigt echte Angaben statt der Beispielwert
 
 Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klient mit langer Historie (Sitzung 39, nächster Termin, interne Notiz, drei Kacheln mit gekürzter und aufklappbarer Notiz, eine davon „Keine Notiz") und ein Klient ohne Historie („Sitzung 1", „Keiner geplant", „Das ist die erste Sitzung"). Ein Tab-Wechsel löst keinen zweiten Abruf aus. API per `curl`: Buchungsnotiz und nächster Termin am anstehenden Seed-Termin, fremde und unbekannte Buchung 404. Die Umwandlung in Klartext ist per Spec abgedeckt.
 
-### B6 · Robustheit und autoritatives Sitzungsende
+### B6 · Robustheit und autoritatives Sitzungsende *(Webhooks umgesetzt 2026-09-25; Reconnect, doppelte Tabs und No-Show offen)*
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
 
-### B7 · Chat im Call, mit geteilten Dateien *(Nachrichten umgesetzt 2026-09-24, Dateien folgen)*
+#### Nachtrag: Sitzungsende über Webhooks *(umgesetzt 2026-09-25)*
+
+Bisher endete eine Sitzung nur über „Sitzung beenden". Schloss der Coach einfach den Tab, blieb sie offen: Der Klient saß allein im Raum, und der Termin galt nie als gehalten.
+
+**Entschieden:** Die Sitzung endet, wenn der Coach den Raum verlässt und **innerhalb von 2 Minuten** nicht zurückkommt – auch wenn der Klient noch im Raum ist. Ein Reload, ein Browser-Absturz oder ein WLAN-Wechsel beendet nichts. Dass der Klient geht, beendet in keinem Fall etwas; er kann über seinen Link zurück.
+
+- **Webhook-Endpunkt** `POST /api/v1/livekit/webhooks` ohne AuthGuard, aber mit Signaturprüfung (`WebhookReceiver`). Dafür kommt der Body für diesen einen Pfad unverändert an (`express.raw` in `main.ts`, Typ `application/webhook+json`). Ohne oder mit falscher Signatur: 401.
+- **Was ein Ereignis bedeutet**, steht als reine Funktion in `call/call-presence.ts` (mit Spec): Coach geht → Nachfrist beginnt (`bookings.coach_left_at`), Coach kommt → Nachfrist hinfällig, Raum geschlossen → Rückfallebene, falls das Gehen nicht ankam. Auch dann wird erst nach der Nachfrist beendet; sonst endete eine Sitzung nach 20 Sekunden, nur weil beide gleichzeitig das Netz verloren.
+- **Ein Lauf alle 30 Sekunden** beendet abgelaufene Nachfristen – in der Datenbank statt in einem Timer, damit das einen Neustart der API übersteht. **Vor dem Beenden fragt er LiveKit, ob der Coach nicht doch im Raum ist.** Das ist nicht Vorsicht, sondern nötig: Beim Reload und beim zweiten Tab meldet LiveKit ebenfalls „Coach verlässt den Raum", und die Webhooks kommen nicht zwingend in der Reihenfolge an, in der es passiert ist. Ist LiveKit nicht erreichbar, wird nicht beendet, sondern im nächsten Lauf erneut geprüft.
+- **Beendet wird wie beim Klick** (`CallService.endAfterCoachLeft`): gehalten, `completed`, Meldung auf dem Ereigniskanal, der Klient landet auf der Danke-Seite. Unter der Sperre der Buchungszeile wird noch einmal geprüft, ob die Nachfrist noch läuft.
+- **LiveKit-Konfiguration:** `webhook.api_key` ist Pflicht – ohne ihn startet LiveKit nicht. Lokal steht dort `hxroom_dev`, die Adresse ist `host.docker.internal:3000`. Im Betrieb kommt der Schlüsselname aus der `.env`, LiveKit ersetzt aber in der Datei keine Umgebungsvariablen. `docker-compose.yml` startet den Container deshalb über eine Shell, die den Platzhalter `__LIVEKIT_API_KEY__` in eine Kopie einsetzt; die Adresse ist `http://api:3000` im Docker-Netz, also kein neuer Port und kein Weg über Caddy. Lokal mit dem Produktions-Image und der Produktionsdatei nachgestellt: Der Schlüssel wird eingesetzt, LiveKit startet.
+
+Abnahme mit drei Sitzungen gleichzeitig und echter Nachfrist: **A** – der Coach schließt den Tab: Nach sechs Sekunden läuft die Nachfrist, beendet ist noch nichts; nach Ablauf ist die Sitzung `completed` und der Klient auf der Danke-Seite. **B** – der Coach lädt neu: keine Nachfrist, die Sitzung läuft weiter. **C** – der Coach öffnet einen zweiten Tab: läuft weiter. Im Log sieht man, warum der Blick in den Raum nötig ist: Auch bei B und C kam „Coach verlässt den Raum" an, erst der folgende Beitritt hob die Nachfrist auf. Das Sicherheitsnetz gesondert: Bei laufender Sitzung eine seit drei Minuten „abgelaufene" Nachfrist in die Datenbank geschrieben – der nächste Lauf fand den Coach im Raum, hob die Nachfrist auf und beendete nichts.
+
+Offen in B6: was der Klient während der Nachfrist sieht (heute „… verbindet sich"), das Reconnect-Verhalten, eine verständliche Meldung beim zweiten Tab und der No-Show.
+
+### B7 · Chat im Call, mit geteilten Dateien ✅ *(umgesetzt 2026-09-24/25)*
 
 Der Chat aus `project.md` §5a wird echt: Nachrichten erreichen die Gegenseite, und **Chatverlauf und geteilte Dateien werden gespeichert** und bleiben der Sitzung zugeordnet. Unabhängig von B6, kann auch davor gebaut werden.
 
-Gebaut in zwei Teilen. **Teil 1 – Textnachrichten – steht**, siehe den Nachtrag am Ende dieses Abschnitts; der übrige Plan beschreibt weiterhin auch Teil 2 (Dateien).
+Gebaut in zwei Teilen – Textnachrichten und Dateien –, beide umgesetzt; siehe die Nachträge am Ende dieses Abschnitts. Der Plan darüber ist der ursprüngliche und an einzelnen Stellen überholt (etwa „Chatverlauf im Termin-Slideover", der noch aussteht).
 
 **Getroffene Entscheidungen** *(2026-09-17)*
 
@@ -401,7 +417,7 @@ Zweck laut §5a: der Fall, dass der Ton ausfällt („kannst du mich hören?"), 
 - Die Signatur legt die Antwort fest: `ResponseContentDisposition: attachment` mit dem ursprünglichen Dateinamen, `ResponseContentType` mit dem gespeicherten statt des mitgeschickten Typs, `ResponseCacheControl: private, no-store`. Eine hochgeladene Datei wird damit nie als Seite geöffnet. `X-Content-Type-Options: nosniff` lässt sich so nicht setzen, und davor sitzt kein eigener Proxy mehr. Das trägt die Prüfung der Dateisignatur beim Hochladen: Eine HTML-Datei kommt gar nicht erst in den Bucket.
 - Signiert wird mit demselben `S3Client`, der auch schreibt. Ein zweiter Endpunkt ist nicht nötig, denn die Adresse ist auf beiden Seiten vom Browser aus erreichbar: lokal `http://localhost:9000` (RustFS, Port an `127.0.0.1` gebunden), auf dem Server der öffentliche Endpunkt von Hetzner.
 
-#### Voraussetzung: Hetzner Object Storage statt RustFS *(im Repo umgesetzt 2026-09-24, Server steht aus)*
+#### Voraussetzung: Hetzner Object Storage statt RustFS ✅ *(umgesetzt 2026-09-24, auf dem Server eingerichtet)*
 
 Vorgezogen, weil der Chat als erstes Feature Dateien von Klienten ablegt und Presigned URLs einen erreichbaren Speicher brauchen. **Ohne Datenmigration** – auf dem Server lagen nur Testdateien.
 

@@ -148,9 +148,43 @@ export class CallService {
     return this.transition(organizationId, userId, bookingId, {
       alreadyDone: (state) => state === 'ended',
       allowed: canEnd,
-      values: () => ({ callEndedAt: new Date(), status: 'completed' as const }),
+      values: () => ({ callEndedAt: new Date(), status: 'completed' as const, coachLeftAt: null }),
       conflict: 'Session is not running',
     });
+  }
+
+  /**
+   * Die Sitzung endet, weil der Coach gegangen und nicht zurückgekommen ist (B6) – der
+   * Webhook als zweite Quelle neben dem Knopf „Sitzung beenden".
+   *
+   * Dieselbe Wirkung wie der Klick: gilt als gehalten, der Klient bekommt über den
+   * Ereigniskanal den Endzustand und landet auf der Danke-Seite.
+   *
+   * Unter der Sperre wird noch einmal geprüft, ob die Nachfrist noch läuft. Zwischen der
+   * Abfrage des Laufs und diesem Aufruf kann der Coach zurückgekommen sein oder regulär
+   * beendet haben – dann bleibt alles, wie es ist. Bewusst nicht über `resolveCallState`:
+   * Ist das Zugangsfenster inzwischen abgelaufen (etwa weil die API länger aus war), wäre
+   * der Zustand „expired", die Sitzung aber trotzdem gehalten worden.
+   */
+  async endAfterCoachLeft(bookingId: string): Promise<boolean> {
+    const changed = await this.db.transaction(async (tx) => {
+      const [row] = await tx.select().from(bookings).where(eq(bookings.id, bookingId)).for('update');
+      const stillAbandoned = !!row
+        && !!row.coachLeftAt
+        && !!row.admittedAt
+        && !row.callEndedAt
+        && row.status === 'confirmed';
+      if (!stillAbandoned) return false;
+
+      await tx
+        .update(bookings)
+        .set({ callEndedAt: new Date(), status: 'completed', coachLeftAt: null })
+        .where(eq(bookings.id, bookingId));
+      return true;
+    });
+
+    if (changed) this.events.notifyChanged(bookingId);
+    return changed;
   }
 
   // --- intern ---

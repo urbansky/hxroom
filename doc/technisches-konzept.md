@@ -491,6 +491,15 @@ Minuten Laufzeit und bis zu einer Stunde Wartezeit ohne Sonderweg auflöst.
 
 **Zwei Domains sind für LiveKit unkritisch:** Die Raumzugehörigkeit hängt ausschließlich am `room`-Grant im JWT; von welcher Origin die Seite ausgeliefert wurde, wertet LiveKit nicht aus. Das Signaling läuft als WebSocket ohne CORS-Preflight, die Medien als ICE/DTLS/SRTP – auf dieser Ebene existiert der Origin-Begriff gar nicht. Coach und Klient können sich also problemlos von `app.hxroom.de` und `[slug].hxroom.de` aus in denselben Raum verbinden.
 
+### Sitzungsende und Webhooks
+
+Eine Sitzung endet auf zwei Wegen, mit derselben Wirkung (gehalten, `completed`, Klient auf der Danke-Seite):
+
+- **Der Coach klickt „Sitzung beenden"** – der Normalfall.
+- **Der Coach verlässt den Raum und kommt innerhalb von 2 Minuten nicht zurück** (umgesetzt 2026-09-25, `call/call-presence.service.ts`). LiveKit meldet Beitritt, Verlassen und das Schließen eines Raums per Webhook an `POST /api/v1/livekit/webhooks`; das Verlassen trägt `bookings.coach_left_at` ein, ein Beitritt leert die Spalte wieder, und ein Lauf alle 30 Sekunden beendet, was abgelaufen ist. Vor dem Beenden fragt er LiveKit selbst, ob der Coach nicht doch im Raum ist – Webhooks kommen nicht zwingend in der richtigen Reihenfolge an, etwa beim zweiten Tab (`DUPLICATE_IDENTITY`). Dass der Klient geht, beendet nichts.
+
+Der Webhook-Endpunkt hat keinen AuthGuard; sein Ausweis ist die Signatur von LiveKit (JWT mit dem API-Schlüssel und der SHA-256-Summe des Bodys), geprüft mit dem `WebhookReceiver` des SDK auf dem unveränderten Body. LiveKit ruft ihn über das Docker-Netz (`http://api:3000`), nicht über Caddy. `livekit.yaml` braucht dafür den Namen des Schlüssels; weil LiveKit in der Datei keine Umgebungsvariablen ersetzt, setzt der Start des Containers ihn aus `LIVEKIT_API_KEY` in eine Kopie ein.
+
 ### Warteraum-Flow
 
 Der Warteraum ist **kein separater LiveKit Room**, sondern ein Frontend-Zustand:

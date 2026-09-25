@@ -19,3 +19,13 @@ rtc:
 logging:
   level: debug
   json: false
+
+# Webhooks an die API (B6): Beitritt, Verlassen, Raum geschlossen. Die API läuft lokal auf
+# dem Host, nicht im Docker-Netz – daher host.docker.internal.
+#
+# api_key ist Pflicht (ohne ihn startet LiveKit nicht): Mit dem Schlüssel dieses Namens
+# signiert der Server die Webhooks, und die API prüft mit demselben.
+webhook:
+  api_key: hxroom_dev
+  urls:
+    - http://host.docker.internal:3000/api/v1/livekit/webhooks

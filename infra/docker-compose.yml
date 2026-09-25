@@ -59,11 +59,18 @@ services:
   # Hetzner-Cloud-Firewall, sonst kommt zwar die Verbindung zustande, aber kein Bild.
   livekit:
     image: livekit/livekit-server:v1.13.6
-    command: --config /etc/livekit.yaml
+    # Der Name des Schlüssels steht in der .env, livekit.yaml braucht ihn aber für die
+    # Webhooks (B6) – und LiveKit ersetzt dort keine Umgebungsvariablen. Deshalb setzt der
+    # Start ihn in eine Kopie ein. $$ lässt die Variable für die Shell im Container stehen,
+    # statt sie schon beim Einlesen der Compose-Datei aufzulösen.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - sed "s/__LIVEKIT_API_KEY__/$${LIVEKIT_API_KEY}/" /etc/livekit.yaml > /tmp/livekit.yaml && exec /livekit-server --config /tmp/livekit.yaml
     environment:
       # Quotes sind Pflicht: Ohne sie liest YAML den Doppelpunkt als Mapping statt als
       # Teil des Wertes, und LiveKit startet ohne Schlüssel.
       - "LIVEKIT_KEYS=${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
     volumes:
       - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
     ports:
