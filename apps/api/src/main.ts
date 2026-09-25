@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { raw } from 'express';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { toNodeHandler } from 'better-auth/node';
 import { AUTH, type Auth } from './auth/auth.module';
@@ -8,7 +8,7 @@ import { runMigrations } from './db/migrate';
 async function bootstrap() {
   await runMigrations();
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const auth = app.get<Auth>(AUTH);
 
@@ -39,9 +39,13 @@ async function bootstrap() {
   });
   app.use('/api/auth', toNodeHandler(auth));
   // LiveKit-Webhooks (B6): Die Signatur gilt für die Bytes, wie LiveKit sie geschickt hat.
-  // Deshalb hier der unveränderte Body, nur für diesen Pfad – und für den Typ, den LiveKit
-  // setzt; `application/webhook+json` erkennt der JSON-Parser von Nest ohnehin nicht.
-  app.use('/api/v1/livekit/webhooks', raw({ type: 'application/webhook+json', limit: '1mb' }));
+  // Deshalb der unveränderte Body für genau den Typ, den nur LiveKit setzt
+  // (`application/webhook+json`) – den erkennt der JSON-Parser von Nest ohnehin nicht.
+  //
+  // Über Nest und nicht über `express` direkt: express ist keine eigene Abhängigkeit der
+  // API. Lokal fand Node es im gemeinsamen node_modules des Monorepos, im Docker-Image nicht
+  // – die API startete dort gar nicht erst.
+  app.useBodyParser('raw', { type: 'application/webhook+json', limit: '1mb' });
   app.setGlobalPrefix('api/v1');
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port).catch((err: NodeJS.ErrnoException) => {
