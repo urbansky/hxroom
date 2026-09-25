@@ -85,4 +85,19 @@ export interface CallChatFile {
   name: string
   size: number
   href?: string
+  /**
+   * Was der Chat daraus macht: Ein Bild mit Vorschau steht als Bild da und öffnet die
+   * Großansicht, ein PDF öffnet der Viewer des Browsers in einem neuen Tab, alles andere
+   * wird heruntergeladen.
+   */
+  kind: 'image' | 'pdf' | 'file'
+  /** Das kleine Vorschaubild – nur bei Bildern, und nur wenn der Server eines erzeugt hat. */
+  preview?: { href: string; width: number; height: number }
+}
+
+/** Ein Bild in der Großansicht. `href` lädt das Original, nicht das Vorschaubild. */
+export interface CallViewerImage {
+  id: string
+  name: string
+  href: string
 }

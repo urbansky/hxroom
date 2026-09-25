@@ -634,6 +634,9 @@ export const callChatMessageSchema = z.object({
     name:     z.string(),
     mimeType: z.string(),
     size:     z.number(),
+    // Maße des Vorschaubilds, nur bei Bildern. Null heißt: kein Vorschaubild, die Datei
+    // erscheint als Zeile mit Name und Größe.
+    preview:  z.object({ width: z.number(), height: z.number() }).nullable(),
   }).nullable(),
 });
 export type CallChatMessageResponse = z.infer<typeof callChatMessageSchema>;

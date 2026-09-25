@@ -14,6 +14,7 @@ export { default as CallMicLevel } from './components/call/CallMicLevel.vue';
 export { namedDevices } from './components/call/devices';
 
 export type {
+  CallChatFile,
   CallChatMessage,
   CallConnection,
   CallDevice,

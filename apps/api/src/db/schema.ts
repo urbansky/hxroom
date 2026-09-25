@@ -283,6 +283,12 @@ export const sessionChatFiles = pgTable('session_chat_files', {
   mimeType:       text('mime_type').notNull(),
   extension:      text('extension').notNull(),
   sizeBytes:      integer('size_bytes').notNull(),
+  // Maße des Vorschaubilds, nur bei Bildern. Gesetzt heißt: Es gibt ein Vorschaubild unter
+  // {…}/attachments/{id}-preview.webp. Die Maße gehen mit hinaus, damit der Chat den Platz
+  // reserviert, bevor das Bild geladen ist – sonst verschöbe jedes nachladende Bild den
+  // Verlauf, und das Mitscrollen ans Ende liefe ins Leere.
+  previewWidth:   integer('preview_width'),
+  previewHeight:  integer('preview_height'),
   createdAt:      timestamp('created_at').notNull().defaultNow(),
 }, (table) => [
   index('session_chat_files_booking_idx').on(table.bookingId),

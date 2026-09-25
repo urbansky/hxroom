@@ -1,7 +1,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { apiUrl } from '../utils/api';
 import type { CallChatMessageResponse, CallChatMessagesResponse, CallChatSender } from '@hxroom/shared';
-import type { CallChatMessage } from '@hxroom/ui';
+import type { CallChatFile, CallChatMessage } from '@hxroom/ui';
 
 /**
  * Der Ereignisstrom meldet hierher, dass es neue Nachrichten gibt (B7). Ein Zähler auf
@@ -18,6 +18,27 @@ export function notifyCallChatEvent(): void {
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Was der Chat aus einer Datei macht. `href` und die Vorschau zeigen auf die API; `query`
+ * hängt den Token an – weder ein Link noch ein `<img>` kann Kopfzeilen setzen.
+ */
+function chatFile(
+  file: NonNullable<CallChatMessageResponse['file']>,
+  href: string,
+  query: string,
+): CallChatFile {
+  const kind = file.mimeType.startsWith('image/') ? 'image' : file.mimeType === 'application/pdf' ? 'pdf' : 'file';
+  return {
+    name: file.name,
+    size: file.size,
+    kind,
+    href: `${href}${query}`,
+    preview: file.preview
+      ? { href: `${href}/preview${query}`, width: file.preview.width, height: file.preview.height }
+      : undefined,
+  };
 }
 
 /**
@@ -57,12 +78,16 @@ export function useCallChat(options: {
    * Gespeicherte Nachrichten einsortieren. Die eigene, längst angezeigte Nachricht wird über
    * `clientMessageId` wiedererkannt und ersetzt – sonst stünde sie zweimal da, sobald das
    * Nachholen die Antwort auf das eigene POST überholt.
+   *
+   * Den Zeiger bewegt nur das Nachholen, nie die Antwort auf das eigene Senden. Sonst
+   * spränge er über eine Nachricht der Gegenseite hinweg, die kurz davor gespeichert, aber
+   * noch nicht abgeholt wurde – und die käme erst mit dem nächsten Neuladen.
    */
-  function apply(rows: CallChatMessageResponse[]): void {
+  function apply(rows: CallChatMessageResponse[], source: 'fetch' | 'own'): void {
     let fromPeer: string | null = null;
 
     for (const row of rows) {
-      if (row.seq > lastSeq) lastSeq = row.seq;
+      if (source === 'fetch' && row.seq > lastSeq) lastSeq = row.seq;
 
       const message: CallChatMessage = {
         id: row.clientMessageId,
@@ -72,11 +97,7 @@ export function useCallChat(options: {
         // Der Link zeigt auf die API, nicht auf den Speicher: Sie prüft beim Klick und leitet
         // dann auf einen signierten, kurzlebigen Link weiter.
         file: row.file
-          ? {
-              name: row.file.name,
-              size: row.file.size,
-              href: `${fileBase}/${row.file.id}?token=${encodeURIComponent(options.token)}`,
-            }
+          ? chatFile(row.file, `${fileBase}/${row.file.id}`, `?token=${encodeURIComponent(options.token)}`)
           : undefined,
       };
 
@@ -109,7 +130,7 @@ export function useCallChat(options: {
 
       const res = await fetch(`${base}?${query}`);
       if (!res.ok) throw new Error('failed');
-      apply(((await res.json()) as CallChatMessagesResponse).messages);
+      apply(((await res.json()) as CallChatMessagesResponse).messages, 'fetch');
       loadError.value = false;
     } catch {
       loadError.value = true;
@@ -137,7 +158,7 @@ export function useCallChat(options: {
         body: JSON.stringify({ token: options.token, clientMessageId, text }),
       });
       if (!res.ok) throw new Error('failed');
-      apply([(await res.json()) as CallChatMessageResponse]);
+      apply([(await res.json()) as CallChatMessageResponse], 'own');
     } catch {
       markFailed(clientMessageId);
     }
@@ -166,7 +187,7 @@ export function useCallChat(options: {
         return;
       }
       pendingFiles.delete(clientMessageId);
-      apply([(await res.json()) as CallChatMessageResponse]);
+      apply([(await res.json()) as CallChatMessageResponse], 'own');
     } catch {
       errorMessage.value = 'Die Datei konnte nicht gesendet werden.';
       markFailed(clientMessageId);
@@ -186,7 +207,7 @@ export function useCallChat(options: {
       time: formatTime(new Date().toISOString()),
       status: 'sending',
       // Ohne href: Bis die Datei liegt, gibt es nichts herunterzuladen.
-      file: { name: file.name, size: file.size },
+      file: { name: file.name, size: file.size, kind: 'file' },
     });
     draft.value = '';
     void deliverFile(clientMessageId, text, file);

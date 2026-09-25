@@ -98,6 +98,33 @@ onMounted(() => {
   onUnmounted(() => observer.disconnect())
 })
 
+// Eine Datei, die irgendwo außerhalb einer Ablagefläche losgelassen wird, öffnet der Browser
+// selbst – im selben Tab. Das ist eine Navigation, und an `beforeunload`/`pagehide` hängt
+// livekit-client (`disconnectOnPageLeave`): Das Gespräch wäre beendet, weil jemand beim
+// Ziehen in den Chat ein Stück danebengelegt hat.
+//
+// Deshalb gilt während des Calls die ganze Seite als Ablagefläche, die nichts annimmt.
+// Wo tatsächlich etwas angenommen wird – im Chat –, behandelt das Panel das Ereignis vorher.
+function refuseStrayFileDrop(event: DragEvent) {
+  if (!Array.from(event.dataTransfer?.types ?? []).includes('Files')) return
+  // Hat das Chat-Panel das Ereignis schon angenommen, bleibt dessen Zeiger („kopieren")
+  // stehen. Sonst zeigt der Zeiger, dass hier nichts abgelegt werden kann.
+  const acceptedBelow = event.defaultPrevented
+  event.preventDefault()
+  if (event.type === 'dragover' && event.dataTransfer && !acceptedBelow) {
+    event.dataTransfer.dropEffect = 'none'
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('dragover', refuseStrayFileDrop)
+  window.addEventListener('drop', refuseStrayFileDrop)
+})
+onUnmounted(() => {
+  window.removeEventListener('dragover', refuseStrayFileDrop)
+  window.removeEventListener('drop', refuseStrayFileDrop)
+})
+
 // ---------------------------------------------------------------------------
 // Seitenleiste: ein Slideover, das über der Bühne liegt
 // ---------------------------------------------------------------------------

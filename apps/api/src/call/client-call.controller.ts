@@ -100,8 +100,8 @@ export class ClientCallController {
   }
 
   /**
-   * Weiterleitung auf einen frisch signierten Link. Der Token steht in der Query, weil ein
-   * Download-Link keine Kopfzeilen setzen kann – wie beim Ereignisstrom.
+   * Weiterleitung auf einen signierten Link. Der Token steht in der Query, weil weder ein
+   * Link noch ein `<img>` Kopfzeilen setzen kann – wie beim Ereignisstrom.
    */
   @Get(':id/waiting-room/files/:fileId')
   @Redirect(undefined, HttpStatus.FOUND)
@@ -111,8 +111,21 @@ export class ClientCallController {
     @Query('token') token: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const url = await this.chatService.downloadUrlForClient(id, token ?? '', fileId);
-    res.set({ 'Cache-Control': 'private, no-store' });
-    return { url };
+    const signed = await this.chatService.fileUrlForClient(id, token ?? '', fileId, 'original');
+    res.set({ 'Cache-Control': signed.cacheControl });
+    return { url: signed.url };
+  }
+
+  @Get(':id/waiting-room/files/:fileId/preview')
+  @Redirect(undefined, HttpStatus.FOUND)
+  async previewFile(
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+    @Query('token') token: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const signed = await this.chatService.fileUrlForClient(id, token ?? '', fileId, 'preview');
+    res.set({ 'Cache-Control': signed.cacheControl });
+    return { url: signed.url };
   }
 }

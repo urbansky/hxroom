@@ -1,5 +1,5 @@
 import type { CallChatMessageResponse, CallChatMessagesResponse, CallChatSender } from '@hxroom/shared'
-import type { CallChatMessage } from '@hxroom/ui'
+import type { CallChatFile, CallChatMessage } from '@hxroom/ui'
 
 /**
  * Der Ereignisstrom meldet hierher, dass es neue Nachrichten gibt (B7). Ein Zähler auf
@@ -16,6 +16,27 @@ export function notifyCallChatEvent(): void {
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
+
+/**
+ * Was der Chat aus einer Datei macht. `href` und die Vorschau zeigen auf die API; `query`
+ * hängt den Ausweis an, wo einer nötig ist (hier: keiner, das Cookie reicht).
+ */
+function chatFile(
+  file: NonNullable<CallChatMessageResponse['file']>,
+  href: string,
+  query: string,
+): CallChatFile {
+  const kind = file.mimeType.startsWith('image/') ? 'image' : file.mimeType === 'application/pdf' ? 'pdf' : 'file'
+  return {
+    name: file.name,
+    size: file.size,
+    kind,
+    href: `${href}${query}`,
+    preview: file.preview
+      ? { href: `${href}/preview${query}`, width: file.preview.width, height: file.preview.height }
+      : undefined,
+  }
 }
 
 /**
@@ -63,12 +84,16 @@ export function useCallChat(options: {
    * Gespeicherte Nachrichten einsortieren. Die eigene, längst angezeigte Nachricht wird über
    * `clientMessageId` wiedererkannt und ersetzt – ohne sie stünde sie zweimal da, sobald das
    * Nachholen die Antwort auf das eigene POST überholt.
+   *
+   * Den Zeiger bewegt nur das Nachholen, nie die Antwort auf das eigene Senden. Sonst
+   * spränge er über eine Nachricht der Gegenseite hinweg, die kurz davor gespeichert, aber
+   * noch nicht abgeholt wurde – und die käme erst mit dem nächsten Neuladen.
    */
-  function apply(rows: CallChatMessageResponse[]): void {
+  function apply(rows: CallChatMessageResponse[], source: 'fetch' | 'own'): void {
     let fromPeer: string | null = null
 
     for (const row of rows) {
-      if (row.seq > lastSeq) lastSeq = row.seq
+      if (source === 'fetch' && row.seq > lastSeq) lastSeq = row.seq
 
       const message: CallChatMessage = {
         id:   row.clientMessageId,
@@ -77,13 +102,7 @@ export function useCallChat(options: {
         time: formatTime(row.createdAt),
         // Der Link zeigt auf die API, nicht auf den Speicher: Sie prüft beim Klick und leitet
         // dann auf einen signierten, kurzlebigen Link weiter.
-        file: row.file
-          ? {
-              name: row.file.name,
-              size: row.file.size,
-              href: `${apiUrl}/bookings/${options.bookingId}/call/files/${row.file.id}`,
-            }
-          : undefined,
+        file: row.file ? chatFile(row.file, `${apiUrl}/bookings/${options.bookingId}/call/files/${row.file.id}`, '') : undefined,
       }
 
       const index = messages.value.findIndex(known => known.id === message.id)
@@ -114,7 +133,7 @@ export function useCallChat(options: {
       const res = await $api<CallChatMessagesResponse>(`/bookings/${options.bookingId}/call/messages`, {
         query: lastSeq ? { after: lastSeq } : undefined,
       })
-      apply(res.messages)
+      apply(res.messages, 'fetch')
       loadError.value = false
     } catch {
       loadError.value = true
@@ -140,7 +159,7 @@ export function useCallChat(options: {
         method: 'POST',
         body: { clientMessageId, text },
       })
-      apply([saved])
+      apply([saved], 'own')
     } catch {
       markFailed(clientMessageId)
     }
@@ -163,7 +182,7 @@ export function useCallChat(options: {
         body: form,
       })
       pendingFiles.delete(clientMessageId)
-      apply([saved])
+      apply([saved], 'own')
     } catch (err) {
       const status = (err as { statusCode?: number })?.statusCode
       // 400 heißt: Diese Datei kommt auch beim zweiten Versuch nicht durch. Das gehört gesagt,
@@ -188,7 +207,7 @@ export function useCallChat(options: {
       time:   formatTime(new Date().toISOString()),
       status: 'sending',
       // Ohne href: Bis die Datei liegt, gibt es nichts herunterzuladen.
-      file:   { name: file.name, size: file.size },
+      file:   { name: file.name, size: file.size, kind: 'file' },
     })
     draft.value = ''
     void deliverFile(clientMessageId, text, file)

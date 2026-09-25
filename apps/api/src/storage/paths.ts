@@ -21,3 +21,12 @@ export function sessionAttachmentKey(
 ): string {
   return `${organizationId}/sessions/${bookingId}/attachments/${fileId}.${extension}`;
 }
+
+/**
+ * Das Vorschaubild eines geteilten Bildes – klein genug, um mitten im Videocall zu laden,
+ * ohne dem Video die Leitung wegzunehmen. Liegt neben dem Original, damit der Prefix-Delete
+ * der Kontolöschung beide erfasst.
+ */
+export function sessionAttachmentPreviewKey(organizationId: string, bookingId: string, fileId: string): string {
+  return `${organizationId}/sessions/${bookingId}/attachments/${fileId}-preview.webp`;
+}

@@ -102,6 +102,7 @@ Sitzungs-Assets. Die Zuordnung `sessionId → clientId` erfolgt ausschließlich 
 | `recording.{ext}` | Video/Audio (mp4/webm) | LiveKit Egress → BullMQ-Job |
 | `transcript.txt` | Transkription (UTF-8 Plaintext) | Whisper-Dienst → BullMQ-Job |
 | `attachments/{fileId}.{ext}` | Im Videocall geteilte Dateien (implementiert mit B7) | Upload während der Sitzung, über die API geprüft |
+| `attachments/{fileId}-preview.webp` | Vorschaubild eines geteilten Bildes, längste Kante 480 px | beim Upload, zusammen mit dem Original |
 
 > Aufzeichnungen und Transkripte werden **nicht sofort** angelegt – sie entstehen asynchron nach Sitzungsende über die Job-Queue.
 
@@ -234,7 +235,7 @@ Alle Dateien im Bucket sind **nicht öffentlich**. Zugriff erfolgt über **Presi
 |---|---|---|
 | Coach-Profilbilder | – (kein Presigned-URL-Mechanismus) | Öffentlich, Proxy-Read über `GET /api/v1/booking-page/avatar/:organizationId` |
 | Klienten-Dokumente | 1 Stunde | zuständiger Coach + Klient selbst |
-| Sitzungs-Anhänge | 15 Minuten | Coach + zugeordneter Klient |
+| Sitzungs-Anhänge | 15 Minuten, über eine Weiterleitung der API; Bilder und PDFs `inline`, Office als Download; Bilder und Vorschauen auf ein Zehn-Minuten-Fenster signiert und cachebar | Coach jederzeit, Klient solange sein Zugang gilt |
 | Aufzeichnungen / Transkripte | 1 Stunde | Coach only (Klient nur wenn Coach freigegeben) |
 | Coach-Ressourcen | 1 Stunde | Coach only |
 | Studio-Assets (Logo, Cover) | 1 Stunde | alle Coaches des Studios (lesend) |

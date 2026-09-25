@@ -134,9 +134,12 @@ export class CoachCallController {
   }
 
   /**
-   * Weiterleitung auf einen frisch signierten Link (B7). Der Verlauf trägt deshalb eine
-   * dauerhafte Adresse, während der Zugriff selbst nur 15 Minuten gilt und beim Klick geprüft
-   * wird. 302 statt 307, weil daraus nie etwas anderes als ein GET werden soll.
+   * Weiterleitung auf einen signierten Link (B7). Der Verlauf trägt deshalb eine dauerhafte
+   * Adresse, während der Zugriff selbst nur 15 Minuten gilt und beim Abruf geprüft wird.
+   * 302 statt 307, weil daraus nie etwas anderes als ein GET werden soll.
+   *
+   * Ob der Browser anzeigt oder herunterlädt und wie lange er sich die Weiterleitung merken
+   * darf, entscheidet der Dienst nach Art der Datei.
    */
   @Get(':id/call/files/:fileId')
   @Redirect(undefined, HttpStatus.FOUND)
@@ -147,10 +150,24 @@ export class CoachCallController {
     @Res({ passthrough: true }) res: Response,
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
-    const url = await this.chatService.downloadUrlForCoach(org.id, id, fileId);
-    // Die Weiterleitung selbst darf nirgends liegen bleiben: Sie trägt die Signatur.
-    res.set({ 'Cache-Control': 'private, no-store' });
-    return { url };
+    const signed = await this.chatService.fileUrlForCoach(org.id, id, fileId, 'original');
+    res.set({ 'Cache-Control': signed.cacheControl });
+    return { url: signed.url };
+  }
+
+  /** Das kleine Vorschaubild eines geteilten Bildes – für den Chat, nicht die Großansicht. */
+  @Get(':id/call/files/:fileId/preview')
+  @Redirect(undefined, HttpStatus.FOUND)
+  async previewFile(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    const signed = await this.chatService.fileUrlForCoach(org.id, id, fileId, 'preview');
+    res.set({ 'Cache-Control': signed.cacheControl });
+    return { url: signed.url };
   }
 
   @Post(':id/call/end')

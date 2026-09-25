@@ -51,20 +51,28 @@ export class S3Service {
   }
 
   /**
-   * Signierter Link zum Herunterladen, gültig für kurze Zeit
+   * Signierter Link auf ein Objekt, gültig für kurze Zeit
    * (doc/s3-verzeichnisschema.md, doc/videocall-umsetzungsplan.md B7).
    *
    * Die Antwort steht in der Signatur, nicht beim Speicher: Dateiname, der hier übergebene
-   * geprüfte Typ und `no-store`. Damit lädt der Browser die Datei herunter, statt sie zu
-   * öffnen – auf dem Objektspeicher liegt sie unter ihrer ID, ohne Namen und ohne Typ aus
-   * dem Upload.
+   * geprüfte Typ, ob der Browser anzeigt (`inline`) oder herunterlädt (`attachment`), und
+   * wie lange er die Antwort behalten darf. Auf dem Objektspeicher liegt die Datei unter
+   * ihrer ID, ohne Namen und ohne Typ aus dem Upload.
    *
    * Der Bucket bleibt privat; nur dieser Link kommt hinein, und nur für die Dauer von
    * `expiresInSeconds`.
    */
   async presignedDownloadUrl(
     key: string,
-    options: { fileName: string; contentType: string; expiresInSeconds: number },
+    options: {
+      fileName: string;
+      contentType: string;
+      expiresInSeconds: number;
+      disposition: 'inline' | 'attachment';
+      cacheControl: string;
+      /** Signierzeitpunkt – für gleiche URLs bei wiederholtem Abruf, siehe CallChatService. */
+      signingDate?: Date;
+    },
   ): Promise<string> {
     return getSignedUrl(
       this.s3,
@@ -72,14 +80,15 @@ export class S3Service {
         Bucket: this.bucket,
         Key: key,
         // Der Name wird zusätzlich als filename* (RFC 5987) gesetzt: Ohne das verliert ein
-        // Name mit Umlauten beim Herunterladen seine Zeichen.
+        // Name mit Umlauten seine Zeichen – beim Herunterladen wie beim Speichern aus dem
+        // PDF-Viewer.
         ResponseContentDisposition:
-          `attachment; filename="${asciiFallback(options.fileName)}"; `
+          `${options.disposition}; filename="${asciiFallback(options.fileName)}"; `
           + `filename*=UTF-8''${encodeURIComponent(options.fileName)}`,
         ResponseContentType: options.contentType,
-        ResponseCacheControl: 'private, no-store',
+        ResponseCacheControl: options.cacheControl,
       }),
-      { expiresIn: options.expiresInSeconds },
+      { expiresIn: options.expiresInSeconds, signingDate: options.signingDate },
     );
   }
 
