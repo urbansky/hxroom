@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { firstName, type CallAccessResponse } from '@hxroom/shared'
 import {
@@ -18,6 +18,7 @@ import {
   CallScreen as CallShell,
   CallAudioOutput,
   CallChatPanel,
+  CallConnectionNotice,
   namedDevices,
   type CallConnection,
   type CallPanelDef,
@@ -38,11 +39,17 @@ import { deviceNotice } from '../utils/deviceText'
 // Der Token geht mit, weil der Chat ihn braucht (B7): Er ist der einzige Ausweis des
 // Klienten, hier wie beim Betreten des Warteraums.
 const props = defineProps<{ call: CallAccessResponse; now: number; token: string }>()
+// Einen frischen Zugang holen (B6): Nach einer abgerissenen Verbindung ist der alte Token
+// womöglich abgelaufen. Das kann nur die Seite, die den Zustand hält.
+const emit = defineEmits<{ refresh: [] }>()
 
 const router = useRouter()
 
 const {
   status,
+  joinFailure,
+  connectionLoss,
+  clearConnectionLoss,
   participants,
   localIdentity,
   camera,
@@ -74,8 +81,58 @@ watch(() => props.call.livekit, (livekit) => {
   // Jeder Zustand außer „läuft bereits" heißt: betreten. Nach einem vorangegangenen
   // Gespräch steht hier 'ended' – wer in derselben Sitzung einen zweiten Call öffnet, käme
   // sonst nie in den Raum, und die Bühne bliebe bei „verbindet sich …" stehen.
-  if (status.value !== 'connecting' && status.value !== 'connected') void joinCall()
+  //
+  // Zwei Ausnahmen (B6): Während LiveKit selbst neu verbindet, stört ein zweiter Beitritt
+  // nur. Und ist das Gespräch in einem anderen Tab geöffnet, tritt dieser nicht von selbst
+  // wieder bei – sonst würfen sich beide Tabs gegenseitig hinaus.
+  if (connectionLoss.value === 'elsewhere') return
+  if (status.value !== 'connecting' && status.value !== 'connected' && status.value !== 'reconnecting') void joinCall()
 }, { immediate: true })
+
+// Welcher Hinweis stand, als das Neuverbinden begann. Er bleibt stehen, bis das Gespräch
+// wieder läuft – sonst verschwände er für die Dauer jedes Versuchs und käme zurück, wenn der
+// scheitert.
+const recovering = ref<'lost' | 'elsewhere' | null>(null)
+watch(status, (next) => { if (next === 'connected') recovering.value = null })
+
+// Die eigene Verbindung, wie sie über der Bühne steht (B6).
+const connectionNotice = computed<'reconnecting' | 'lost' | 'elsewhere' | null>(() => {
+  if (status.value === 'reconnecting') return 'reconnecting'
+  if (recovering.value && status.value !== 'connected') return recovering.value
+  if (connectionLoss.value === 'elsewhere') return 'elsewhere'
+  if (status.value === 'failed' && (connectionLoss.value === 'network' || joinFailure.value === 'network')) return 'lost'
+  return null
+})
+
+// Neu verbinden heißt: frischen Zugang holen. Der Beitritt folgt von selbst, sobald die neue
+// Antwort ihr Token trägt (Watch oben).
+function reconnect() {
+  const notice = connectionNotice.value
+  if (notice === 'lost' || notice === 'elsewhere') recovering.value = notice
+  clearConnectionLoss()
+  emit('refresh')
+}
+
+// Ist das Netz zurück, verbindet die Seite von selbst neu – wer im Zug durch einen Tunnel
+// fährt, soll keinen Knopf suchen müssen. Nicht beim anderen Tab.
+//
+// Dazu ein Versuch alle 15 Sekunden, solange die Verbindung weg ist: Startet der
+// Medienserver neu – bei jedem Deploy –, ist das Netz des Nutzers nie weg gewesen, und das
+// `online`-Ereignis käme nie.
+const RETRY_MS = 15_000
+let retryTimer: ReturnType<typeof setInterval> | undefined
+function onOnline() {
+  if (connectionNotice.value === 'lost') reconnect()
+}
+watch(connectionNotice, (notice) => {
+  clearInterval(retryTimer)
+  if (notice === 'lost') retryTimer = setInterval(onOnline, RETRY_MS)
+})
+onMounted(() => window.addEventListener('online', onOnline))
+onBeforeUnmount(() => {
+  window.removeEventListener('online', onOnline)
+  clearInterval(retryTimer)
+})
 
 // Verlässt der Klient die Seite, endet auch die Verbindung – sonst bliebe ein Teilnehmer
 // im Raum stehen, den der Coach sieht, ohne dass jemand da ist.
@@ -110,6 +167,12 @@ const local = computed<CallPeer>(() => ({
   stream: localVideoStream(),
 }))
 
+// War der Coach schon im Gespräch? Dann heißt „nicht im Raum" nicht mehr „kommt gleich",
+// sondern „ist gerade weg" (B6) – etwa während der Nachfrist, nachdem er den Tab geschlossen
+// hat. Bleibt gesetzt, auch wenn er zurückkommt.
+const peerSeen = ref(false)
+watch(remotePeer, (peer) => { if (peer) peerSeen.value = true })
+
 const remote = computed<CallPeer>(() => ({
   id: remotePeer.value?.id ?? 'remote',
   name: remotePeer.value?.name || props.call.coachName,
@@ -119,6 +182,12 @@ const remote = computed<CallPeer>(() => ({
   micOn: remotePeer.value ? !remotePeer.value.microphoneMuted : true,
   blurred: false,
   stream: remotePeer.value ? videoStreamFor(remotePeer.value.id) : null,
+  presence: remotePeer.value
+    ? (remotePeer.value.connectionLost ? 'unstable' : 'present')
+    // „Ist gerade nicht verbunden" nur, wenn man selbst verbunden ist – sonst weiß man es
+    // schlicht nicht, und nicht der Coach ist weg, sondern die eigene Verbindung.
+    : !peerSeen.value ? 'connecting' : status.value === 'connected' ? 'away' : 'unknown',
+  awayHint: `Das Gespräch bleibt offen – sobald ${firstName(props.call.coachName, 'dein Gegenüber')} zurück ist, geht es weiter.`,
 }))
 
 const remoteAudio = computed(() =>
@@ -132,6 +201,7 @@ const connection = computed<CallConnection>(() => {
   switch (status.value) {
     case 'connected': return 'live'
     case 'connecting': return 'connecting'
+    case 'reconnecting': return 'reconnecting'
     case 'failed': return 'lost'
     default: return 'connecting'
   }
@@ -246,6 +316,13 @@ async function leave() {
   >
     <template #stage-overlay>
       <div class="absolute inset-x-0 top-4 z-20 flex flex-col items-center gap-2 px-4">
+        <!-- Die eigene Verbindung zuerst: Solange sie fehlt, ist alles andere zweitrangig. -->
+        <CallConnectionNotice
+          :state="connectionNotice"
+          :busy="status === 'connecting'"
+          @reconnect="reconnect"
+        />
+
         <UAlert
           v-if="audioOut?.blocked && !audioAlertDismissed"
           icon="i-lucide-volume-x"

@@ -5,7 +5,7 @@
 // dort gewöhnliche Props und Slots. Beide Konsumenten sind Bundler (Nuxt-Vite und die
 // Vite-SPA `apps/bookingpage`), deshalb wird die Quelle ausgeliefert und nicht gebaut.
 
-export { configureLivekit, prepareCall, joinCall, leaveCall } from './src/room'
+export { configureLivekit, prepareCall, joinCall, leaveCall, clearConnectionLoss } from './src/room'
 
 // Geräte einrichten im Warteraum: Kamera und Mikrofon vor dem Beitritt, übernommen beim Einlass.
 export { startPreview, stopPreview, localVideoStream, localAudioStream } from './src/room'
@@ -33,4 +33,4 @@ export type { VideoQuality } from './src/stats'
 
 export { useCallRoom } from './src/room'
 
-export type { CallParticipant, RoomStatus, DeviceIssue, JoinFailure, CallDeviceKind, CallMediaDevice, ScreenShareIssue } from './src/types'
+export type { CallParticipant, RoomStatus, ConnectionLoss, DeviceIssue, JoinFailure, CallDeviceKind, CallMediaDevice, ScreenShareIssue } from './src/types'

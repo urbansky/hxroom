@@ -29,6 +29,20 @@ export interface CallPeer {
    * B4/B5 reichen hier die Spur aus dem LiveKit-Raum herein – der Vertrag bleibt derselbe.
    */
   stream?: MediaStream | null
+  /**
+   * Wo das Gegenüber steht (B6). Fehlt der Wert, gilt `present`.
+   *
+   * - `connecting`: noch nie im Gespräch gewesen – es kommt gleich.
+   * - `present`: da.
+   * - `unstable`: da, aber seine Verbindung ist abgerissen; das Bild steht womöglich still.
+   * - `away`: war schon im Gespräch und ist jetzt weg. Das ist etwas anderes als
+   *   „verbindet sich": Wer das für einen Beitritt hält, wartet auf etwas, das so nicht kommt.
+   * - `unknown`: Die *eigene* Verbindung fehlt – ob das Gegenüber da ist, lässt sich dann
+   *   nicht sagen. Die Bühne behauptet nichts und zeigt nur, wer es ist.
+   */
+  presence?: 'connecting' | 'present' | 'unstable' | 'away' | 'unknown'
+  /** Ein Satz unter „… ist gerade nicht verbunden" – was jetzt passiert. Rollenabhängig, daher von der App. */
+  awayHint?: string
 }
 
 /** Ein Bereich der Seitenleiste. Welche es gibt, sagt die App. */

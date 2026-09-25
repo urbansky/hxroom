@@ -93,12 +93,19 @@ onMounted(() => {
 const remoteInitials = computed(() => initials(props.remote?.name ?? ''))
 const remoteShort = computed(() => firstName(props.remote?.name ?? '', 'Dein Gegenüber'))
 
-// Was statt eines Bildes steht. Zwei Lagen, die sich für den Wartenden unterschiedlich
-// anfühlen: Ist die Kamera aus, kommt kein Bild mehr; verbindet sich die Gegenseite noch,
-// kommt es gleich. Wer das eine für das andere hält, wartet vergeblich oder fragt nach.
-const remotePlaceholder = computed(() =>
-  props.remote && !props.remote.cameraOn ? 'Kamera aus' : `${remoteShort.value} verbindet sich …`,
-)
+// Was statt eines Bildes steht. Drei Lagen, die sich für den Wartenden unterschiedlich
+// anfühlen: Ist die Kamera aus, kommt kein Bild mehr; verbindet sich die Gegenseite zum
+// ersten Mal, kommt es gleich; war sie schon da und ist jetzt weg, ist offen, wann sie
+// zurückkommt (B6). Wer das eine für das andere hält, wartet vergeblich oder fragt nach.
+const remoteAway = computed(() => props.remote?.presence === 'away' || props.remote?.presence === 'unknown')
+const remotePlaceholder = computed(() => {
+  // Die eigene Verbindung fehlt: Über das Gegenüber lässt sich nichts sagen – den Grund
+  // nennt der Hinweis über der Bühne.
+  if (props.remote?.presence === 'unknown') return ''
+  if (remoteAway.value) return `${remoteShort.value} ist gerade nicht verbunden`
+  if (props.remote && props.remote.presence !== 'connecting' && !props.remote.cameraOn) return 'Kamera aus'
+  return `${remoteShort.value} verbindet sich …`
+})
 
 // Ob geteilt wird, und von wem. Beides folgt aus einer Angabe: Wer selbst teilt, sieht den
 // Hinweis in der ersten Person und darf die Freigabe beenden; wer zusieht, nicht.
@@ -197,12 +204,29 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
             <!-- Erst die Kamera, dann die Spur: LiveKit schaltet eine ausgeschaltete Kamera nur
                  stumm, die Spur bleibt als Objekt bestehen. Mit der umgekehrten Prüfung stünde
                  hier das letzte Bild eingefroren. -->
-            <CallCameraView v-if="remote?.cameraOn && remote.stream" :stream="remote.stream" :mirrored="false" />
-            <div v-else class="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <span class="size-16 sm:size-20 rounded-full bg-primary/10 text-primary font-medium text-lg sm:text-xl flex items-center justify-center">
+            <CallCameraView v-if="!remoteAway && remote?.cameraOn && remote.stream" :stream="remote.stream" :mirrored="false" />
+            <div v-else class="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+              <span
+                class="size-16 sm:size-20 rounded-full font-medium text-lg sm:text-xl flex items-center justify-center"
+                :class="remoteAway ? 'bg-elevated text-dimmed' : 'bg-primary/10 text-primary'"
+              >
                 {{ remoteInitials }}
               </span>
-              <span class="text-xs sm:text-sm text-muted">{{ remotePlaceholder }}</span>
+              <span v-if="remotePlaceholder" class="text-xs sm:text-sm text-muted">{{ remotePlaceholder }}</span>
+              <span v-if="remote?.presence === 'away' && remote.awayHint" class="max-w-xs text-xs text-dimmed">{{ remote.awayHint }}</span>
+            </div>
+
+            <!-- Die Verbindung des Gegenübers ist abgerissen: Sein Bild steht womöglich still.
+                 Darüber gelegt statt an seine Stelle – kommt sie gleich zurück, soll nichts
+                 umspringen. -->
+            <div
+              v-if="remote?.presence === 'unstable'"
+              class="absolute inset-x-0 top-4 flex justify-center px-4 pointer-events-none"
+            >
+              <span class="inline-flex items-center gap-2 rounded-full border border-default bg-default/90 backdrop-blur px-3 py-1.5 text-xs text-toned shadow">
+                <UIcon name="i-lucide-wifi-off" class="size-3.5 text-warning" />
+                Verbindung zu {{ remoteShort }} unterbrochen …
+              </span>
             </div>
 
           <!-- Name und Zustand des Gegenübers, unten links wie im Entwurf. -->

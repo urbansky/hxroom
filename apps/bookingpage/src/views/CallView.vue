@@ -17,7 +17,7 @@ const route = useRoute()
 // derselben Seite. Der Server kennt den Zustand, deshalb landet auch ein Reload mitten im
 // Gespräch wieder richtig – und der Token bleibt in genau einer URL.
 const token = typeof route.query.token === 'string' ? route.query.token : ''
-const { phase, call, errorMessage, now, start } = useCallState(props.bookingId, token)
+const { phase, call, errorMessage, now, start, refresh } = useCallState(props.bookingId, token)
 
 // Selbstabsage über denselben Token, der diese Seite geöffnet hat – der Warteraum braucht
 // dafür keinen zweiten Ausweis und die API keinen neuen Endpunkt.
@@ -79,7 +79,7 @@ onMounted(start)
        Das Gegenstück zu layouts/call.vue in der Coach-App, das es in dieser SPA nicht gibt –
        deshalb steht es an der einzigen Stelle, die es braucht. -->
   <div v-if="call && call.state === 'admitted'" class="h-dvh flex flex-col overflow-hidden bg-default">
-    <CallStage :call="call" :now="now" :token="token" />
+    <CallStage :call="call" :now="now" :token="token" @refresh="refresh" />
   </div>
 
   <div v-else class="min-h-screen flex flex-col items-center justify-center px-6 py-12">

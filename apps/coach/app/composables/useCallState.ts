@@ -65,6 +65,22 @@ export function useCallState(bookingId: string) {
     source.onerror = () => {}
   }
 
+  /**
+   * Frischen Zustand holen, still (B6): Nach einer abgerissenen Verbindung braucht der
+   * erneute Beitritt einen neuen LiveKit-Token. Anders als `load` führt ein Fehler hier
+   * nicht auf die Fehlerseite – ist das Netz noch weg, kommt der nächste Versuch mit dem
+   * `online`-Ereignis oder dem Knopf.
+   */
+  async function refresh(): Promise<void> {
+    try {
+      call.value = await $api<CallAccessResponse>(`/bookings/${bookingId}/call`)
+      if (isFinal(call.value.state)) closeStream()
+      else openStream()
+    } catch {
+      // Netz noch weg – siehe oben.
+    }
+  }
+
   async function load(): Promise<void> {
     try {
       call.value = await $api<CallAccessResponse>(`/bookings/${bookingId}/call`)
@@ -131,5 +147,5 @@ export function useCallState(bookingId: string) {
     if (ticker) clearInterval(ticker)
   })
 
-  return { phase, call, loadError, actionError, pending, now, admit, end }
+  return { phase, call, loadError, actionError, pending, now, admit, end, refresh }
 }

@@ -151,10 +151,34 @@ export function useCallState(bookingId: string, token: string) {
     }, TICK_MS);
   }
 
+  /**
+   * Frischen Zustand holen, still (B6): Nach einer abgerissenen Verbindung braucht der
+   * erneute Beitritt einen neuen LiveKit-Token, der alte ist womöglich abgelaufen.
+   *
+   * Anders als `enter` führt ein Fehler hier nicht auf die Fehlerseite – ist das Netz noch
+   * weg, kommt der nächste Versuch mit dem `online`-Ereignis oder dem Knopf. Der Aufruf ist
+   * serverseitig derselbe idempotente Eintritt.
+   */
+  async function refresh(): Promise<void> {
+    try {
+      const res = await fetch(`${apiUrl}/api/v1/bookings/${bookingId}/waiting-room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) return;
+      call.value = (await res.json()) as CallAccessResponse;
+      if (isFinal(call.value.state)) closeStream();
+      else openStream();
+    } catch {
+      // Netz noch weg – siehe oben.
+    }
+  }
+
   onUnmounted(() => {
     closeStream();
     if (ticker) clearInterval(ticker);
   });
 
-  return { phase, call, errorMessage, now, start };
+  return { phase, call, errorMessage, now, start, refresh };
 }

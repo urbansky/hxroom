@@ -1,5 +1,6 @@
 import { ref, shallowReactive, shallowRef } from 'vue'
 import {
+  ConnectionQuality,
   createLocalTracks,
   DisconnectReason,
   type LocalAudioTrack,
@@ -25,6 +26,7 @@ import {
   camera,
   cameraIssue,
   cameras,
+  connectionLoss,
   findParticipant,
   joinFailure,
   loadingCamera,
@@ -218,6 +220,7 @@ export async function joinCall(): Promise<void> {
   const active = (room ??= new Room())
   status.value = 'connecting'
   joinFailure.value = null
+  connectionLoss.value = null
 
   // Die gemerkten Geräte gelten für alles, was der Raum selbst anlegt – ohne Vorschau beim
   // Beitritt, mit ihr beim späteren Wiedereinschalten einer im Warteraum ausgeschalteten Kamera.
@@ -276,7 +279,20 @@ export async function joinCall(): Promise<void> {
   active.on(RoomEvent.ParticipantNameChanged, participantNameListener)
   active.on(RoomEvent.ParticipantConnected, participantConnectedListener)
   active.on(RoomEvent.ParticipantDisconnected, participantDisconnectedListener)
-  active.on(RoomEvent.Disconnected, disconnectedListener)
+  // Nur für den Raum, der gerade gilt: Nach einem erneuten Beitritt kann das Trennen des
+  // alten noch nachkommen und dürfte den neuen nicht abräumen.
+  active.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
+    if (room === active) void disconnectedListener(reason)
+  })
+  // Wiederverbinden (B6). LiveKit versucht es bei einem Aussetzer von selbst, rund 45
+  // Sekunden lang; ohne diese beiden stünde währenddessen weiter „Live" da und das Bild
+  // eingefroren. SignalReconnecting ist der leichte Fall – nur die Steuerverbindung, die
+  // Medien laufen womöglich weiter –, fühlt sich für den Nutzer aber genauso an.
+  const reconnecting = () => { if (room === active) status.value = 'reconnecting' }
+  active.on(RoomEvent.Reconnecting, reconnecting)
+  active.on(RoomEvent.SignalReconnecting, reconnecting)
+  active.on(RoomEvent.Reconnected, () => { if (room === active) status.value = 'connected' })
+  active.on(RoomEvent.ConnectionQualityChanged, connectionQualityListener)
   active.on(RoomEvent.LocalTrackUnpublished, localTrackUnpublishListener)
   active.on(RoomEvent.AudioPlaybackStatusChanged, audioPlaybackStatusListener)
   active.on(RoomEvent.MediaDevicesChanged, devicesChangedListener)
@@ -557,7 +573,10 @@ async function setPreviewEnabled(source: Track.Source, enabled: boolean): Promis
  */
 async function adoptPreview(active: Room): Promise<boolean> {
   const fromPreview = previewing.value
-  const want = fromPreview ? { ...wanted } : { camera: true, microphone: true }
+  // Nach einer unerwarteten Trennung gilt der Stand von vorher (rejoinWish), sonst die
+  // Vorschau aus dem Warteraum, sonst beides an.
+  const want = fromPreview ? { ...wanted } : rejoinWish ?? { camera: true, microphone: true }
+  rejoinWish = null
   if (fromPreview) {
     log.info('Vorschau übernehmen', want)
     previewing.value = false
@@ -1156,26 +1175,56 @@ function audioPlaybackStatusListener(playing: boolean) {
 }
 
 /**
- * Gründe, nach denen die Sitzung nicht von selbst zurückkommt.
- *
- * Alles andere – ein Reconnect, eine Migration, ein vom Client selbst ausgelöstes Trennen –
- * ist entweder vorübergehend oder gewollt. Ohne Angabe eines Grundes gilt die Verbindung
- * ebenfalls als endgültig verloren.
+ * Kamera und Mikrofon, wie sie vor einer unerwarteten Trennung standen. Tritt man danach
+ * wieder bei, gilt dieser Stand – nicht „beides an". Wer sich stummgeschaltet hatte, wäre
+ * nach einem Netzaussetzer sonst plötzlich wieder zu hören.
  */
-const TERMINAL_REASONS: DisconnectReason[] = [
-  DisconnectReason.SERVER_SHUTDOWN,
-  DisconnectReason.ROOM_DELETED,
-]
+let rejoinWish: { camera: boolean, microphone: boolean } | null = null
 
+/**
+ * Das Gespräch ist weg (B6). `Disconnected` kommt erst, wenn LiveKit das Wiederverbinden
+ * aufgegeben hat oder die Trennung von der Gegenseite ausgeht – ein kurzer Aussetzer läuft
+ * über `Reconnecting`/`Reconnected` und landet nicht hier.
+ *
+ * Früher galten nur zwei Gründe (Server heruntergefahren, Raum gelöscht) als endgültig;
+ * bei allen anderen passierte nichts, und die Oberfläche zeigte ein totes Gespräch als
+ * „Live". Jetzt ist jede Trennung, die nicht vom eigenen Verlassen kommt, ein Zustand, aus
+ * dem die App zurückführen kann – mit der Unterscheidung, ob sie das von selbst darf.
+ */
 async function disconnectedListener(reason?: DisconnectReason) {
-  const terminal = reason === undefined || TERMINAL_REASONS.includes(reason)
-  log.info('Vom Raum getrennt', { reason: reason === undefined ? 'ohne Angabe' : DisconnectReason[reason], terminal })
-
-  if (terminal) {
-    await disconnectRoom()
-    resetTracks()
-    resetState('failed')
+  const name = reason === undefined ? 'ohne Angabe' : DisconnectReason[reason]
+  // Selbst verlassen: leaveCall hat bereits aufgeräumt, `room` ist dann schon leer.
+  if (reason === DisconnectReason.CLIENT_INITIATED || !room) {
+    log.info('Vom Raum getrennt', { reason: name })
+    return
   }
+
+  const loss = reason === DisconnectReason.DUPLICATE_IDENTITY ? 'elsewhere' : 'network'
+  log.info('Vom Raum getrennt', { reason: name, loss })
+
+  rejoinWish = { camera: camera.value, microphone: microphone.value }
+  await disconnectRoom()
+  resetTracks()
+  resetState('failed')
+  connectionLoss.value = loss
+}
+
+/**
+ * Hört LiveKit von einem Teilnehmer gerade nichts mehr, steht sein Bild eingefroren da.
+ * Die Oberfläche soll das beim Namen nennen, statt ein stehendes Bild zu zeigen.
+ */
+function connectionQualityListener(quality: ConnectionQuality, participant: Participant) {
+  if (participant.isLocal) return
+  const entry = findParticipant(participant.identity)
+  if (entry) entry.connectionLost = quality === ConnectionQuality.Lost
+}
+
+/**
+ * Nach „Das Gespräch ist in einem anderen Tab geöffnet": Der Nutzer will hier weitermachen.
+ * Erst danach darf die App wieder beitreten – von selbst tut sie es in diesem Fall nicht.
+ */
+export function clearConnectionLoss(): void {
+  connectionLoss.value = null
 }
 
 function addParticipant(participant: LocalParticipant | RemoteParticipant): CallParticipant {
@@ -1189,6 +1238,7 @@ function addParticipant(participant: LocalParticipant | RemoteParticipant): Call
     name: participant.name || participant.identity,
     cameraMuted: camera?.isMuted ?? false,
     microphoneMuted: microphone?.isMuted ?? false,
+    connectionLost: false,
   }
   participants.value.push(entry)
   if (!participant.isLocal) watchForMissingTracks(participant.identity)
@@ -1268,6 +1318,7 @@ export function useCallRoom() {
     // Zustand
     status,
     joinFailure,
+    connectionLoss,
     participants,
     localIdentity,
     remoteParticipants,
@@ -1304,6 +1355,7 @@ export function useCallRoom() {
     switchDevice,
 
     // Aktionen
+    clearConnectionLoss,
     startPreview,
     stopPreview,
     prepareCall,

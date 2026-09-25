@@ -10,7 +10,7 @@ definePageMeta({ middleware: 'auth', layout: 'call' })
 const route = useRoute()
 const bookingId = route.params.bookingId as string
 
-const { phase, call, loadError, actionError, pending, now, admit, end } = useCallState(bookingId)
+const { phase, call, loadError, actionError, pending, now, admit, end, refresh } = useCallState(bookingId)
 
 // Warmlauf, solange der Coach im Warteraum steht: DNS, TLS und der erste Kontakt zum
 // Medienserver passieren jetzt, der Beitritt kommt mit dem Klick auf „Klient einlassen"
@@ -116,7 +116,7 @@ function initials(call: CallAccessResponse): string {
   <!-- Nach dem Einlassen übernimmt der Call-Screen die ganze Fläche: Er bringt seine eigene
        Kopfzeile mit, und ein "Zurück zu den Terminen" neben einem laufenden Gespräch lädt
        nur zum versehentlichen Verlassen ein. -->
-  <CallScreen v-if="call && call.state === 'admitted'" :call="call" :now="now" @end="end" />
+  <CallScreen v-if="call && call.state === 'admitted'" :call="call" :now="now" @end="end" @refresh="refresh" />
 
   <div v-else class="flex-1 min-h-0 flex flex-col overflow-y-auto">
     <header class="flex items-center justify-between gap-4 px-4 sm:px-6 py-4">

@@ -346,7 +346,7 @@ Das Panel „Klient" der Seitenleiste zeigt echte Angaben statt der Beispielwert
 
 Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klient mit langer Historie (Sitzung 39, nächster Termin, interne Notiz, drei Kacheln mit gekürzter und aufklappbarer Notiz, eine davon „Keine Notiz") und ein Klient ohne Historie („Sitzung 1", „Keiner geplant", „Das ist die erste Sitzung"). Ein Tab-Wechsel löst keinen zweiten Abruf aus. API per `curl`: Buchungsnotiz und nächster Termin am anstehenden Seed-Termin, fremde und unbekannte Buchung 404. Die Umwandlung in Klartext ist per Spec abgedeckt.
 
-### B6 · Robustheit und autoritatives Sitzungsende *(Webhooks umgesetzt 2026-09-25; Reconnect, doppelte Tabs und No-Show offen)*
+### B6 · Robustheit und autoritatives Sitzungsende *(Webhooks, Reconnect und doppelte Tabs umgesetzt 2026-09-25; No-Show offen)*
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
 
@@ -365,6 +365,29 @@ Bisher endete eine Sitzung nur über „Sitzung beenden". Schloss der Coach einf
 Abnahme mit drei Sitzungen gleichzeitig und echter Nachfrist: **A** – der Coach schließt den Tab: Nach sechs Sekunden läuft die Nachfrist, beendet ist noch nichts; nach Ablauf ist die Sitzung `completed` und der Klient auf der Danke-Seite. **B** – der Coach lädt neu: keine Nachfrist, die Sitzung läuft weiter. **C** – der Coach öffnet einen zweiten Tab: läuft weiter. Im Log sieht man, warum der Blick in den Raum nötig ist: Auch bei B und C kam „Coach verlässt den Raum" an, erst der folgende Beitritt hob die Nachfrist auf. Das Sicherheitsnetz gesondert: Bei laufender Sitzung eine seit drei Minuten „abgelaufene" Nachfrist in die Datenbank geschrieben – der nächste Lauf fand den Coach im Raum, hob die Nachfrist auf und beendete nichts.
 
 Offen in B6: was der Klient während der Nachfrist sieht (heute „… verbindet sich"), das Reconnect-Verhalten, eine verständliche Meldung beim zweiten Tab und der No-Show.
+
+#### Nachtrag: Reconnect und doppelter Tab *(umgesetzt 2026-09-25)*
+
+**Vorher:** Bei einem Aussetzer verband sich `livekit-client` selbst neu, rund 45 Sekunden lang – die Oberfläche bekam davon nichts mit, oben stand „Live", das Bild fror ein. Gab LiveKit auf, behandelte `packages/livekit` nur zwei Trennungsgründe als endgültig; bei allen anderen, auch beim zweiten Tab, blieb ein totes Gespräch als „Live" stehen, ohne Knopf und ohne neuen Versuch. Und beim Gegenüber stand „… verbindet sich", sobald die andere Seite weg war – auch mitten im Gespräch.
+
+**Die eigene Verbindung** (`packages/livekit`, `CallConnectionNotice` in `packages/ui`):
+
+- Neuer Zustand `reconnecting` aus `Reconnecting`/`SignalReconnecting`, zurück auf `connected` mit `Reconnected`. Oben „Verbindung wackelt", über der Bühne „Verbindung unterbrochen – sie wird gerade wiederhergestellt". Kein Knopf: Es gibt nichts zu tun.
+- Jede Trennung, die nicht vom eigenen Verlassen kommt, endet in `failed` mit einem Grund (`connectionLoss`): `network` oder – bei `DUPLICATE_IDENTITY` – `elsewhere`.
+- `network`: „Verbindung verloren" mit „Erneut verbinden". Die Seite holt dafür über `refresh()` einen frischen Zugang (der alte Token ist womöglich abgelaufen) und tritt wieder bei, ohne Reload und ohne neue Kamerafreigabe. Sie tut das auch von selbst: sobald der Browser `online` meldet und zusätzlich alle 15 Sekunden. Das zweite ist nötig, weil bei einem Neustart des Medienservers – bei jedem Deploy – das Netz des Nutzers nie weg war und `online` nie käme. Während eines Versuchs bleibt der Hinweis stehen, statt zu flackern.
+- Kamera und Mikrofon kommen zurück, wie sie vor dem Abbruch standen (`rejoinWish`); ohne das wäre, wer sich stummgeschaltet hatte, nach dem Neuverbinden wieder zu hören.
+- `elsewhere`: „In einem anderen Tab geöffnet" mit „Hier weitermachen". Hier verbindet nichts von selbst – weder der Knopf-lose Versuch noch ein Ereignis auf dem Strom –, sonst würfen sich zwei Tabs gegenseitig hinaus. Der Klick holt das Gespräch zurück, der andere Tab zeigt dann denselben Hinweis.
+
+**Das Gegenüber** (`CallPeer.presence`):
+
+- `connecting` – noch nie da gewesen: „… verbindet sich".
+- `unstable` – LiveKit hört nichts mehr von ihm (`ConnectionQuality.Lost`): „Verbindung zu … unterbrochen" über dem womöglich stehenden Bild.
+- `away` – war schon da und ist weg: „… ist gerade nicht verbunden", dazu je Rolle ein Satz, was jetzt passiert (beim Klienten „Das Gespräch bleibt offen …", beim Coach „Über den Link aus seiner Mail kommt … jederzeit zurück").
+- `unknown` – die *eigene* Verbindung fehlt: Dann behauptet die Bühne nichts über das Gegenüber. Aufgefallen beim zweiten Tab: Dort stand zuerst „Miriam ist gerade nicht verbunden", obwohl nicht Miriam weg war, sondern dieser Tab.
+
+Abnahme im Browser mit Coach und Klient, vier Szenarien, 23 Prüfungen: Klient schließt den Tab → beim Coach „Miriam ist gerade nicht verbunden" samt Hinweis, verschwindet, sobald sie über den Link zurück ist. Medienserver sechs Sekunden angehalten → auf beiden Seiten „Verbindung unterbrochen" und „Verbindung wackelt", danach ohne Zutun wieder vier laufende Spuren. Medienserver gestoppt (wie bei einem Deploy) → nach 52 Sekunden auf beiden Seiten „Verbindung verloren", der Hinweis steht 32 Sekunden lang ohne Lücke, nach dem Neustart des Servers sind beide ohne Klick zurück und das vorher stummgeschaltete Mikrofon ist weiter stumm. Zweiter Tab des Coachs → der erste zeigt „In einem anderen Tab geöffnet", 20 Sekunden kein Hin und Her; „Hier weitermachen" tauscht die Rollen, und so bleibt es. Dazu der Klient während der Nachfrist: „Anna ist gerade nicht verbunden – Das Gespräch bleibt offen", kein Hinweis auf die eigene Verbindung, nach dem Ende die Danke-Seite. Chat und Dateien laufen unverändert.
+
+Beim Prüfen gelernt: Ein **angehaltener** Container (`docker pause`) nimmt Verbindungen an und antwortet nie; jeder Versuch von LiveKit läuft dann in eine lange Zeitüberschreitung, und aus 45 Sekunden werden mehrere Minuten „Verbindung unterbrochen". Der Fall „verloren" lässt sich nur mit einem **gestoppten** Server prüfen, der Verbindungen sofort abweist.
 
 ### B7 · Chat im Call, mit geteilten Dateien ✅ *(umgesetzt 2026-09-24/25)*
 

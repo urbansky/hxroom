@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { CallMediaDevice, CallParticipant, DeviceIssue, JoinFailure, RoomStatus, ScreenShareIssue } from './types'
+import type { CallMediaDevice, CallParticipant, ConnectionLoss, DeviceIssue, JoinFailure, RoomStatus, ScreenShareIssue } from './types'
 
 /**
  * Der Zustand des laufenden Calls – reine Refs, ohne Kenntnis von LiveKit.
@@ -17,6 +17,12 @@ import type { CallMediaDevice, CallParticipant, DeviceIssue, JoinFailure, RoomSt
 export const status = ref<RoomStatus>('idle')
 /** Gesetzt, solange `status` auf `failed` steht. */
 export const joinFailure = ref<JoinFailure | null>(null)
+/**
+ * Warum ein laufendes Gespräch getrennt wurde (B6). Anders als `joinFailure` übersteht es
+ * `resetState`: Es beschreibt genau den Zustand danach, und die App braucht es, um zu
+ * entscheiden, ob sie von selbst wieder beitreten darf.
+ */
+export const connectionLoss = ref<ConnectionLoss | null>(null)
 
 export const participants = ref<CallParticipant[]>([])
 /** Die eigene LiveKit-Identität, sobald der Raum steht. */
