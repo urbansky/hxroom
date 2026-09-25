@@ -408,7 +408,7 @@ Abnahme per API: gehaltene Sitzungen des Klienten 11 → 10 und nach „Doch ers
 
 Der Chat aus `project.md` §5a wird echt: Nachrichten erreichen die Gegenseite, und **Chatverlauf und geteilte Dateien werden gespeichert** und bleiben der Sitzung zugeordnet. Unabhängig von B6, kann auch davor gebaut werden.
 
-Gebaut in zwei Teilen – Textnachrichten und Dateien –, beide umgesetzt; siehe die Nachträge am Ende dieses Abschnitts. Der Plan darüber ist der ursprüngliche und an einzelnen Stellen überholt (etwa „Chatverlauf im Termin-Slideover", der noch aussteht).
+Gebaut in zwei Teilen – Textnachrichten und Dateien –, beide umgesetzt; siehe die Nachträge am Ende dieses Abschnitts. Der Plan darüber ist der ursprüngliche und an einzelnen Stellen überholt; der „Chatverlauf im Termin-Slideover" kam als eigener Nachtrag dazu.
 
 **Getroffene Entscheidungen** *(2026-09-17)*
 
@@ -598,6 +598,17 @@ Bewusst nicht dabei: Löschen einer geteilten Datei, ein Virenscan und der Verla
 3. **Die Antwort auf das eigene Senden rückte den Zeiger vor** – auch über eine Nachricht der Gegenseite, die schon gespeichert, aber noch nicht abgeholt war. Jetzt bewegt nur das Nachholen den Zeiger (`apply(rows, 'fetch' | 'own')`).
 
 Nachgestellt mit einem Stresstest, der einen Klienten genau wie `useCallChat` nachbildet, während Coach und Klient parallel je neun Dateien und neun Texte schicken: vorher kamen in fünf Runden 24 von 180 Dateinachrichten ohne ihre Datei an, nachher in zehn Runden keine von 360 falsch und keine fehlend. Mit 25 gleichzeitigen Uploads bleiben es genau 20 Dateien und 20 Objekte im Speicher. Im Browser teilen beide Seiten gleichzeitig per Drag'n Drop je sechs Dateien und schreiben dazwischen – dreimal hintereinander zeigen beide alle zwölf Dateien ohne Neuladen und ohne Doppelte. Die ersten beiden stehen als offene Punkte in `technisches-konzept.md` §16.
+
+#### Nachtrag: Chatverlauf im Termin-Detail *(umgesetzt 2026-09-25)*
+
+Im Termin-Slideover – also auch aus dem Klientenprofil heraus – steht unter den Notizen der Chat der Sitzung zum Nachlesen. Die API war schon da: Der Coach darf Verlauf und Dateien jederzeit abrufen, und die Links im Verlauf zeigen auf die API, die erst beim Klick signiert.
+
+- **Dieselbe Ansicht wie im Call:** `CallChatPanel` hat einen Modus `readonly` ohne Eingabezeile und ohne Ablagefläche; Links, Vorschaubilder, Großansicht und Dateiübersicht bleiben. Die Umwandlung der gespeicherten Nachrichten teilen sich `useCallChat` und das neue `useSessionChat` (`utils/chat.ts`).
+- **Eingeklappt:** eine Zeile „Chat · 19 Nachrichten · 2 Dateien", auf Klick der Verlauf in fester Höhe, am Ende beginnend wie im Call; das Slideover scrollt dabei so weit, dass er ganz zu sehen ist.
+- **Nur, wo es einen gibt:** Geladen wird beim Öffnen und nur für Termine mit Einlass (`admittedAt`) – ohne Einlass kann niemand schreiben, und die meisten Termine kosten so keinen Abruf. Ist der Verlauf leer, fehlt der Abschnitt; ein Skelett beim Laden stünde bei jeder Sitzung ohne Chat kurz da. Schlägt das Laden fehl, steht „Erneut versuchen" da.
+- Kein Nachholen über den Ereigniskanal: Hier wird zurückgeschaut, nicht mitgeschrieben.
+
+Abnahme im Browser mit einer beendeten Sitzung (Text, Link, Bild, PDF, 19 Nachrichten), 20 Prüfungen: eingeklappt mit Zusammenfassung, aufgeklappt am Ende und im Blick, keine Eingabezeile, Link im neuen Tab, Vorschaubild geladen, Großansicht öffnet und schließt mit Escape ohne das Slideover, PDF kommt über den Link an, Dateiübersicht, wieder einklappbar; untergeschobener 500er → Hinweis, „Erneut versuchen" lädt; Termin ohne Einlass → kein Abschnitt und kein Abruf. Dazu der Chat im Call nach dem Umbau: Senden und Empfangen wie vorher.
 
 ---
 

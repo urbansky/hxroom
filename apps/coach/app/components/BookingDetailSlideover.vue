@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { isWithinCallWindow, type CoachBookingResponse } from '@hxroom/shared'
+import { CallChatPanel } from '@hxroom/ui'
 
 const props = defineProps<{ booking: CoachBookingResponse | null }>()
 const emit = defineEmits<{
@@ -34,6 +35,31 @@ watch(open, (isOpen) => {
 // der Liste; beim Schließen oder beim Wechsel des Termins wird gespeichert.
 const notes = useSessionNotes(() => (open.value ? props.booking?.id ?? null : null))
 const { content: notesContent, ready: notesReady, loadError: notesLoadError, status: notesStatus } = notes
+
+// Chat der Sitzung zum Nachlesen (B7). Geschrieben wird nur im laufenden Gespräch – ohne
+// Einlass gibt es also keinen Verlauf, und für diese Termine, die allermeisten, wird gar
+// nicht erst gefragt. Eingeklappt, weil das Slideover mit den Notizen schon lang ist.
+const chat = useSessionChat(() => (open.value && props.booking?.admittedAt ? props.booking.id : null))
+const { messages: chatMessages, fileCount: chatFileCount, loadError: chatLoadError } = chat
+const chatOpen = ref(false)
+watch(() => props.booking?.id, () => (chatOpen.value = false))
+
+// Aufgeklappt stünde das Ende des Verlaufs – die neuesten Nachrichten – sonst unterhalb des
+// sichtbaren Bereichs.
+const chatBox = ref<HTMLElement | null>(null)
+async function toggleChat() {
+  chatOpen.value = !chatOpen.value
+  if (!chatOpen.value) return
+  await nextTick()
+  chatBox.value?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+}
+
+const chatSummary = computed(() => {
+  const count = chatMessages.value.length
+  const parts = [`${count} ${count === 1 ? 'Nachricht' : 'Nachrichten'}`]
+  if (chatFileCount.value) parts.push(`${chatFileCount.value} ${chatFileCount.value === 1 ? 'Datei' : 'Dateien'}`)
+  return parts.join(' · ')
+})
 
 // Im Klientenprofil selbst führte „Klientenprofil öffnen“ nur auf die Seite, auf der man
 // schon steht.
@@ -290,6 +316,36 @@ async function cancelBooking() {
           />
           <USkeleton v-else class="h-44 rounded-lg" />
         </div>
+
+        <!-- Erst sichtbar, wenn es einen Verlauf gibt: Ein Skelett während des Ladens stünde
+             bei jeder Sitzung ohne Chat kurz da und verschwände wieder. -->
+        <div v-if="chatMessages.length">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between gap-2 rounded-md -mx-1 px-1 py-0.5 hover:bg-elevated focus-visible:outline-2 focus-visible:outline-primary cursor-pointer"
+            :aria-expanded="chatOpen"
+            @click="toggleChat"
+          >
+            <span class="text-xs uppercase tracking-wide text-muted">Chat</span>
+            <span class="flex items-center gap-1.5 text-xs text-muted">
+              {{ chatSummary }}
+              <UIcon :name="chatOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-4" />
+            </span>
+          </button>
+          <!-- Feste Höhe: Das Panel scrollt in sich, wie in der Seitenleiste des Calls, und
+               beginnt am Ende des Verlaufs. -->
+          <div v-if="chatOpen" ref="chatBox" class="mt-2 h-96 rounded-lg border border-default bg-elevated/40 p-3">
+            <CallChatPanel :messages="chatMessages" :peer-name="booking.clientName" readonly />
+          </div>
+        </div>
+        <UAlert
+          v-else-if="chatLoadError"
+          icon="i-lucide-alert-circle"
+          color="error"
+          variant="subtle"
+          description="Der Chat dieser Sitzung konnte nicht geladen werden."
+          :actions="[{ label: 'Erneut versuchen', color: 'error', variant: 'outline', onClick: () => chat.reload() }]"
+        />
 
         <div class="text-xs text-muted flex flex-col gap-0.5">
           <span>Gebucht am {{ formatDateTime(booking.createdAt) }}</span>

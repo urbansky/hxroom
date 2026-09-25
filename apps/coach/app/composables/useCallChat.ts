@@ -1,5 +1,5 @@
 import type { CallChatMessageResponse, CallChatMessagesResponse, CallChatSender } from '@hxroom/shared'
-import type { CallChatFile, CallChatMessage } from '@hxroom/ui'
+import type { CallChatMessage } from '@hxroom/ui'
 
 /**
  * Der Ereignisstrom meldet hierher, dass es neue Nachrichten gibt (B7). Ein Zähler auf
@@ -12,31 +12,6 @@ const chatSignal = ref(0)
 /** Vom Ereignisstrom aufgerufen: bei einem `chat`-Ereignis und nach jedem Zustandsereignis. */
 export function notifyCallChatEvent(): void {
   chatSignal.value++
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-}
-
-/**
- * Was der Chat aus einer Datei macht. `href` und die Vorschau zeigen auf die API; `query`
- * hängt den Ausweis an, wo einer nötig ist (hier: keiner, das Cookie reicht).
- */
-function chatFile(
-  file: NonNullable<CallChatMessageResponse['file']>,
-  href: string,
-  query: string,
-): CallChatFile {
-  const kind = file.mimeType.startsWith('image/') ? 'image' : file.mimeType === 'application/pdf' ? 'pdf' : 'file'
-  return {
-    name: file.name,
-    size: file.size,
-    kind,
-    href: `${href}${query}`,
-    preview: file.preview
-      ? { href: `${href}/preview${query}`, width: file.preview.width, height: file.preview.height }
-      : undefined,
-  }
 }
 
 /**
@@ -95,15 +70,7 @@ export function useCallChat(options: {
     for (const row of rows) {
       if (source === 'fetch' && row.seq > lastSeq) lastSeq = row.seq
 
-      const message: CallChatMessage = {
-        id:   row.clientMessageId,
-        from: row.sender === options.self ? 'self' : 'peer',
-        text: row.text,
-        time: formatTime(row.createdAt),
-        // Der Link zeigt auf die API, nicht auf den Speicher: Sie prüft beim Klick und leitet
-        // dann auf einen signierten, kurzlebigen Link weiter.
-        file: row.file ? chatFile(row.file, `${apiUrl}/bookings/${options.bookingId}/call/files/${row.file.id}`, '') : undefined,
-      }
+      const message = toChatMessage(row, { self: options.self, bookingId: options.bookingId, apiUrl })
 
       const index = messages.value.findIndex(known => known.id === message.id)
       if (index >= 0) {
@@ -204,7 +171,7 @@ export function useCallChat(options: {
       id:     clientMessageId,
       from:   'self',
       text,
-      time:   formatTime(new Date().toISOString()),
+      time:   chatTimeNow(),
       status: 'sending',
       // Ohne href: Bis die Datei liegt, gibt es nichts herunterzuladen.
       file:   { name: file.name, size: file.size, kind: 'file' },
@@ -224,7 +191,7 @@ export function useCallChat(options: {
       id:     clientMessageId,
       from:   'self',
       text,
-      time:   formatTime(new Date().toISOString()),
+      time:   chatTimeNow(),
       status: 'sending',
     })
     draft.value = ''

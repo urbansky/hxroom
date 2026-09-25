@@ -11,7 +11,8 @@ import type { CallChatFile, CallChatMessage, CallViewerImage } from './types'
 // Die Nachrichten liegen in der App (B7): Sie gehen über die API und werden gespeichert.
 // Dieses Panel zeigt nur und meldet, was der Benutzer will.
 
-const draft = defineModel<string>('draft', { required: true })
+// Ohne Pflicht, damit die Ansicht zum Nachlesen (`readonly`) keinen Entwurf durchreichen muss.
+const draft = defineModel<string>('draft', { default: '' })
 
 const props = defineProps<{
   messages: CallChatMessage[]
@@ -24,6 +25,11 @@ const props = defineProps<{
   canSend?: boolean
   /** Warum nicht, falls gesperrt. Ein gesperrtes Feld ohne Grund ist ein Rätsel. */
   disabledReason?: string
+  /**
+   * Nur zum Nachlesen, etwa im Termin-Detail nach der Sitzung: ohne Eingabezeile und ohne
+   * Ablagefläche. Verlauf, Dateiübersicht und Großansicht bleiben.
+   */
+  readonly?: boolean
 }>()
 const emit = defineEmits<{
   send: []
@@ -93,6 +99,9 @@ const dragDepth = ref(0)
 const dragging = computed(() => dragDepth.value > 0)
 
 function carriesFiles(event: DragEvent): boolean {
+  // Nur zum Nachlesen gibt es keine Ablagefläche – der Browser verfährt mit der Datei dann
+  // wie überall sonst auf der Seite.
+  if (props.readonly) return false
   return Array.from(event.dataTransfer?.types ?? []).includes('Files')
 }
 
@@ -540,7 +549,7 @@ function splitLinks(text: string): MessagePart[] {
 
     <CallImageViewer v-model:open="viewerOpen" v-model:index="viewerIndex" :images="viewerImages" />
 
-    <div>
+    <div v-if="!readonly">
       <!-- items-end: Wächst das Feld, bleiben Büroklammer und Senden unten an der letzten
            Zeile – dort, wo getippt wird. -->
       <div class="flex items-end gap-2">
