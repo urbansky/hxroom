@@ -29,6 +29,9 @@ export interface CallBookingState {
  */
 export function resolveCallState(booking: CallBookingState, now: Date): CallState {
   if (booking.status === 'cancelled') return 'cancelled';
+  // Nicht erschienen, vom Coach vermerkt (B6) – endgültig wie eine Absage, aber für den
+  // Klienten etwas anderes als „abgesagt" oder „beendet".
+  if (booking.status === 'no_show') return 'missed';
 
   // 'completed' ohne callEndedAt gibt es für Sitzungen, die vor A1 abgeschlossen wurden.
   if (booking.callEndedAt || booking.status === 'completed') return 'ended';

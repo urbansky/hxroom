@@ -790,8 +790,9 @@ export const bookings = pgTable('bookings', {
   offerName: text('offer_name'),                     // Snapshot des Angebotsnamens zum Buchungszeitpunkt
   scheduledAt: timestamp('scheduled_at').notNull(),
   durationMinutes: integer('duration_minutes').notNull().default(60), // Snapshot aus offer.durationMinutes
+  // 'no_show': Klient nicht erschienen, vom Coach vermerkt (B6) – zählt nicht als gehalten
   status: text('status')
-    .$type<'pending' | 'confirmed' | 'completed' | 'cancelled'>()
+    .$type<'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'>()
     .default('pending'),
   confirmedAt: timestamp('confirmed_at'), // gesetzt beim Klick auf den Bestätigungslink; erst dann wird clients-Matching final vollzogen
   clientAccessToken: text('client_access_token'), // derselbe Token dient zuerst der Bestätigung, später dem Warteraum-Zugang
@@ -801,6 +802,7 @@ export const bookings = pgTable('bookings', {
   // des Coach-Browsers den eingelassenen Klienten nicht zurückwirft.
   admittedAt: timestamp('admitted_at'),   // Coach hat den Klienten eingelassen
   callEndedAt: timestamp('call_ended_at'), // Sitzung beendet; setzt zugleich status = 'completed'
+  coachLeftAt: timestamp('coach_left_at'), // Coach hat den Raum verlassen, Nachfrist läuft (B6)
   // Absagedetails: 'cancelled' allein sagt nicht, ob der Coach abgesagt hat, der Klient
   // selbst (Link aus der Bestätigungsmail) oder ob die Buchung nur nie bestätigt wurde.
   cancelledAt: timestamp('cancelled_at'),

@@ -27,6 +27,7 @@ export const coachBookingColumns = {
   cancelledAt:        bookings.cancelledAt,
   cancelledBy:        bookings.cancelledBy,
   cancellationReason: bookings.cancellationReason,
+  admittedAt:         bookings.admittedAt,
 };
 
 export interface CoachBookingRow {
@@ -48,6 +49,7 @@ export interface CoachBookingRow {
   cancelledAt: Date | null;
   cancelledBy: CancelledBy | null;
   cancellationReason: string | null;
+  admittedAt: Date | null;
 }
 
 export function toCoachBookingResponse(row: CoachBookingRow): CoachBookingResponse {
@@ -70,5 +72,6 @@ export function toCoachBookingResponse(row: CoachBookingRow): CoachBookingRespon
     cancelledAt:        row.cancelledAt?.toISOString() ?? null,
     cancelledBy:        row.cancelledBy,
     cancellationReason: row.cancellationReason,
+    admittedAt:         row.admittedAt?.toISOString() ?? null,
   };
 }

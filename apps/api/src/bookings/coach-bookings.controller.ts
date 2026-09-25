@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
@@ -43,6 +43,27 @@ export class CoachBookingsController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.coachBookingsService.cancel(org.id, id, dto);
+  }
+
+  // Nicht erschienen (B6). Eine Unterressource statt eines Status-Patches: Der Übergang hat
+  // eigene Regeln (begonnen, bestätigt, kein Einlass), und das Gegenstück ist ein DELETE.
+  @Post(':id/no-show')
+  @HttpCode(HttpStatus.OK)
+  markNoShow(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.markNoShow(org.id, id);
+  }
+
+  @Delete(':id/no-show')
+  undoNoShow(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.undoNoShow(org.id, id);
   }
 
   // Zuordnung zu einem Klienten – liegt hier und nicht im ClientsController, weil die

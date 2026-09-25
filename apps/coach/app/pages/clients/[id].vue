@@ -258,9 +258,10 @@ function onSaved(saved: ClientResponse) {
                   </span>
                 </div>
 
-                <div v-if="isAdHoc(booking) || booking.status === 'cancelled'" class="mt-1 flex items-center gap-2">
+                <div v-if="isAdHoc(booking) || booking.status === 'cancelled' || booking.status === 'no_show'" class="mt-1 flex items-center gap-2">
                   <UBadge v-if="isAdHoc(booking)" :label="AD_HOC_LABEL" color="info" variant="subtle" size="sm" />
                   <UBadge v-if="booking.status === 'cancelled'" :label="STATUS_LABELS.cancelled" color="neutral" variant="subtle" size="sm" />
+                  <UBadge v-if="booking.status === 'no_show'" :label="STATUS_LABELS.no_show" icon="i-lucide-user-x" color="warning" variant="subtle" size="sm" />
                 </div>
 
                 <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">

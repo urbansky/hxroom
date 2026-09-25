@@ -10,7 +10,7 @@ definePageMeta({ middleware: 'auth', layout: 'call' })
 const route = useRoute()
 const bookingId = route.params.bookingId as string
 
-const { phase, call, loadError, actionError, pending, now, admit, end, refresh } = useCallState(bookingId)
+const { phase, call, loadError, actionError, pending, now, admit, end, refresh, markNoShow } = useCallState(bookingId)
 
 // Warmlauf, solange der Coach im Warteraum steht: DNS, TLS und der erste Kontakt zum
 // Medienserver passieren jetzt, der Beitritt kommt mit dem Klick auf „Klient einlassen"
@@ -56,10 +56,28 @@ const clientStatus = computed(() => {
 // hereinkommen, wenn er eintrifft, statt an einer geschlossenen Tür zu stehen.
 const canAdmit = computed(() => call.value?.state === 'open' || call.value?.state === 'waiting')
 
+// Nicht erschienen (B6): Hier sitzt der Coach und wartet – der naheliegende Moment für die
+// Frage. Erst ab dem Beginn des Termins, vorher kann niemand zu spät sein. Den Rest prüft
+// der Server (bestätigt, niemand eingelassen).
+const canMarkNoShow = computed(() =>
+  !!call.value && canAdmit.value && now.value >= new Date(call.value.start),
+)
+const noShowOpen = ref(false)
+async function confirmNoShow() {
+  await markNoShow()
+  if (!actionError.value) noShowOpen.value = false
+}
+
 const ending = computed(() => {
   switch (call.value?.state) {
     case 'ended':
       return { icon: 'i-lucide-check', title: 'Sitzung beendet', description: 'Der Termin ist als gehalten vermerkt.' }
+    case 'missed':
+      return {
+        icon: 'i-lucide-user-x',
+        title: 'Nicht erschienen',
+        description: 'Der Termin zählt nicht als gehaltene Sitzung. Im Termin-Detail lässt sich das zurücknehmen.',
+      }
     case 'cancelled':
       return { icon: 'i-lucide-calendar-x', title: 'Termin abgesagt', description: 'Diese Sitzung findet nicht statt.' }
     default:
@@ -201,8 +219,41 @@ function initials(call: CallAccessResponse): string {
             :loading="pending"
             @click="admit"
           />
-          <p v-if="actionError" class="text-sm text-error">{{ actionError }}</p>
+          <!-- Zurückhaltend, unter dem Einlassen: Es ist die Ausnahme, nicht der Weg. -->
+          <UButton
+            v-if="canMarkNoShow"
+            label="Klient nicht erschienen"
+            icon="i-lucide-user-x"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="noShowOpen = true"
+          />
+          <p v-if="actionError && !noShowOpen" class="text-sm text-error">{{ actionError }}</p>
         </div>
+
+        <UModal
+          v-model:open="noShowOpen"
+          title="Als nicht erschienen vermerken?"
+          :description="`Der Termin zählt dann nicht als gehaltene Sitzung. ${call.clientName} bekommt keine Nachricht. Im Termin-Detail kannst du das zurücknehmen.`"
+        >
+          <template #body>
+            <UAlert
+              v-if="call.clientOnline"
+              icon="i-lucide-info"
+              color="warning"
+              variant="subtle"
+              :description="`${call.clientName} ist gerade im Warteraum.`"
+            />
+            <p v-if="actionError" class="text-sm text-error" :class="call.clientOnline && 'mt-3'">{{ actionError }}</p>
+          </template>
+          <template #footer>
+            <div class="flex gap-3 justify-end w-full">
+              <UButton label="Abbrechen" color="neutral" variant="outline" @click="noShowOpen = false" />
+              <UButton label="Vermerken" icon="i-lucide-user-x" color="neutral" :loading="pending" @click="confirmNoShow" />
+            </div>
+          </template>
+        </UModal>
       </div>
 
       <div v-else-if="call" class="text-center flex flex-col items-center gap-4">

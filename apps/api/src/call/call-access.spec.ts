@@ -121,6 +121,13 @@ describe('resolveCallState – Status der Buchung', () => {
     expect(resolveCallState(booking({ status: 'pending' }), during)).toBe('expired');
   });
 
+  // Kommt der Klient nach dem Vermerk doch noch, soll er weder „abgesagt" noch „beendet"
+  // lesen – beides stimmt nicht.
+  it('meldet einen vermerkten No-Show als eigenen Zustand, auch im offenen Fenster', () => {
+    expect(resolveCallState(booking({ status: 'no_show' }), during)).toBe('missed');
+    expect(resolveCallState(booking({ status: 'no_show', clientTokenUsedAt: during }), during)).toBe('missed');
+  });
+
   // Bestand aus der Zeit vor A1: 'completed' gab es, callEndedAt noch nicht.
   it('behandelt eine abgeschlossene Sitzung ohne Zeitstempel als beendet', () => {
     expect(resolveCallState(booking({ status: 'completed' }), during)).toBe('ended');

@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 // Booking status
-export const BookingStatus = z.enum(['pending', 'confirmed', 'completed', 'cancelled']);
+// 'no_show': Der Termin war verbindlich, der Klient ist nicht erschienen (B6). Vom Coach
+// vermerkt, nie automatisch – ein bestätigter Termin ohne Einlass kann auch ein Gespräch am
+// Telefon gewesen sein. Kein Unterfall von 'cancelled': Abgesagt wurde nichts, und ein
+// späteres Ausfallhonorar hinge sonst an der falschen Stelle. Zählt nicht als gehalten.
+export const BookingStatus = z.enum(['pending', 'confirmed', 'completed', 'cancelled', 'no_show']);
 export type BookingStatus = z.infer<typeof BookingStatus>;
 
 // Wer eine Buchung abgesagt hat. 'system' steht für den automatischen Verfall einer
@@ -352,6 +356,9 @@ export const coachBookingResponseSchema = z.object({
   cancelledAt:        z.string().nullable(),
   cancelledBy:        CancelledBy.nullable(),
   cancellationReason: z.string().nullable(),
+  // Wann der Coach den Klienten eingelassen hat, null ohne Einlass. Das Termin-Detail
+  // braucht es für „Als nicht erschienen vermerken" (B6): Wer eingelassen wurde, war da.
+  admittedAt:         z.string().nullable(),
 });
 export type CoachBookingResponse = z.infer<typeof coachBookingResponseSchema>;
 
@@ -456,6 +463,7 @@ export const CallState = z.enum([
   'waiting',   // Klient ist im Warteraum, der Coach hat noch nicht eingelassen
   'admitted',  // Coach hat eingelassen – ab hier trägt die Antwort den LiveKit-Token
   'ended',     // Sitzung wurde beendet
+  'missed',    // Der Coach hat vermerkt, dass der Klient nicht erschienen ist (B6)
   'cancelled', // Buchung abgesagt
   'expired',   // Zugangsfenster vorbei oder Buchung nie bestätigt
 ]);

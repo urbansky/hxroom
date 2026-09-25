@@ -1,7 +1,7 @@
 import type { CallAccessResponse, CallState } from '@hxroom/shared'
 
 /** Zustände, nach denen nichts mehr kommt – dort wird der Ereignisstrom geschlossen. */
-const FINAL_STATES: CallState[] = ['ended', 'cancelled', 'expired']
+const FINAL_STATES: CallState[] = ['ended', 'cancelled', 'expired', 'missed']
 
 /** Sekundentakt für Wartezeit, Sitzungsdauer und das Erkennen von Fensterwechseln. */
 const TICK_MS = 1000
@@ -121,6 +121,26 @@ export function useCallState(bookingId: string) {
   const end = () => act('end', 'Diese Sitzung läuft nicht mehr.')
 
   /**
+   * Klient nicht erschienen (B6). Liegt an der Buchung, nicht am Call – derselbe Endpunkt
+   * wie im Termin-Detail. Die Antwort ist deshalb eine Buchung, kein Call-Zustand; den holt
+   * `refresh` danach, und der Strom meldet ihn ohnehin.
+   */
+  async function markNoShow(): Promise<void> {
+    pending.value = true
+    actionError.value = ''
+    try {
+      await $api(`/bookings/${bookingId}/no-show`, { method: 'POST' })
+      await refresh()
+    } catch (err) {
+      actionError.value = (err as { statusCode?: number })?.statusCode === 409
+        ? 'Dieser Termin lässt sich gerade nicht als nicht erschienen vermerken.'
+        : 'Der Vermerk konnte nicht gespeichert werden.'
+    } finally {
+      pending.value = false
+    }
+  }
+
+  /**
    * Prüft, ob allein durch das Verstreichen von Zeit ein anderer Zustand gilt. Die API
    * meldet das nicht, weil dabei nichts geschrieben wird – die Grenzen des Zugangsfensters
    * stehen dafür in jeder Antwort.
@@ -147,5 +167,5 @@ export function useCallState(bookingId: string) {
     if (ticker) clearInterval(ticker)
   })
 
-  return { phase, call, loadError, actionError, pending, now, admit, end, refresh }
+  return { phase, call, loadError, actionError, pending, now, admit, end, refresh, markNoShow }
 }

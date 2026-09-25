@@ -8,7 +8,7 @@ import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { isUniqueViolation } from '../common/pg-errors';
-import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME } from './booking.constants';
+import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, canMarkNoShow } from './booking.constants';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderSessionInvitationEmail } from '../mail/templates/client/session-invitation';
 import { toAppointmentInfo } from './booking-formatting';
@@ -86,6 +86,58 @@ export class CoachBookingsService {
     }
 
     return toCoachBookingResponse(cancelled);
+  }
+
+  /**
+   * Vermerkt, dass der Klient nicht erschienen ist (B6). Aus dem Warteraum des Calls oder
+   * aus dem Termin-Detail – viele Coachs öffnen den Call gar nicht erst, wenn niemand kommt.
+   *
+   * Unter der Sperre der Buchungszeile, wie der Einlass (CallService.transition): Lässt der
+   * Coach in einem zweiten Tab gerade ein, darf der Vermerk ihn nicht überholen – und
+   * umgekehrt. Kein Mailversand: Der Vermerk ist ein Eintrag für den Coach, keine Nachricht
+   * an den Klienten. Öffnet der Klient den Link doch noch, sieht er einen neutralen Satz.
+   */
+  async markNoShow(organizationId: string, bookingId: string): Promise<CoachBookingResponse> {
+    const row = await this.db.transaction(async (tx) => {
+      const [booking] = await tx
+        .select()
+        .from(bookings)
+        .where(and(eq(bookings.id, bookingId), eq(bookings.organizationId, organizationId)))
+        .for('update');
+
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (!canMarkNoShow(booking, new Date())) {
+        throw new ConflictException('Booking cannot be marked as no-show');
+      }
+
+      const [updated] = await tx
+        .update(bookings)
+        .set({ status: 'no_show' })
+        .where(eq(bookings.id, bookingId))
+        .returning(coachBookingColumns);
+      return updated;
+    });
+
+    // Sitzt der Klient doch im Warteraum, verlässt er ihn mit dem passenden Hinweis.
+    this.callEvents.notifyChanged(bookingId);
+    return toCoachBookingResponse(row);
+  }
+
+  /** „Doch erschienen": Der Vermerk war ein Versehen. Der Termin zählt wieder als gehalten. */
+  async undoNoShow(organizationId: string, bookingId: string): Promise<CoachBookingResponse> {
+    const booking = await this.findOwn(organizationId, bookingId);
+    if (booking.status !== 'no_show') {
+      throw new ConflictException('Booking is not marked as no-show');
+    }
+
+    const [updated] = await this.db
+      .update(bookings)
+      .set({ status: 'confirmed' })
+      .where(and(eq(bookings.id, bookingId), eq(bookings.status, 'no_show')))
+      .returning(coachBookingColumns);
+
+    this.callEvents.notifyChanged(bookingId);
+    return toCoachBookingResponse(updated);
   }
 
   /**

@@ -222,7 +222,8 @@ function bookingBlocks(weekday: number) {
   const blocks = (bookingsByWeekday.value.get(weekday) ?? []).map((booking) => {
     const height = Math.max(booking.durationMinutes * PIXELS_PER_MINUTE, MIN_BLOCK_HEIGHT)
     // Vergangen ist ein Termin erst, wenn er zu Ende ist – ein laufender bleibt hervorgehoben.
-    const isPast = new Date(booking.end) < now.value
+    // Ein vermerkter No-Show (B6) ist vorbei, sobald er vermerkt ist.
+    const isPast = booking.status === 'no_show' || new Date(booking.end) < now.value
     return {
       booking,
       top: offsetTop(minutesSinceMidnight(booking.start)),
@@ -246,6 +247,7 @@ function bookingBlocks(weekday: number) {
         formatTimeRange(block.booking),
         block.booking.clientName,
         block.booking.status === 'pending' ? 'noch nicht bestätigt' : '',
+        block.booking.status === 'no_show' ? STATUS_LABELS.no_show : '',
       ].filter(Boolean).join(' · '),
       width: columnWidth(block.columnCount),
       left: `calc(${BLOCK_GUTTER}px + (${columnWidth(block.columnCount)} + ${BLOCK_GAP}px) * ${block.column})`,
@@ -350,6 +352,11 @@ function bookingBlocks(weekday: number) {
               {{ formatTimeRange(block.booking) }}
             </span>
             <span class="block text-xs leading-tight font-medium truncate" :class="block.tone.name">
+              <UIcon
+                v-if="block.booking.status === 'no_show'"
+                name="i-lucide-user-x"
+                class="size-3 align-[-2px] mr-0.5 text-warning"
+              />
               {{ block.booking.clientName }}
             </span>
             <span

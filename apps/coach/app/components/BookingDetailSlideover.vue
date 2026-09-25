@@ -102,6 +102,36 @@ async function assignClient(clientId: string | null) {
   }
 }
 
+// Nicht erschienen (B6). Dieselbe Regel wie auf dem Server (canMarkNoShow): bestätigt,
+// begonnen, niemand eingelassen – wer eingelassen wurde, war da.
+const canMarkNoShow = computed(() =>
+  !!props.booking
+  && props.booking.status === 'confirmed'
+  && !props.booking.admittedAt
+  && new Date(props.booking.start) <= now.value,
+)
+const markingNoShow = ref(false)
+
+// Ohne Rückfrage: Der Vermerk lässt sich mit „Doch erschienen" jederzeit zurücknehmen, und
+// er geht an niemanden hinaus.
+async function setNoShow(noShow: boolean) {
+  if (!props.booking) return
+  markingNoShow.value = true
+  actionError.value = null
+  try {
+    const updated = await $api<CoachBookingResponse>(`/bookings/${props.booking.id}/no-show`, {
+      method: noShow ? 'POST' : 'DELETE',
+    })
+    emit('updated', updated)
+  } catch {
+    actionError.value = noShow
+      ? 'Der Vermerk konnte nicht gespeichert werden.'
+      : 'Der Vermerk konnte nicht zurückgenommen werden.'
+  } finally {
+    markingNoShow.value = false
+  }
+}
+
 async function cancelBooking() {
   if (!props.booking) return
   cancelling.value = true
@@ -151,6 +181,13 @@ async function cancelBooking() {
             color="warning"
             variant="subtle"
           />
+          <UBadge
+            v-else-if="booking.status === 'no_show'"
+            :label="STATUS_LABELS.no_show"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-user-x"
+          />
           <UBadge v-else :label="STATUS_LABELS[booking.status]" color="neutral" variant="subtle" />
           <span v-if="booking.status === 'pending'" class="text-xs text-muted">
             Der Klient hat den Bestätigungslink noch nicht angeklickt.
@@ -197,6 +234,23 @@ async function cancelBooking() {
           <p class="text-sm text-highlighted whitespace-pre-line border-l-2 border-primary/40 pl-3">
             {{ booking.clientNote }}
           </p>
+        </div>
+
+        <div v-if="booking.status === 'no_show'">
+          <p class="text-xs uppercase tracking-wide text-muted mb-1">Nicht erschienen</p>
+          <p class="text-sm text-muted">
+            Dieser Termin zählt nicht als gehaltene Sitzung. Der Klient hat keine Nachricht bekommen.
+          </p>
+          <UButton
+            class="mt-2"
+            label="Doch erschienen"
+            icon="i-lucide-undo-2"
+            color="neutral"
+            variant="subtle"
+            size="xs"
+            :loading="markingNoShow"
+            @click="setNoShow(false)"
+          />
         </div>
 
         <div v-if="booking.cancelledAt">
@@ -260,15 +314,25 @@ async function cancelBooking() {
       <!-- flex-wrap: Mit dem Startknopf stehen hier zeitweise drei Schaltflächen, die in
            der Breite des Slideovers nicht nebeneinander passen. -->
       <div v-else class="flex flex-wrap items-center justify-between w-full gap-2">
-        <UButton
-          v-if="!isCancelled && !isPast"
-          label="Termin absagen"
-          icon="i-lucide-calendar-x"
-          color="error"
-          variant="ghost"
-          @click="confirmingCancel = true"
-        />
-        <div v-else />
+        <div class="flex flex-wrap items-center gap-2">
+          <UButton
+            v-if="!isCancelled && !isPast && booking?.status !== 'no_show'"
+            label="Termin absagen"
+            icon="i-lucide-calendar-x"
+            color="error"
+            variant="ghost"
+            @click="confirmingCancel = true"
+          />
+          <UButton
+            v-if="canMarkNoShow"
+            label="Nicht erschienen"
+            icon="i-lucide-user-x"
+            color="neutral"
+            variant="ghost"
+            :loading="markingNoShow"
+            @click="setNoShow(true)"
+          />
+        </div>
         <div class="flex items-center gap-2">
         <UButton
           v-if="canStart"

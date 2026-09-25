@@ -42,3 +42,18 @@ export function canClientCancel(booking: { status: BookingStatus; startTime: Dat
 // Als reines Array statt als Drizzle-Bedingung, damit diese Datei frei von ORM-Importen
 // bleibt; die Aufrufer bauen ihr `inArray` selbst.
 export const HELD_SESSION_STATUSES = ['confirmed', 'completed'] as const;
+
+/**
+ * Darf der Coach vermerken, dass der Klient nicht erschienen ist (B6)?
+ *
+ * Nur für einen bestätigten Termin, der begonnen hat und in dem niemand eingelassen wurde.
+ * Wer eingelassen wurde, war da – auch wenn das Gespräch kurz war. Vor dem Beginn kann
+ * niemand zu spät sein. 'no_show' steht nicht in HELD_SESSION_STATUSES; der Termin fällt
+ * damit aus jeder Zählung gehaltener Sitzungen heraus.
+ */
+export function canMarkNoShow(
+  booking: { status: BookingStatus; startTime: Date; admittedAt: Date | null },
+  now: Date,
+): boolean {
+  return booking.status === 'confirmed' && !booking.admittedAt && booking.startTime <= now;
+}

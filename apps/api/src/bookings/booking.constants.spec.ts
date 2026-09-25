@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONFIRMATION_TTL_MINUTES, canClientCancel, isExpiredPending } from './booking.constants';
+import { CONFIRMATION_TTL_MINUTES, canClientCancel, canMarkNoShow, isExpiredPending } from './booking.constants';
 
 // Die Grenzentscheidung wird an zwei Stellen getroffen (Lazy-Check in confirm() und
 // Verfall-Cron) und entscheidet darüber, ob ein Slot wieder frei wird – deshalb hier
@@ -67,5 +67,35 @@ describe('canClientCancel', () => {
 
   it('lehnt eine abgeschlossene Sitzung ab', () => {
     expect(canClientCancel({ status: 'completed', startTime: past }, now)).toBe(false);
+  });
+});
+
+describe('canMarkNoShow – wann der Coach „nicht erschienen" vermerken darf', () => {
+  const now = new Date('2026-09-25T10:10:00.000Z');
+  const started = new Date('2026-09-25T10:00:00.000Z');
+  const later = new Date('2026-09-25T11:00:00.000Z');
+
+  it('erlaubt es für einen bestätigten, begonnenen Termin ohne Einlass', () => {
+    expect(canMarkNoShow({ status: 'confirmed', startTime: started, admittedAt: null }, now)).toBe(true);
+  });
+
+  it('erlaubt es genau zum Beginn', () => {
+    expect(canMarkNoShow({ status: 'confirmed', startTime: now, admittedAt: null }, now)).toBe(true);
+  });
+
+  // Vor dem Beginn kann niemand zu spät sein.
+  it('lehnt einen Termin ab, der noch nicht begonnen hat', () => {
+    expect(canMarkNoShow({ status: 'confirmed', startTime: later, admittedAt: null }, now)).toBe(false);
+  });
+
+  // Wer eingelassen wurde, war da – auch wenn das Gespräch kurz war.
+  it('lehnt einen Termin mit Einlass ab', () => {
+    expect(canMarkNoShow({ status: 'confirmed', startTime: started, admittedAt: started }, now)).toBe(false);
+  });
+
+  it('lehnt abgesagte, abgeschlossene, unbestätigte und schon vermerkte Termine ab', () => {
+    for (const status of ['cancelled', 'completed', 'pending', 'no_show'] as const) {
+      expect(canMarkNoShow({ status, startTime: started, admittedAt: null }, now)).toBe(false);
+    }
   });
 });

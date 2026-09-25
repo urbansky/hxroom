@@ -51,7 +51,10 @@ function queryForFilter(): Record<string, string> {
   // Vergangen heißt: gehalten und vorbei. 'completed' gehört dazu – so steht jede Sitzung da,
   // die über „Sitzung beenden“ abgeschlossen wurde. Absteigend, damit das Limit der API die
   // ältesten Termine abschneidet und nicht die jüngsten.
-  if (filter.value === 'past') return { to: now.toISOString(), status: 'confirmed,completed', order: 'desc' }
+  //
+  // 'no_show' ebenfalls (B6): nicht gehalten, aber vorbei – und hier sucht der Coach, wenn
+  // er einen Vermerk zurücknehmen will. Das Badge unterscheidet es.
+  if (filter.value === 'past') return { to: now.toISOString(), status: 'confirmed,completed,no_show', order: 'desc' }
   if (filter.value === 'cancelled') return { status: 'cancelled' }
 
   // Das Ladefenster reicht bewusst in die Vergangenheit: Die API filtert auf den Beginn,
@@ -98,18 +101,22 @@ watch([viewMode, filter, weekStart], loadBookings)
 // Kommend und vergangen trennt das Ende des Termins, nicht sein Beginn: Ein Termin, der
 // gerade läuft, gehört zu den kommenden (siehe queryForFilter) und steht deshalb nicht
 // zugleich in der Vergangenheit, obwohl er dort über `to: now` mitgeladen wird.
+//
+// Ausnahme: Ein vermerkter No-Show (B6) ist vorbei, sobald er vermerkt ist – er bliebe
+// sonst bis zu seinem geplanten Ende unter „Kommend" stehen.
 const visibleBookings = computed(() => {
   if (viewMode.value === 'week' || filter.value === 'cancelled') return bookings.value
   const now = Date.now()
+  const isOver = (b: CoachBookingResponse) => b.status === 'no_show' || new Date(b.end).getTime() < now
   return filter.value === 'upcoming'
-    ? bookings.value.filter(b => new Date(b.end).getTime() >= now)
-    : bookings.value.filter(b => new Date(b.end).getTime() < now)
+    ? bookings.value.filter(b => !isOver(b))
+    : bookings.value.filter(isOver)
 })
 
 // Der nächste anstehende Termin wird in der Agenda hervorgehoben.
 const nextBookingId = computed(() => {
   const now = Date.now()
-  return bookings.value.find(b => b.status !== 'cancelled' && new Date(b.start).getTime() >= now)?.id ?? null
+  return bookings.value.find(b => b.status !== 'cancelled' && b.status !== 'no_show' && new Date(b.start).getTime() >= now)?.id ?? null
 })
 
 const bookingPageUrl = computed(() => {

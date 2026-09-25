@@ -136,6 +136,7 @@ function rowClass(booking: CoachBookingResponse): string {
               <UBadge v-if="isAdHoc(booking)" :label="AD_HOC_LABEL" color="info" variant="subtle" size="sm" class="shrink-0" />
               <UBadge v-if="booking.status === 'pending'" :label="STATUS_LABELS.pending" color="warning" variant="subtle" size="sm" class="shrink-0" />
               <UBadge v-else-if="booking.status === 'cancelled'" :label="STATUS_LABELS.cancelled" color="neutral" variant="subtle" size="sm" class="shrink-0" />
+              <UBadge v-else-if="booking.status === 'no_show'" :label="STATUS_LABELS.no_show" icon="i-lucide-user-x" color="warning" variant="subtle" size="sm" class="shrink-0" />
             </div>
 
             <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">

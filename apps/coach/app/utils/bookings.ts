@@ -158,6 +158,7 @@ export const STATUS_LABELS: Record<CoachBookingResponse['status'], string> = {
   confirmed: 'bestätigt',
   completed: 'abgeschlossen',
   cancelled: 'abgesagt',
+  no_show: 'nicht erschienen',
 }
 
 // Ein Spontan-Termin ist keine Buchung: Ihn hat der Coach selbst gestartet, er steht in

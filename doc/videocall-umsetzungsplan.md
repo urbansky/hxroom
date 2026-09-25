@@ -346,7 +346,7 @@ Das Panel „Klient" der Seitenleiste zeigt echte Angaben statt der Beispielwert
 
 Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klient mit langer Historie (Sitzung 39, nächster Termin, interne Notiz, drei Kacheln mit gekürzter und aufklappbarer Notiz, eine davon „Keine Notiz") und ein Klient ohne Historie („Sitzung 1", „Keiner geplant", „Das ist die erste Sitzung"). Ein Tab-Wechsel löst keinen zweiten Abruf aus. API per `curl`: Buchungsnotiz und nächster Termin am anstehenden Seed-Termin, fremde und unbekannte Buchung 404. Die Umwandlung in Klartext ist per Spec abgedeckt.
 
-### B6 · Robustheit und autoritatives Sitzungsende *(Webhooks, Reconnect und doppelte Tabs umgesetzt 2026-09-25; No-Show offen)*
+### B6 · Robustheit und autoritatives Sitzungsende ✅ *(umgesetzt 2026-09-25)*
 
 LiveKit-Webhooks als zweite Quelle für das Sitzungsende, Reconnect-Verhalten, doppelte Tabs (`DUPLICATE_IDENTITY`), No-Show. Die Schaltfläche „Sitzung beenden" bleibt der Auslöser, der Webhook ist der Fallback.
 
@@ -356,7 +356,7 @@ Bisher endete eine Sitzung nur über „Sitzung beenden". Schloss der Coach einf
 
 **Entschieden:** Die Sitzung endet, wenn der Coach den Raum verlässt und **innerhalb von 2 Minuten** nicht zurückkommt – auch wenn der Klient noch im Raum ist. Ein Reload, ein Browser-Absturz oder ein WLAN-Wechsel beendet nichts. Dass der Klient geht, beendet in keinem Fall etwas; er kann über seinen Link zurück.
 
-- **Webhook-Endpunkt** `POST /api/v1/livekit/webhooks` ohne AuthGuard, aber mit Signaturprüfung (`WebhookReceiver`). Dafür kommt der Body für diesen einen Pfad unverändert an (`express.raw` in `main.ts`, Typ `application/webhook+json`). Ohne oder mit falscher Signatur: 401.
+- **Webhook-Endpunkt** `POST /api/v1/livekit/webhooks` ohne AuthGuard, aber mit Signaturprüfung (`WebhookReceiver`). Dafür kommt der Body für diesen einen Pfad unverändert an (`app.useBodyParser('raw', …)` in `main.ts`, Typ `application/webhook+json`). Ohne oder mit falscher Signatur: 401.
 - **Was ein Ereignis bedeutet**, steht als reine Funktion in `call/call-presence.ts` (mit Spec): Coach geht → Nachfrist beginnt (`bookings.coach_left_at`), Coach kommt → Nachfrist hinfällig, Raum geschlossen → Rückfallebene, falls das Gehen nicht ankam. Auch dann wird erst nach der Nachfrist beendet; sonst endete eine Sitzung nach 20 Sekunden, nur weil beide gleichzeitig das Netz verloren.
 - **Ein Lauf alle 30 Sekunden** beendet abgelaufene Nachfristen – in der Datenbank statt in einem Timer, damit das einen Neustart der API übersteht. **Vor dem Beenden fragt er LiveKit, ob der Coach nicht doch im Raum ist.** Das ist nicht Vorsicht, sondern nötig: Beim Reload und beim zweiten Tab meldet LiveKit ebenfalls „Coach verlässt den Raum", und die Webhooks kommen nicht zwingend in der Reihenfolge an, in der es passiert ist. Ist LiveKit nicht erreichbar, wird nicht beendet, sondern im nächsten Lauf erneut geprüft.
 - **Beendet wird wie beim Klick** (`CallService.endAfterCoachLeft`): gehalten, `completed`, Meldung auf dem Ereigniskanal, der Klient landet auf der Danke-Seite. Unter der Sperre der Buchungszeile wird noch einmal geprüft, ob die Nachfrist noch läuft.
@@ -364,7 +364,7 @@ Bisher endete eine Sitzung nur über „Sitzung beenden". Schloss der Coach einf
 
 Abnahme mit drei Sitzungen gleichzeitig und echter Nachfrist: **A** – der Coach schließt den Tab: Nach sechs Sekunden läuft die Nachfrist, beendet ist noch nichts; nach Ablauf ist die Sitzung `completed` und der Klient auf der Danke-Seite. **B** – der Coach lädt neu: keine Nachfrist, die Sitzung läuft weiter. **C** – der Coach öffnet einen zweiten Tab: läuft weiter. Im Log sieht man, warum der Blick in den Raum nötig ist: Auch bei B und C kam „Coach verlässt den Raum" an, erst der folgende Beitritt hob die Nachfrist auf. Das Sicherheitsnetz gesondert: Bei laufender Sitzung eine seit drei Minuten „abgelaufene" Nachfrist in die Datenbank geschrieben – der nächste Lauf fand den Coach im Raum, hob die Nachfrist auf und beendete nichts.
 
-Offen in B6: was der Klient während der Nachfrist sieht (heute „… verbindet sich"), das Reconnect-Verhalten, eine verständliche Meldung beim zweiten Tab und der No-Show.
+Offen in B6 waren danach noch: was der Klient während der Nachfrist sieht, das Reconnect-Verhalten, eine verständliche Meldung beim zweiten Tab und der No-Show – alles in den beiden folgenden Nachträgen umgesetzt.
 
 #### Nachtrag: Reconnect und doppelter Tab *(umgesetzt 2026-09-25)*
 
@@ -388,6 +388,21 @@ Offen in B6: was der Klient während der Nachfrist sieht (heute „… verbindet
 Abnahme im Browser mit Coach und Klient, vier Szenarien, 23 Prüfungen: Klient schließt den Tab → beim Coach „Miriam ist gerade nicht verbunden" samt Hinweis, verschwindet, sobald sie über den Link zurück ist. Medienserver sechs Sekunden angehalten → auf beiden Seiten „Verbindung unterbrochen" und „Verbindung wackelt", danach ohne Zutun wieder vier laufende Spuren. Medienserver gestoppt (wie bei einem Deploy) → nach 52 Sekunden auf beiden Seiten „Verbindung verloren", der Hinweis steht 32 Sekunden lang ohne Lücke, nach dem Neustart des Servers sind beide ohne Klick zurück und das vorher stummgeschaltete Mikrofon ist weiter stumm. Zweiter Tab des Coachs → der erste zeigt „In einem anderen Tab geöffnet", 20 Sekunden kein Hin und Her; „Hier weitermachen" tauscht die Rollen, und so bleibt es. Dazu der Klient während der Nachfrist: „Anna ist gerade nicht verbunden – Das Gespräch bleibt offen", kein Hinweis auf die eigene Verbindung, nach dem Ende die Danke-Seite. Chat und Dateien laufen unverändert.
 
 Beim Prüfen gelernt: Ein **angehaltener** Container (`docker pause`) nimmt Verbindungen an und antwortet nie; jeder Versuch von LiveKit läuft dann in eine lange Zeitüberschreitung, und aus 45 Sekunden werden mehrere Minuten „Verbindung unterbrochen". Der Fall „verloren" lässt sich nur mit einem **gestoppten** Server prüfen, der Verbindungen sofort abweist.
+
+#### Nachtrag: No-Show *(umgesetzt 2026-09-25)*
+
+Erscheint der Klient nicht, kann der Coach das vermerken. Vorher blieb so ein Termin einfach `confirmed` stehen und war von einem vergessenen „Sitzung beenden" nicht zu unterscheiden.
+
+**Entschieden:**
+
+- **Eigener Status `no_show`** statt eines Merkmals an `completed` oder `cancelled`. Er gehört nicht zu `HELD_SESSION_STATUSES` – der Termin zählt also weder als gehaltene Sitzung noch in der Sitzungsnummer – und ist auch keine Absage: Der Klient hat nicht abgesagt, und eine Absage-Mail geht nicht hinaus. Neue Migration braucht es nicht, `status` ist eine Textspalte.
+- **Vermerkt werden kann nur**, was bestätigt ist, schon begonnen hat und in das noch niemand eingelassen wurde (`canMarkNoShow` in `booking.constants.ts`, mit Spec). Sonst 409.
+- **Zwei Stellen:** im Warteraum des Coachs (ab Terminbeginn „Klient nicht erschienen", mit Rückfrage; wartet der Klient gerade, weist die Rückfrage darauf hin) und im Termin-Detail („Nicht erschienen", ohne Rückfrage, weil sich das dort zurücknehmen lässt). **Zurücknehmen** nur im Termin-Detail: „Doch erschienen" setzt wieder `confirmed`.
+- **API:** `POST /api/v1/bookings/:id/no-show` vermerkt, `DELETE` nimmt zurück. Beides unter der Sperre der Buchungszeile und mit Meldung auf dem Ereigniskanal.
+- **Der Klient sieht neutral** „Dieser Termin ist vorbei – Melde dich bei …, wenn du einen neuen vereinbaren möchtest" samt Link zur Buchungsseite (Call-Zustand `missed`). Kein „nicht erschienen": Das Wort wäre ein Vorwurf, und es kann ein Irrtum des Coachs sein. Ein wartender Klient bekommt die Seite sofort über den Ereigniskanal.
+- **Kalender:** Badge „nicht erschienen" in Agenda und Klientenprofil, in der Wochenansicht ein Symbol vor dem Namen und ausgegraut wie ein vergangener Termin; ein vermerkter Termin steht sofort unter „Vergangen", nicht erst nach seinem geplanten Ende, und nicht mehr unter den anstehenden im Dashboard.
+
+Abnahme per API: gehaltene Sitzungen des Klienten 11 → 10 und nach „Doch erschienen" wieder 11; 409 für einen künftigen, einen schon eingelassenen und einen bereits vermerkten Termin, 404 für einen fremden, 401 ohne Anmeldung; der Ereigniskanal meldet `missed`. Im Browser mit Coach und wartendem Klienten, 12 Prüfungen: vor Terminbeginn kein Knopf, danach Knopf und Rückfrage mit Hinweis auf den wartenden Klienten, beim Klienten sofort „Dieser Termin ist vorbei" ohne das Wort „nicht erschienen", Badge im Kalender unter „Vergangen", im Termin-Detail „Doch erschienen" und erneut „Nicht erschienen".
 
 ### B7 · Chat im Call, mit geteilten Dateien ✅ *(umgesetzt 2026-09-24/25)*
 

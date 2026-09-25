@@ -4,7 +4,7 @@ import { notifyCallChatEvent } from './useCallChat';
 import type { CallAccessResponse, CallState } from '@hxroom/shared';
 
 /** Zustände, nach denen nichts mehr kommt – dort wird der Ereignisstrom geschlossen. */
-const FINAL_STATES: CallState[] = ['ended', 'cancelled', 'expired'];
+const FINAL_STATES: CallState[] = ['ended', 'cancelled', 'expired', 'missed'];
 
 /** Sekundentakt für Countdown und das Erkennen von Fensterwechseln. */
 const TICK_MS = 1000;

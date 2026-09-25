@@ -43,7 +43,9 @@ export function upcomingBookings(bookings: CoachBookingResponse[], now = new Dat
   const until = endOfDayAfter(now, days).getTime()
 
   return bookings
-    .filter(b => b.status !== 'cancelled')
+    // Nicht erschienen (B6): vermerkt, sobald der Termin begonnen hat – er stünde sonst bis
+    // zu seinem Ende weiter unter „Als Nächstes".
+    .filter(b => b.status !== 'cancelled' && b.status !== 'no_show')
     .filter((b) => {
       const start = new Date(b.start).getTime()
       return start < until && new Date(b.end).getTime() >= from

@@ -32,7 +32,7 @@ const inWaitingRoom = computed(() =>
   call.value?.state === 'too_early' || call.value?.state === 'open' || call.value?.state === 'waiting',
 )
 
-// Die drei Endzustände lesen sich für den Klienten unterschiedlich: abgesagt ist etwas
+// Die Endzustände lesen sich für den Klienten unterschiedlich: abgesagt ist etwas
 // anderes als abgelaufen, und ein beendetes Gespräch ist gar kein Problem.
 const ending = computed(() => {
   switch (call.value?.state) {
@@ -49,6 +49,16 @@ const ending = computed(() => {
         title: 'Der Termin wurde abgesagt',
         tone: 'warning' as const,
         description: 'Dieser Termin findet nicht statt. Du kannst jederzeit einen neuen buchen.',
+      }
+    // Der Coach hat vermerkt, dass niemand kam (B6). Bewusst ohne Vorwurf und ohne das Wort:
+    // Wer den Link jetzt öffnet, kam vielleicht nur zu spät – er soll wissen, wie es
+    // weitergeht, nicht, wie er vermerkt ist.
+    case 'missed':
+      return {
+        icon: 'i-lucide-calendar-clock',
+        title: 'Dieser Termin ist vorbei',
+        tone: 'neutral' as const,
+        description: `Melde dich bei ${call.value.coachName}, wenn du einen neuen vereinbaren möchtest.`,
       }
     default:
       return {
