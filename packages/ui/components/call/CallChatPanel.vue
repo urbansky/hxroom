@@ -37,6 +37,8 @@ const emit = defineEmits<{
   attach: [file: File]
   /** Die Datei passt nicht – zu groß oder ein Format, das nicht geteilt werden kann. */
   attachRejected: [reason: string]
+  /** Die Datei dieser Nachricht entfernen – erst nach der Rückfrage hier im Panel. */
+  remove: [id: string]
 }>()
 
 const peerShort = computed(() => firstName(props.peerName, 'Gegenüber'))
@@ -205,6 +207,47 @@ function openViewer(messageId: string) {
   viewerOpen.value = true
 }
 
+// Verschwindet ein Bild, während die Großansicht offen ist: Ist es das gezeigte, schließt
+// sie – es gibt nichts mehr zu sehen. Sonst bleibt sie beim selben Bild, dessen Position sich
+// verschoben haben kann.
+watch(viewerImages, (images, previous) => {
+  if (!viewerOpen.value) return
+  const shownId = previous[viewerIndex.value]?.id
+  const position = images.findIndex(image => image.id === shownId)
+  if (position === -1) viewerOpen.value = false
+  else viewerIndex.value = position
+})
+
+// ---------------------------------------------------------------------------
+// Datei entfernen
+// ---------------------------------------------------------------------------
+// Mit Rückfrage: Entfernt heißt für beide weg, auch aus dem Speicher – zurückholen lässt
+// sich nichts. Ob der Papierkorb erscheint, sagt die App über `removable`.
+
+const confirmingRemoval = ref<CallChatMessage | null>(null)
+const confirmOpen = computed({
+  get: () => confirmingRemoval.value !== null,
+  set: (open: boolean) => { if (!open) confirmingRemoval.value = null },
+})
+
+function askRemove(message: CallChatMessage) {
+  confirmingRemoval.value = message
+}
+
+function confirmRemove() {
+  const message = confirmingRemoval.value
+  confirmingRemoval.value = null
+  if (message) emit('remove', message.id)
+}
+
+function removedLabel(message: CallChatMessage): string {
+  return message.fileRemoved?.by === 'self' ? 'Datei von dir entfernt' : `Datei von ${peerShort.value} entfernt`
+}
+
+// Beim Überfahren sichtbar, per Tastatur beim Fokus – und auf Geräten ohne Mauszeiger immer,
+// sonst käme man dort nie heran.
+const REMOVE_BUTTON_REVEAL = 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100'
+
 // ---------------------------------------------------------------------------
 // Übersicht der geteilten Dateien
 // ---------------------------------------------------------------------------
@@ -257,8 +300,8 @@ async function showHistory(messageId?: string) {
   else element.scrollTop = savedScrollTop
 }
 
-// Verschwindet die letzte Datei – heute nicht möglich, aber der Verlauf kann neu geladen
-// werden –, soll niemand in einer leeren Übersicht stehen bleiben.
+// Wird die letzte Datei entfernt – hier oder vom Gegenüber –, soll niemand in einer leeren
+// Übersicht stehen bleiben.
 watch(() => sharedFiles.value.length, (count) => { if (!count && view.value === 'files') void showHistory() })
 
 function senderLabel(message: CallChatMessage): string {
@@ -371,22 +414,34 @@ function splitLinks(text: string): MessagePart[] {
         <div class="grid grid-cols-3 gap-2">
           <!-- Quadratisch beschnitten – im Raster zählt das Wiedererkennen, das ganze Bild
                zeigt die Großansicht. -->
-          <button
-            v-for="message in sharedImages"
-            :key="message.id"
-            type="button"
-            class="aspect-square overflow-hidden rounded-md border border-default bg-elevated hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
-            :aria-label="`${message.file!.name} groß anzeigen`"
-            :title="`${message.file!.name} · ${senderLabel(message)}`"
-            @click="openViewer(message.id)"
-          >
-            <img
-              :src="message.file!.preview!.href"
-              :alt="message.file!.name"
-              loading="lazy"
-              class="block w-full h-full object-cover"
+          <div v-for="message in sharedImages" :key="message.id" class="group relative">
+            <button
+              type="button"
+              class="block w-full aspect-square overflow-hidden rounded-md border border-default bg-elevated hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
+              :aria-label="`${message.file!.name} groß anzeigen`"
+              :title="`${message.file!.name} · ${senderLabel(message)}`"
+              @click="openViewer(message.id)"
             >
-          </button>
+              <img
+                :src="message.file!.preview!.href"
+                :alt="message.file!.name"
+                loading="lazy"
+                class="block w-full h-full object-cover"
+              >
+            </button>
+            <UButton
+              v-if="message.removable"
+              icon="i-lucide-trash-2"
+              color="neutral"
+              variant="solid"
+              size="xs"
+              class="absolute top-1 end-1 shadow-sm"
+              :class="REMOVE_BUTTON_REVEAL"
+              :aria-label="`${message.file!.name} entfernen`"
+              title="Datei entfernen"
+              @click="askRemove(message)"
+            />
+          </div>
         </div>
       </section>
 
@@ -421,10 +476,22 @@ function splitLinks(text: string): MessagePart[] {
               color="neutral"
               variant="ghost"
               size="xs"
-              class="mr-1.5 shrink-0"
+              class="shrink-0"
+              :class="message.removable ? '' : 'mr-1.5'"
               aria-label="Im Verlauf zeigen"
               title="Im Verlauf zeigen"
               @click="showHistory(message.id)"
+            />
+            <UButton
+              v-if="message.removable"
+              icon="i-lucide-trash-2"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="mr-1.5 shrink-0"
+              :aria-label="`${message.file!.name} entfernen`"
+              title="Datei entfernen"
+              @click="askRemove(message)"
             />
           </li>
         </ul>
@@ -475,23 +542,39 @@ function splitLinks(text: string): MessagePart[] {
         <!-- Ein Bild mit Vorschau steht als Bild da und öffnet die Großansicht. Breite und
              Höhe stehen vorab fest, damit das nachladende Bild den Verlauf nicht verschiebt –
              sonst liefe das Mitscrollen ans Ende ins Leere. -->
-        <button
+        <div
           v-if="message.file?.kind === 'image' && message.file.preview && message.file.href"
-          type="button"
-          class="block overflow-hidden rounded-lg border border-default bg-elevated hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
-          :style="{ width: `${previewBox(message.file.preview).width}px`, aspectRatio: `${message.file.preview.width} / ${message.file.preview.height}` }"
-          :aria-label="`${message.file.name} groß anzeigen`"
-          @click="openViewer(message.id)"
+          class="group relative"
         >
-          <img
-            :src="message.file.preview.href"
-            :alt="message.file.name"
-            :width="message.file.preview.width"
-            :height="message.file.preview.height"
-            loading="lazy"
-            class="block w-full h-full object-cover"
+          <button
+            type="button"
+            class="block overflow-hidden rounded-lg border border-default bg-elevated hover:border-primary focus-visible:outline-2 focus-visible:outline-primary"
+            :style="{ width: `${previewBox(message.file.preview).width}px`, aspectRatio: `${message.file.preview.width} / ${message.file.preview.height}` }"
+            :aria-label="`${message.file.name} groß anzeigen`"
+            @click="openViewer(message.id)"
           >
-        </button>
+            <img
+              :src="message.file.preview.href"
+              :alt="message.file.name"
+              :width="message.file.preview.width"
+              :height="message.file.preview.height"
+              loading="lazy"
+              class="block w-full h-full object-cover"
+            >
+          </button>
+          <UButton
+            v-if="message.removable"
+            icon="i-lucide-trash-2"
+            color="neutral"
+            variant="solid"
+            size="xs"
+            class="absolute top-1.5 end-1.5 shadow-sm"
+            :class="REMOVE_BUTTON_REVEAL"
+            :aria-label="`${message.file.name} entfernen`"
+            title="Datei entfernen"
+            @click="askRemove(message)"
+          />
+        </div>
 
         <!-- Sonst als Zeile unter dem Text. PDFs zeigt der Viewer des Browsers, alles andere
              wird heruntergeladen – beides in einem neuen Tab.
@@ -502,26 +585,55 @@ function splitLinks(text: string): MessagePart[] {
              das Gespräch wäre danach tot, während die Seite stehen bleibt. Den Dateinamen
              trägt ohnehin der Content-Disposition-Header; das `download`-Attribut wirkt bei
              einer fremden Herkunft nicht. -->
-        <component
-          :is="message.file.href ? 'a' : 'div'"
+        <!-- Der Papierkorb steht auf der Innenseite, zur Mitte des Panels hin – bei eigenen
+             Nachrichten also links. -->
+        <div
           v-else-if="message.file"
-          :href="message.file.href"
-          :target="message.file.href ? '_blank' : undefined"
-          :rel="message.file.href ? 'noopener noreferrer' : undefined"
-          class="max-w-[85%] flex items-center gap-2 rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-900"
-          :class="[
-            message.file.href ? 'hover:border-primary hover:bg-elevated cursor-pointer' : 'opacity-60',
-            message.status === 'sending' ? 'opacity-60' : '',
-          ]"
+          class="group max-w-[85%] flex items-center gap-1"
+          :class="message.from === 'self' ? 'flex-row-reverse' : ''"
         >
-          <UIcon :name="message.status === 'sending' ? 'i-lucide-loader-circle' : fileIcon(message.file.kind)" class="size-4 text-dimmed shrink-0" :class="message.status === 'sending' ? 'animate-spin' : ''" />
-          <span class="min-w-0">
-            <span class="block text-xs text-toned truncate">{{ message.file.name }}</span>
-            <span class="block text-[0.625rem] text-dimmed">
-              {{ fileSize(message.file.size) }}<template v-if="message.file.href"> · {{ message.file.kind === 'file' ? 'herunterladen' : 'öffnen' }}</template>
+          <component
+            :is="message.file.href ? 'a' : 'div'"
+            :href="message.file.href"
+            :target="message.file.href ? '_blank' : undefined"
+            :rel="message.file.href ? 'noopener noreferrer' : undefined"
+            class="min-w-0 flex items-center gap-2 rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-900"
+            :class="[
+              message.file.href ? 'hover:border-primary hover:bg-elevated cursor-pointer' : 'opacity-60',
+              message.status === 'sending' ? 'opacity-60' : '',
+            ]"
+          >
+            <UIcon :name="message.status === 'sending' ? 'i-lucide-loader-circle' : fileIcon(message.file.kind)" class="size-4 text-dimmed shrink-0" :class="message.status === 'sending' ? 'animate-spin' : ''" />
+            <span class="min-w-0">
+              <span class="block text-xs text-toned truncate">{{ message.file.name }}</span>
+              <span class="block text-[0.625rem] text-dimmed">
+                {{ fileSize(message.file.size) }}<template v-if="message.file.href"> · {{ message.file.kind === 'file' ? 'herunterladen' : 'öffnen' }}</template>
+              </span>
             </span>
-          </span>
-        </component>
+          </component>
+          <UButton
+            v-if="message.removable && message.file.href"
+            icon="i-lucide-trash-2"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            class="shrink-0"
+            :class="REMOVE_BUTTON_REVEAL"
+            :aria-label="`${message.file.name} entfernen`"
+            title="Datei entfernen"
+            @click="askRemove(message)"
+          />
+        </div>
+
+        <!-- Platzhalter einer entfernten Datei – ohne Namen, schon der kann verraten, was
+             nicht mehr da sein soll. -->
+        <div
+          v-else-if="message.fileRemoved"
+          class="max-w-[85%] flex items-center gap-2 rounded-lg border border-dashed border-default px-3 py-2 text-xs text-dimmed"
+        >
+          <UIcon name="i-lucide-file-x" class="size-4 shrink-0" />
+          <span>{{ removedLabel(message) }}</span>
+        </div>
 
         <div class="flex items-center gap-1.5 text-[0.625rem] text-dimmed">
           <template v-if="message.status === 'failed'">
@@ -548,6 +660,27 @@ function splitLinks(text: string): MessagePart[] {
     </div>
 
     <CallImageViewer v-model:open="viewerOpen" v-model:index="viewerIndex" :images="viewerImages" />
+
+    <!-- Eigene Ebene wie die Großansicht: Im Call lägen Seitenleiste und Steuerleiste sonst
+         darüber. -->
+    <UModal
+      v-model:open="confirmOpen"
+      title="Datei entfernen?"
+      :ui="{ overlay: 'z-[100]', content: 'z-[100]' }"
+    >
+      <template #body>
+        <p class="text-sm text-toned">
+          „{{ confirmingRemoval?.file?.name }}" ist danach für euch beide weg und lässt sich nicht
+          zurückholen. Im Verlauf bleibt ein Hinweis, dass hier eine Datei war.
+        </p>
+      </template>
+      <template #footer>
+        <div class="flex w-full justify-end gap-2">
+          <UButton label="Abbrechen" color="neutral" variant="ghost" @click="confirmOpen = false" />
+          <UButton label="Entfernen" color="error" icon="i-lucide-trash-2" @click="confirmRemove" />
+        </div>
+      </template>
+    </UModal>
 
     <div v-if="!readonly">
       <!-- items-end: Wächst das Feld, bleiben Büroklammer und Senden unten an der letzten

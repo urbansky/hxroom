@@ -88,6 +88,16 @@ export interface CallChatMessage {
   status?: 'sending' | 'failed'
   /** Die geteilte Datei, falls die Nachricht eine trägt. */
   file?: CallChatFile
+  /**
+   * Hier lag eine Datei, sie wurde entfernt – von mir oder vom Gegenüber. Der Verlauf zeigt
+   * einen Platzhalter ohne Dateinamen.
+   */
+  fileRemoved?: { by: 'self' | 'peer' }
+  /**
+   * Darf ich die Datei dieser Nachricht entfernen? Entscheidet die App nach ihrer Rolle; das
+   * Panel zeigt dann den Papierkorb. Die verbindliche Prüfung macht der Server.
+   */
+  removable?: boolean
 }
 
 /**
@@ -96,6 +106,8 @@ export interface CallChatMessage {
  * Fehlt `href`, ist die Datei noch unterwegs.
  */
 export interface CallChatFile {
+  /** Kennung beim Server – zum Entfernen. Fehlt, solange die Datei noch unterwegs ist. */
+  id?: string
   name: string
   size: number
   href?: string

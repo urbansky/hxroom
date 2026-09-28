@@ -6,7 +6,15 @@ import {
   callWindowClosesAt,
   callWindowOpensAt,
 } from '@hxroom/shared';
-import { canAdmit, canEnd, mayJoinRoom, mayReachRoom, resolveCallState, type CallBookingState } from './call-access';
+import {
+  canAdmit,
+  canEnd,
+  mayJoinRoom,
+  mayReachRoom,
+  mayRemoveChatFile,
+  resolveCallState,
+  type CallBookingState,
+} from './call-access';
 
 // Sitzung von 10:00 bis 11:00; Fenster damit 09:00 bis 13:00.
 const START = new Date('2026-08-20T10:00:00.000Z');
@@ -226,6 +234,34 @@ describe('mayJoinRoom', () => {
       expect(mayJoinRoom('expired', role)).toBe(false);
       expect(mayJoinRoom('ended', role)).toBe(false);
       expect(mayJoinRoom('cancelled', role)).toBe(false);
+    }
+  });
+});
+
+describe('mayRemoveChatFile', () => {
+  const ALL_STATES = ['too_early', 'open', 'waiting', 'admitted', 'ended', 'cancelled', 'expired', 'missed'] as const;
+
+  // Der Coach ist für die Daten verantwortlich – auch ein späterer Löschwunsch des Klienten
+  // landet bei ihm.
+  it('lässt den Coach jede Datei jederzeit entfernen', () => {
+    for (const state of ALL_STATES) {
+      expect(mayRemoveChatFile('coach', 'coach', state)).toBe(true);
+      expect(mayRemoveChatFile('coach', 'client', state)).toBe(true);
+    }
+  });
+
+  it('lässt den Klienten seine eigene Datei im laufenden Gespräch entfernen', () => {
+    expect(mayRemoveChatFile('client', 'client', 'admitted')).toBe(true);
+  });
+
+  it('lässt den Klienten nie die Datei des Coachs entfernen', () => {
+    for (const state of ALL_STATES) expect(mayRemoveChatFile('client', 'coach', state)).toBe(false);
+  });
+
+  // Nach dem Ende ist der Raum für ihn zu – wie beim Lesen des Verlaufs.
+  it('lässt den Klienten außerhalb des Gesprächs nichts entfernen', () => {
+    for (const state of ALL_STATES.filter((s) => s !== 'admitted')) {
+      expect(mayRemoveChatFile('client', 'client', state)).toBe(false);
     }
   });
 });

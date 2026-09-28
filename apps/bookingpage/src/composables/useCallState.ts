@@ -1,6 +1,6 @@
 import { onUnmounted, ref } from 'vue';
 import { apiUrl } from '../utils/api';
-import { notifyCallChatEvent } from './useCallChat';
+import { notifyCallChatChanged, notifyCallChatEvent } from './useCallChat';
 import type { CallAccessResponse, CallState } from '@hxroom/shared';
 
 /** Zustände, nach denen nichts mehr kommt – dort wird der Ereignisstrom geschlossen. */
@@ -72,6 +72,16 @@ export function useCallState(bookingId: string, token: string) {
     // Neue Chatnachricht. Benanntes Ereignis, erreicht onmessage bewusst nicht: Es trägt
     // keinen Inhalt, der Chat holt sich die neuen Nachrichten selbst.
     source.addEventListener('chat', () => notifyCallChatEvent());
+
+    // Eine vorhandene Nachricht hat sich geändert (etwa eine entfernte Datei). Dasselbe bei
+    // jedem Wiederverbinden des Stroms: Was in der Lücke geändert wurde, sieht das Nachholen
+    // nach Nummern nicht – der Chat lädt dann einmal den ganzen Verlauf.
+    source.addEventListener('chat-changed', () => notifyCallChatChanged());
+    let opened = false;
+    source.onopen = () => {
+      if (opened) notifyCallChatChanged();
+      opened = true;
+    };
 
     // Kein eigenes Zutun: Der Browser verbindet von sich aus neu, und jedes Ereignis trägt
     // den vollständigen Zustand – ein währenddessen verpasster Wechsel heilt beim nächsten.

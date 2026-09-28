@@ -397,6 +397,7 @@ async function leave() {
         @retry="chat.retry"
         @attach="chat.sendFile"
         @attach-rejected="(message: string) => { chatProblem = message }"
+        @remove="chat.remove"
       />
     </template>
   </CallShell>

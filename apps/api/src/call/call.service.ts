@@ -229,7 +229,14 @@ export class CallService {
       map((): MessageEvent => ({ type: 'chat', data: '' })),
     );
 
-    return merge(state, chat, heartbeat);
+    // Eine vorhandene Nachricht hat sich geändert – heute: ihre Datei wurde entfernt. Auch das
+    // ohne Inhalt; der Empfänger lädt den Verlauf ganz, weil das Nachholen nach Nummern nur
+    // Neues sieht.
+    const chatChanged = this.events.chatChangesFor(bookingId).pipe(
+      map((): MessageEvent => ({ type: 'chat-changed', data: '' })),
+    );
+
+    return merge(state, chat, chatChanged, heartbeat);
   }
 
   /**

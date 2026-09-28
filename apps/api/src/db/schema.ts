@@ -263,6 +263,11 @@ export const sessionChatMessages = pgTable('session_chat_messages', {
   // Netzfehler trifft auf diesen Schlüssel und legt keine zweite Nachricht an.
   clientMessageId: text('client_message_id').notNull(),
   text:            text('text').notNull(),
+  // Die Datei der Nachricht wurde entfernt: Objekt und Zeile in session_chat_files sind weg,
+  // die Nachricht bleibt als Platzhalter stehen – ohne Dateinamen, denn schon der kann
+  // verraten, was nicht mehr da sein soll. Gesetzt heißt: Hier war eine Datei.
+  fileRemovedAt:   timestamp('file_removed_at'),
+  fileRemovedBy:   text('file_removed_by').$type<CallChatSender>(),
   createdAt:       timestamp('created_at').notNull().defaultNow(),
 }, (table) => [
   unique().on(table.bookingId, table.clientMessageId),

@@ -18,8 +18,12 @@ import { Observable, Subject, filter, map } from 'rxjs';
  * nach der letzten bekannten" (B7). Zwei Arten statt eines Ereignisses, weil ein
  * Zustandsabruf die vollständige Antwort baut – bei jeder Chatnachricht wäre das Verschwendung,
  * und die Klientenseite bekäme den LiveKit-Token ohne Anlass neu.
+ *
+ * `chat-changed` heißt „eine Nachricht, die du schon hast, hat sich geändert – lade den
+ * Verlauf ganz" (etwa eine entfernte Datei). Das Nachholen über die höchste Nummer sieht nur
+ * Neues, keine Änderungen.
  */
-export type CallEventKind = 'state' | 'chat';
+export type CallEventKind = 'state' | 'chat' | 'chat-changed';
 
 @Injectable()
 export class CallEventsService {
@@ -40,6 +44,11 @@ export class CallEventsService {
     this.changes.next({ bookingId, kind: 'chat' });
   }
 
+  /** Meldet, dass sich eine vorhandene Chatnachricht geändert hat – ebenfalls ohne Inhalt. */
+  notifyChatChanged(bookingId: string): void {
+    this.changes.next({ bookingId, kind: 'chat-changed' });
+  }
+
   /** Zustandsereignisse genau einer Buchung – ohne Nutzlast, der Abonnent lädt den Stand selbst. */
   changesFor(bookingId: string): Observable<void> {
     return this.of(bookingId, 'state');
@@ -48,6 +57,11 @@ export class CallEventsService {
   /** Chatereignisse genau einer Buchung. */
   chatFor(bookingId: string): Observable<void> {
     return this.of(bookingId, 'chat');
+  }
+
+  /** Änderungen an vorhandenen Chatnachrichten genau einer Buchung. */
+  chatChangesFor(bookingId: string): Observable<void> {
+    return this.of(bookingId, 'chat-changed');
   }
 
   private of(bookingId: string, kind: CallEventKind): Observable<void> {

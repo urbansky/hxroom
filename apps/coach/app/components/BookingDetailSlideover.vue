@@ -40,7 +40,7 @@ const { content: notesContent, ready: notesReady, loadError: notesLoadError, sta
 // Einlass gibt es also keinen Verlauf, und für diese Termine, die allermeisten, wird gar
 // nicht erst gefragt. Eingeklappt, weil das Slideover mit den Notizen schon lang ist.
 const chat = useSessionChat(() => (open.value && props.booking?.admittedAt ? props.booking.id : null))
-const { messages: chatMessages, fileCount: chatFileCount, loadError: chatLoadError } = chat
+const { messages: chatMessages, fileCount: chatFileCount, loadError: chatLoadError, removeError: chatRemoveError } = chat
 const chatOpen = ref(false)
 watch(() => props.booking?.id, () => (chatOpen.value = false))
 
@@ -335,8 +335,11 @@ async function cancelBooking() {
           <!-- Feste Höhe: Das Panel scrollt in sich, wie in der Seitenleiste des Calls, und
                beginnt am Ende des Verlaufs. -->
           <div v-if="chatOpen" ref="chatBox" class="mt-2 h-96 rounded-lg border border-default bg-elevated/40 p-3">
-            <CallChatPanel :messages="chatMessages" :peer-name="booking.clientName" readonly />
+            <!-- Nur lesen heißt hier: nicht schreiben. Entfernen darf der Coach eine Datei auch
+                 nach der Sitzung, etwa auf einen Löschwunsch des Klienten hin. -->
+            <CallChatPanel :messages="chatMessages" :peer-name="booking.clientName" readonly @remove="chat.remove" />
           </div>
+          <p v-if="chatRemoveError" class="mt-2 text-sm text-error">Die Datei konnte nicht entfernt werden.</p>
         </div>
         <UAlert
           v-else-if="chatLoadError"

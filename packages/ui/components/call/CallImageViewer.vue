@@ -28,6 +28,10 @@ const current = computed(() => props.images[index.value] ?? null)
 // Neu aufbauen bei jedem Öffnen: Das Karussell übernimmt seinen Startpunkt nur beim Mounten.
 const mountKey = ref(0)
 watch(open, (isOpen) => { if (isOpen) mountKey.value++ })
+// Ebenso, wenn sich die Bilder ändern, während sie offen ist – etwa weil das Gegenüber eines
+// entfernt hat. Das Karussell zählte sonst weiter nach den alten Positionen; der Aufrufer
+// hat den Index dann schon auf das gezeigte Bild nachgeführt.
+watch(() => props.images.map(image => image.id).join(), () => { if (open.value) mountKey.value++ })
 
 const carousel = ref<{ emblaApi?: { scrollPrev: () => void, scrollNext: () => void } } | null>(null)
 

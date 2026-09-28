@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Redirect, Res, Sse, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Redirect, Res, Sse, UnauthorizedException, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
@@ -168,6 +168,20 @@ export class CoachCallController {
     const signed = await this.chatService.fileUrlForCoach(org.id, id, fileId, 'preview');
     res.set({ 'Cache-Control': signed.cacheControl });
     return { url: signed.url };
+  }
+
+  /**
+   * Eine geteilte Datei entfernen – jede, jederzeit, auch nach der Sitzung. Antwort ist die
+   * Nachricht mit ihrem Platzhalter.
+   */
+  @Delete(':id/call/files/:fileId')
+  removeFile(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.chatService.removeFileAsCoach(org.id, id, fileId);
   }
 
   @Post(':id/call/end')

@@ -98,3 +98,17 @@ export function mayJoinRoom(state: CallState, role: CallRole): boolean {
 export function mayReachRoom(state: CallState): boolean {
   return state === 'open' || state === 'waiting' || state === 'admitted';
 }
+
+/**
+ * Darf dieser Aufrufer eine im Chat geteilte Datei entfernen?
+ *
+ * Der Coach jede, jederzeit – auch die des Klienten und auch nach der Sitzung: Ein späterer
+ * Löschwunsch des Klienten geht an ihn, er ist für die Daten verantwortlich. Der Klient nur
+ * seine eigenen und nur im laufenden Gespräch; der typische Fehlgriff ist das falsche
+ * Dokument, und das soll er zurücknehmen können, ohne darum bitten zu müssen. Nach dem Ende
+ * ist der Raum für ihn zu, wie beim Lesen des Verlaufs.
+ */
+export function mayRemoveChatFile(remover: CallRole, sender: CallRole, state: CallState): boolean {
+  if (remover === 'coach') return true;
+  return sender === 'client' && state === 'admitted';
+}

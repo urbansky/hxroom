@@ -505,7 +505,7 @@ Auf dem Server noch zu tun:
 Die offenen Punkte kommen in §16:
 
 - Chat und Dateien liegen im Klartext wie die Notizen.
-- Löschen durch den Coach: Ein versehentlich geteiltes Dokument bleibt sonst bis zur Kontolöschung liegen.
+- Löschen durch den Coach: Ein versehentlich geteiltes Dokument bleibt sonst bis zur Kontolöschung liegen. *(Umgesetzt 2026-09-28, siehe Nachtrag „Geteilte Dateien entfernen".)*
 - Virenscan (etwa ClamAV), bevor Coachs Dateien von Klienten öffnen.
 - Aufbewahrungsfristen (`legal.md`).
 
@@ -609,6 +609,29 @@ Im Termin-Slideover – also auch aus dem Klientenprofil heraus – steht unter 
 - Kein Nachholen über den Ereigniskanal: Hier wird zurückgeschaut, nicht mitgeschrieben.
 
 Abnahme im Browser mit einer beendeten Sitzung (Text, Link, Bild, PDF, 19 Nachrichten), 20 Prüfungen: eingeklappt mit Zusammenfassung, aufgeklappt am Ende und im Blick, keine Eingabezeile, Link im neuen Tab, Vorschaubild geladen, Großansicht öffnet und schließt mit Escape ohne das Slideover, PDF kommt über den Link an, Dateiübersicht, wieder einklappbar; untergeschobener 500er → Hinweis, „Erneut versuchen" lädt; Termin ohne Einlass → kein Abschnitt und kein Abruf. Dazu der Chat im Call nach dem Umbau: Senden und Empfangen wie vorher.
+
+#### Nachtrag: Geteilte Dateien entfernen *(umgesetzt 2026-09-28)*
+
+Ein versehentlich geteiltes Dokument blieb bisher bis zur Kontolöschung liegen (`technisches-konzept.md` §16 Punkt 04). Jetzt lässt es sich entfernen.
+
+**Entschieden:**
+
+- **Wer:** Der Coach entfernt jede Datei jederzeit – auch die des Klienten und auch nach der Sitzung, denn ein späterer Löschwunsch des Klienten geht an ihn. Der Klient entfernt seine eigenen Dateien, solange das Gespräch läuft. Die Regel steht als reine Funktion `mayRemoveChatFile` in `call-access.ts` (mit Spec).
+- **Was bleibt:** ein Platzhalter „Datei von Anna entfernt" bzw. „Datei von dir entfernt", **ohne Dateinamen** – schon der Name kann verraten, was nicht mehr da sein soll. Ein Begleittext bleibt stehen.
+- **Entfernt heißt weg:** Original und Vorschaubild aus dem Speicher, die Zeile aus `session_chat_files` samt Namen. Die Nachricht behält `file_removed_at` und `file_removed_by` (Migration 0023). Eine entfernte Datei zählt nicht mehr zur Grenze von 20 je Sitzung; wer die falsche geschickt hat, kann die richtige nachschicken.
+
+**API:** `DELETE /bookings/:id/call/files/:fileId` (Coach) und `DELETE /bookings/:id/waiting-room/files/:fileId` mit dem Token im Body (Klient). Antwort ist die Nachricht mit Platzhalter; eine schon entfernte oder fremde Datei ergibt 404, eine fremde Datei für den Klienten 403. Unter der Sperre des Chats, und die Objekte werden innerhalb der Transaktion gelöscht: Scheitert der Speicher, bleibt alles, wie es war.
+
+**Die Gegenseite erfährt es sofort** über ein drittes benanntes Ereignis `chat-changed`, ohne Inhalt: „Eine Nachricht, die du hast, hat sich geändert – lade den Verlauf ganz". Das Nachholen nach Nummern sieht nur Neues, keine Änderungen. Zwei Stellen, an denen eine Änderung sonst verloren ginge, lösen deshalb ebenfalls ein volles Laden aus:
+
+- **Der Strom verbindet neu** (`onopen` ab dem zweiten Mal) – was in der Lücke passiert ist, kam nie an.
+- **Der Abruf nach einem Ereignis scheitert** – das Ereignis kam an, das Netz war beim Nachladen kurz weg. Ein gescheiterter Abruf wird jetzt nach vier Sekunden wiederholt; vorher blieb er liegen, bis zufällig die nächste Nachricht kam. Aufgefallen im Test: Der Klient war drei Sekunden offline, sein Strom blieb offen, das Ereignis kam an, der Abruf scheiterte – und der Platzhalter kam nie.
+
+Ein volles Laden behält eigene Nachrichten, die noch unterwegs oder gescheitert sind, am Ende des Verlaufs (`mergeFullHistory`).
+
+**Oberfläche** (`CallChatPanel`): ein Papierkorb am Bild, an der Dateizeile und in der Dateiübersicht – beim Überfahren sichtbar, auf Geräten ohne Mauszeiger immer. Ob er erscheint, sagt die App über `removable`; verbindlich prüft der Server. Vorher eine Rückfrage „Datei entfernen? – … ist danach für euch beide weg". Ist die Großansicht beim Gegenüber gerade auf dem entfernten Bild, schließt sie sich; sonst bleibt sie beim gezeigten Bild. Im Termin-Detail kann der Coach ebenfalls entfernen.
+
+Abnahme per API, 21 Prüfungen: Objekte vorher da und danach weg (auch das Vorschaubild), Zeile weg, Vermerk an der Nachricht, `chat-changed` auf dem Strom, Verlauf ohne Dateinamen; Klient an fremder Datei 403, falscher Token 401, ohne Token 400, Coach ohne Anmeldung 401, zweites Entfernen 404; mit 20 Dateien voll, nach dem Entfernen passt wieder eine; nach dem Ende Klient 403, Coach 200. Im Browser mit Coach und Klient, 20 Prüfungen: Papierkorb nach Rolle und erst beim Überfahren, Rückfrage mit Dateinamen, Platzhalter auf beiden Seiten ohne Neuladen, Großansicht schließt, Abbrechen lässt die Datei stehen, Übersicht zählt neu, Entfernen während der Klient offline ist kommt nach, Entfernen im Termin-Detail nach der Sitzung. Getrennt geprüft: Nach einem Neustart der API lädt der Klient den Verlauf einmal ganz und sieht eine in der Lücke entfernte Datei.
 
 ---
 

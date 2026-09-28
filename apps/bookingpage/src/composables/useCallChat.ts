@@ -1,4 +1,4 @@
-import { onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { apiUrl } from '../utils/api';
 import type { CallChatMessageResponse, CallChatMessagesResponse, CallChatSender } from '@hxroom/shared';
 import type { CallChatFile, CallChatMessage } from '@hxroom/ui';
@@ -9,11 +9,25 @@ import type { CallChatFile, CallChatMessage } from '@hxroom/ui';
  * ein zweiter EventSource wäre der falsche Preis dafür. Er zählte hier außerdem als zweite
  * Anwesenheit des Klienten.
  */
+/** Nach einem gescheiterten Abruf des Verlaufs erneut versuchen. */
+const FETCH_RETRY_MS = 4000;
+
 const chatSignal = ref(0);
+/** Wie chatSignal, aber für „lade den Verlauf ganz". */
+const chatResetSignal = ref(0);
 
 /** Vom Ereignisstrom aufgerufen: bei einem `chat`-Ereignis und nach jedem Zustandsereignis. */
 export function notifyCallChatEvent(): void {
   chatSignal.value++;
+}
+
+/**
+ * Vom Ereignisstrom aufgerufen, wenn sich eine vorhandene Nachricht geändert hat
+ * (`chat-changed`, etwa eine entfernte Datei) und bei jedem Wiederverbinden: Was in einer
+ * Lücke geändert wurde, sieht das Nachholen nach Nummern nicht.
+ */
+export function notifyCallChatChanged(): void {
+  chatResetSignal.value++;
 }
 
 function formatTime(iso: string): string {
@@ -31,6 +45,7 @@ function chatFile(
 ): CallChatFile {
   const kind = file.mimeType.startsWith('image/') ? 'image' : file.mimeType === 'application/pdf' ? 'pdf' : 'file';
   return {
+    id: file.id,
     name: file.name,
     size: file.size,
     kind,
@@ -68,6 +83,8 @@ export function useCallChat(options: {
   let lastSeq = 0;
   let loading = false;
   let again = false;
+  /** Beim nächsten Abruf den ganzen Verlauf holen statt nur das Neue. */
+  let fullPending = false;
   /** Dateien, deren Nachricht noch nicht beim Server liegt – für den zweiten Versuch. */
   const pendingFiles = new Map<string, File>();
 
@@ -83,23 +100,34 @@ export function useCallChat(options: {
    * spränge er über eine Nachricht der Gegenseite hinweg, die kurz davor gespeichert, aber
    * noch nicht abgeholt wurde – und die käme erst mit dem nächsten Neuladen.
    */
+  /**
+   * Eine gespeicherte Nachricht so, wie das Panel sie zeigt. Entfernen darf der Klient nur
+   * seine eigenen Dateien und nur im laufenden Gespräch – außerhalb davon sieht er den Chat
+   * gar nicht, die Prüfung auf den Zustand liegt deshalb beim Server.
+   */
+  function toMessage(row: CallChatMessageResponse): CallChatMessage {
+    return {
+      id: row.clientMessageId,
+      from: row.sender === options.self ? 'self' : 'peer',
+      text: row.text,
+      time: formatTime(row.createdAt),
+      // Der Link zeigt auf die API, nicht auf den Speicher: Sie prüft beim Klick und leitet
+      // dann auf einen signierten, kurzlebigen Link weiter.
+      file: row.file
+        ? chatFile(row.file, `${fileBase}/${row.file.id}`, `?token=${encodeURIComponent(options.token)}`)
+        : undefined,
+      fileRemoved: row.fileRemoved ? { by: row.fileRemoved.by === options.self ? 'self' : 'peer' } : undefined,
+      removable: !!row.file && row.sender === options.self,
+    };
+  }
+
   function apply(rows: CallChatMessageResponse[], source: 'fetch' | 'own'): void {
     let fromPeer: string | null = null;
 
     for (const row of rows) {
       if (source === 'fetch' && row.seq > lastSeq) lastSeq = row.seq;
 
-      const message: CallChatMessage = {
-        id: row.clientMessageId,
-        from: row.sender === options.self ? 'self' : 'peer',
-        text: row.text,
-        time: formatTime(row.createdAt),
-        // Der Link zeigt auf die API, nicht auf den Speicher: Sie prüft beim Klick und leitet
-        // dann auf einen signierten, kurzlebigen Link weiter.
-        file: row.file
-          ? chatFile(row.file, `${fileBase}/${row.file.id}`, `?token=${encodeURIComponent(options.token)}`)
-          : undefined,
-      };
+      const message = toMessage(row);
 
       const index = messages.value.findIndex((known) => known.id === message.id);
       if (index >= 0) {
@@ -116,7 +144,31 @@ export function useCallChat(options: {
     }
   }
 
-  async function fetchSince(): Promise<void> {
+  /**
+   * Den ganzen Verlauf übernehmen, etwa nachdem eine Datei entfernt wurde – das Nachholen nach
+   * Nummern sieht nur neue Nachrichten, keine geänderten. Eigene Nachrichten, die noch
+   * unterwegs oder gescheitert sind, liegen noch nicht beim Server und bleiben am Ende stehen.
+   * Gegenstück zu mergeFullHistory in der Coach-App.
+   */
+  function replaceAll(rows: CallChatMessageResponse[]): void {
+    const known = new Set(messages.value.map((message) => message.id));
+    const stored = new Set(rows.map((row) => row.clientMessageId));
+    const pending = messages.value.filter((message) => message.status && !stored.has(message.id));
+
+    messages.value = [...rows.map(toMessage), ...pending];
+    lastSeq = rows.reduce((max, row) => Math.max(max, row.seq), lastSeq);
+
+    const added = rows.filter((row) => row.sender !== options.self && !known.has(row.clientMessageId));
+    const fromPeer = added[added.length - 1];
+    if (fromPeer) {
+      latestPeerText.value = fromPeer.text;
+      if (!options.visible()) unread.value = true;
+    }
+  }
+
+  async function fetchSince(full = false): Promise<void> {
+    if (full) fullPending = true;
+
     // Nie zwei Abrufe gleichzeitig – der spätere könnte den früheren überholen.
     if (loading) {
       again = true;
@@ -124,22 +176,63 @@ export function useCallChat(options: {
     }
 
     loading = true;
+    const loadAll = fullPending || !lastSeq;
+    fullPending = false;
     try {
       const query = new URLSearchParams({ token: options.token });
-      if (lastSeq) query.set('after', String(lastSeq));
+      if (!loadAll) query.set('after', String(lastSeq));
 
       const res = await fetch(`${base}?${query}`);
       if (!res.ok) throw new Error('failed');
-      apply(((await res.json()) as CallChatMessagesResponse).messages, 'fetch');
+      const rows = ((await res.json()) as CallChatMessagesResponse).messages;
+      if (loadAll) replaceAll(rows);
+      else apply(rows, 'fetch');
       loadError.value = false;
     } catch {
       loadError.value = true;
+      // Nicht aufgeben: Ein Ereignis, das ankam, während der Abruf danach scheiterte (das Netz
+      // war kurz weg), käme sonst nie nach – bei einer entfernten Datei heilt es auch keine
+      // spätere Nachricht. Die Bitte, ganz zu laden, bleibt dabei stehen.
+      if (loadAll) fullPending = true;
+      scheduleRetry();
     } finally {
       loading = false;
       if (again) {
         again = false;
         void fetchSince();
       }
+    }
+  }
+
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  function scheduleRetry(): void {
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => void fetchSince(), FETCH_RETRY_MS);
+  }
+  onBeforeUnmount(() => clearTimeout(retryTimer));
+
+  /**
+   * Eigene Datei entfernen. Der Token steht im Body wie beim Senden. Ist die Datei schon weg
+   * (404), hat das der Coach erledigt – dann nur den Verlauf auffrischen.
+   */
+  async function remove(id: string): Promise<void> {
+    const fileId = messages.value.find((message) => message.id === id)?.file?.id;
+    if (!fileId) return;
+
+    try {
+      const res = await fetch(`${fileBase}/${fileId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: options.token }),
+      });
+      if (res.status === 404) {
+        void fetchSince(true);
+        return;
+      }
+      if (!res.ok) throw new Error('failed');
+      apply([(await res.json()) as CallChatMessageResponse], 'own');
+    } catch {
+      errorMessage.value = 'Die Datei konnte nicht entfernt werden.';
     }
   }
 
@@ -246,6 +339,7 @@ export function useCallChat(options: {
   }
 
   watch(chatSignal, () => void fetchSince());
+  watch(chatResetSignal, () => void fetchSince(true));
   watch(
     () => options.visible(),
     (visible) => {
@@ -255,5 +349,5 @@ export function useCallChat(options: {
 
   onMounted(() => void fetchSince());
 
-  return { draft, messages, unread, latestPeerText, loadError, errorMessage, send, sendFile, retry };
+  return { draft, messages, unread, latestPeerText, loadError, errorMessage, send, sendFile, retry, remove };
 }

@@ -646,8 +646,18 @@ export const callChatMessageSchema = z.object({
     // erscheint als Zeile mit Name und Größe.
     preview:  z.object({ width: z.number(), height: z.number() }).nullable(),
   }).nullable(),
+  // Hier lag eine Datei, sie wurde entfernt – `file` ist dann null. Ohne Dateinamen: Schon
+  // der kann verraten, was nicht mehr da sein soll. `by` sagt, wer entfernt hat, damit
+  // niemand glaubt, die Datei sei einfach verloren gegangen.
+  fileRemoved: z.object({ by: CallChatSender }).nullable(),
 });
 export type CallChatMessageResponse = z.infer<typeof callChatMessageSchema>;
+
+// Der Klient entfernt mit seinem Token – wie beim Senden steht er im Body, nicht in der URL.
+export const removeClientCallFileSchema = z.object({
+  token: z.string().min(1, 'Token ist erforderlich'),
+});
+export type RemoveClientCallFileDto = z.infer<typeof removeClientCallFileSchema>;
 
 export const callChatMessagesResponseSchema = z.object({
   messages: z.array(callChatMessageSchema),

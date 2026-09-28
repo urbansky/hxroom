@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, asc, count, eq, gt } from 'drizzle-orm';
 import {
   CALL_FILES_PER_BOOKING_LIMIT,
@@ -9,7 +16,7 @@ import { bookings, sessionChatFiles, sessionChatMessages } from '../db/schema';
 import { S3Service } from '../storage/s3.service';
 import { sessionAttachmentKey, sessionAttachmentPreviewKey } from '../storage/paths';
 import { createImagePreview, stripImageMetadata } from '../storage/image-transcode.util';
-import { mayReachRoom, resolveCallState } from './call-access';
+import { mayReachRoom, mayRemoveChatFile, resolveCallState } from './call-access';
 import { detectCallFileType, safeFileName } from './call-file-type';
 import { CallEventsService } from './call-events.service';
 import { CallService } from './call.service';
@@ -85,6 +92,7 @@ function toResponse(row: MessageRow, file?: FileRow | null): CallChatMessageResp
             : null,
         }
       : null,
+    fileRemoved: row.fileRemovedAt && row.fileRemovedBy ? { by: row.fileRemovedBy } : null,
   };
 }
 
@@ -196,7 +204,77 @@ export class CallChatService {
     return this.signedUrlFor(booking.id, fileId, variant);
   }
 
+  /**
+   * Eine geteilte Datei entfernen. Wer was darf, entscheidet `mayRemoveChatFile`: der Coach
+   * jede Datei jederzeit, der Klient seine eigenen im laufenden Gespräch.
+   */
+  async removeFileAsCoach(organizationId: string, bookingId: string, fileId: string): Promise<CallChatMessageResponse> {
+    const booking = await this.callService.findOwn(organizationId, bookingId);
+    return this.removeFile(booking, 'coach', fileId);
+  }
+
+  async removeFileAsClient(bookingId: string, token: string, fileId: string): Promise<CallChatMessageResponse> {
+    const booking = await this.callService.loadForClient(bookingId, token);
+    return this.removeFile(booking, 'client', fileId);
+  }
+
   // --- intern ---
+
+  /**
+   * Entfernt heißt weg: Original und Vorschaubild aus dem Speicher, die Zeile aus
+   * `session_chat_files` – mit ihr der Dateiname. Die Nachricht bleibt als Platzhalter stehen,
+   * damit der Verlauf verständlich bleibt, wenn danach jemand „hab's gelöscht" schreibt; ein
+   * Begleittext bleibt ebenfalls. Die Datei zählt danach nicht mehr zur Grenze je Sitzung –
+   * wer die falsche geschickt hat, kann die richtige nachschicken.
+   *
+   * Unter der Sperre des Chats wie das Senden, und die Objekte werden innerhalb der
+   * Transaktion gelöscht: Scheitert der Speicher, bleibt alles, wie es war, und ein zweiter
+   * Versuch ist möglich. Ein Objekt, das schon weg ist, löscht S3 ohne Fehler.
+   */
+  private async removeFile(booking: BookingRow, remover: CallChatSender, fileId: string): Promise<CallChatMessageResponse> {
+    const state = resolveCallState(booking, new Date());
+
+    const message = await this.db.transaction(async (tx) => {
+      await this.lockChat(tx, booking.id);
+
+      const [found] = await tx
+        .select({ file: sessionChatFiles, message: sessionChatMessages })
+        .from(sessionChatFiles)
+        .innerJoin(sessionChatMessages, eq(sessionChatMessages.id, sessionChatFiles.messageId))
+        .where(and(eq(sessionChatFiles.id, fileId), eq(sessionChatFiles.bookingId, booking.id)))
+        .limit(1);
+
+      // Fremd, unbekannt oder schon entfernt – für den Aufrufer dasselbe.
+      if (!found) throw new NotFoundException('File not found');
+
+      if (!mayRemoveChatFile(remover, found.message.sender, state)) {
+        // Der Klient kennt die Datei (sie steht in seinem Verlauf), darf sie aber nicht
+        // entfernen – das ist kein „nicht vorhanden".
+        throw new ForbiddenException('File cannot be removed');
+      }
+
+      await tx.delete(sessionChatFiles).where(eq(sessionChatFiles.id, found.file.id));
+      const [updated] = await tx
+        .update(sessionChatMessages)
+        .set({ fileRemovedAt: new Date(), fileRemovedBy: remover })
+        .where(eq(sessionChatMessages.id, found.message.id))
+        .returning();
+
+      await this.s3.deleteObject(
+        sessionAttachmentKey(found.file.organizationId, found.file.bookingId, found.file.id, found.file.extension),
+      );
+      if (found.file.previewWidth && found.file.previewHeight) {
+        await this.s3.deleteObject(
+          sessionAttachmentPreviewKey(found.file.organizationId, found.file.bookingId, found.file.id),
+        );
+      }
+
+      return updated;
+    });
+
+    this.events.notifyChatChanged(booking.id);
+    return toResponse(message);
+  }
 
   /**
    * Der Verlauf, aufsteigend. `after` ist die Nummer der letzten bekannten Nachricht: Auf ein
@@ -283,7 +361,7 @@ export class CallChatService {
       .limit(1);
 
     // Kann nur fehlen, wenn zwischen Konflikt und Abfrage gelöscht wurde – heute gibt es
-    // keinen Weg, eine einzelne Nachricht zu löschen.
+    // keinen Weg, eine einzelne Nachricht zu löschen (entfernt wird nur ihre Datei).
     if (!row) throw new ConflictException('Message could not be stored');
     return toResponse(row.message, row.file);
   }

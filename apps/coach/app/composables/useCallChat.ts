@@ -7,11 +7,25 @@ import type { CallChatMessage } from '@hxroom/ui'
  * Strom in der Seite, der Chat in der Seitenleiste –, und ein zweiter EventSource wäre der
  * falsche Preis dafür.
  */
+/** Nach einem gescheiterten Abruf des Verlaufs erneut versuchen. */
+const FETCH_RETRY_MS = 4000
+
 const chatSignal = ref(0)
+/** Wie chatSignal, aber für „lade den Verlauf ganz". */
+const chatResetSignal = ref(0)
 
 /** Vom Ereignisstrom aufgerufen: bei einem `chat`-Ereignis und nach jedem Zustandsereignis. */
 export function notifyCallChatEvent(): void {
   chatSignal.value++
+}
+
+/**
+ * Vom Ereignisstrom aufgerufen, wenn sich eine vorhandene Nachricht geändert hat
+ * (`chat-changed`, etwa eine entfernte Datei) und bei jedem (Wieder-)Verbinden: Was in einer
+ * Lücke geändert wurde, sieht das Nachholen nach Nummern nicht.
+ */
+export function notifyCallChatChanged(): void {
+  chatResetSignal.value++
 }
 
 /**
@@ -43,6 +57,8 @@ export function useCallChat(options: {
   const loadError = ref(false)
   /** Meldung, die der Aufrufer zeigen soll – etwa eine Datei, die nicht durchkommt. */
   const errorMessage = ref<string | null>(null)
+  /** Zählt gescheiterte Versuche, eine Datei zu entfernen – der Aufrufer meldet sie. */
+  const removeFailed = ref(0)
   /** Neue Nachricht, während der Chat nicht zu sehen war. */
   const unread = ref(false)
   /** Text der letzten fremden Nachricht – für den kurzen Hinweis über der Bühne. */
@@ -52,6 +68,8 @@ export function useCallChat(options: {
   let lastSeq = 0
   let loading = false
   let again = false
+  /** Beim nächsten Abruf den ganzen Verlauf holen statt nur das Neue. */
+  let fullPending = false
   /** Dateien, deren Nachricht noch nicht beim Server liegt – für den zweiten Versuch. */
   const pendingFiles = new Map<string, File>()
 
@@ -87,7 +105,23 @@ export function useCallChat(options: {
     }
   }
 
-  async function fetchSince(): Promise<void> {
+  /** Den ganzen Verlauf übernehmen – siehe mergeFullHistory. */
+  function replaceAll(rows: CallChatMessageResponse[]): void {
+    const loaded = rows.map(row => toChatMessage(row, { self: options.self, bookingId: options.bookingId, apiUrl }))
+    const { messages: merged, added } = mergeFullHistory(messages.value, loaded)
+    messages.value = merged
+    lastSeq = rows.reduce((max, row) => Math.max(max, row.seq), lastSeq)
+
+    const fromPeer = added.filter(message => message.from === 'peer').at(-1)
+    if (fromPeer) {
+      latestPeerText.value = fromPeer.text
+      if (!options.visible()) unread.value = true
+    }
+  }
+
+  async function fetchSince(full = false): Promise<void> {
+    if (full) fullPending = true
+
     // Nie zwei Abrufe gleichzeitig: Der spätere könnte den früheren überholen, und dann wäre
     // lastSeq weiter als der Verlauf auf dem Schirm.
     if (loading) {
@@ -96,20 +130,55 @@ export function useCallChat(options: {
     }
 
     loading = true
+    const loadAll = fullPending || !lastSeq
+    fullPending = false
     try {
       const res = await $api<CallChatMessagesResponse>(`/bookings/${options.bookingId}/call/messages`, {
-        query: lastSeq ? { after: lastSeq } : undefined,
+        query: loadAll ? undefined : { after: lastSeq },
       })
-      apply(res.messages, 'fetch')
+      if (loadAll) replaceAll(res.messages)
+      else apply(res.messages, 'fetch')
       loadError.value = false
     } catch {
       loadError.value = true
+      // Nicht aufgeben: Ein Ereignis, das ankam, während der Abruf danach scheiterte (das Netz
+      // war kurz weg), käme sonst nie nach – bei einer entfernten Datei heilt es auch keine
+      // spätere Nachricht. Die Bitte, ganz zu laden, bleibt dabei stehen.
+      if (loadAll) fullPending = true
+      scheduleRetry()
     } finally {
       loading = false
       if (again) {
         again = false
         void fetchSince()
       }
+    }
+  }
+
+  let retryTimer: ReturnType<typeof setTimeout> | undefined
+  function scheduleRetry(): void {
+    clearTimeout(retryTimer)
+    retryTimer = setTimeout(() => void fetchSince(), FETCH_RETRY_MS)
+  }
+  onBeforeUnmount(() => clearTimeout(retryTimer))
+
+  /**
+   * Die Datei einer Nachricht entfernen. Die Antwort ist die Nachricht mit ihrem Platzhalter;
+   * das Gegenüber erfährt es über den Ereigniskanal. Ist die Datei schon weg (404), hat das
+   * jemand anderes erledigt – dann nur den Verlauf auffrischen.
+   */
+  async function remove(id: string): Promise<void> {
+    const fileId = messages.value.find(message => message.id === id)?.file?.id
+    if (!fileId) return
+
+    try {
+      const saved = await $api<CallChatMessageResponse>(`/bookings/${options.bookingId}/call/files/${fileId}`, {
+        method: 'DELETE',
+      })
+      apply([saved], 'own')
+    } catch (err) {
+      if ((err as { statusCode?: number })?.statusCode === 404) void fetchSince(true)
+      else removeFailed.value++
     }
   }
 
@@ -213,11 +282,12 @@ export function useCallChat(options: {
   }
 
   watch(chatSignal, () => void fetchSince())
+  watch(chatResetSignal, () => void fetchSince(true))
   watch(() => options.visible(), (visible) => {
     if (visible) unread.value = false
   })
 
   onMounted(() => void fetchSince())
 
-  return { draft, messages, unread, latestPeerText, loadError, errorMessage, send, sendFile, retry }
+  return { draft, messages, unread, latestPeerText, loadError, errorMessage, removeFailed, send, sendFile, retry, remove }
 }

@@ -314,6 +314,14 @@ watch(() => chat.errorMessage.value, (message) => {
   chatProblem(message)
   chat.errorMessage.value = null
 })
+watch(() => chat.removeFailed.value, () => {
+  toast.add({
+    title: 'Datei nicht entfernt',
+    description: 'Die Datei konnte nicht entfernt werden. Versuch es gleich noch einmal.',
+    icon: 'i-lucide-alert-circle',
+    color: 'error',
+  })
+})
 
 // Wer den Ton verloren hat, schaut auf das Bild und nicht in die Seitenleiste – deshalb steht
 // eine neue Nachricht kurz über der Bühne und nicht nur als Punkt am Reiter.
@@ -417,6 +425,7 @@ async function confirmEnd(force = false) {
         @retry="chat.retry"
         @attach="chat.sendFile"
         @attach-rejected="chatProblem"
+        @remove="chat.remove"
       />
     </template>
 

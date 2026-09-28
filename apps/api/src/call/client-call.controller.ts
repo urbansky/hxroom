@@ -1,13 +1,15 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Redirect, Res, Sse, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Redirect, Res, Sse, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
   CALL_FILE_MAX_BYTES,
   enterWaitingRoomSchema,
+  removeClientCallFileSchema,
   sendClientCallFileSchema,
   sendClientCallMessageSchema,
   type EnterWaitingRoomDto,
+  type RemoveClientCallFileDto,
   type SendClientCallFileDto,
   type SendClientCallMessageDto,
 } from '@hxroom/shared';
@@ -127,5 +129,19 @@ export class ClientCallController {
     const signed = await this.chatService.fileUrlForClient(id, token ?? '', fileId, 'preview');
     res.set({ 'Cache-Control': signed.cacheControl });
     return { url: signed.url };
+  }
+
+  /**
+   * Eigene Datei entfernen, nur im laufenden Gespräch. Der Token steht im Body wie beim
+   * Senden – eine Änderung soll nicht an einer URL hängen, die irgendwo mitgeloggt wird.
+   * Antwort ist die Nachricht mit ihrem Platzhalter.
+   */
+  @Delete(':id/waiting-room/files/:fileId')
+  removeFile(
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+    @Body(new ZodValidationPipe(removeClientCallFileSchema)) dto: RemoveClientCallFileDto,
+  ) {
+    return this.chatService.removeFileAsClient(id, dto.token, fileId);
   }
 }

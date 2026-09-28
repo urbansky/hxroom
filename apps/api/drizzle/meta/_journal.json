@@ -162,6 +162,13 @@
       "when": 1790318285955,
       "tag": "0022_curly_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790566871638,
+      "tag": "0023_modern_satana",
+      "breakpoints": true
     }
   ]
 }
