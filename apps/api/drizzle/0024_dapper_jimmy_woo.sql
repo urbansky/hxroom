@@ -1,0 +1,1 @@
+ALTER TABLE "session_chat_files" ADD COLUMN "virus_scanned_at" timestamp;

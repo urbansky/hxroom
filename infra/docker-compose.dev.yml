@@ -102,6 +102,22 @@ services:
       "
     restart: "no"
 
+  # ClamAV – lokal bewusst **nicht** Teil des normalen Starts (Profil `clamav`): Der Scanner
+  # braucht gut 1 GB Speicher, und ohne CLAMAV_HOST in apps/api/.env prüft die API ohnehin
+  # nicht. Zum Testen des Virenscans:
+  #   docker compose -f infra/docker-compose.dev.yml --profile clamav up -d clamav
+  #   CLAMAV_HOST=localhost in apps/api/.env, API neu starten
+  clamav:
+    image: clamav/clamav-debian:1.5.4
+    profiles: ["clamav"]
+    environment:
+      CLAMD_CONF_StreamMaxLength: 30M
+    ports:
+      - "127.0.0.1:3310:3310"
+    volumes:
+      - clamav_dev_data:/var/lib/clamav
+
 volumes:
   postgres_dev_data:
   rustfs_dev_data:
+  clamav_dev_data:

@@ -223,9 +223,12 @@ export function useCallChat(options: {
       const status = (err as { statusCode?: number })?.statusCode
       // 400 heißt: Diese Datei kommt auch beim zweiten Versuch nicht durch. Das gehört gesagt,
       // sonst klickt jemand „Erneut senden", bis er aufgibt.
-      errorMessage.value = status === 400
-        ? 'Diese Datei lässt sich nicht teilen. Erlaubt sind PDF, Bilder und Office-Dateien bis 25 MB.'
-        : 'Die Datei konnte nicht gesendet werden.'
+      // 422: Der Virenscan hat angeschlagen – ebenso endgültig.
+      errorMessage.value = status === 422
+        ? 'Diese Datei wurde beim Virenscan als schädlich erkannt und nicht geteilt.'
+        : status === 400
+          ? 'Diese Datei lässt sich nicht teilen. Erlaubt sind PDF, Bilder und Office-Dateien bis 25 MB.'
+          : 'Die Datei konnte nicht gesendet werden.'
       markFailed(clientMessageId)
     }
   }

@@ -506,7 +506,7 @@ Die offenen Punkte kommen in §16:
 
 - Chat und Dateien liegen im Klartext wie die Notizen.
 - Löschen durch den Coach: Ein versehentlich geteiltes Dokument bleibt sonst bis zur Kontolöschung liegen. *(Umgesetzt 2026-09-28, siehe Nachtrag „Geteilte Dateien entfernen".)*
-- Virenscan (etwa ClamAV), bevor Coachs Dateien von Klienten öffnen.
+- Virenscan (etwa ClamAV), bevor Coachs Dateien von Klienten öffnen. *(Umgesetzt 2026-09-28, siehe Nachtrag „Virenscan geteilter Dateien".)*
 - Aufbewahrungsfristen (`legal.md`).
 
 Ob die Speicherung eine Einwilligung braucht oder wie die Notizen unter den AVV fällt, gehört zur rechtlichen Klärung aus §5a. Hier wird es nicht entschieden.
@@ -632,6 +632,24 @@ Ein volles Laden behält eigene Nachrichten, die noch unterwegs oder gescheitert
 **Oberfläche** (`CallChatPanel`): ein Papierkorb am Bild, an der Dateizeile und in der Dateiübersicht – beim Überfahren sichtbar, auf Geräten ohne Mauszeiger immer. Ob er erscheint, sagt die App über `removable`; verbindlich prüft der Server. Vorher eine Rückfrage „Datei entfernen? – … ist danach für euch beide weg". Ist die Großansicht beim Gegenüber gerade auf dem entfernten Bild, schließt sie sich; sonst bleibt sie beim gezeigten Bild. Im Termin-Detail kann der Coach ebenfalls entfernen.
 
 Abnahme per API, 21 Prüfungen: Objekte vorher da und danach weg (auch das Vorschaubild), Zeile weg, Vermerk an der Nachricht, `chat-changed` auf dem Strom, Verlauf ohne Dateinamen; Klient an fremder Datei 403, falscher Token 401, ohne Token 400, Coach ohne Anmeldung 401, zweites Entfernen 404; mit 20 Dateien voll, nach dem Entfernen passt wieder eine; nach dem Ende Klient 403, Coach 200. Im Browser mit Coach und Klient, 20 Prüfungen: Papierkorb nach Rolle und erst beim Überfahren, Rückfrage mit Dateinamen, Platzhalter auf beiden Seiten ohne Neuladen, Großansicht schließt, Abbrechen lässt die Datei stehen, Übersicht zählt neu, Entfernen während der Klient offline ist kommt nach, Entfernen im Termin-Detail nach der Sitzung. Getrennt geprüft: Nach einem Neustart der API lädt der Klient den Verlauf einmal ganz und sieht eine in der Lücke entfernte Datei.
+
+#### Nachtrag: Virenscan geteilter Dateien *(umgesetzt 2026-09-28)*
+
+Coachs öffnen Dateien, die Klienten im Gespräch teilen. Geprüft wurden bisher nur Endung, Signatur und Größe; jetzt prüft zusätzlich ClamAV jede Datei, bevor sie im Speicher landet.
+
+**Entschieden:**
+
+- **Lokal wird nicht geprüft.** Ohne `CLAMAV_HOST` überspringt die API den Scan; der Scanner braucht gut 1 GB Speicher. Zum Testen gibt es ihn in `docker-compose.dev.yml` unter dem Profil `clamav`.
+- **Ist ClamAV im Betrieb nicht erreichbar, geht die Datei durch** – mit Warnung im Log und ohne `virus_scanned_at`. Teilen soll im Gespräch nicht an einem Neustart oder Signatur-Update des Scanners scheitern. Welche Dateien so durchkamen, sagt `session_chat_files.virus_scanned_at IS NULL` (Migration 0024).
+- **Server mit ≥ 8 GB:** ClamAV läuft mit Standardeinstellungen, das Nachladen der Signaturen im Hintergrund bleibt an.
+
+**Ablauf** (`call-chat.service.ts`, `sendFile`): erst die Typprüfung – eine unzulässige Datei geht gar nicht erst zum Scanner –, dann der Scan des Originals, danach sharp und der Speicher. Ein Fund ergibt `422 File rejected by virus scan`; im Speicher liegt dann nichts, im Verlauf steht keine Nachricht. Geloggt werden Buchungs-ID, Absenderrolle und Signaturname, nie der Dateiname. Beide Apps zeigen „Diese Datei wurde beim Virenscan als schädlich erkannt und nicht geteilt."
+
+**Der Scanner** (`apps/api/src/virus-scan/`): ein eigener kleiner clamd-Client über `node:net` statt eines npm-Pakets – das Protokoll (`INSTREAM`, Blöcke mit Längenpräfix) ist ein paar Zeilen, und eine zusätzliche Laufzeit-Abhängigkeit hat im Produktions-Image schon einmal gefehlt. Das Protokoll steht als reine Funktionen in `clamd-protocol.ts` (mit Spec); eine Fehlerantwort von clamd gilt nie als sauber. Verbindungsaufbau höchstens 3 s, Scan höchstens 30 s. Beim Start ein `PING`: „Virenscan aktiv" oder „Virenscan aus" – im Betrieb ohne `CLAMAV_HOST` als Error.
+
+**Infrastruktur:** `clamav/clamav-debian:1.5.4` – das Debian-Image, weil es amd64 und arm64 gibt, `clamav/clamav` nur amd64. Volume für die Signaturen, kein Port nach außen, `CLAMAV_HOST=clamav` in `docker-compose.yml` fest eingetragen statt aus der `.env`. `CLAMD_CONF_StreamMaxLength=30M`, weil der Standard von 25M genau dem Dateilimit des Chats entspricht. Kein `depends_on` der API: Beim ersten Start lädt ClamAV minutenlang Signaturen, bis dahin gehen Dateien ungeprüft durch.
+
+Abnahme mit dem lokalen ClamAV-Container, per API in drei Betriebsarten: **aus** – Datei angenommen, nicht als geprüft vermerkt, Startlog „Virenscan aus"; **an** – sauberes PDF angenommen und vermerkt, die EICAR-Testsignatur in einem als `.docx` gepackten ZIP mit 422 abgelehnt, kein neues Objekt im Bucket, keine Nachricht, Log mit „Eicar-Test-Signature" und ohne Dateinamen, eine Datei knapp unter 25 MiB vollständig geprüft; **gestoppt** – Datei angenommen, als ungeprüft vermerkt, „ClamAV nicht erreichbar" im Log; nach dem Neustart des Containers wird wieder geprüft. Im Browser: Der Klient teilt die EICAR-Datei → Hinweis und „Nicht gesendet", beim Coach kommt nichts an; eine saubere Datei danach normal.
 
 ---
 

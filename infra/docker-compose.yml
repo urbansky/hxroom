@@ -83,6 +83,24 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # ClamAV – Virenscan der im Call geteilten Dateien (doc/videocall-umsetzungsplan.md,
+  # Nachtrag „Virenscan geteilter Dateien"). Die API spricht clamd auf 3310 im Docker-Netz an,
+  # nach außen ist nichts offen. freshclam im Container hält die Signaturen aktuell; das
+  # Volume erspart den Download (einige hundert MB) bei jedem Neustart.
+  #
+  # Das Debian-Image, weil es amd64 und arm64 gibt – clamav/clamav nur amd64. Beim ersten
+  # Start dauert es Minuten, bis die Signaturen geladen sind; bis dahin nimmt die API Dateien
+  # ungeprüft an und loggt das (entschieden 2026-09-28). Deshalb kein depends_on in der API.
+  clamav:
+    image: clamav/clamav-debian:1.5.4
+    environment:
+      # Der Standard (25M) ist genau das Dateilimit des Chats (25 MiB) – ohne Luft brächte
+      # eine Datei an der Grenze clamd zum Abbruch statt zu einem Ergebnis.
+      - CLAMD_CONF_StreamMaxLength=30M
+    volumes:
+      - clamav_data:/var/lib/clamav
+    restart: unless-stopped
+
   postgres:
     image: postgres:17-alpine
     environment:
@@ -133,6 +151,10 @@ services:
       - LIVEKIT_HOST=http://livekit:7880
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      # Fest eingetragen, nicht aus der .env: Ein vergessener Eintrag schaltete den
+      # Virenscan still ab.
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
     depends_on:
       postgres:
         condition: service_started
@@ -140,3 +162,4 @@ services:
 
 volumes:
   postgres_data:
+  clamav_data:

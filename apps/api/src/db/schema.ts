@@ -299,6 +299,10 @@ export const sessionChatFiles = pgTable('session_chat_files', {
   // Verlauf, und das Mitscrollen ans Ende liefe ins Leere.
   previewWidth:   integer('preview_width'),
   previewHeight:  integer('preview_height'),
+  // Von ClamAV geprüft und sauber. Null heißt: nicht geprüft – lokal ohne Scanner oder weil
+  // er im Betrieb gerade nicht erreichbar war (dann geht die Datei trotzdem durch). So lässt
+  // sich jederzeit sagen, welche Dateien ungeprüft durchgekommen sind.
+  virusScannedAt: timestamp('virus_scanned_at'),
   createdAt:      timestamp('created_at').notNull().defaultNow(),
 }, (table) => [
   index('session_chat_files_booking_idx').on(table.bookingId),

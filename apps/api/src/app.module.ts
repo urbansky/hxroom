@@ -10,6 +10,7 @@ import { BookingPageModule } from './booking-page/booking-page.module';
 import { OffersModule } from './offers/offers.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { S3Module } from './storage/s3.module';
+import { VirusScanModule } from './virus-scan/virus-scan.module';
 import { LivekitModule } from './livekit/livekit.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { CallModule } from './call/call.module';
@@ -27,6 +28,7 @@ import { SessionNotesModule } from './session-notes/session-notes.module';
     ScheduleModule.forRoot(),
     DbModule,
     S3Module,
+    VirusScanModule,
     LivekitModule,
     AuthModule,
     HealthModule,

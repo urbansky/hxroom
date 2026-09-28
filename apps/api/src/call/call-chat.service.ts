@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { and, asc, count, eq, gt } from 'drizzle-orm';
 import {
@@ -14,6 +16,7 @@ import {
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings, sessionChatFiles, sessionChatMessages } from '../db/schema';
 import { S3Service } from '../storage/s3.service';
+import { VirusScanService } from '../virus-scan/virus-scan.service';
 import { sessionAttachmentKey, sessionAttachmentPreviewKey } from '../storage/paths';
 import { createImagePreview, stripImageMetadata } from '../storage/image-transcode.util';
 import { mayReachRoom, mayRemoveChatFile, resolveCallState } from './call-access';
@@ -112,11 +115,14 @@ function toResponse(row: MessageRow, file?: FileRow | null): CallChatMessageResp
  */
 @Injectable()
 export class CallChatService {
+  private readonly logger = new Logger(CallChatService.name);
+
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly callService: CallService,
     private readonly events: CallEventsService,
     private readonly s3: S3Service,
+    private readonly virusScan: VirusScanService,
   ) {}
 
   // --- Coach: Ausweis ist die Session, die Grenze die organizationId ---
@@ -399,6 +405,19 @@ export class CallChatService {
       throw new BadRequestException('Unsupported file type');
     }
 
+    // Virenscan des Originals, bevor irgendetwas davon im Speicher liegt – und vor sharp,
+    // das Bilder ohnehin neu kodiert: Geprüft wird, was der Absender geschickt hat. Nach der
+    // Typprüfung, damit eine unzulässige Datei gar nicht erst zum Scanner geht.
+    const scan = await this.virusScan.scan(file.buffer);
+    if (scan.status === 'infected') {
+      // Ohne Dateinamen: Der gehört zu den Daten des Absenders, die Signatur nicht.
+      this.logger.warn(`Datei beim Virenscan abgelehnt (Buchung ${booking.id}, ${sender}): ${scan.signature}`);
+      throw new UnprocessableEntityException('File rejected by virus scan');
+    }
+    if (scan.status === 'skipped' && scan.reason === 'unavailable') {
+      this.logger.warn(`Datei ungeprüft angenommen, ClamAV nicht erreichbar (Buchung ${booking.id})`);
+    }
+
     let body = file.buffer;
     let preview: { body: Buffer; width: number; height: number } | null = null;
     if (type.isImage) {
@@ -463,6 +482,7 @@ export class CallChatService {
             sizeBytes:      body.length,
             previewWidth:   preview?.width ?? null,
             previewHeight:  preview?.height ?? null,
+            virusScannedAt: scan.status === 'clean' ? new Date() : null,
           })
           .returning();
 

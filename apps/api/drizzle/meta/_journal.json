@@ -169,6 +169,13 @@
       "when": 1790566871638,
       "tag": "0023_modern_satana",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790568441538,
+      "tag": "0024_dapper_jimmy_woo",
+      "breakpoints": true
     }
   ]
 }

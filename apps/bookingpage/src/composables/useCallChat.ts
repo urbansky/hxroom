@@ -273,9 +273,12 @@ export function useCallChat(options: {
       const res = await fetch(`${base}/files`, { method: 'POST', body: form });
       if (!res.ok) {
         // 400 heißt: Diese Datei kommt auch beim zweiten Versuch nicht durch.
-        errorMessage.value = res.status === 400
-          ? 'Diese Datei lässt sich nicht teilen. Erlaubt sind PDF, Bilder und Office-Dateien bis 25 MB.'
-          : 'Die Datei konnte nicht gesendet werden.';
+        // 422: Der Virenscan hat angeschlagen – ebenso endgültig.
+        errorMessage.value = res.status === 422
+          ? 'Diese Datei wurde beim Virenscan als schädlich erkannt und nicht geteilt.'
+          : res.status === 400
+            ? 'Diese Datei lässt sich nicht teilen. Erlaubt sind PDF, Bilder und Office-Dateien bis 25 MB.'
+            : 'Die Datei konnte nicht gesendet werden.';
         markFailed(clientMessageId);
         return;
       }

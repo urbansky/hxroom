@@ -42,6 +42,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | **Hosting** | Hetzner Cloud, Standort Deutschland (Nürnberg / Falkenstein) |
 | **LiveKit Server** | Self-hosted Docker-Container auf Hetzner |
 | **Whisper Service** | Self-hosted Docker-Container auf Hetzner |
+| **Virenscan** | ClamAV (`clamav/clamav-debian`), self-hosted Docker-Container; prüft im Call geteilte Dateien vor dem Ablegen |
 | **Reverse Proxy** | Caddy (automatisches HTTPS, Wildcard-Zertifikate für `*.hxroom.de`) |
 | **Object Storage** | **Hetzner Object Storage** (S3-kompatibel, Falkenstein) in Produktion; **RustFS** self-hosted als Docker-Container in der Entwicklung |
 | **Deployment** | Docker Compose (Entwicklung & Produktion) |
@@ -105,6 +106,7 @@ Die Apps (api, coach, bookingpage, admin, landing) laufen lokal per `pnpm dev`. 
 - **RustFS** als S3-kompatibler Object Store (siehe `doc/s3-verzeichnisschema.md`), Console auf Port 9001, S3-API auf Port 9000
 - **Caddy** als Reverse Proxy: routet `*.hxroom.localhost` auf die lokalen pnpm-Dev-Server
 - **LiveKit** (Signaling 7880, Medien 7881/tcp und 7882/udp), erreichbar als `livekit.hxroom.localhost`
+- **ClamAV** nur auf Wunsch (Profil `clamav`, Port 3310): `docker compose -f infra/docker-compose.dev.yml --profile clamav up -d clamav` und `CLAMAV_HOST=localhost` in `apps/api/.env`. Ohne `CLAMAV_HOST` prüft die API nicht – lokal der Normalfall.
 
 Weitere Services (Redis, Whisper) werden ergänzt, wenn sie lokal benötigt werden.
 
@@ -117,6 +119,7 @@ services:
   api, coach, bookingpage, admin, landing   # gebuildete App-Images
   postgres:   image: postgres:17-alpine
   livekit:    image: livekit/livekit-server:v1.13.6
+  clamav:     image: clamav/clamav-debian:1.5.4  # Virenscan geteilter Dateien, nur intern (3310)
   caddy:      build: ./infra/caddy               # mit IONOS-DNS-Plugin für Wildcard-TLS
 
 # Noch nicht gebaut, kommen mit ihrer Phase:
@@ -1082,7 +1085,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 | 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.hxroom.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
 | 02 | **Verschlüsselung der Sitzungsnotizen** | `session_notes.content` liegt als JSONB im Klartext, geschützt wie die übrigen Fachdaten (Server, Netz, Backups). Coaching-Notizen können Gesundheitsdaten nach Art. 9 DSGVO enthalten; eine zusätzliche Verschlüsselung auf Anwendungsebene (z. B. AES-256-GCM, Schlüssel außerhalb der DB) wurde bei der Umsetzung bewusst zurückgestellt. Nachrüsten heißt: Spalte umschreiben, Schlüsselverwaltung und Backup-Wiederherstellung mitdenken, Suche im Inhalt entfällt. | Vor dem Start mit echten Coaches entscheiden |
 | 03 | **Off-Site-Kopie des Objektspeichers** | Seit dem Wechsel auf Hetzner Object Storage (§10) deckt das Server-Backup die Dateien nicht mehr mit ab, und die in §13 vorgesehene tägliche Kopie in einen zweiten Bucket läuft noch nicht. Ein versehentliches Löschen ist damit endgültig. Mit den Chat-Dateien aus B7 liegen dort erstmals Daten von Klienten. | Vor dem Start mit echten Coaches |
-| 04 | **Geteilte Dateien: Virenscan** | Eine im Call geteilte Datei (B7) wird auf Endung, Signatur und Größe geprüft, ein Virenscan (etwa ClamAV) fehlt; Coachs öffnen Dateien, die Klienten hochgeladen haben. Das Entfernen einzelner Dateien ist seit 2026-09-28 umgesetzt (`videocall-umsetzungsplan.md`, Nachtrag zu B7). | Vor dem Start mit echten Coaches |
+| 04 | ~~**Geteilte Dateien: Löschen und Virenscan**~~ | ✅ Erledigt 2026-09-28: Geteilte Dateien lassen sich entfernen, und ClamAV prüft jede Datei vor dem Ablegen (`videocall-umsetzungsplan.md`, Nachträge zu B7). Offen bleibt nur, im Betrieb ungeprüft durchgelassene Dateien nachzuprüfen (`session_chat_files.virus_scanned_at IS NULL`), falls ClamAV einmal länger ausfällt. | – |
 
 ---
 
@@ -1100,6 +1103,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 - Kein Logging von E-Mail-Adressen oder Namen in Application Logs (nur IDs)
 - **Zugriffslogs ohne Query-String.** Die Zugangslinks tragen ihr Geheimnis in der URL (`/call/:id?token=…`, `/confirm`, `/cancel`, `/auth/reset-password`). Die nginx-Container von `bookingpage` und `coach` loggen deshalb mit einem eigenen Format, das statt `$request` nur den Pfad schreibt und den Referer weglässt; Caddy führt gar kein Zugriffslog, die API kein Request-Logging.
 - **Keine Drittanbieter-Requests von der Klientenseite.** Symbole werden zur Build-Zeit ins Bundle gelegt (`hxroomUI()` in `packages/ui/vite.ts`), statt sie zur Laufzeit von `api.iconify.design` zu holen – sonst ginge die IP jedes Klienten an einen Dritten.
+- **Virenscan geteilter Dateien.** Jede im Call geteilte Datei geht vor dem Ablegen durch ClamAV (eigener Container, nur im Docker-Netz erreichbar); eine erkannte Datei wird mit `422` abgelehnt und landet nie im Speicher. Ist ClamAV nicht erreichbar, wird die Datei angenommen, als ungeprüft vermerkt (`virus_scanned_at` null) und das geloggt – bewusst, damit das Teilen im Gespräch nicht an einem Neustart des Scanners scheitert. Geloggt werden Buchungs-ID und Signaturname, nie der Dateiname. Die Signatur-Updates holt freshclam von `database.clamav.net`; dabei gehen keine Daten von HxRoom hinaus.
 - AVV automatisch bei Registrierung abgeschlossen
 - DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.
 - Audioaufnahme / Transkription: aktive Klienten-Einwilligung pro Sitzung, dokumentiert mit Timestamp, IP und Version
