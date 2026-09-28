@@ -22,8 +22,11 @@ import { createLogger } from './logger'
 const log = createLogger('HxRoom:Blur')
 
 const STORAGE_KEY = 'hxroom:background-blur'
-/** Stärke des Weichzeichners – der Standard des Pakets. */
-const BLUR_RADIUS = 10
+/**
+ * Stärke des Weichzeichners. Doppelt so stark wie der Standard des Pakets (10): Bei 10 blieben
+ * Formen im Hintergrund erkennbar – Bücherrücken, Fotos an der Wand sollen es nicht sein.
+ */
+const BLUR_RADIUS = 20
 
 /**
  * Gewünscht, nicht erreicht: Ob der Hintergrund weichgezeichnet werden soll. Gemerkt je

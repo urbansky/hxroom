@@ -72,6 +72,13 @@ const IMAGE_CACHE_SECONDS = 10 * 60;
  * stimmt mit der Endung überein, Bilder hat sharp zusätzlich neu kodiert, und SVG ist nicht
  * erlaubt. Eine HTML-Datei, die sich als Bild ausgibt, gibt es dort nicht.
  */
+/** Größe fürs Log, etwa „1.2 MB" oder „35 B". */
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function dispositionFor(mimeType: string): 'inline' | 'attachment' {
   return mimeType.startsWith('image/') || mimeType === 'application/pdf' ? 'inline' : 'attachment';
 }
@@ -408,14 +415,24 @@ export class CallChatService {
     // Virenscan des Originals, bevor irgendetwas davon im Speicher liegt – und vor sharp,
     // das Bilder ohnehin neu kodiert: Geprüft wird, was der Absender geschickt hat. Nach der
     // Typprüfung, damit eine unzulässige Datei gar nicht erst zum Scanner geht.
+    const scanStarted = Date.now();
     const scan = await this.virusScan.scan(file.buffer);
+    // Jede Prüfung steht im Log, damit sich im Betrieb nachvollziehen lässt, dass der Scanner
+    // arbeitet. Ohne Dateinamen – der gehört zu den Daten des Absenders; Typ und Größe nicht.
+    const scanContext = `Buchung ${booking.id}, ${sender}, .${type.extension}, ${formatBytes(file.buffer.length)}, ${Date.now() - scanStarted} ms`;
     if (scan.status === 'infected') {
-      // Ohne Dateinamen: Der gehört zu den Daten des Absenders, die Signatur nicht.
-      this.logger.warn(`Datei beim Virenscan abgelehnt (Buchung ${booking.id}, ${sender}): ${scan.signature}`);
+      this.logger.warn(`Virenscan: abgelehnt, ${scan.signature} (${scanContext})`);
       throw new UnprocessableEntityException('File rejected by virus scan');
     }
-    if (scan.status === 'skipped' && scan.reason === 'unavailable') {
-      this.logger.warn(`Datei ungeprüft angenommen, ClamAV nicht erreichbar (Buchung ${booking.id})`);
+    if (scan.status === 'clean') {
+      this.logger.log(`Virenscan: sauber (${scanContext})`);
+    }
+    else if (scan.reason === 'unavailable') {
+      this.logger.warn(`Virenscan: ungeprüft angenommen, ClamAV nicht erreichbar (${scanContext})`);
+    }
+    else {
+      // Lokal der Normalfall (ohne CLAMAV_HOST) – deshalb nur auf Debug-Ebene.
+      this.logger.debug(`Virenscan: aus, ungeprüft angenommen (${scanContext})`);
     }
 
     let body = file.buffer;
