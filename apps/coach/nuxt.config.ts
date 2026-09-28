@@ -1,5 +1,23 @@
+import { resolve } from 'node:path'
+import { mediapipeAssets } from '@hxroom/livekit/vite'
+
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui'],
+  modules: [
+    '@nuxt/ui',
+    // Die Dateien aus mediapipeAssets() (unten unter vite.plugins) landen im Client-Build unter
+    // _hxroom/. Nitro übernimmt von dort aber nur _nuxt/ in die Ausgabe – ohne diesen Eintrag
+    // fehlten WASM und Modell im Build, und der Weichzeichner liefe ins Leere.
+    (_options, nuxt) => {
+      nuxt.hook('nitro:config', (config) => {
+        config.publicAssets ??= []
+        config.publicAssets.push({
+          dir: resolve(nuxt.options.buildDir, 'dist/client/_hxroom'),
+          baseURL: '/_hxroom',
+          maxAge: 60 * 60 * 24 * 365,
+        })
+      })
+    },
+  ],
 
   app: {
     head: {
@@ -50,6 +68,9 @@ export default defineNuxtConfig({
     optimizeDeps: {
       exclude: ['@tiptap/core', '@tiptap/starter-kit', '@tiptap/pm'],
     },
+    // WASM und Modell des Weichzeichners von der eigenen Origin statt von jsDelivr und Google
+    // (packages/livekit/vite.ts).
+    plugins: [mediapipeAssets()],
   },
 
   ssr: false,

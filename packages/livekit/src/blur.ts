@@ -15,11 +15,20 @@ import { createLogger } from './logger'
 // umgeschaltet – so empfiehlt es das Paket, weil `setProcessor`/`stopProcessor` beim Umschalten
 // Bildfehler erzeugen.
 //
-// Bekannt und bewusst vorerst so: Das Paket lädt WASM und Modell von jsDelivr und
-// storage.googleapis.com (technisches-konzept.md §16). Selbst ausliefern über `assetPaths`
-// kommt als eigener Schritt.
+// WASM und Modell kommen von der eigenen Origin, nicht von jsDelivr und storage.googleapis.com
+// (technisches-konzept.md §17). Ausgeliefert werden sie von `mediapipeAssets()` in
+// `packages/livekit/vite.ts`; das Plugin setzt auch den Pfad.
 
 const log = createLogger('HxRoom:Blur')
+
+/** Vom Plugin `mediapipeAssets()` gesetzt, etwa `/_hxroom/mediapipe/0.10.14`. */
+declare const __HXROOM_MEDIAPIPE_BASE__: string
+
+/**
+ * Ohne das Plugin fiele das Paket still auf die fremden Server zurück – dann lieber gar kein
+ * Weichzeichner. Beide Apps binden das Plugin ein.
+ */
+const MEDIAPIPE_BASE = typeof __HXROOM_MEDIAPIPE_BASE__ === 'string' ? __HXROOM_MEDIAPIPE_BASE__ : null
 
 const STORAGE_KEY = 'hxroom:background-blur'
 /**
@@ -62,7 +71,7 @@ export function storeBlurPreference(on: boolean): void {
  * nicht schon für die Frage geladen wird, ob der Schalter erscheint.
  */
 export function backgroundBlurSupported(): boolean {
-  if (typeof document === 'undefined') return false
+  if (typeof document === 'undefined' || !MEDIAPIPE_BASE) return false
   const hasTransformer = typeof OffscreenCanvas !== 'undefined'
     && typeof VideoFrame !== 'undefined'
     && typeof createImageBitmap !== 'undefined'
@@ -124,7 +133,13 @@ async function applyNow(track: LocalVideoTrack | undefined): Promise<boolean> {
     }
     const { BackgroundProcessor } = await loadProcessors()
     // Erneut gelesen: Während das Paket lud, kann die Wahl schon wieder gewechselt haben.
-    const processor = BackgroundProcessor(backgroundBlur.value ? options : { mode: 'disabled' })
+    const processor = BackgroundProcessor({
+      ...(backgroundBlur.value ? options : { mode: 'disabled' as const }),
+      assetPaths: {
+        tasksVisionFileSet: MEDIAPIPE_BASE!,
+        modelAssetPath: `${MEDIAPIPE_BASE}/selfie_segmenter.tflite`,
+      },
+    })
     await track.setProcessor(processor)
     log.info('Weichzeichner angehängt', { mode: processor.mode })
     return true

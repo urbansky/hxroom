@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { hxroomUI } from '@hxroom/ui/vite';
+import { mediapipeAssets } from '@hxroom/livekit/vite';
 import { resolve } from 'path';
 
 export default defineConfig({
@@ -9,6 +10,9 @@ export default defineConfig({
     // colorMode: false – die Klientenseite erscheint bewusst immer hell (kein Umschalter,
     // kein OS-Abgleich), damit sie dieselbe Fläche zeigt wie das Coach-Backoffice.
     hxroomUI({ colorMode: false }),
+    // WASM und Modell des Weichzeichners von der eigenen Origin statt von jsDelivr und Google
+    // (packages/livekit/vite.ts).
+    mediapipeAssets(),
   ],
   resolve: {
     alias: {
