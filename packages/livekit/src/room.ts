@@ -47,6 +47,7 @@ import type { CallDeviceKind } from './types'
 import type { CallParticipant, DeviceIssue, RoomStatus } from './types'
 import { collectVideoQuality, formatVideoQuality, type VideoQuality } from './stats'
 import { SCREEN_SHARE_PUBLISH, screenShareCaptureOptions } from './quality'
+import { applyBlur, backgroundBlur, backgroundBlurSupported, blurLoading, storeBlurPreference } from './blur'
 
 // Die Verbindung zum LiveKit-Raum.
 //
@@ -518,6 +519,7 @@ function holdPreviewTrack(track: LocalTrack) {
     previewCamera.value = track as LocalVideoTrack
     camera.value = true
     cameraIssue.value = null
+    blurCamera(track as LocalVideoTrack)
   }
   else {
     previewMicrophone.value = track as LocalAudioTrack
@@ -793,7 +795,33 @@ function registerLocalCamera(local: LocalParticipant) {
   publication.track.on(TrackEvent.Restarted, bumpStreams)
   // Aus und wieder an käme sonst in voller Auflösung zurück, mitten in einer Freigabe.
   if (screenSharing.value) setCameraBudget(true)
+  blurCamera(publication.track as LocalVideoTrack)
 }
+
+// ---------------------------------------------------------------------------
+// Hintergrund weichzeichnen
+// ---------------------------------------------------------------------------
+// Die Mechanik liegt in blur.ts; hier nur, wo sie ansetzt: an jeder Kameraspur, die entsteht
+// – Vorschau im Warteraum, Kamera im Raum, auch nach einem Wiederbeitritt. Die Spur aus der
+// Vorschau nimmt ihren Prozessor beim Einlass mit.
+
+/** Anhängen bzw. umstellen; ändert sich dabei die gesendete Spur, das eigene Bild neu anstoßen. */
+function blurCamera(track: LocalVideoTrack | undefined) {
+  void applyBlur(track).then((changed) => { if (changed) bumpStreams() })
+}
+
+/**
+ * Den Hintergrund weichzeichnen oder nicht – im Warteraum wie im Gespräch. Die Wahl wird je
+ * Browser gemerkt und gilt auch für eine Kamera, die gerade aus ist, sobald sie angeht.
+ */
+export async function setBackgroundBlur(on: boolean): Promise<void> {
+  storeBlurPreference(on)
+  await adopting
+  const changed = await applyBlur(localTrack(Track.Source.Camera) as LocalVideoTrack | undefined)
+  if (changed) bumpStreams()
+}
+
+export { backgroundBlurSupported }
 
 // ---------------------------------------------------------------------------
 // Geräte
@@ -1330,6 +1358,8 @@ export function useCallRoom() {
     microphoneIssue,
     previewing,
     screenSharing,
+    backgroundBlur,
+    blurLoading,
 
     // Spuren
     audioTracks,
@@ -1367,5 +1397,7 @@ export function useCallRoom() {
     toggleMicrophone,
     setScreenShareEnabled,
     sendCallData,
+    setBackgroundBlur,
+    backgroundBlurSupported,
   }
 }

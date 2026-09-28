@@ -42,7 +42,7 @@ const props = defineProps<{
   canMuteRemote?: boolean
   /** Bildschirmfreigabe anbieten – die App weiß, ob der Browser es kann (siehe CallControls). */
   canShare?: boolean
-  /** Weichzeichnen anbieten – aus, bis es wirkt (siehe CallControls). */
+  /** Weichzeichnen anbieten – nur, wo der Browser es kann (siehe CallControls). */
   canBlur?: boolean
   endLabel: string
 }>()

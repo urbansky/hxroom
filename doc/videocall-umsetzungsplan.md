@@ -251,7 +251,7 @@ In der Oberfläche ist `CallShareSim` entfernt; die Bühne zeigt die Freigabe ü
 
 Abnahme mit Coach und Klient; den Auswahldialog ersetzt ein animiertes Canvas mit Ton, alles danach läuft über den echten Weg. Klient teilt → Coach sieht die Freigabe in 1920×1080 laufend, hört ihren Ton, sein Knopf ist gesperrt; Beenden über das Banner räumt beide Seiten ab; dasselbe in umgekehrter Richtung; Beenden über die Browserleiste räumt ebenfalls beide Seiten ab; Abbruch im Dialog zeigt keine Meldung, die Systemsperre schon. Zum Beenden über die Browserleiste: `track.stop()` feuert kein `ended`, das tut nur der Browser, wenn die Quelle von außen endet – der erste Testlauf, der nur `stop()` rief, zeigte deshalb einen Fehler, den es nicht gibt. LiveKit hebt die Veröffentlichung bei `ended` selbst auf.
 
-Weichzeichnen bleibt hinter `can-blur` ausgeblendet; es braucht die Personensegmentierung der Track-Processors.
+Weichzeichnen bleibt hinter `can-blur` ausgeblendet; es braucht die Personensegmentierung der Track-Processors. *(Umgesetzt 2026-09-28, siehe Nachtrag „Hintergrund weichzeichnen".)*
 
 #### Nachtrag: Qualität der Bildschirmfreigabe *(2026-09-16)*
 
@@ -288,7 +288,7 @@ Vorgezogen aus dem Technik-Check (`project.md` §5a: „Geräteauswahl und Techn
 
 **Nur auf Klick.** Der Warteraum steht ab dem Tag der Buchung offen. Die Kachel „Kamera und Mikrofon einrichten" startet die Vorschau, vorher gibt es keinen einzigen `getUserMedia`-Aufruf. Wer nichts einrichtet, tritt wie bisher mit Kamera und Mikrofon bei. Der Coach betritt den Raum weiterhin erst mit „Klient einlassen"; die Vorschau ist keine Anwesenheit im Raum.
 
-**„Hintergrund weichzeichnen" steht da, ist aber gesperrt** und trägt „Bald verfügbar". Ein bedienbarer Schalter ohne Personensegmentierung ließe jemanden glauben, die eigene Küche sei nicht zu sehen.
+**„Hintergrund weichzeichnen" steht da, ist aber gesperrt** und trägt „Bald verfügbar". Ein bedienbarer Schalter ohne Personensegmentierung ließe jemanden glauben, die eigene Küche sei nicht zu sehen. *(Seit 2026-09-28 wirksam, siehe Nachtrag „Hintergrund weichzeichnen".)*
 
 **Die Vorschauspuren werden übernommen, nicht neu geholt.** `startPreview()` in `packages/livekit` legt die Spuren mit `createLocalTracks` außerhalb eines Raums an, `joinCall()` veröffentlicht sie mit `publishTrack`. Kein zweiter Freigabedialog, kein Kameralicht, das beim Einlass aus- und wieder angeht, und das eigene Bild läuft über den Stream-Cache ohne schwarzen Moment durch (`localVideoStream()`). Ein späterer Blur-Processor kann bereits an der Vorschauspur hängen. Schalter und Gerätewechsel sind dieselben Funktionen wie im Gespräch; sie verzweigen über `previewing`.
 
@@ -345,6 +345,25 @@ Das Panel „Klient" der Seitenleiste zeigt echte Angaben statt der Beispielwert
 **Entfallen** sind „Pro Plan", „Transkription" und „Datenschutz: AVV vorhanden" samt dem Hinweis auf Beispielwerte. Pakete, Transkription und AVV gibt es noch nicht, und im echten Gespräch soll nichts eine Wirkung vortäuschen; die Zeilen kommen mit ihren Features zurück.
 
 Abnahme in Chromium über `app.hxroom.localhost` mit Spontan-Terminen: ein Klient mit langer Historie (Sitzung 39, nächster Termin, interne Notiz, drei Kacheln mit gekürzter und aufklappbarer Notiz, eine davon „Keine Notiz") und ein Klient ohne Historie („Sitzung 1", „Keiner geplant", „Das ist die erste Sitzung"). Ein Tab-Wechsel löst keinen zweiten Abruf aus. API per `curl`: Buchungsnotiz und nächster Termin am anstehenden Seed-Termin, fremde und unbekannte Buchung 404. Die Umwandlung in Klartext ist per Spec abgedeckt.
+
+#### Nachtrag: Hintergrund weichzeichnen *(umgesetzt 2026-09-28)*
+
+Der Schalter im Warteraum und der Menüpunkt im Gespräch wirken jetzt. Grundlage ist `@livekit/track-processors` (0.8.1): Ein `BackgroundProcessor` hängt an der lokalen Kameraspur, MediaPipe trennt Person und Hintergrund, der Hintergrund wird im Browser des Absenders weichgezeichnet. Das Gegenüber bekommt schon das fertige Bild, der Server hat damit nichts zu tun.
+
+**Entschieden:**
+
+- **Gemerkt je Browser** (`localStorage`, wie die Gerätewahl). Wer einmal weichzeichnet, sitzt meist immer am selben Ort, und „gemerkt an" zeigt nie mehr als gewollt. Beim ersten Mal aus.
+- **Keine Kennzeichnung beim Gegenüber** – man sieht es am Bild, und eine Meldung bräuchte ein zusätzliches Recht im LiveKit-Token. Das eigene Bild trägt weiter sein Symbol; `remote.blurred` ist immer false, die Plakette in `CallVideoArea` entfallen.
+- **Das Nachladen von jsDelivr und storage.googleapis.com bleibt vorerst.** Das Paket holt WASM und Modell von dort; selbst ausliefern über `assetPaths` kommt als eigener Schritt (`technisches-konzept.md` §16).
+
+**Mechanik** (`packages/livekit/src/blur.ts`, angesetzt in `room.ts`):
+
+- Der Prozessor hängt einmal an und wird per `switchTo()` zwischen weich und `disabled` umgestellt – so empfiehlt es das Paket, `setProcessor`/`stopProcessor` erzeugten beim Umschalten Bildfehler.
+- Angesetzt an jeder Kameraspur, die entsteht: Vorschau im Warteraum (`holdPreviewTrack`) und Kamera im Raum (`registerLocalCamera`, auch nach einem Wiederbeitritt). Die Spur aus der Vorschau nimmt ihren Prozessor beim Einlass mit. Den Rest erledigt `livekit-client` selbst: `mediaStreamTrack` liefert die bearbeitete Spur – beim Veröffentlichen wie für das eigene Bild –, und `restartTrack` (Kamera wieder an, Gerätewechsel) startet den Prozessor mit. Weil der Stream-Cache an der `MediaStreamTrack` hängt, stößt das Anhängen das eigene Bild neu an (`bumpStreams`).
+- Das Paket wird erst beim ersten Einschalten per `import()` geladen; wer nie weichzeichnet, lädt nichts davon. Die Frage, ob der Browser es kann, ist deshalb nachgebildet (`backgroundBlurSupported()`, dieselben Feature-Abfragen wie `supportsBackgroundProcessors()`). Wo es nicht geht, fehlen Schalter und Menüpunkt.
+- Schlägt das Anhängen fehl, läuft die Kamera ohne Weichzeichner weiter und der Schalter geht zurück.
+
+Abnahme im Browser mit Coach und Klient, 13 Prüfungen, gemessen am Anteil harter Kanten im Bild (die Testkamera zeigt keinen Menschen, das ganze Bild ist Hintergrund): ohne Einschalten kein Abruf von Paket oder Modell; Weichzeichnen im Warteraum, eigenes Bild von 9,9 auf 0 ‰ Kanten, ohne Neuladen der Seite; nach dem Einlass kommt beim Coach das weiche Bild an; im Gespräch aus → beim Coach scharf (13,2 ‰), wieder an → weich; Kamera aus und wieder an → bleibt weich; die Wahl ist gemerkt; keine Kennzeichnung beim Coach. Nicht geprüft: der Gerätewechsel (Chromes Testkamera gibt es nur einmal) und eine echte Person vor der Kamera – beides beim ersten Test mit echter Kamera ansehen.
 
 ### B6 · Robustheit und autoritatives Sitzungsende ✅ *(umgesetzt 2026-09-25)*
 

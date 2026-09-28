@@ -243,16 +243,6 @@ const TILE_LABEL = 'absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate 
                 <UIcon name="i-lucide-mic-off" class="size-3.5 text-error" />
               </span>
             </UTooltip>
-
-            <UBadge
-              v-if="remote.blurred"
-              icon="i-lucide-aperture"
-              color="neutral"
-              variant="subtle"
-              size="sm"
-              :label="`Hintergrund von ${remoteShort} weichgezeichnet`"
-              class="hidden sm:inline-flex"
-            />
           </div>
 
           <!-- Eigenes Bild. Klein, oben rechts – man soll sich nicht selbst anschauen.

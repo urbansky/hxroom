@@ -58,6 +58,9 @@ const {
   screenShareBy,
   screenShareIssue,
   setScreenShareEnabled,
+  backgroundBlur,
+  setBackgroundBlur,
+  backgroundBlurSupported,
 } = useCallRoom()
 
 // ---------------------------------------------------------------------------
@@ -136,7 +139,13 @@ onBeforeUnmount(() => {
 // verlässt, verlässt den Raum. Der Klient folgt über sein SSE-Ereignis.
 onBeforeUnmount(() => { void leaveCall() })
 
-const selfBlur = ref(false)
+// Weichzeichnen: gewünscht in @hxroom/livekit, dort je Browser gemerkt; die Wahl aus dem
+// Warteraum gilt hier weiter.
+const selfBlur = computed({
+  get: () => backgroundBlur.value,
+  set: (on: boolean) => { void setBackgroundBlur(on) },
+})
+const blurSupported = backgroundBlurSupported()
 /** Nur hier still, nie an den Klienten gemeldet – für technische Notfälle. */
 const remoteMutedLocally = ref(false)
 
@@ -387,6 +396,7 @@ async function confirmEnd(force = false) {
     :sharing-by="screenShareBy"
     :share-stream="shareStream"
     :can-share="shareSupported"
+    :can-blur="blurSupported"
     :share-disabled-reason="shareDisabledReason"
     can-mute-remote
     end-label="Sitzung beenden"

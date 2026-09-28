@@ -20,7 +20,11 @@ export interface CallPeer {
   name: string
   cameraOn: boolean
   micOn: boolean
-  /** Hintergrund weichgezeichnet – die Entscheidung dieser Person, hier nur Anzeige. */
+  /**
+   * Hintergrund weichgezeichnet. Angezeigt nur am eigenen Bild: Beim Gegenüber sieht man es am
+   * Bild selbst, und eine Meldung darüber bräuchte ein zusätzliches Recht im LiveKit-Token
+   * (entschieden 2026-09-28). Für `remote` also immer false.
+   */
   blurred: boolean
   /** Nur auf dieser Seite stummgeschaltet, nie an die Gegenseite gemeldet. */
   mutedLocally?: boolean

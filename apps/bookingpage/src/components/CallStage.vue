@@ -67,6 +67,9 @@ const {
   screenShareBy,
   screenShareIssue,
   setScreenShareEnabled,
+  backgroundBlur,
+  setBackgroundBlur,
+  backgroundBlurSupported,
 } = useCallRoom()
 
 // Beitreten, sobald der Coach eingelassen hat – das ist der Moment, in dem die Antwort
@@ -138,7 +141,13 @@ onBeforeUnmount(() => {
 // im Raum stehen, den der Coach sieht, ohne dass jemand da ist.
 onBeforeUnmount(() => { void leaveCall() })
 
-const selfBlur = ref(false)
+// Weichzeichnen: gewünscht in @hxroom/livekit, dort je Browser gemerkt; die Wahl aus dem
+// Warteraum gilt hier weiter.
+const selfBlur = computed({
+  get: () => backgroundBlur.value,
+  set: (on: boolean) => { void setBackgroundBlur(on) },
+})
+const blurSupported = backgroundBlurSupported()
 /** Der Klient schaltet niemanden stumm – das Modell verlangt den Wert trotzdem. */
 const remoteMutedLocally = ref(false)
 const sidebarOpen = ref(false)
@@ -305,6 +314,7 @@ async function leave() {
     :sharing-by="screenShareBy"
     :share-stream="shareStream"
     :can-share="shareSupported"
+    :can-blur="blurSupported"
     :share-disabled-reason="shareDisabledReason"
     end-label="Gespräch verlassen"
     @update:mic-on="toggleMicrophone()"

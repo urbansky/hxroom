@@ -69,8 +69,8 @@ const props = defineProps<{
   /** Warum gerade nicht geteilt werden kann; sperrt den Knopf und steht im Tooltip. */
   shareDisabledReason?: string | null
   /**
-   * „Hintergrund weichzeichnen" anbieten. Aus aus demselben Grund: Ohne die
-   * Personensegmentierung der Track-Processors ist es nur ein Häkchen.
+   * „Hintergrund weichzeichnen" anbieten. Aus aus demselben Grund: Wo der Browser die
+   * Personensegmentierung nicht kann, wäre es nur ein Häkchen.
    */
   canBlur?: boolean
   /** "Sitzung beenden" beim Coach, "Gespräch verlassen" beim Klienten. */

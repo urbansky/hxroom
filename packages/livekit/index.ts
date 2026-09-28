@@ -24,6 +24,10 @@ export {
 // packages/ui frei von LiveKit bleibt und beide Apps dieselbe Umwandlung nutzen (B4).
 export { videoStreamFor, audioStreamFor, screenShareStream, screenShareAudioStream, screenShareSupported } from './src/room'
 
+// Hintergrund weichzeichnen – im Warteraum wie im Gespräch, je Browser gemerkt.
+export { setBackgroundBlur, backgroundBlurSupported } from './src/room'
+export { backgroundBlur, blurLoading } from './src/blur'
+
 // Geräte: Liste ohne Chromes Doppelung des Standardgeräts, echter Wechsel der laufenden Spur.
 export { refreshDevices, switchDevice } from './src/room'
 

@@ -107,7 +107,14 @@ const {
   toggleCamera,
   toggleMicrophone,
   switchDevice,
+  backgroundBlur,
+  blurLoading,
+  setBackgroundBlur,
+  backgroundBlurSupported,
 } = useCallRoom()
+
+// Nur, wo der Browser es kann – ein Schalter ohne Wirkung täuschte Schutz vor.
+const blurSupported = backgroundBlurSupported()
 
 const micDevices = computed(() => namedDevices(microphones.value, 'Mikrofon'))
 const camDevices = computed(() => namedDevices(cameras.value, 'Kamera'))
@@ -189,6 +196,10 @@ function initials(call: CallAccessResponse): string {
           :cam-devices="camDevices"
           :loading-camera="loadingCamera"
           :name="call.coachName"
+          :blur="backgroundBlur"
+          :can-blur="blurSupported"
+          :blur-loading="blurLoading"
+          @update:blur="(on: boolean) => setBackgroundBlur(on)"
           @update:mic-on="toggleMicrophone()"
           @update:cam-on="toggleCamera()"
           @update:mic-device-id="(id: string) => switchDevice('audioinput', id)"

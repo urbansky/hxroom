@@ -18,9 +18,9 @@ import type { CallDevice } from './types'
 // Die Einrichtung beginnt erst auf Klick. Der Warteraum steht schon ab dem Tag der Buchung
 // offen, und ein Freigabedialog, den niemand angefordert hat, liest sich wie ein Übergriff.
 //
-// „Hintergrund weichzeichnen" steht schon an seinem Platz, ist aber gesperrt: Die
-// Personensegmentierung fehlt noch, und ein Schalter ohne Wirkung ließe jemanden glauben,
-// die eigene Küche sei nicht zu sehen.
+// „Hintergrund weichzeichnen" erscheint nur, wo der Browser es kann (`canBlur`). Ein Schalter
+// ohne Wirkung ließe jemanden glauben, die eigene Küche sei nicht zu sehen. Die Wahl gilt
+// beim Einlass weiter – die Spur nimmt ihren Weichzeichner mit in den Raum.
 //
 // Rollenfrei: Coach und Klient binden dieselbe Komponente ein. Die Mechanik liegt in
 // @hxroom/livekit, Gerätemeldungen formuliert die App im Slot #notice.
@@ -29,6 +29,7 @@ const micOn = defineModel<boolean>('micOn', { required: true })
 const camOn = defineModel<boolean>('camOn', { required: true })
 const micDeviceId = defineModel<string>('micDeviceId', { required: true })
 const camDeviceId = defineModel<string>('camDeviceId', { required: true })
+const blur = defineModel<boolean>('blur', { default: false })
 
 const props = defineProps<{
   /** Ob die Einrichtung läuft – vorher steht nur die Kachel zum Starten. */
@@ -42,6 +43,10 @@ const props = defineProps<{
   loadingCamera?: boolean
   /** Eigener Name, für die Initialen bei ausgeschalteter Kamera. */
   name: string
+  /** Kann dieser Browser den Hintergrund weichzeichnen? Sonst fehlt der Schalter. */
+  canBlur?: boolean
+  /** Das Modell lädt beim ersten Einschalten einen Moment. */
+  blurLoading?: boolean
 }>()
 
 defineEmits<{
@@ -141,11 +146,10 @@ const ROUND_BTN = 'rounded-full size-11 justify-center'
           />
         </div>
 
-        <div class="flex items-center gap-3 pt-3 border-t border-default">
+        <div v-if="canBlur" class="flex items-center gap-3 pt-3 border-t border-default">
           <UIcon name="i-lucide-aperture" class="size-4 text-dimmed shrink-0" />
           <span class="flex-1 min-w-0 text-sm text-muted">Hintergrund weichzeichnen</span>
-          <UBadge label="Bald verfügbar" color="neutral" variant="subtle" size="sm" class="shrink-0" />
-          <USwitch :model-value="false" disabled aria-label="Hintergrund weichzeichnen – bald verfügbar" />
+          <USwitch v-model="blur" :loading="blurLoading" aria-label="Hintergrund weichzeichnen" />
         </div>
       </div>
 
