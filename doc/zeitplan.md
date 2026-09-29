@@ -80,7 +80,7 @@ Verfügbarkeits-Engine mit Slot-Logik, öffentliche gebrandete Buchungsseite auf
 ### Phase 4 – Videocall
 **Zeitraum:** Woche 13–16 · **Aufwand:** 40 Stunden · **Status:** ✅ abgeschlossen am 2026-09-29
 
-> Umgesetzt nach `videocall-umsetzungsplan.md`. Über den Plan hinaus dabei: Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum, Hintergrund-Weichzeichner und die Notizen im Call (aus Phase 5 vorgezogen). Der Warteraum zeigt das Coach-Foto bereits. Noch nicht dabei und in Phase 5/6 verschoben: die Willkommensnachricht, eine konfigurierbare Danke-Seite und das Einwilligungsbanner für Aufnahmen.
+> Umgesetzt nach `videocall-umsetzungsplan.md`. Über den Plan hinaus dabei: Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum, Hintergrund-Weichzeichner und die Notizen im Call (aus Phase 5 vorgezogen). Der Warteraum zeigt das Coach-Foto bereits. Noch nicht dabei und in Phase 6 verschoben: das Einwilligungsbanner für Aufnahmen. Die Willkommensnachricht und die konfigurierbare Danke-Seite sind auf später verschoben (29.09.2026).
 
 *LiveKit · Warteraum · Call-UI · Sitzungsabschluss*
 
@@ -100,9 +100,14 @@ Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Gen
 ### Phase 5 – Nachbereitung & CRM
 **Zeitraum:** Woche 17–19 · **Aufwand:** 30 Stunden
 
-*Notizen · Session-Protokoll · Klientenliste · Buchungsseite*
+*Notizen · Session-Protokoll · Klientenliste · Buchungsseite · E2E-Verschlüsselung*
 
 Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenliste mit Sitzungshistorie, einfache Suchfunktion. Nach dieser Phase ist der MVP bereit für echte Beta-Coaches.
+
+**Festgelegt am 29.09.2026:**
+- **Session-Abschluss-Protokoll** ist die Abschlusskarte für den Coach wie im Prototyp (`poc/videocall-v2.html`, Screen 4 „Sitzung abgeschlossen“): als gehalten markiert, Notizen verknüpft, Dauer, Datum und Speicherstand der Notizen. Heute zeigt der Coach-Call nach dem Ende nur „Sitzung beendet – als gehalten vermerkt“.
+- **Danke-Seite des Klienten** bleibt wie sie ist, also ohne Weiterleitung und ohne Einstellungen. Die konfigurierbare Fassung ist auf später verschoben.
+- **Nice-to-have, nicht in Phase 5:** die KI-Sitzungszusammenfassung, die Zusammenfassungsmail an den Klienten und die Willkommensnachricht im Warteraum.
 
 **Neu aufgenommen am 29.09.2026: die Buchungsseite vollständig umsetzen.** Die öffentliche Buchungsseite (`[slug].hxroom.de`) zeigt bei jedem Coach noch dieselben Beispielinhalte:
 - Titel, Themen und Kennzahlen („340+ Sitzungen", „8 Jahre", „4.9 Bewertung")
@@ -114,7 +119,15 @@ Die Links zu Datenschutz, Impressum und AGB führen ins Leere. Tagline, „Über
 
 Ziel: Jeder Inhalt der Seite kommt aus den Einstellungen des Coachs. Was er nicht pflegt, wird ausgeblendet statt durch Beispieltext ersetzt. Vor einer Beta mit echten Coaches ist das Pflicht, denn Klienten sehen diese Seite als Erstes.
 
-**Technologien:** Notes-Modul · CRM-Queries · Dashboard · Buchungsseite · **Beta-ready** ✓
+**Neu aufgenommen am 29.09.2026: Datenschutz-Kasten im Warteraum.** Der Klient sieht im Warteraum, was mit seinem Gespräch geschieht: Aufzeichnung, Übertragung, Speicherung von Chat und Dateien, KI und Verschlüsselung. Dazu kommt ein Link zur Datenschutzerklärung des Coachs. Die genauen Aussagen werden später festgelegt. Zwei Regeln stehen fest:
+- Es werden nur Tatsachen genannt, die die Technik belegt, keine rechtlichen Wertungen wie „DSGVO-konform“.
+- Die Aussagen folgen dem echten Zustand, damit sie mit der Aufnahme in Phase 6 nicht stillschweigend falsch werden.
+
+Voraussetzung ist der Datenschutz-Link von der Buchungsseite.
+
+**Neu aufgenommen am 29.09.2026: Ende-zu-Ende-Verschlüsselung im Call.** Bild, Ton und Bildschirmfreigabe werden im Browser verschlüsselt. Der LiveKit-Server leitet sie nur weiter und kann sie nicht lesen. `livekit-client` bringt das mit (E2EE-Worker, Insertable Streams bzw. `RTCRtpScriptTransform`). Mehrere Fragen sind vor dem Bau zu klären, vor allem die Schlüsselverteilung und das Verhältnis zur Aufnahme in Phase 6. Sie stehen in `technisches-konzept.md` §16 (Punkt 08).
+
+**Technologien:** Notes-Modul · CRM-Queries · Dashboard · Buchungsseite · LiveKit E2EE · **Beta-ready** ✓
 
 **Claude Code Hauptaufgaben:**
 - Notes-Modul mit Auto-Save während des Calls
@@ -124,6 +137,8 @@ Ziel: Jeder Inhalt der Seite kommt aus den Einstellungen des Coachs. Was er nich
 - Öffentlichen Coach-Endpunkt um die gepflegten Profilfelder erweitern, fehlende Felder (z. B. Schwerpunkte) in Schema und Einstellungen ergänzen
 - Beispielinhalte der Buchungsseite durch echte Daten ersetzen, leere Felder ausblenden
 - Impressum und Datenschutz des Coachs auf der Buchungsseite verlinken
+- Datenschutz-Kasten im Warteraum, abgeleitet aus dem tatsächlichen Zustand
+- Ende-zu-Ende-Verschlüsselung für Bild, Ton und Freigabe über `livekit-client` E2EE, Worker von der eigenen Origin
 
 ---
 

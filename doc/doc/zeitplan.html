@@ -659,7 +659,7 @@ body::before {
         <div class="phase-body">
           <div class="phase-body-inner">
             <p class="phase-desc">Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Generierung im Backend, Call-UI mit Kamera/Mikro-Controls und Screen-Share, Sitzungsabschluss-Flow, Danke-Seite für Klienten, Einwilligungsbanner für Aufnahmen (DSGVO).</p>
-            <p class="phase-desc"><strong>Stand 29.09.2026:</strong> umgesetzt nach <code>videocall-umsetzungsplan.md</code>, dazu Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum und Hintergrund-Weichzeichner. In Phase 5/6 verschoben: Willkommensnachricht, konfigurierbare Danke-Seite, Einwilligungsbanner.</p>
+            <p class="phase-desc"><strong>Stand 29.09.2026:</strong> umgesetzt nach <code>videocall-umsetzungsplan.md</code>, dazu Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum und Hintergrund-Weichzeichner. In Phase 6 verschoben: Einwilligungsbanner. Auf später verschoben: Willkommensnachricht und konfigurierbare Danke-Seite.</p>
             <div class="phase-tags">
               <span class="tag tag-muted">LiveKit SDK</span>
               <span class="tag tag-muted">WebRTC</span>
@@ -687,7 +687,7 @@ body::before {
           <div class="phase-num">5</div>
           <div class="phase-info">
             <div class="phase-name">Nachbereitung & CRM</div>
-            <div class="phase-sub">Notizen · Session-Protokoll · Klientenliste · Buchungsseite</div>
+            <div class="phase-sub">Notizen · Session-Protokoll · Klientenliste · Buchungsseite · E2E-Verschlüsselung</div>
           </div>
           <div class="phase-meta">
             <div class="phase-weeks">Woche 17–19</div>
@@ -704,6 +704,8 @@ body::before {
           <div class="phase-body-inner">
             <p class="phase-desc">Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenliste mit Sitzungshistorie, einfache Suchfunktion. Nach dieser Phase ist der MVP bereit für echte Beta-Coaches.</p>
             <p class="phase-desc"><strong>Neu aufgenommen (29.09.2026): Buchungsseite vollständig umsetzen.</strong> Die öffentliche Buchungsseite zeigt bei jedem Coach noch dieselben Beispielinhalte – Titel, Themen, Kennzahlen, Hero-Text, „Über mich" samt Zitat und Qualifikationen, „Verifiziert", „Erstgespräch kostenlos" –, und Datenschutz, Impressum und AGB führen ins Leere. Künftig kommt jeder Inhalt aus den Einstellungen des Coachs; was er nicht pflegt, wird ausgeblendet.</p>
+            <p class="phase-desc"><strong>Festgelegt am 29.09.2026:</strong> Das Session-Abschluss-Protokoll ist die Abschlusskarte für den Coach wie im Prototyp – als gehalten markiert, Notizen verknüpft, Dauer, Datum, Speicherstand der Notizen. Die Danke-Seite des Klienten bleibt wie sie ist. KI-Sitzungszusammenfassung, Zusammenfassungsmail an den Klienten und Willkommensnachricht im Warteraum sind Nice-to-have.</p>
+            <p class="phase-desc"><strong>Neu aufgenommen (29.09.2026):</strong> ein <strong>Datenschutz-Kasten im Warteraum</strong> (Aufzeichnung, Übertragung, Speicherung, KI, Verschlüsselung, Link zur Datenschutzerklärung des Coachs – genaue Aussagen folgen, nur belegbare Tatsachen, abgeleitet aus dem echten Zustand) und die <strong>Ende-zu-Ende-Verschlüsselung im Call</strong> über <code>livekit-client</code> E2EE. Schlüsselverteilung und das Verhältnis zur Aufnahme in Phase 6 sind vor dem Bau zu klären (<code>technisches-konzept.md</code> §16 Punkt 08).</p>
             <div class="phase-tags">
               <span class="tag tag-sage">Beta-ready</span>
               <span class="tag tag-muted">Notes-Modul</span>
@@ -720,6 +722,8 @@ body::before {
                 <div class="claude-item">Vue-Tabellen-Komponenten für CRM-Ansichten</div>
                 <div class="claude-item">Öffentlichen Coach-Endpunkt um die gepflegten Profilfelder erweitern, fehlende Felder in Schema und Einstellungen ergänzen</div>
                 <div class="claude-item">Beispielinhalte der Buchungsseite durch echte Daten ersetzen, Impressum und Datenschutz des Coachs verlinken</div>
+                <div class="claude-item">Datenschutz-Kasten im Warteraum, abgeleitet aus dem tatsächlichen Zustand</div>
+                <div class="claude-item">Ende-zu-Ende-Verschlüsselung für Bild, Ton und Freigabe, Worker von der eigenen Origin</div>
               </div>
             </div>
           </div>
