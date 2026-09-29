@@ -100,17 +100,30 @@ Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Gen
 ### Phase 5 – Nachbereitung & CRM
 **Zeitraum:** Woche 17–19 · **Aufwand:** 30 Stunden
 
-*Notizen · Session-Protokoll · Klientenliste*
+*Notizen · Session-Protokoll · Klientenliste · Buchungsseite*
 
 Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenliste mit Sitzungshistorie, einfache Suchfunktion. Nach dieser Phase ist der MVP bereit für echte Beta-Coaches.
 
-**Technologien:** Notes-Modul · CRM-Queries · Dashboard · **Beta-ready** ✓
+**Neu aufgenommen am 29.09.2026: die Buchungsseite vollständig umsetzen.** Die öffentliche Buchungsseite (`[slug].hxroom.de`) zeigt bei jedem Coach noch dieselben Beispielinhalte:
+- Titel, Themen und Kennzahlen („340+ Sitzungen", „8 Jahre", „4.9 Bewertung")
+- den Text im Kopfbereich
+- Zitat, Text und Qualifikationen unter „Über mich"
+- das Abzeichen „Verifiziert" und das Versprechen „Erstgespräch kostenlos"
+
+Die Links zu Datenschutz, Impressum und AGB führen ins Leere. Tagline, „Über mich" und Button-Text pflegt der Coach bereits in den Einstellungen, der öffentliche Endpunkt liefert sie aber nicht aus.
+
+Ziel: Jeder Inhalt der Seite kommt aus den Einstellungen des Coachs. Was er nicht pflegt, wird ausgeblendet statt durch Beispieltext ersetzt. Vor einer Beta mit echten Coaches ist das Pflicht, denn Klienten sehen diese Seite als Erstes.
+
+**Technologien:** Notes-Modul · CRM-Queries · Dashboard · Buchungsseite · **Beta-ready** ✓
 
 **Claude Code Hauptaufgaben:**
 - Notes-Modul mit Auto-Save während des Calls
 - Client-Modul mit Sitzungshistorie und Klientenprofil
 - Dashboard-Queries mit Drizzle (Aggregate, Joins)
 - Vue-Tabellen-Komponenten für CRM-Ansichten
+- Öffentlichen Coach-Endpunkt um die gepflegten Profilfelder erweitern, fehlende Felder (z. B. Schwerpunkte) in Schema und Einstellungen ergänzen
+- Beispielinhalte der Buchungsseite durch echte Daten ersetzen, leere Felder ausblenden
+- Impressum und Datenschutz des Coachs auf der Buchungsseite verlinken
 
 ---
 
