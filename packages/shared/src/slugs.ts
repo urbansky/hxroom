@@ -10,6 +10,10 @@
  * die für Mail und Infrastruktur üblich sind, und Namen, die HxRoom absehbar selbst
  * braucht. Neue Einträge wirken nur auf künftige Vergaben; ein bereits vergebener Slug
  * bleibt, bis ihn jemand ändert.
+ *
+ * Hier in `@hxroom/shared`, weil drei Stellen sie brauchen: die Registrierung und der
+ * better-auth-Endpunkt `/organization/update` in der API sowie `bookingPageSchema`, das
+ * sowohl `PATCH /booking-page` als auch das Formular der Coach-App prüft.
  */
 export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   // Heute belegt: eigene Blöcke im Caddyfile bzw. eigener DNS-Eintrag (Ionos)

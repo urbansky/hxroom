@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { isReservedSlug } from './slugs.js';
+
+export { RESERVED_SLUGS, isReservedSlug, isValidSlugFormat } from './slugs.js';
 
 // Booking status
 // 'no_show': Der Termin war verbindlich, der Klient ist nicht erschienen (B6). Vom Coach
@@ -35,7 +38,8 @@ export const DEFAULT_PRIMARY_COLOR = '#8B9E8A';
 
 // Booking page settings
 export const bookingPageSchema = z.object({
-  subdomain:   z.string().min(3).max(63).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/).optional(),
+  subdomain:   z.string().min(3).max(63).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/)
+    .refine((s) => !isReservedSlug(s), 'This subdomain is reserved').optional(),
   profileName: z.string().min(1).max(160).optional(),
   tagline:     z.string().max(160).nullish(),
   bio:         z.string().max(2000).nullish(),

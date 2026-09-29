@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { isReservedSlug, isValidSlugFormat } from './reserved-slugs';
+// Die Sperrliste liegt in @hxroom/shared (das Paket hat keine eigenen Tests), wirkt aber an
+// den Slug-Pfaden der API – deshalb steht der Test hier.
+import { bookingPageSchema, isReservedSlug, isValidSlugFormat } from '@hxroom/shared';
+
+describe('bookingPageSchema.subdomain', () => {
+  // PATCH /booking-page und das Formular der Coach-App prüfen beide mit diesem Schema.
+  it('weist gesperrte Subdomains ab', () => {
+    const r = bookingPageSchema.safeParse({ subdomain: 'app' });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toBe('This subdomain is reserved');
+  });
+
+  it('lässt freie Subdomains durch', () => {
+    expect(bookingPageSchema.safeParse({ subdomain: 'anna-bergmann' }).success).toBe(true);
+    expect(bookingPageSchema.safeParse({}).success).toBe(true);
+  });
+});
 
 describe('isReservedSlug', () => {
   it('sperrt die heute belegten Hosts', () => {

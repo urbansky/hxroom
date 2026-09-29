@@ -15,7 +15,7 @@ import { renderPasswordResetEmail } from '../mail/templates/coach/password-reset
 import * as schema from '../db/schema';
 import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
-import { isReservedSlug, isValidSlugFormat } from '../organization/reserved-slugs';
+import { isReservedSlug, isValidSlugFormat } from '@hxroom/shared';
 
 export const AUTH = Symbol('AUTH');
 export type Auth = ReturnType<typeof betterAuth>;
