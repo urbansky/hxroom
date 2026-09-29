@@ -280,7 +280,7 @@ Zwei Dinge sind bewusst nicht geprüft: Das Verhalten bei knapper Leitung – ü
 
 **`adaptiveStream` und `dynacast` bleiben aus.** Beide klingen nach der bequemeren Lösung, taugen hier aber nicht: `adaptiveStream` braucht `track.attach(element)`, um Größe und Sichtbarkeit zu kennen. HxRoom hängt Spuren nicht so an – `streamFor()` baut einen eigenen `MediaStream`, den `CallCameraView` per `srcObject` setzt, damit `packages/ui` frei von LiveKit bleibt. Ohne `attach()` bleibt `elementInfos` leer, `updateVisibility()` hält jede Spur für unsichtbar und pausiert sie. `dynacast` wiederum stoppt nur Ebenen, die niemand abonniert; ohne `adaptiveStream` fordert der einzige Abonnent im Gespräch immer die höchste an.
 
-Offen für später: VP9 (`scalabilityMode: 'L1T3'`) ist bei Bildschirminhalten pro Bit deutlich schärfer als VP8, verlangt aber Dekodierung beim Empfänger, oft in Software. Das gehört mit eigener Abnahme auf Safari und einem älteren Gerät geprüft.
+VP9 statt VP8 war hier als „offen für später" vermerkt. *Inzwischen geprüft und verworfen, siehe den Nachtrag „VP9 für die Freigabe".*
 
 #### Nachtrag: Verbindungsdetails im Debug-Modus *(umgesetzt 2026-09-29)*
 
@@ -292,6 +292,27 @@ Die Messung war bisher nur über die Konsole im Dev-Build erreichbar. Mit **`?de
 - **Verbindungen**: das ausgewählte ICE-Kandidatenpaar mit Round-Trip-Zeit, Weg (direkt, direkt über NAT, über TURN samt Protokoll zum TURN-Server) und der Senderate, die die Staukontrolle gerade zulässt. Gelesen wird es aus den Berichten der Spuren und nach Paar zusammengefasst. So stimmt es mit einer PeerConnection (Voreinstellung von `livekit-client`) wie mit zweien. Tonspuren zählen mit, damit der Weg auch bei ausgeschalteter Kamera sichtbar ist.
 
 `packages/ui` spiegelt die Form als `CallStats`, ohne von LiveKit abzuhängen. Die App reicht `callQuality` als `loadStats` an `CallScreen` weiter, und ohne diese Prop gibt es den Menüpunkt nicht. IP-Adressen der Kandidaten werden bewusst nicht gezeigt.
+
+#### Nachtrag: VP9 für die Freigabe – geprüft, verworfen *(2026-09-29)*
+
+Die Freigabe bleibt bei **VP8**. VP9 gilt bei Bildschirminhalten als pro Bit schärfer, und der Codec kann das auch. So, wie `livekit-client` 2.22 ihn für Freigaben einsetzt, kommt davon in Chrome aber nichts an. Bei `videoCodec: 'vp9'` erzwingt die Bibliothek für jede Freigabe `scalabilityMode: 'L1T3'` und setzt `contentHint = 'motion'`, als Umgehung eines Chrome-Fehlers im Bildschirm-Modus von VP9. Die drei Zeitebenen sind es, die die Qualität kosten.
+
+**Messaufbau:** zwei `RTCPeerConnection` im selben Browser, ohne LiveKit-Server und ohne Paketverlust, auf einem Apple M2. Gesendet wird eine Canvas-Tabelle mit 13-px-Schrift in 2560×1440 bei 15 fps, mit denselben Einstellungen wie `SCREEN_SHARE_PUBLISH` (kein Simulcast, `maintain-resolution`), bei Obergrenzen von 400 bis 8000 kbit/s. Gemessen wird die PSNR im Tabellenbereich: ab etwa 45 dB ist Text vom Original nicht zu unterscheiden, um 35 dB lesbar, aber weich. Drei Situationen: stehendes Bild, Folienwechsel bei warmer Verbindung, Scrollen (6 px je Bild, der Ausschnitt ist über eine Bildnummer im Frame zugeordnet).
+
+| Chrome 154, Scrollen | VP8 (heute) | VP9 wie `livekit-client` es sendet | VP9 ohne Zeitebenen (`L1T1`) |
+|---|---|---|---|
+| 800 kbit/s | 46,0 dB, 15 fps | 31,6 dB, 4 fps, 3,7 s Hänger | 47,1 dB, 15 fps |
+| 1500 kbit/s | 48,1 dB, 15 fps | 34,9 dB, 6 fps, 2,1 s Hänger | 52,7 dB, 15 fps |
+| 8000 kbit/s | 48,1 dB bei 0,84 Mbit/s | 52,4 dB bei 6,6 Mbit/s | – |
+
+- **Qualität, Chrome als Absender:** Unter 1,5 Mbit/s ist VP9 durchweg schlechter. Beim Scrollen fällt die Bildrate auf 4–9 fps, und eine neue Folie wird langsamer scharf. Bei reichlich Leitung erreicht VP9 51 statt 46–47 dB, ein Unterschied, den man nicht sieht.
+- **Qualität, Safari 26.5 als Absender:** Hier ist VP9 auch mit `L1T3` besser (Scrollen bei 800 kbit/s 47,5 statt 42 dB, bei 1500 kbit/s 52 statt 42 dB). Dafür erscheint eine neue Folie erst nach 1–2 Sekunden, dann gleich scharf. VP8 zeigt sofort ein grobes Bild und schärft nach.
+- **Firefox als Absender** sendet ohnehin nie VP9: `supportsVP9()` in `livekit-client` gibt dort immer `false` zurück.
+- **Kompatibilität:** Chrome, Safari 26.5 und Firefox 154 dekodieren VP9, auf dem Mac jeweils in Hardware. Kodiert wird überall in Software, in Chrome mit 7–13 ms je Bild statt 5–10 ms bei VP8. Safari unter 16 und iOS unter 16 fallen automatisch auf VP8 zurück.
+- **Bandbreite ist kein Grund:** VP8 braucht mit dem heutigen Profil in Chrome etwa 170 kbit/s für eine stehende Folie und etwa 840 kbit/s beim Scrollen. VP9 bräuchte bei viel Leitung mehr, nicht weniger.
+- **Nebenwirkung:** Mit VP9 legt `livekit-client` eine VP8-Ausweichspur an (`backupCodec`) und schaltet dafür `dynacast` für den ganzen Raum ein, entgegen der Entscheidung oben.
+
+**Wieder aufgreifen**, wenn `livekit-client` für Freigaben `L1T1` zulässt. Die rechte Spalte zeigt, dass VP9 dann auch in Chrome klar gewinnt. Ein eigener Patch an der Bibliothek lohnt sich dafür nicht: Er müsste gegen den LiveKit-Server abgenommen werden, das `dynacast`-Problem bliebe, und VP9 nur für Absender mit Safari wäre Sonderlogik für eine Minderheit der Coachs.
 
 #### Nachtrag: Geräte einrichten im Warteraum *(2026-09-16)*
 
