@@ -50,8 +50,20 @@ async function onSaved(_client: ClientResponse) {
         placeholder="Nach Name oder E-Mail suchen"
         icon="i-lucide-search"
         class="w-full max-w-xs"
-        :ui="{ base: 'bg-white dark:bg-neutral-800' }"
-      />
+        :ui="{ base: 'bg-white dark:bg-neutral-800', trailing: 'pe-1' }"
+        @keydown.esc="search = ''"
+      >
+        <template v-if="search" #trailing>
+          <UButton
+            color="neutral"
+            variant="link"
+            size="sm"
+            icon="i-lucide-x"
+            aria-label="Suche löschen"
+            @click="search = ''"
+          />
+        </template>
+      </UInput>
       <UButton
         v-if="clients.length"
         label="Klient anlegen"
