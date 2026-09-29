@@ -78,7 +78,9 @@ Verfügbarkeits-Engine mit Slot-Logik, öffentliche gebrandete Buchungsseite auf
 ---
 
 ### Phase 4 – Videocall
-**Zeitraum:** Woche 13–16 · **Aufwand:** 40 Stunden
+**Zeitraum:** Woche 13–16 · **Aufwand:** 40 Stunden · **Status:** ✅ abgeschlossen am 2026-09-29
+
+> Umgesetzt nach `videocall-umsetzungsplan.md`. Über den Plan hinaus dabei: Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum, Hintergrund-Weichzeichner und die Notizen im Call (aus Phase 5 vorgezogen). Der Warteraum zeigt das Coach-Foto bereits. Noch nicht dabei und in Phase 5/6 verschoben: die Willkommensnachricht, eine konfigurierbare Danke-Seite und das Einwilligungsbanner für Aufnahmen.
 
 *LiveKit · Warteraum · Call-UI · Sitzungsabschluss*
 
@@ -199,7 +201,7 @@ End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cas
 | 1 – Fundament & Infrastruktur | Woche 1–4 | 40h | Start |
 | 2 – Auth & Coach-Profil | Woche 5–7 | 30h | — |
 | 3 – Buchungssystem | Woche 8–12 | 50h | Komplex |
-| 4 – Videocall | Woche 13–16 | 40h | — |
+| 4 – Videocall | Woche 13–16 | 40h | ✅ Abgeschlossen |
 | 5 – Nachbereitung & CRM | Woche 17–19 | 30h | Beta-ready |
 | 6 – Whisper-Transkription | Woche 20–22 | 30h | — |
 | 7 – Billing (Stripe) | Woche 23–26 | 40h | Zahlende Kunden |

@@ -1038,13 +1038,15 @@ export const organizationBilling = pgTable('organization_billing', {
 | **1 – Fundament** | Docker Compose Setup, DB-Schema, Basis-Auth | Monorepo-Setup, Drizzle-Schema, Docker-Config |
 | **2 – Auth & Profil** | Registrierung, Login, Subdomain-Setup, Branding | better-auth Integration, Coach-Modul |
 | **3 – Buchung** | Angebote (Einzelsitzungen), Verfügbarkeiten inkl. Zwei-Stufen-Modell, Buchungsseite, E-Mail-Bestätigung | Offer-Modul, Booking-Modul, Availability-Logik, E-Mail-Templates |
-| **4 – Videocall** | Warteraum, LiveKit-Integration, Call-UI als Route in `bookingpage` und `coach`, geteilte Schicht `packages/livekit` | LiveKit-Modul (Token, Webhooks), SSE-Kanal „Klient wartet", Übernahme und Entkernen der HxMeet-Composables |
+| **4 – Videocall** ✅ | Warteraum, LiveKit-Integration, Call-UI als Route in `bookingpage` und `coach`, geteilte Schicht `packages/livekit` | LiveKit-Modul (Token, Webhooks), SSE-Kanal „Klient wartet", Übernahme und Entkernen der HxMeet-Composables |
 | **5 – Nachbereitung** | Notizen, Session-Abschluss, Klienten-Weiterleitung | Notes-Modul, Session-State |
 | **6 – Speech2Text** | Whisper-Transkription, Klienten-Einwilligung, Transkript-Ansicht | Whisper-Service, BullMQ-Job, Consent-Flow, Transkript-UI |
 | **7 – CRM** | Klientenliste, Sitzungshistorie | Client-Modul, Dashboard-Queries |
 | **8 – Betreiber-Backoffice** | Coach-Accounts einsehen, Plan manuell setzen, Accounts sperren, Übersicht aller Organizations | Admin-Modul (geschützt durch separaten Auth-Guard für Betreiber-Rolle) |
 | **9 – Billing** | Stripe Subscription, Billing Portal, Plan-Enforcement | Stripe-Webhook-Handler, organizationBilling-Schema |
 | **10 – Pro-Features** | Rechnungsstellung, iCal-Feed (Basic), Google Calendar API Sync (Pro, bidirektional) | Rechnung-PDF → S3, iCal-Endpunkt, Google Calendar OAuth + Webhook |
+
+**Stand 2026-09-29:** Phase 4 ist abgeschlossen, der Ablauf steht in `videocall-umsetzungsplan.md`. Aus Phase 5 sind die Notizen im Call (Autosave, auch im Termin-Slideover) und der Chatverlauf zum Nachlesen bereits vorgezogen. Willkommensnachricht im Warteraum, konfigurierbare Danke-Seite und das Einwilligungs-Banner gehören weiter zu den Phasen 5 und 6.
 
 ---
 

@@ -1,10 +1,12 @@
 # Videocall – Umsetzungsplan (Phase 4)
 
-*Stand: 2026-08-20. Grober Schnitt der Umsetzung, bewusst ohne Implementierungsdetails. Fachliche und architektonische Grundlage ist `technisches-konzept.md` §6, §7 und §8; die Feature-Abgrenzung steht in `project.md` §5a.*
+*Begonnen 2026-08-20, **abgeschlossen 2026-09-29**. Fachliche und architektonische Grundlage ist `technisches-konzept.md` §6, §7 und §8; die Feature-Abgrenzung steht in `project.md` §5a.*
+
+> **Status: Phase 4 ist abgeschlossen.** Stufe A (A1–A6) und Stufe B (B1–B7) sind samt aller Nachträge umgesetzt, gepusht und im Betrieb auf Hetzner bestätigt. Was aus dem Videocall bewusst offen bleibt, steht in `technisches-konzept.md` §16: die Off-Site-Kopie des Objektspeichers (Punkt 03, zur Fertigstellung der Beta in Phase 9) sowie als Nice-to-have die Verschlüsselung der Sitzungsnotizen (02), die Lautsprecherwahl (06) und die Nachprüfung ungeprüft angenommener Dateien (07). VP9 für die Freigabe ist geprüft und verworfen (Nachtrag unten). Was ausdrücklich in spätere Phasen gehört, steht unter *Bewusst nicht Teil dieses Plans*.
 
 ## Ausgangslage
 
-Phase 4 aus `technisches-konzept.md` §14 ist die nächste ungebaute Phase. Buchung, Token-Lifecycle, Mailversand und Coach-Dashboard stehen; für den Videocall existierte zu Beginn dieses Plans keine Zeile Code: kein `packages/livekit`, kein LiveKit-Modul in der API, keine `/call`-Routen, `infra/livekit/` enthält nur `.gitkeep`. Der Caddy-Block für `livekit.hxroom.localhost` ist bereits aktiv und zeigt derzeit ins Leere. Inzwischen umgesetzt ist A1 (Sitzungszustand und Call-Zugang in der API); der Rest steht noch aus.
+Phase 4 aus `technisches-konzept.md` §14 war zu Beginn dieses Plans die nächste ungebaute Phase. Buchung, Token-Lifecycle, Mailversand und Coach-Dashboard standen; für den Videocall existierte zu Beginn dieses Plans keine Zeile Code: kein `packages/livekit`, kein LiveKit-Modul in der API, keine `/call`-Routen, `infra/livekit/` enthält nur `.gitkeep`. Der Caddy-Block für `livekit.hxroom.localhost` war bereits aktiv und zeigte ins Leere.
 
 ## Leitgedanke des Schnitts
 
