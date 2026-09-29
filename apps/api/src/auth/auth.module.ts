@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { betterAuth, generateId } from 'better-auth';
+import { APIError } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, organization } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
@@ -14,6 +15,7 @@ import { renderPasswordResetEmail } from '../mail/templates/coach/password-reset
 import * as schema from '../db/schema';
 import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
+import { isReservedSlug, isValidSlugFormat } from '../organization/reserved-slugs';
 
 export const AUTH = Symbol('AUTH');
 export type Auth = ReturnType<typeof betterAuth>;
@@ -42,6 +44,27 @@ export type Auth = ReturnType<typeof betterAuth>;
             organization({
               allowUserToCreateOrganization: false,
               creatorRole: 'owner',
+              organizationHooks: {
+                // Eine Oberfläche zum Ändern des Slugs gibt es nicht, der Endpunkt
+                // /organization/update steht dem Owner aber offen. Ohne diese Prüfung
+                // könnte ein Coach sich dort `api` oder `app` als Subdomain nehmen.
+                beforeUpdateOrganization: async ({ organization }) => {
+                  const slug = organization.slug;
+                  if (slug === undefined) return;
+                  if (!isValidSlugFormat(slug)) {
+                    throw new APIError('BAD_REQUEST', {
+                      message: 'Invalid slug format',
+                      code: 'INVALID_SLUG_FORMAT',
+                    });
+                  }
+                  if (isReservedSlug(slug)) {
+                    throw new APIError('BAD_REQUEST', {
+                      message: 'This slug is reserved',
+                      code: 'SLUG_RESERVED',
+                    });
+                  }
+                },
+              },
             }),
             admin({
               defaultRole: DEFAULT_ROLE,
@@ -217,6 +240,11 @@ async function ensureUniqueSlug(base: string, db: DrizzleDb): Promise<string> {
   let slug = base;
   let counter = 2;
   while (true) {
+    // Ein gesperrter Name wird wie ein vergebener behandelt: aus „App" wird `app-2`.
+    if (isReservedSlug(slug)) {
+      slug = `${base}-${counter++}`;
+      continue;
+    }
     const [existing] = await db
       .select({ id: schema.organization.id })
       .from(schema.organization)

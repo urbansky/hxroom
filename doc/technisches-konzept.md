@@ -246,6 +246,8 @@ Der Host ist ausdrücklich **keine** Autorisierungsgrenze: welche Rolle was darf
 
 **Subdomain-Routing im Frontend:** Jede Subdomain wird von ihrer eigenen App bedient (`apps/landing`, `apps/coach`, `apps/bookingpage`, `apps/admin`). Caddy routet allein anhand des Hostnames an den jeweiligen Container; innerhalb der App übernimmt deren eigenes Routing die URL-Auflösung – bei den Nuxt-Apps das file-based Routing (`pages/`), bei `bookingpage` der Vue Router. Da `bookingpage` als statische SPA ausgeliefert wird, liest sie den Coach-Slug clientseitig aus dem Hostname und lädt Branding und Buchungskontext über die API nach.
 
+**Gesperrte Slugs:** Weil jeder Host ohne eigenen Caddy-Block an `bookingpage` geht, darf kein Coach einen Slug bekommen, der schon anders belegt ist – unter `api.hxroom.de` wäre seine Buchungsseite nie erreichbar. Die Sperrliste steht in `apps/api/src/organization/reserved-slugs.ts`: die belegten Hosts (Caddyfile und `autodiscover`, den einzigen DNS-Eintrag neben dem Wildcard), übliche Namen für Mail und Infrastruktur und absehbar eigene Namen wie `studio` oder `status`. Sie greift an beiden Stellen, an denen ein Slug entsteht: Bei der Registrierung wird ein gesperrter Name wie ein vergebener behandelt (aus „App“ wird `app-2`), und `/organization/update` von better-auth – eine Oberfläche dafür gibt es nicht, der Endpunkt steht dem Owner aber offen – weist gesperrte Slugs mit `SLUG_RESERVED` ab und alles, was kein gültiges DNS-Label in Kleinbuchstaben ist, mit `INVALID_SLUG_FORMAT`. Wer einen neuen Host im Caddyfile anlegt, trägt ihn dort mit ein.
+
 **Die Call-Pfade brauchen keine eigene Caddy-Regel.** `/call/*` ist in beiden Apps eine gewöhnliche interne Route und wird über die bestehenden Host-Blöcke bedient:
 
 ```
