@@ -263,7 +263,7 @@ Das Sendeprofil steht jetzt in `packages/livekit/src/quality.ts`, rein deklarati
 
 **Safari bleibt ausgenommen.** WebKit-Bug 263015: Safari 17 liefert bei *jeder* Auflösungsvorgabe eine niedrig aufgelöste Aufnahme. Dort bleibt die Vorgabe weg, und der Browser gibt die native Auflösung – `livekit-client` verfährt aus demselben Grund ebenso.
 
-**`videoQuality()` in `packages/livekit`** liest Auflösung, Bildrate, Bitrate, Codec und `qualityLimitationReason` aller Spuren aus den RTC-Statistiken. Für die Abnahme eines Sendeprofils und für die Frage, woran ein weiches Bild liegt – nicht für die Oberfläche.
+**`videoQuality()` in `packages/livekit`** liest Auflösung, Bildrate, Bitrate, Codec und `qualityLimitationReason` aller Spuren aus den RTC-Statistiken. Für die Abnahme eines Sendeprofils und für die Frage, woran ein weiches Bild liegt – nicht für die Oberfläche. *(Seit 2026-09-29 `callQuality()` und im Debug-Modus sichtbar, siehe den folgenden Nachtrag.)*
 
 Abnahme mit Coach und Klient über die Caddy-Subdomains, gemessen beim Sender und beim Empfänger:
 
@@ -281,6 +281,17 @@ Zwei Dinge sind bewusst nicht geprüft: Das Verhalten bei knapper Leitung – ü
 **`adaptiveStream` und `dynacast` bleiben aus.** Beide klingen nach der bequemeren Lösung, taugen hier aber nicht: `adaptiveStream` braucht `track.attach(element)`, um Größe und Sichtbarkeit zu kennen. HxRoom hängt Spuren nicht so an – `streamFor()` baut einen eigenen `MediaStream`, den `CallCameraView` per `srcObject` setzt, damit `packages/ui` frei von LiveKit bleibt. Ohne `attach()` bleibt `elementInfos` leer, `updateVisibility()` hält jede Spur für unsichtbar und pausiert sie. `dynacast` wiederum stoppt nur Ebenen, die niemand abonniert; ohne `adaptiveStream` fordert der einzige Abonnent im Gespräch immer die höchste an.
 
 Offen für später: VP9 (`scalabilityMode: 'L1T3'`) ist bei Bildschirminhalten pro Bit deutlich schärfer als VP8, verlangt aber Dekodierung beim Empfänger, oft in Software. Das gehört mit eigener Abnahme auf Safari und einem älteren Gerät geprüft.
+
+#### Nachtrag: Verbindungsdetails im Debug-Modus *(umgesetzt 2026-09-29)*
+
+Die Messung war bisher nur über die Konsole im Dev-Build erreichbar. Mit **`?debug=1`** an der Call-Adresse (Coach: `/call/<bookingId>?debug=1`, Klient: `/call/<bookingId>?token=…&debug=1`) steht im Drei-Punkt-Menü der Steuerleiste der Eintrag **„Verbindungsdetails"**. Er öffnet `CallStatsModal` in `packages/ui`, das alle 2 Sekunden neu misst, solange es offen ist. Der Schalter gilt nur für den jeweiligen Aufruf. Er wird nicht gemerkt und funktioniert auch im Produktions-Build, denn die Statistik hängt nicht am Logger.
+
+`callQuality()` (vorher `videoQuality()`) liefert jetzt zwei Teile:
+
+- **Videospuren** wie bisher, zusätzlich **Verlust** und **Jitter**. Beim Empfangen kommen beide aus `inbound-rtp`, der Verlust als Differenz zwischen zwei Messungen. Beim Senden stammen sie aus der Rückmeldung des LiveKit-Servers (`remote-inbound-rtp`).
+- **Verbindungen**: das ausgewählte ICE-Kandidatenpaar mit Round-Trip-Zeit, Weg (direkt, direkt über NAT, über TURN samt Protokoll zum TURN-Server) und der Senderate, die die Staukontrolle gerade zulässt. Gelesen wird es aus den Berichten der Spuren und nach Paar zusammengefasst. So stimmt es mit einer PeerConnection (Voreinstellung von `livekit-client`) wie mit zweien. Tonspuren zählen mit, damit der Weg auch bei ausgeschalteter Kamera sichtbar ist.
+
+`packages/ui` spiegelt die Form als `CallStats`, ohne von LiveKit abzuhängen. Die App reicht `callQuality` als `loadStats` an `CallScreen` weiter, und ohne diese Prop gibt es den Menüpunkt nicht. IP-Adressen der Kandidaten werden bewusst nicht gezeigt.
 
 #### Nachtrag: Geräte einrichten im Warteraum *(2026-09-16)*
 

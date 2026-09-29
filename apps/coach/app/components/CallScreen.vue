@@ -2,6 +2,7 @@
 import { firstName, type CallAccessResponse, type CallClientContext } from '@hxroom/shared'
 import {
   audioStreamFor,
+  callQuality,
   configureLivekit,
   joinCall,
   leaveCall,
@@ -62,6 +63,10 @@ const {
   setBackgroundBlur,
   backgroundBlurSupported,
 } = useCallRoom()
+
+// Debug-Modus: `?debug=1` an der Adresse bietet im Menü die Verbindungsdetails an. Gilt nur
+// für diesen Aufruf – nach einem Neuladen ohne den Parameter ist er wieder aus.
+const loadStats = useRoute().query.debug === '1' ? callQuality : null
 
 // ---------------------------------------------------------------------------
 // Verbindung
@@ -398,6 +403,7 @@ async function confirmEnd(force = false) {
     :can-share="shareSupported"
     :can-blur="blurSupported"
     :share-disabled-reason="shareDisabledReason"
+    :load-stats="loadStats"
     can-mute-remote
     end-label="Sitzung beenden"
     @update:mic-on="toggleMicrophone()"

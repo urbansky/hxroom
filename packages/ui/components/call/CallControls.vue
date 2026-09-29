@@ -73,11 +73,13 @@ const props = defineProps<{
    * Personensegmentierung nicht kann, wäre es nur ein Häkchen.
    */
   canBlur?: boolean
+  /** Debug-Modus: „Verbindungsdetails" im Menü anbieten (meldet `stats`). */
+  debug?: boolean
   /** "Sitzung beenden" beim Coach, "Gespräch verlassen" beim Klienten. */
   endLabel: string
 }>()
 
-defineEmits<{ end: [] }>()
+const emit = defineEmits<{ end: [], stats: [] }>()
 
 /** Hervorgehoben ist ein Bereich nur, solange die Leiste ihn auch zeigt. */
 function panelShown(panel: string): boolean {
@@ -196,6 +198,14 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [
         type: 'checkbox' as const,
         checked: remoteMutedLocally.value,
         onUpdateChecked: (value: boolean) => { remoteMutedLocally.value = value },
+      }]]
+    : []),
+  // Nur mit `?debug=1` – ein Werkzeug für die Fehlersuche, nichts für das Gespräch.
+  ...(props.debug
+    ? [[{
+        label: 'Verbindungsdetails',
+        icon: 'i-lucide-activity',
+        onSelect: () => emit('stats'),
       }]]
     : []),
 ])

@@ -31,9 +31,10 @@ export { backgroundBlur, blurLoading } from './src/blur'
 // Geräte: Liste ohne Chromes Doppelung des Standardgeräts, echter Wechsel der laufenden Spur.
 export { refreshDevices, switchDevice } from './src/room'
 
-// Messung für die Abnahme von Sendeprofilen – nicht für die Oberfläche.
-export { videoQuality, logVideoQuality } from './src/room'
-export type { VideoQuality } from './src/stats'
+// Messung für die Abnahme von Sendeprofilen und die Fehlersuche – in der Oberfläche nur im
+// Debug-Modus (`?debug=1`).
+export { callQuality, logVideoQuality } from './src/room'
+export type { CallQuality, ConnectionQuality, VideoQuality } from './src/stats'
 
 export { useCallRoom } from './src/room'
 

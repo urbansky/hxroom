@@ -73,6 +73,42 @@ export interface CallDevice {
  */
 export type CallConnection = 'connecting' | 'live' | 'reconnecting' | 'lost'
 
+/**
+ * Die Messwerte für die Verbindungsdetails im Debug-Modus.
+ *
+ * Von Hand gespiegelt aus `CallQuality` in @hxroom/livekit, aus demselben Grund wie
+ * `CallConnection`: Dieses Paket kennt LiveKit nicht. Die Form ist dieselbe, die App reicht
+ * `callQuality` deshalb ohne Umbau herein. Bedeutung der Felder siehe dort (stats.ts).
+ */
+export interface CallStats {
+  video: CallStatsVideo[]
+  connections: CallStatsConnection[]
+}
+
+export interface CallStatsVideo {
+  source: string
+  direction: 'send' | 'receive'
+  width: number | null
+  height: number | null
+  fps: number | null
+  kbps: number | null
+  lossPercent: number | null
+  jitterMs: number | null
+  codec: string | null
+  implementation: string | null
+  limitation: string | null
+  layer: string | null
+}
+
+export interface CallStatsConnection {
+  directions: ('send' | 'receive')[]
+  rttMs: number | null
+  candidateType: string | null
+  protocol: string | null
+  relayProtocol: string | null
+  availableSendKbps: number | null
+}
+
 export interface CallChatMessage {
   /**
    * Die vom Browser erzeugte Kennung der Nachricht (`clientMessageId`), nicht die der

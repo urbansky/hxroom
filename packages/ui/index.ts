@@ -21,4 +21,5 @@ export type {
   CallDevice,
   CallPanelDef,
   CallPeer,
+  CallStats,
 } from './components/call/types';

@@ -45,7 +45,7 @@ import {
 } from './state'
 import type { CallDeviceKind } from './types'
 import type { CallParticipant, DeviceIssue, RoomStatus } from './types'
-import { collectVideoQuality, formatVideoQuality, type VideoQuality } from './stats'
+import { collectCallQuality, formatVideoQuality, type CallQuality } from './stats'
 import { SCREEN_SHARE_PUBLISH, screenShareCaptureOptions } from './quality'
 import { applyBlur, backgroundBlur, backgroundBlurSupported, blurLoading, storeBlurPreference } from './blur'
 
@@ -1315,19 +1315,20 @@ function trackUnpublishedListener(publication: RemoteTrackPublication, participa
 // ---------------------------------------------------------------------------
 
 /**
- * Was die Videospuren gerade wirklich übertragen – Auflösung, Bildrate, Bitrate, Codec.
+ * Was die Videospuren gerade wirklich übertragen – Auflösung, Bildrate, Bitrate, Verlust,
+ * Codec – und über welchen Weg die Verbindung läuft.
  *
  * Für die Abnahme eines Sendeprofils und für den Fall, dass jemand fragt, woran ein weiches
- * Bild liegt. Zweimal hintereinander aufrufen: Die Bitrate ist eine Differenz und steht erst
- * beim zweiten Aufruf.
+ * Bild liegt. Zweimal hintereinander aufrufen: Bitrate und Verlust sind Differenzen und
+ * stehen erst beim zweiten Aufruf.
  */
-export function videoQuality(): Promise<VideoQuality[]> {
-  return collectVideoQuality(room)
+export function callQuality(): Promise<CallQuality> {
+  return collectCallQuality(room)
 }
 
-/** Dasselbe als eine Zeile je Spur, zum Hineinschauen in der Konsole. */
+/** Die Videospuren als eine Zeile je Spur, zum Hineinschauen in der Konsole. */
 export async function logVideoQuality(): Promise<void> {
-  log.info('Videoqualität\n' + formatVideoQuality(await collectVideoQuality(room)))
+  log.info('Videoqualität\n' + formatVideoQuality((await collectCallQuality(room)).video))
 }
 
 // ---------------------------------------------------------------------------

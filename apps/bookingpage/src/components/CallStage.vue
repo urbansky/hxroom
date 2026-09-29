@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { firstName, type CallAccessResponse } from '@hxroom/shared'
 import {
   audioStreamFor,
+  callQuality,
   configureLivekit,
   joinCall,
   leaveCall,
@@ -71,6 +72,10 @@ const {
   setBackgroundBlur,
   backgroundBlurSupported,
 } = useCallRoom()
+
+// Debug-Modus: `?debug=1` an der Adresse bietet im Menü die Verbindungsdetails an. Gilt nur
+// für diesen Aufruf – nach einem Neuladen ohne den Parameter ist er wieder aus.
+const loadStats = useRoute().query.debug === '1' ? callQuality : null
 
 // Beitreten, sobald der Coach eingelassen hat – das ist der Moment, in dem die Antwort
 // erstmals ein Token trägt. Der Warmlauf ist da längst gelaufen (WaitingRoom.vue), die
@@ -316,6 +321,7 @@ async function leave() {
     :can-share="shareSupported"
     :can-blur="blurSupported"
     :share-disabled-reason="shareDisabledReason"
+    :load-stats="loadStats"
     end-label="Gespräch verlassen"
     @update:mic-on="toggleMicrophone()"
     @update:cam-on="toggleCamera()"

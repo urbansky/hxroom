@@ -2,8 +2,9 @@
 // Vue-APIs explizit, U-Komponenten beim Resolver – siehe Kommentar in CallVideoArea.
 import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import CallControls from './CallControls.vue'
+import CallStatsModal from './CallStatsModal.vue'
 import CallVideoArea from './CallVideoArea.vue'
-import type { CallConnection, CallDevice, CallPanelDef, CallPeer } from './types'
+import type { CallConnection, CallDevice, CallPanelDef, CallPeer, CallStats } from './types'
 
 // Das Gerüst der Call-Oberfläche: Bühne, Steuerleiste und die Mechanik dazwischen.
 //
@@ -44,8 +45,15 @@ const props = defineProps<{
   canShare?: boolean
   /** Weichzeichnen anbieten – nur, wo der Browser es kann (siehe CallControls). */
   canBlur?: boolean
+  /**
+   * Debug-Modus: Liest die Messwerte für die Verbindungsdetails. Gesetzt nur mit `?debug=1` –
+   * fehlt die Funktion, gibt es den Menüpunkt nicht.
+   */
+  loadStats?: (() => Promise<CallStats>) | null
   endLabel: string
 }>()
+
+const statsOpen = ref(false)
 
 const micOn = defineModel<boolean>('micOn', { required: true })
 const camOn = defineModel<boolean>('camOn', { required: true })
@@ -284,11 +292,15 @@ function resizeByKey(event: KeyboardEvent) {
           :can-share="canShare"
           :share-disabled-reason="shareDisabledReason"
           :can-blur="canBlur"
+          :debug="!!loadStats"
           :end-label="endLabel"
           @end="$emit('end')"
+          @stats="statsOpen = true"
         />
       </div>
     </div>
+
+    <CallStatsModal v-if="loadStats" v-model:open="statsOpen" :load="loadStats" />
 
     <!-- Der Titel nennt den offenen Bereich; die Reiter dafür sitzen in der Steuerleiste. -->
     <USlideover
