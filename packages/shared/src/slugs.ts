@@ -27,7 +27,9 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
   // Absehbar für HxRoom selbst (Studio-Subdomain: technisches-konzept.md §16 Punkt 01)
   'hxroom', 'studio', 'blog', 'help', 'hilfe', 'support', 'docs', 'status', 'auth',
   'login', 'account', 'dashboard', 'billing', 'pay', 'checkout', 'shop', 'api-docs',
-  'dev', 'staging', 'test', 'demo', 'beta', 'preview', 'internal', 'intern', 'backoffice',
+  // `demo` fehlt bewusst: demo.hxroom.de ist die Buchungsseite des Betreibers für
+  // Produktvorführungen – ein gewöhnliches Coach-Konto, nur mit diesem Slug.
+  'dev', 'staging', 'test', 'beta', 'preview', 'internal', 'intern', 'backoffice',
   'call', 'meet', 'video', 'kontakt', 'contact', 'impressum', 'datenschutz', 'legal',
 ]);
 

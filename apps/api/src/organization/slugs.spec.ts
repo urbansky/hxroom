@@ -24,6 +24,11 @@ describe('isReservedSlug', () => {
     }
   });
 
+  // demo.hxroom.de ist die Vorführ-Buchungsseite des Betreibers, ein normales Coach-Konto.
+  it('lässt demo frei', () => {
+    expect(isReservedSlug('demo')).toBe(false);
+  });
+
   it('lässt gewöhnliche Coach-Namen durch', () => {
     expect(isReservedSlug('anna')).toBe(false);
     expect(isReservedSlug('anna-bergmann')).toBe(false);
