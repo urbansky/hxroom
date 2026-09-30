@@ -100,7 +100,7 @@ Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Gen
 ### Phase 5 – Nachbereitung & CRM
 **Zeitraum:** Woche 17–19 · **Aufwand:** 30 Stunden
 
-*Notizen · Session-Protokoll · Klientenliste · Buchungsseite · E2E-Verschlüsselung*
+*Notizen · Session-Protokoll · Klientenliste · Buchungsseite · Beta-Start*
 
 Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenliste mit Sitzungshistorie, einfache Suchfunktion. Nach dieser Phase ist der MVP bereit für echte Beta-Coaches.
 
@@ -108,6 +108,37 @@ Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenli
 - **Session-Abschluss-Protokoll** ist die Abschlusskarte für den Coach wie im Prototyp (`poc/videocall-v2.html`, Screen 4 „Sitzung abgeschlossen“): als gehalten markiert, Notizen verknüpft, Dauer, Datum und Speicherstand der Notizen. Heute zeigt der Coach-Call nach dem Ende nur „Sitzung beendet – als gehalten vermerkt“.
 - **Danke-Seite des Klienten** bleibt wie sie ist, also ohne Weiterleitung und ohne Einstellungen. Die konfigurierbare Fassung ist auf später verschoben.
 - **Nice-to-have, nicht in Phase 5:** die KI-Sitzungszusammenfassung, die Zusammenfassungsmail an den Klienten und die Willkommensnachricht im Warteraum.
+
+**Neu aufgenommen am 30.09.2026: eigene Seite pro Termin (`/bookings/[id]`).** Das Termin-Slideover wird für Chatverlauf und später das Transkript zu eng. Es bleibt deshalb als Kurzansicht, und alles Ausführliche bekommt eine eigene Seite.
+- **Slideover:**
+  - Termin, Klient, Status und die Aktionen (Call starten, absagen, Klient zuordnen, nicht erschienen)
+  - die Notizen, weiterhin direkt bearbeitbar
+  - Chat (und später Transkript) nur als Zusammenfassungszeile, z. B. „14 Nachrichten · 2 Dateien“, mit Sprung auf die Seite
+  - ein Knopf „Als Seite öffnen“
+- **Terminseite:**
+  - Kopf mit Datum, Klient, Angebot, Status und denselben Aktionen
+  - links die Notizen in großem Editor
+  - rechts Reiter für „Chat & Dateien“, „Transkript“ (ab Phase 6) und „Details“ (Nachricht des Klienten, Absage, No-Show)
+  - auf dem Handy untereinander
+
+Die Seite ist die Grundlage für Abschlusskarte und Notizen-Chronik und wird deshalb vor diesen beiden gebaut. Die Abschlusskarte verlinkt mit „Zur Sitzung“ auf sie, jeder Eintrag der Chronik ebenso.
+
+**Neu aufgenommen am 30.09.2026: breitere Klientenseite (`/clients/[id]`).** Heute ist sie eine schmale Spalte mit Kontakt, interner Notiz, Terminliste und einer Platzhalter-Kachel. Künftig nutzt sie die Breite:
+- **Kopf** (volle Breite): Name, Kontakt, „Klient seit“, dazu eine Zeile Kennzahlen (gehaltene Sitzungen, letzte und nächste Sitzung, No-Shows). Aktionen wie bisher, Seltenes in einem Drei-Punkte-Menü.
+- **Linke Spalte mit Reitern:**
+  - **Termine:** die Terminliste wie heute, ohne Notizauszüge
+  - **Notizen:** alle Sitzungsnotizen hintereinander im Volltext, jeweils mit Sprung zur Terminseite. Das ist die Notizen-Chronik (Funktionsliste 4.02).
+  - **Dateien:** alle geteilten Dateien über alle Sitzungen
+  - **Transkripte:** ab Phase 6
+- **Rechte Spalte**, bleibt beim Scrollen stehen:
+  - nächster Termin mit Einstieg in den Call
+  - **Coaching-Ziele & Themen** als Freitext (Funktionsliste 3.05, ersetzt die Platzhalter-Kachel)
+  - die interne Notiz
+- **Auf dem Handy:** alles untereinander, Ziele und interne Notiz als eigener Reiter „Profil“.
+
+Notizen-Chronik und Coaching-Ziele sind damit Teil dieser Seite. Ein klickbarer Entwurf folgt vor dem Bau.
+
+**Festgelegt am 30.09.2026: Der Menüpunkt „Notizen“ entfällt**, samt Platzhalterseite (`apps/coach/app/pages/notes.vue`). Notizen gehören immer zu einer Sitzung und einem Klienten und werden dort gesucht: auf der Klientenseite (Reiter „Notizen“) und auf der Terminseite. Eine Liste über alle Klienten hinweg ist nicht geplant.
 
 **Neu aufgenommen am 29.09.2026: die Buchungsseite vollständig umsetzen.** Die öffentliche Buchungsseite (`[slug].hxroom.de`) zeigt bei jedem Coach noch dieselben Beispielinhalte:
 - Titel, Themen und Kennzahlen („340+ Sitzungen", „8 Jahre", „4.9 Bewertung")
@@ -125,20 +156,56 @@ Ziel: Jeder Inhalt der Seite kommt aus den Einstellungen des Coachs. Was er nich
 
 Voraussetzung ist der Datenschutz-Link von der Buchungsseite.
 
-**Neu aufgenommen am 29.09.2026: Ende-zu-Ende-Verschlüsselung im Call.** Bild, Ton und Bildschirmfreigabe werden im Browser verschlüsselt. Der LiveKit-Server leitet sie nur weiter und kann sie nicht lesen. `livekit-client` bringt das mit (E2EE-Worker, Insertable Streams bzw. `RTCRtpScriptTransform`). Mehrere Fragen sind vor dem Bau zu klären, vor allem die Schlüsselverteilung und das Verhältnis zur Aufnahme in Phase 6. Sie stehen in `technisches-konzept.md` §16 (Punkt 08).
+Die Ende-zu-Ende-Verschlüsselung im Call war hier am 29.09.2026 aufgenommen und ist am 30.09.2026 nach Phase 6 verschoben worden (siehe dort).
 
-**Technologien:** Notes-Modul · CRM-Queries · Dashboard · Buchungsseite · LiveKit E2EE · **Beta-ready** ✓
+**Neu aufgenommen am 30.09.2026: Beta für Marketing und erstes Feedback.** Nach Phase 5 beginnt das Marketing. Interessierte Coaches buchen beim Betreiber eine Produktvorführung, danach probieren sie HxRoom selbst als Coach aus und geben Feedback. Beta-Tester dürfen dabei **mit echten Klienten arbeiten**. Die Registrierung bleibt offen.
+
+*Vorführung buchen:*
+- **Vorführ-Buchungsseite des Betreibers** unter `demo.hxroom.de`: ein gewöhnliches Coach-Konto mit dem Angebot „Produktvorführung“. Interessenten erleben so Buchungsseite, Bestätigungsmail, Warteraum und Call aus Sicht eines Klienten. `demo` ist deshalb nicht mehr auf der Slug-Sperrliste.
+- **Erinnerungsmails** 24 h und 1 h vor dem Termin an den Klienten (Funktionsliste 2.05). Bisher gibt es keine.
+- **Knopf „Vorführung buchen“ auf der Landingpage**, verlinkt auf die Vorführ-Buchungsseite. Heute bietet sie nur die Early-Access-Anmeldung an.
+
+*Selbst als Coach ausprobieren:*
+- **Probe-Sitzung mit sich selbst:** Ein Knopf legt einen Testklienten an (den Coach selbst) und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Testtermine zählen nicht in Kennzahlen und Klientenliste.
+- **Onboarding-Checkliste** auf die Beta ausrichten: Profil, Angebot, Verfügbarkeit, Probe-Sitzung, Buchungslink teilen.
+- **„Kommt bald“-Seiten ausblenden:** Menüpunkte, die nur Ankündigungs-Kacheln zeigen (Rechnungen, Umsatz, Abrechnung, Benachrichtigungen, Datenschutz, Warteraum), verschwinden für die Beta, statt anzukündigen.
+
+*Feedback einholen:*
+- **Feedback-Knopf in der Coach-App:** ein kurzes Formular, gespeichert und per Mail an den Betreiber, mit der Seite, auf der der Coach gerade war.
+- **Aktivität der Beta-Coaches im Betreiber-Backoffice:** letzter Login, Angebote, Buchungen, gehaltene Sitzungen.
+
+*Voraussetzungen, weil Beta-Tester mit echten Klienten arbeiten:*
+- **Impressum und Datenschutzerklärung des Coachs:** HxRoom stellt eine Vorlage für die Datenschutzerklärung bereit (`legal.md` §4.3). Der Coach hinterlegt beides in den Einstellungen, die Buchungsseite verlinkt es.
+- **AGB zwischen HxRoom und Coach sowie der AVV** werden bei der Registrierung abgeschlossen (`legal.md` §5.1 und §6). Die Texte liefert der Betreiber.
+- **Fehlerüberwachung:** Fehler in API und Oberflächen erreichen den Betreiber, statt unbemerkt zu bleiben. Heute gibt es keine.
+- **Funktionierendes Backup** nach `technisches-konzept.md` §13, aus Phase 9 vorgezogen. Heute ist davon nichts umgesetzt, die Datenbank liegt allenfalls im Server-Backup von Hetzner. Dazu gehören:
+  - täglicher `pg_dump` in einen eigenen Bucket, Aufbewahrung nach GFS-Schema
+  - tägliche Off-Site-Kopie der Dateien in einen zweiten Bucket (§16 Punkt 03)
+  - Alarm per Mail, wenn ein Lauf scheitert
+  - eine einmal durchgespielte Wiederherstellung. Ein Backup gilt erst als funktionierend, wenn es sich zurückspielen lässt.
+
+**Technologien:** Notes-Modul · CRM-Queries · Dashboard · Buchungsseite · Erinnerungsmails · Feedback · **Beta-ready** ✓
 
 **Claude Code Hauptaufgaben:**
 - Notes-Modul mit Auto-Save während des Calls
 - Client-Modul mit Sitzungshistorie und Klientenprofil
 - Dashboard-Queries mit Drizzle (Aggregate, Joins)
 - Vue-Tabellen-Komponenten für CRM-Ansichten
+- Terminseite `/bookings/[id]` (Notizen, Chat & Dateien, Details) und Termin-Slideover als Kurzansicht mit Sprung dorthin
+- Klientenseite zweispaltig: Reiter Termine, Notizen, Dateien; rechts nächster Termin, Coaching-Ziele (Freitext) und interne Notiz
+- Menüpunkt „Notizen“ und seine Platzhalterseite entfernen
 - Öffentlichen Coach-Endpunkt um die gepflegten Profilfelder erweitern, fehlende Felder (z. B. Schwerpunkte) in Schema und Einstellungen ergänzen
 - Beispielinhalte der Buchungsseite durch echte Daten ersetzen, leere Felder ausblenden
 - Impressum und Datenschutz des Coachs auf der Buchungsseite verlinken
 - Datenschutz-Kasten im Warteraum, abgeleitet aus dem tatsächlichen Zustand
-- Ende-zu-Ende-Verschlüsselung für Bild, Ton und Freigabe über `livekit-client` E2EE, Worker von der eigenen Origin
+- Erinnerungsmails 24 h / 1 h vor dem Termin
+- Vorführ-Buchungsseite `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage
+- Probe-Sitzung mit sich selbst (Testklient, QR-Code), Onboarding-Checkliste anpassen
+- „Kommt bald“-Menüpunkte für die Beta ausblenden
+- Feedback-Knopf in der Coach-App, Aktivität der Coaches im Betreiber-Backoffice
+- Impressum und Datenschutzerklärung des Coachs in den Einstellungen, AGB und AVV bei der Registrierung
+- Fehlerüberwachung für API und Oberflächen
+- Backup: täglicher `pg_dump` mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm bei Fehlschlag, Wiederherstellung einmal durchspielen
 
 ---
 
@@ -149,6 +216,8 @@ Voraussetzung ist der Datenschutz-Link von der Buchungsseite.
 
 LiveKit Egress-Konfiguration (Aufnahme → S3), BullMQ-Job für asynchrone Transkription, faster-whisper HTTP-Wrapper auf Hetzner, Transkript-Speicherung in der DB, Transkript-Ansicht im Backoffice, automatisches Löschen der Audiodatei nach erfolgreicher Transkription.
 
+**Aus Phase 5 verschoben am 30.09.2026: Ende-zu-Ende-Verschlüsselung im Call.** Bild, Ton und Bildschirmfreigabe werden im Browser verschlüsselt. Der LiveKit-Server leitet sie nur weiter und kann sie nicht lesen. `livekit-client` bringt das mit (E2EE-Worker, Insertable Streams bzw. `RTCRtpScriptTransform`). Sie gehört hierher, weil sie mit der Aufnahme zusammen entschieden werden muss: LiveKit Egress kann verschlüsselte Räume nicht aufnehmen. Die offenen Fragen stehen in `technisches-konzept.md` §16 (Punkt 08).
+
 **Technologien:** LiveKit Egress · faster-whisper · BullMQ Job · S3 Lifecycle · Whisper small
 
 **Claude Code Hauptaufgaben:**
@@ -156,6 +225,7 @@ LiveKit Egress-Konfiguration (Aufnahme → S3), BullMQ-Job für asynchrone Trans
 - BullMQ-Job: Audio-Download → Whisper → Transkript-Speicherung → Audio-Delete
 - faster-whisper HTTP-Wrapper Dockerfile und API
 - Transkript-UI-Komponenten im Coach-Backoffice
+- Ende-zu-Ende-Verschlüsselung für Bild, Ton und Freigabe über `livekit-client` E2EE, Worker von der eigenen Origin, abgestimmt mit der Aufnahme
 
 ---
 
@@ -200,7 +270,7 @@ PDF-Rechnungsgenerierung (nach jeder Sitzung → S3), Umsatzübersicht für Coac
 
 *Tests · DSGVO · Backup · Monitoring · Produktion*
 
-End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cascade-Delete), Backup-Cron-Jobs (pg_dump → S3), Monitoring-Setup, Performance-Optimierung kritischer DB-Queries, Fehlerbehandlung und Edge Cases schließen, Produktions-Deployment auf Hetzner finalisieren.
+End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cascade-Delete), Backup-Cron-Jobs (pg_dump → S3, seit 30.09.2026 in Phase 5 vorgezogen – hier nur noch der monatliche Restore-Test), Monitoring-Setup, Performance-Optimierung kritischer DB-Queries, Fehlerbehandlung und Edge Cases schließen, Produktions-Deployment auf Hetzner finalisieren.
 
 **Technologien:** pg_dump Backup · DSGVO Delete · Monitoring · Hetzner Prod · **Vollständiges Produkt** ✓
 

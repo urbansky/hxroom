@@ -687,7 +687,7 @@ body::before {
           <div class="phase-num">5</div>
           <div class="phase-info">
             <div class="phase-name">Nachbereitung & CRM</div>
-            <div class="phase-sub">Notizen · Session-Protokoll · Klientenliste · Buchungsseite · E2E-Verschlüsselung</div>
+            <div class="phase-sub">Notizen · Session-Protokoll · Klientenliste · Buchungsseite · Beta-Start</div>
           </div>
           <div class="phase-meta">
             <div class="phase-weeks">Woche 17–19</div>
@@ -705,7 +705,10 @@ body::before {
             <p class="phase-desc">Notizeingabe während und nach dem Call, Session-Abschluss-Protokoll, Klientenliste mit Sitzungshistorie, einfache Suchfunktion. Nach dieser Phase ist der MVP bereit für echte Beta-Coaches.</p>
             <p class="phase-desc"><strong>Neu aufgenommen (29.09.2026): Buchungsseite vollständig umsetzen.</strong> Die öffentliche Buchungsseite zeigt bei jedem Coach noch dieselben Beispielinhalte – Titel, Themen, Kennzahlen, Hero-Text, „Über mich" samt Zitat und Qualifikationen, „Verifiziert", „Erstgespräch kostenlos" –, und Datenschutz, Impressum und AGB führen ins Leere. Künftig kommt jeder Inhalt aus den Einstellungen des Coachs; was er nicht pflegt, wird ausgeblendet.</p>
             <p class="phase-desc"><strong>Festgelegt am 29.09.2026:</strong> Das Session-Abschluss-Protokoll ist die Abschlusskarte für den Coach wie im Prototyp – als gehalten markiert, Notizen verknüpft, Dauer, Datum, Speicherstand der Notizen. Die Danke-Seite des Klienten bleibt wie sie ist. KI-Sitzungszusammenfassung, Zusammenfassungsmail an den Klienten und Willkommensnachricht im Warteraum sind Nice-to-have.</p>
-            <p class="phase-desc"><strong>Neu aufgenommen (29.09.2026):</strong> ein <strong>Datenschutz-Kasten im Warteraum</strong> (Aufzeichnung, Übertragung, Speicherung, KI, Verschlüsselung, Link zur Datenschutzerklärung des Coachs – genaue Aussagen folgen, nur belegbare Tatsachen, abgeleitet aus dem echten Zustand) und die <strong>Ende-zu-Ende-Verschlüsselung im Call</strong> über <code>livekit-client</code> E2EE. Schlüsselverteilung und das Verhältnis zur Aufnahme in Phase 6 sind vor dem Bau zu klären (<code>technisches-konzept.md</code> §16 Punkt 08).</p>
+            <p class="phase-desc"><strong>Neu aufgenommen (30.09.2026): eigene Seite pro Termin</strong> (<code>/bookings/[id]</code>). Das Slideover bleibt Kurzansicht mit Termin, Aktionen und bearbeitbaren Notizen; Chat und später das Transkript stehen dort nur als Zeile mit Sprung auf die Seite. Die Seite zeigt links die Notizen groß, rechts Reiter für Chat &amp; Dateien, Transkript (ab Phase 6) und Details. Sie kommt vor Abschlusskarte und Notizen-Chronik, die beide auf sie verlinken.</p>
+            <p class="phase-desc"><strong>Neu aufgenommen (30.09.2026): breitere Klientenseite.</strong> Kopf mit Kennzahlen (Sitzungen, letzte/nächste, No-Shows); links Reiter für Termine, Notizen (die Notizen-Chronik im Volltext), Dateien und ab Phase 6 Transkripte; rechts nächster Termin, Coaching-Ziele &amp; Themen als Freitext und die interne Notiz. Ein klickbarer Entwurf folgt vor dem Bau. Der Menüpunkt „Notizen“ entfällt samt Platzhalterseite – Notizen werden beim Klienten und beim Termin gesucht, eine Liste über alle Klienten ist nicht geplant.</p>
+            <p class="phase-desc"><strong>Neu aufgenommen (29.09.2026):</strong> ein <strong>Datenschutz-Kasten im Warteraum</strong> (Aufzeichnung, Übertragung, Speicherung, KI, Verschlüsselung, Link zur Datenschutzerklärung des Coachs – genaue Aussagen folgen, nur belegbare Tatsachen, abgeleitet aus dem echten Zustand). Die Ende-zu-Ende-Verschlüsselung ist am 30.09.2026 nach Phase 6 verschoben.</p>
+            <p class="phase-desc"><strong>Neu aufgenommen (30.09.2026): Beta für Marketing und erstes Feedback.</strong> Interessierte Coaches buchen eine Produktvorführung auf <code>demo.hxroom.de</code> (ein gewöhnliches Coach-Konto des Betreibers), probieren HxRoom danach selbst aus und geben Feedback. Beta-Tester dürfen mit echten Klienten arbeiten, die Registrierung bleibt offen. Dafür: Erinnerungsmails 24 h / 1 h vor dem Termin, Knopf „Vorführung buchen“ auf der Landingpage, Probe-Sitzung mit sich selbst (Testklient, QR-Code), Onboarding-Checkliste für die Beta, „Kommt bald“-Menüpunkte ausblenden, Feedback-Knopf in der Coach-App und die Aktivität der Beta-Coaches im Betreiber-Backoffice. Weil echte Klienten dabei sind außerdem: Impressum und Datenschutzerklärung des Coachs (mit Vorlage), AGB und AVV bei der Registrierung, Fehlerüberwachung und ein funktionierendes Backup (täglicher <code>pg_dump</code> mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm bei Fehlschlag, einmal durchgespielte Wiederherstellung – aus Phase 9 vorgezogen).</p>
             <div class="phase-tags">
               <span class="tag tag-sage">Beta-ready</span>
               <span class="tag tag-muted">Notes-Modul</span>
@@ -720,10 +723,17 @@ body::before {
                 <div class="claude-item">Client-Modul mit Sitzungshistorie und Klientenprofil</div>
                 <div class="claude-item">Dashboard-Queries mit Drizzle (Aggregate, Joins)</div>
                 <div class="claude-item">Vue-Tabellen-Komponenten für CRM-Ansichten</div>
+                <div class="claude-item">Terminseite /bookings/[id] mit Notizen, Chat &amp; Dateien und Details; Slideover als Kurzansicht</div>
+                <div class="claude-item">Klientenseite zweispaltig: Reiter Termine, Notizen, Dateien; rechts nächster Termin, Coaching-Ziele und interne Notiz</div>
                 <div class="claude-item">Öffentlichen Coach-Endpunkt um die gepflegten Profilfelder erweitern, fehlende Felder in Schema und Einstellungen ergänzen</div>
                 <div class="claude-item">Beispielinhalte der Buchungsseite durch echte Daten ersetzen, Impressum und Datenschutz des Coachs verlinken</div>
                 <div class="claude-item">Datenschutz-Kasten im Warteraum, abgeleitet aus dem tatsächlichen Zustand</div>
-                <div class="claude-item">Ende-zu-Ende-Verschlüsselung für Bild, Ton und Freigabe, Worker von der eigenen Origin</div>
+                <div class="claude-item">Erinnerungsmails 24 h / 1 h vor dem Termin</div>
+                <div class="claude-item">Vorführ-Buchungsseite demo.hxroom.de, Knopf „Vorführung buchen“ auf der Landingpage</div>
+                <div class="claude-item">Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Menüpunkte ausblenden</div>
+                <div class="claude-item">Feedback-Knopf in der Coach-App, Aktivität der Coaches im Betreiber-Backoffice</div>
+                <div class="claude-item">Impressum und Datenschutz des Coachs, AGB und AVV bei der Registrierung, Fehlerüberwachung</div>
+                <div class="claude-item">Backup: pg_dump mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm, Wiederherstellung durchspielen</div>
               </div>
             </div>
           </div>
@@ -736,7 +746,7 @@ body::before {
           <div class="phase-num">6</div>
           <div class="phase-info">
             <div class="phase-name">Whisper-Transkription</div>
-            <div class="phase-sub">LiveKit Egress · faster-whisper · BullMQ · Transkript-UI</div>
+            <div class="phase-sub">LiveKit Egress · faster-whisper · BullMQ · Transkript-UI · E2E-Verschlüsselung</div>
           </div>
           <div class="phase-meta">
             <div class="phase-weeks">Woche 20–22</div>
@@ -751,6 +761,7 @@ body::before {
         <div class="phase-body">
           <div class="phase-body-inner">
             <p class="phase-desc">LiveKit Egress-Konfiguration (Aufnahme → S3), BullMQ-Job für asynchrone Transkription, faster-whisper HTTP-Wrapper auf Hetzner, Transkript-Speicherung in der DB, Transkript-Ansicht im Backoffice, automatisches Löschen der Audiodatei nach erfolgreicher Transkription.</p>
+            <p class="phase-desc"><strong>Aus Phase 5 verschoben (30.09.2026): Ende-zu-Ende-Verschlüsselung im Call</strong> über <code>livekit-client</code> E2EE. Sie wird mit der Aufnahme zusammen entschieden, weil LiveKit Egress verschlüsselte Räume nicht aufnehmen kann (<code>technisches-konzept.md</code> §16 Punkt 08).</p>
             <div class="phase-tags">
               <span class="tag tag-muted">LiveKit Egress</span>
               <span class="tag tag-muted">faster-whisper</span>
@@ -765,6 +776,7 @@ body::before {
                 <div class="claude-item">BullMQ-Job: Audio-Download → Whisper → Transkript-Speicherung → Audio-Delete</div>
                 <div class="claude-item">faster-whisper HTTP-Wrapper Dockerfile und API</div>
                 <div class="claude-item">Transkript-UI-Komponenten im Coach-Backoffice</div>
+                <div class="claude-item">Ende-zu-Ende-Verschlüsselung für Bild, Ton und Freigabe, abgestimmt mit der Aufnahme</div>
               </div>
             </div>
           </div>
@@ -876,7 +888,7 @@ body::before {
         </div>
         <div class="phase-body">
           <div class="phase-body-inner">
-            <p class="phase-desc">End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cascade-Delete), Backup-Cron-Jobs (pg_dump → S3), Monitoring-Setup, Performance-Optimierung kritischer DB-Queries, Fehlerbehandlung und Edge Cases schließen, Produktions-Deployment auf Hetzner finalisieren.</p>
+            <p class="phase-desc">End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cascade-Delete), Backup-Cron-Jobs (pg_dump → S3, seit 30.09.2026 in Phase 5 vorgezogen – hier nur noch der monatliche Restore-Test), Monitoring-Setup, Performance-Optimierung kritischer DB-Queries, Fehlerbehandlung und Edge Cases schließen, Produktions-Deployment auf Hetzner finalisieren.</p>
             <div class="phase-tags">
               <span class="tag tag-gold">Vollständiges Produkt</span>
               <span class="tag tag-muted">pg_dump Backup</span>

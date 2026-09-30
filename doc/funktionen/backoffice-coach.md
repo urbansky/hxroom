@@ -44,7 +44,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | 02 | **Klientenprofil** | Kontaktdaten, Notiz-Historie, alle vergangenen Sitzungen auf einen Blick, persönliche Anmerkungen des Coaches. | MVP |
 | 03 | **Klient manuell anlegen** | Coach kann Klienten direkt erfassen ohne vorherige Online-Buchung – für Bestandskunden aus anderen Systemen. | MVP |
 | 04 | **Buchung manuell einem Klienten zuordnen** | Coach kann in der Terminübersicht jede Buchung – ob automatisch per E-Mail gematcht oder nicht – jederzeit einem bestehenden Klienten zuordnen/umhängen, per Suche im Klientenstamm. Korrigiert falsches automatisches Matching (z.B. Klient bucht mit neuer E-Mail-Adresse) und verknüpft manuell angelegte Termine direkt mit einem bestehenden Klienten. Der Coach hat immer das letzte Wort über die Zuordnung. | MVP |
-| 05 | **Coaching-Ziele & Themen** | Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe – sichtbar nur für den Coach. | MVP |
+| 05 | **Coaching-Ziele & Themen** | Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe – sichtbar nur für den Coach. *Festgelegt am 30.09.2026: zum Start ein Freitext in der rechten Spalte der Klientenseite, keine einzelnen Ziele mit Status.* | MVP |
 | 06 | **Klienten-Suche & Filter** | Volltext-Suche, filterbar nach Status (aktiv, inaktiv), Datum letzter Sitzung. | Später |
 | 07 | **Klient archivieren / deaktivieren** | Beendete Coaching-Beziehungen archivieren, Daten bleiben erhalten, Klient taucht nicht mehr aktiv auf. | Später |
 
