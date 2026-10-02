@@ -1,0 +1,4 @@
+# Zeiten in Europe/Berlin (TZ im Dockerfile). Die Dateien laufen nach der Datenbank, damit
+# sich beide Läufe nicht um die Leitung zum Backup-Bucket streiten.
+0 3 * * * /usr/local/bin/backup-db.sh
+30 3 * * * /usr/local/bin/sync-files.sh

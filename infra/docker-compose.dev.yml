@@ -98,9 +98,51 @@ services:
       /bin/sh -c "
       mc alias set hxroom http://rustfs:9000 hxroom_dev hxroom_dev_secret &&
       mc mb --ignore-existing hxroom/hxroom-files &&
-      mc anonymous set none hxroom/hxroom-files
+      mc anonymous set none hxroom/hxroom-files &&
+      mc mb --ignore-existing hxroom/hxroom-backup &&
+      mc anonymous set none hxroom/hxroom-backup
       "
     restart: "no"
+
+  # Backup – lokal nur zum Testen (Profil `backup`), gegen RustFS: Quelle hxroom-files, Ziel
+  # hxroom-backup als Ersatz für den Backup-Bucket in Nürnberg. Schlüssel nur für diesen Test:
+  #   mkdir -p /tmp/hxroom-backup-dev && age-keygen -o /tmp/hxroom-backup-dev/backup.key
+  #   export BACKUP_AGE_RECIPIENTS=$(age-keygen -y /tmp/hxroom-backup-dev/backup.key)
+  #   docker compose -f infra/docker-compose.dev.yml --profile backup run --rm backup backup-db.sh
+  #   … sync-files.sh, restore-db.sh latest hxroom_restore
+  # Ohne BREVO_API_KEY und Heartbeat-URLs wird beides nur geloggt.
+  # RustFS muss schon laufen. Bewusst keine Abhängigkeit darauf: `compose run` stieße sonst jedes
+  # Mal rustfs-perms neu an, dessen chown -R mit den temporären Dateien des laufenden RustFS
+  # um die Wette läuft und dann scheitert.
+  backup:
+    build: ./backup
+    profiles: ["backup"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: hxroom
+      POSTGRES_USER: hxroom
+      POSTGRES_PASSWORD: hxroom
+      S3_ENDPOINT: http://rustfs:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: hxroom_dev
+      S3_SECRET_KEY: hxroom_dev_secret
+      S3_FORCE_PATH_STYLE: "true"
+      S3_BUCKET: hxroom-files
+      BACKUP_S3_ENDPOINT: http://rustfs:9000
+      BACKUP_S3_REGION: us-east-1
+      BACKUP_S3_ACCESS_KEY: hxroom_dev
+      BACKUP_S3_SECRET_KEY: hxroom_dev_secret
+      BACKUP_S3_FORCE_PATH_STYLE: "true"
+      BACKUP_S3_BUCKET: hxroom-backup
+      BACKUP_AGE_RECIPIENTS: ${BACKUP_AGE_RECIPIENTS:-}
+      BACKUP_AGE_IDENTITY: /keys/backup.key
+      BACKUP_LABEL: lokal
+    volumes:
+      - /tmp/hxroom-backup-dev:/keys:ro
 
   # ClamAV – lokal bewusst **nicht** Teil des normalen Starts (Profil `clamav`): Der Scanner
   # braucht gut 1 GB Speicher, und ohne CLAMAV_HOST in apps/api/.env prüft die API ohnehin

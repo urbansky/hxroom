@@ -33,6 +33,12 @@ step "Stoppe laufenden Stack"
 step "Hole aktuelle Images"
 "${compose[@]}" pull
 
+# Caddy und Backup werden hier gebaut, nicht in der CI. `pull` erneuert sie nicht, und
+# `up -d --build` würde auch alle Apps aus dem Quelltext neu bauen (sie haben ebenfalls einen
+# build-Abschnitt) statt die Images aus der CI zu nehmen – deshalb gezielt nur diese beiden.
+step "Baue lokale Images (caddy, backup)"
+"${compose[@]}" build caddy backup
+
 step "Starte Stack neu"
 "${compose[@]}" up -d
 
