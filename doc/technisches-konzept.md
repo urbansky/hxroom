@@ -1008,34 +1008,96 @@ export const organizationBilling = pgTable('organization_billing', {
 
 ## 13. Backup-Konzept
 
-*Noch nicht umgesetzt, die Datenbank liegt bisher nur im Server-Backup von Hetzner. Die Umsetzung ist Schritt 1 in `phase5-umsetzungsplan.md`. Das Backup gilt erst als funktionierend, wenn eine Wiederherstellung einmal durchgespielt ist.*
+*Stand: umgesetzt in `infra/backup/` und lokal abgenommen. Auf dem Server aktiv nach der Inbetriebnahme aus `phase5-umsetzungsplan.md` (Schritt 1a). Das Backup gilt erst als funktionierend, wenn eine Wiederherstellung auf einer fremden Maschine einmal durchgespielt ist.*
 
-**PostgreSQL**
-- Täglicher `pg_dump` via Cron-Job im `api`-Container, komprimiert als `.sql.gz`
-- Upload ins S3-Bucket `hxroom-backups` (privat, Hetzner DE)
-- Aufbewahrung: 7 Tages-Backups, 4 Wochen-Backups, 3 Monats-Backups (GFS-Schema)
-- Restore-Test monatlich in Staging-Umgebung
+**Aufbau.** Ein eigener Container `backup` im Compose-Stack (`infra/backup/`, gebaut auf dem Server wie Caddy), mit `pg_dump` 17, `rclone`, `age` und `supercronic`. Ziel ist ein Backup-Bucket in einem **eigenen Hetzner-Projekt in Nürnberg** (`nbg1`): anderer Standort als der Datei-Bucket in Falkenstein, aber in Deutschland. Die Zugänge stehen in `infra/.env` (`BACKUP_S3_*`). Das Server-Backup von Hetzner läuft zusätzlich, ersetzt den `pg_dump` aber nicht: gleiches Projekt, gleicher Standort, und eine Momentaufnahme des laufenden Servers ist für die Datenbank nicht garantiert konsistent.
 
-**Object Storage**
-- **Produktion (Hetzner Object Storage)**: Hetzner verantwortet Redundanz und Replikation innerhalb des Standorts. Die zusätzliche Off-Site-Kopie – täglich ein `rclone sync` in einen zweiten Bucket, separates Hetzner-Projekt – ist noch **nicht eingerichtet** und steht als offener Punkt in §16. Das Server-Backup deckt den Speicher seit dem Wechsel nicht mehr mit ab; ein Löschen im Bucket ist ohne diese Kopie endgültig.
-- **Entwicklung (RustFS)**: Daten liegen im Docker Volume `rustfs_dev_data` und sind Testdaten – kein Backup nötig, der Seed legt sie neu an.
+**Datenbank (03:00, `backup-db.sh`).**
+- `pg_dump` im Custom-Format (komprimiert), mit `age` verschlüsselt, als Strom in den Bucket: `db/daily/hxroom_<JJJJ-MM-TT>_<hhmmss>.dump.age`
+- sonntags eine Kopie nach `db/weekly/`, am Monatsersten nach `db/monthly/`
+- Aufbewahrung 7 Tage, 4 Wochen, 3 Monate. Maßgeblich ist das Datum im Objektnamen.
+- Ein Dump unter 4 KB gilt als Fehler, ein abgebrochener Upload wird wieder gelöscht. Im Bucket liegt also nie ein halbes Objekt, das wie ein gültiges Backup aussieht.
 
-```bash
-# Beispiel rclone Cron (täglich 03:00) – gilt für beide Varianten
-0 3 * * * rclone sync remote-primary:hxroom-uploads remote-backup:hxroom-uploads-backup
+**Dateien (03:30, `sync-files.sh`).**
+- `rclone sync` des Datei-Buckets nach `files/current/`
+- Was im Original gelöscht wurde, wandert nach `files/deleted/<JJJJ-MM-TT>/` und wird nach 30 Tagen entfernt. Ein versehentliches Löschen lässt sich so rückgängig machen, gewollt Gelöschtes ist nach 30 Tagen auch aus der Kopie weg.
+- Entwicklung (RustFS): Testdaten, kein Backup. Zum Testen der Skripte gibt es den Dienst hinter dem Profil `backup` in `infra/docker-compose.dev.yml`.
+
+**Object Lock.** Der Backup-Bucket ist mit Object Lock angelegt, Standard-Sperrfrist 30 Tage im Modus **Compliance**, dazu eine Lifecycle-Regel, die alte Versionen nach 30 Tagen entfernt. Der Produktivserver braucht Schreibzugriff auf den Bucket. Ein Angreifer mit diesem Zugang könnte ohne Sperre alle Backups löschen. Mit Sperre ist jede geschriebene Version 30 Tage unlöschbar, auch mit gültigem Schlüssel. Governance genügt dafür nicht: Es lässt sich mit dem Schlüssel umgehen, und Hetzner-Schlüssel gelten für das ganze Projekt.
+- Die Skripte bleiben davon unberührt. Ein Löschen beim Aufräumen setzt nur eine Löschmarke, die Version selbst verschwindet erst nach Ablauf der Sperre durch die Lifecycle-Regel.
+- Die Sperrfrist lässt sich im Modus Compliance weder verkürzen noch aufheben. Neue Einstellungen erst an einem Testbucket mit `1d` ausprobieren.
+
+**Verschlüsselung.** Auf dem Server liegen nur öffentliche `age`-Schlüssel (`BACKUP_AGE_RECIPIENTS`, mehrere möglich, jeder entschlüsselt allein). Der geheime Schlüssel liegt im Passwortmanager und wird nur zum Wiederherstellen bereitgestellt. Die Dateien in `files/` sind nicht zusätzlich verschlüsselt, sie liegen so wie im Original-Bucket.
+
+**Meldungen.** Nach jedem erfolgreichen Lauf geht ein Ping an den Checkly-Heartbeat des Jobs (`CHECKLY_HEARTBEAT_DB`, `CHECKLY_HEARTBEAT_FILES`). Bleibt er aus, alarmiert Checkly nach Ablauf der Karenzzeit. Eingestellt sind 1 Tag Periode und 2 Stunden Karenz: Checkly misst ab dem letzten Ping, die Läufe starten nach Ortszeit, und bei der Zeitumstellung liegen 25 Stunden zwischen zwei Läufen. Scheitert ein Lauf, schickt das Skript sofort eine Mail über Brevo an `BACKUP_ALERT_EMAIL`, mit dem gescheiterten Schritt und den letzten Zeilen der Fehlerausgabe. Die Logs enthalten keine Personendaten, nur Schritte, Objektnamen und Größen.
+
+**Aufbewahrung und Löschung.** Gelöschte Daten bleiben bis zu etwa vier Monate in den Datenbank-Backups (3 Monate Aufbewahrung plus 30 Tage bis zum Entfernen der alten Version) und bis zu 60 Tage in der Kopie der Dateien (30 Tage Papierkorb plus 30 Tage). Das gehört in die Datenschutzerklärung bzw. in deren Vorlage für Coaches (`legal.md` §4.3).
+
+**Bucket-Aufbau:**
+
+```
+hxroom-backup/
+  db/daily/    hxroom_2026-10-02_030000.dump.age   (7 Tage)
+  db/weekly/   …                                    (4 Wochen)
+  db/monthly/  …                                    (3 Monate)
+  files/current/<organizationId>/…                  Spiegel des Datei-Buckets
+  files/deleted/2026-10-02/<organizationId>/…       an diesem Tag Gelöschtes (30 Tage)
 ```
 
-**Redis**
-- Nur Job-Queue und Session-Daten – kein persistentes Backup nötig
-- Sessions sind kurzlebig, Jobs werden bei Neustart neu verarbeitet (BullMQ `removeOnComplete`)
+**Von Hand auslösen** (auf dem Server in `infra/`):
+
+```bash
+docker compose run --rm backup backup-db.sh
+docker compose run --rm backup sync-files.sh
+```
+
+### Wiederherstellen
+
+`restore-db.sh <stand> <ziel-datenbank>` lädt einen Stand (`latest` oder z. B. `daily/hxroom_2026-10-02_030000.dump.age`), entschlüsselt ihn und spielt ihn ein. Die Zieldatenbank wird angelegt. Existiert sie schon, muss sie leer sein, sonst bricht das Skript ab. Am Ende gibt es die Zeilenzahl je Tabelle aus. Den geheimen Schlüssel erwartet es als Datei unter `BACKUP_AGE_IDENTITY`.
+
+**Wiederherstellungstest auf der Betriebs-Instanz** (mit dem Repo-Stand dort, Schlüssel nur für die Dauer des Tests):
+
+```bash
+docker build -t hxroom-backup infra/backup
+docker network create restore-test
+docker run -d --name restore-pg --network restore-test \
+  -e POSTGRES_USER=hxroom -e POSTGRES_PASSWORD=test postgres:17-alpine
+until docker exec restore-pg pg_isready -U hxroom; do sleep 1; done
+
+docker run --rm --network restore-test \
+  -e POSTGRES_HOST=restore-pg -e POSTGRES_USER=hxroom -e POSTGRES_PASSWORD=test \
+  -e BACKUP_S3_ENDPOINT=https://nbg1.your-objectstorage.com -e BACKUP_S3_REGION=nbg1 \
+  -e BACKUP_S3_ACCESS_KEY=… -e BACKUP_S3_SECRET_KEY=… -e BACKUP_S3_BUCKET=hxroom-backup \
+  -e BACKUP_AGE_IDENTITY=/keys/backup.key -v /root/restore-key:/keys:ro \
+  hxroom-backup restore-db.sh latest hxroom_restore
+
+# Aufräumen: Datenbank und Schlüssel weg
+docker rm -f restore-pg && docker network rm restore-test && shred -u /root/restore-key/backup.key
+```
+
+Die ausgegebenen Zeilenzahlen werden mit der Produktion verglichen (`select count(*)` je Tabelle). Kleine Abweichungen bei Tabellen, die sich seit dem Dump geändert haben (Sitzungen, Termine), sind normal.
+
+**Ernstfall Produktion:**
+1. Auf dem Server `api` und `backup` stoppen.
+2. Die Datenbank leeren: `docker compose exec postgres dropdb -U hxroom hxroom`, dann `createdb -U hxroom hxroom`. Auf einem neu aufgesetzten Server legt Postgres sie bereits leer an.
+3. Den geheimen Schlüssel als Datei bereitstellen (z. B. `/root/restore-key/backup.key`) und einspielen. Der Dienst `backup` kennt Bucket und Datenbank schon:
+   `docker compose run --rm -e BACKUP_AGE_IDENTITY=/keys/backup.key -v /root/restore-key:/keys:ro backup restore-db.sh latest hxroom`
+4. `api` starten. Die Migrationen laufen beim Start.
+5. Schlüsseldatei löschen.
+
+**Dateien zurückholen** (auf dem Server in `infra/`). Alles aus der Kopie in den Datei-Bucket:
+
+```bash
+docker compose run --rm backup bash -c \
+  'source /usr/local/bin/lib.sh; setup_rclone; rclone copy "$DST/files/current" "$SRC"'
+```
+
+Eine einzelne gelöschte Datei: `rclone copyto "$DST/files/deleted/<datum>/<pfad>" "$SRC/<pfad>"` auf dieselbe Weise.
 
 **Docker Volumes**
-- Whisper-Modelle sind reproduzierbar (Download beim ersten Start) – kein Backup nötig
-- `pgdata`-Volume wird durch pg_dump abgedeckt
-
-**Monitoring**
-- Backup-Job schreibt Ergebnis (Erfolg / Dateigröße) in eine `backup_logs`-Tabelle
-- Fehlgeschlagene Backups lösen Alarm per E-Mail aus (Brevo)
+- Whisper-Modelle sind reproduzierbar (Download beim ersten Start), kein Backup nötig.
+- Das Volume `postgres_data` ist durch den `pg_dump` abgedeckt.
+- Redis (geplant für die Job-Queue) hält nur Jobs und kurzlebige Daten, kein Backup nötig.
 
 ---
 

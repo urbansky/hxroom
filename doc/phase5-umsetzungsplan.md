@@ -58,54 +58,69 @@ Backup-Bucket (eigenes Hetzner-Projekt, Nürnberg) ◀── Wiederherstellungst
 
 ### 1a · Backup
 
-**Ausgangslage:** Nichts aus §13 ist umgesetzt. Die Datenbank (`postgres:17-alpine`, Volume `postgres_data`) liegt nur im Server-Backup von Hetzner. Das bleibt als zusätzliche Schicht, ersetzt den `pg_dump` aber nicht: gleiches Projekt, gleicher Standort, und eine Momentaufnahme des laufenden Servers ist für die Datenbank nicht garantiert konsistent. Die Dateien liegen in Hetzner Object Storage in Falkenstein (`fsn1`, Bucket `hxroom-files`) ohne jede Kopie.
+**Stand:** umgesetzt und lokal abgenommen. Offen ist die Inbetriebnahme auf dem Server. Aufbau, Ablauf und Wiederherstellung beschreibt `technisches-konzept.md` §13.
 
-**Aufbau:** Ein eigener Container `backup` im Compose-Stack mit `postgresql17-client` (passend zum Server), `rclone`, `age`, `curl` und `supercronic`. Die API bleibt unberührt, und ein Deploy unterbricht keinen laufenden Backup-Lauf.
-
-**Ablage:**
+**Umgesetzt:**
 
 ```
 infra/backup/
-  Dockerfile
+  Dockerfile        # alpine 3.22: pg_dump 17, rclone, age, supercronic
   crontab           # 03:00 Datenbank, 03:30 Dateien
-  lib.sh            # Logging, Checkly-Ping, Fehler-Mail über Brevo
-  backup-db.sh      # pg_dump → gzip → age → db/daily, Kopien weekly/monthly, Aufräumen
+  lib.sh            # Logging, rclone-Zugänge, Checkly-Ping, Fehler-Mail über Brevo
+  backup-db.sh      # pg_dump (Custom-Format) → age → db/daily, Kopien weekly/monthly, Aufräumen
   sync-files.sh     # rclone sync mit Papierkorb, Papierkorb nach 30 Tagen leeren
-  restore-db.sh     # Stand laden, entschlüsseln, in eine frische Datenbank einspielen
+  restore-db.sh     # Stand laden, entschlüsseln, in eine leere Datenbank einspielen
 ```
 
-- `infra/docker-compose.yml`: Dienst `backup` mit `build: ./backup`, auf dem Server gebaut wie Caddy
-- `infra/docker-compose.dev.yml`: derselbe Dienst hinter dem Profil `backup`, gegen RustFS mit einem zweiten Bucket
-- `infra/.env.example`: Zugang zum Backup-Bucket, öffentlicher `age`-Schlüssel, Checkly-Ping-URLs, Empfänger der Fehler-Mail
-- `infra/redeploy.sh`: `up -d --build`, weil `pull` gebaute Dienste nicht erneuert. Ohne das kämen geänderte Skripte (und Änderungen an Caddy) nie auf dem Server an.
+- `infra/docker-compose.yml`: Dienst `backup` mit `build: ./backup`
+- `infra/docker-compose.dev.yml`: derselbe Dienst hinter dem Profil `backup`, gegen RustFS mit dem zweiten Bucket `hxroom-backup`
+- `infra/.env.example`: `BACKUP_S3_*`, `BACKUP_AGE_RECIPIENTS`, `CHECKLY_HEARTBEAT_DB`/`_FILES`, `BACKUP_ALERT_EMAIL`
+- `infra/redeploy.sh` baut `caddy` und `backup` gezielt neu. `pull` erneuert gebaute Dienste nicht, und `up -d --build` würde auch alle Apps aus dem Quelltext bauen, weil sie ebenfalls einen build-Abschnitt haben.
 
-**Ablauf jede Nacht:**
+**Lokal abgenommen** (RustFS, Testskript mit 15 Prüfungen, dazu Einzelprüfungen):
+- Datenbank-Backup und Datei-Spiegelung laufen durch (656 Dateien).
+- Eine im Original gelöschte Datei liegt danach im Papierkorb und nicht mehr in `files/current`.
+- Das Aufräumen entfernt genau die Stände jenseits der Frist, in allen drei Ordnern und im Papierkorb.
+- Wochen- und Monatskopie entstehen sonntags bzw. am Monatsersten (geprüft mit vorgestellter Uhr).
+- Die Wiederherstellung in eine frische Datenbank ergibt in allen 17 Tabellen dieselbe Zeilenzahl.
+- Das Einspielen in eine nicht leere Datenbank wird verweigert.
+- Ein falsches Datenbank-Passwort bricht mit Status 1 ab und hinterlässt kein halbes Objekt.
+- `supercronic` startet und liest die Crontab.
+- `shellcheck` ist sauber.
 
-1. **03:00 Datenbank:** `pg_dump`, komprimiert und mit `age` verschlüsselt, geht in den Backup-Bucket unter `db/daily/`. Sonntags kommt eine Kopie nach `db/weekly/`, am Monatsersten nach `db/monthly/`. Aufbewahrt werden 7 Tage, 4 Wochen und 3 Monate.
-2. **03:30 Dateien:** Spiegelung in denselben Backup-Bucket unter `files/current/`. Was im Original gelöscht wurde, liegt 30 Tage unter `files/deleted/<Datum>/` (`rclone sync --backup-dir`) und wird dann entfernt. Ein versehentliches Löschen lässt sich so rückgängig machen, gewollt Gelöschtes ist nach 30 Tagen weg.
-3. **Meldung:** Nach Erfolg ein Ping an den Checkly-Heartbeat des Laufs, bei Fehler sofort eine Mail über die Brevo-API.
+Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf geprüft, weil keine Zugänge gesetzt waren. Beides wird auf dem Server abgenommen.
 
-**Wiederherstellung:** `restore-db.sh` lädt einen Stand, entschlüsselt ihn und spielt ihn in eine frische Datenbank ein. Der Test läuft auf der Betriebs-Instanz, nicht auf dem Produktivserver. Er beweist damit zugleich, dass sich das Backup auf einer fremden Maschine zurückspielen lässt. Den geheimen `age`-Schlüssel gibt es dort nur für die Dauer des Tests. Erst nach diesem Test gilt das Backup als funktionierend.
+**Inbetriebnahme auf dem Server:**
 
-**Vorbereitung durch den Betreiber** (Schritt-für-Schritt-Liste bei der Umsetzung):
+*Betreiber:*
+1. Eigenes Hetzner-Projekt mit privatem **Bucket `hxroom-backup` in Nürnberg (`nbg1`), mit Object Lock angelegt** ✅
+2. In diesem Projekt **S3-Credentials** erzeugen.
+3. **Sperrfrist und Lifecycle setzen** ✅ (MinIO-Client, Alias `hb` auf das Backup-Projekt):
+   ```bash
+   mc retention set --default COMPLIANCE 30d hb/hxroom-backup
+   mc ilm rule add --noncurrent-expire-days 30 hb/hxroom-backup
+   # prüfen
+   mc retention info --default hb/hxroom-backup
+   mc ilm rule ls hb/hxroom-backup
+   ```
+   Die Frist im Modus Compliance lässt sich nicht verkürzen. Vor dem Absenden auf `30d` (Tage, nicht Jahre) achten.
+4. **`age`-Schlüssel** ✅ auf dem eigenen Rechner erzeugen: `age-keygen -o hxroom-backup.key`. Den Inhalt der Datei (geheimer Schlüssel) in den Passwortmanager legen und die Datei löschen. Die Zeile „public key: age1…“ ist der öffentliche Teil.
+5. **Checkly:** ✅ zwei Heartbeat-Monitore („HxRoom DB-Backup“, „HxRoom Datei-Backup“), Periode 1 Tag, Karenzzeit 2 h, Alarm per Mail. Die beiden Ping-URLs notieren.
+6. ✅ In `infra/.env` auf dem Server eintragen: `BACKUP_S3_ACCESS_KEY`, `BACKUP_S3_SECRET_KEY`, `BACKUP_AGE_RECIPIENTS` (öffentlicher Teil), `CHECKLY_HEARTBEAT_DB`, `CHECKLY_HEARTBEAT_FILES`, `BACKUP_ALERT_EMAIL`. Die übrigen `BACKUP_*`-Werte aus `.env.example` passen für `nbg1`.
+7. ✅ In Beszel einen Plattenalarm setzen (etwa 80 %), falls noch nicht vorhanden.
 
-- eigenes Hetzner-Projekt mit Bucket in **Nürnberg (`nbg1`)**: anderer Standort als das Original, aber in Deutschland. Optional Versionierung bzw. Object Lock einschalten, falls angeboten. Dann kann ein kompromittierter Produktivserver die Backups nicht löschen.
-- `age`-Schlüsselpaar. Der geheime Teil kommt in den Passwortmanager, nicht auf den Server.
-- Checkly-Konto mit je einem Heartbeat-Monitor für Datenbank und Dateien (täglich, Karenzzeit etwa 1 h)
-- Plattenalarm in Beszel, falls noch nicht eingestellt
+*Auf dem Server (in `infra/`):*
+1. ✅ Repo aktualisieren, damit `infra/backup/` dort liegt (`redeploy.sh` holt nur Images, keinen Quelltext).
+2. ✅ `./redeploy.sh`. Das baut und startet den Dienst `backup`.
+3. ✅ Einmal von Hand auslösen: `docker compose run --rm backup backup-db.sh` und `… sync-files.sh`. Erwartet: „Fertig“, „Heartbeat gesendet“, beide Checkly-Monitore grün.
+4. ✅ Fehlerfall einmal auslösen: `docker compose run --rm -e POSTGRES_PASSWORD=falsch backup backup-db.sh`. Erwartet: die Fehler-Mail kommt an.
 
-**Abnahme:**
+*Abnahme:*
+- Am nächsten Morgen liegen die Stände der Nacht im Bucket, die Checkly-Monitore sind grün.
+- **Object Lock:** Ein von Hand gelöschter Stand (`rclone deletefile`) verschwindet aus der Ansicht, die Version bleibt erhalten (`mc ls --versions hb/hxroom-backup/db/daily/`). Die Skripte melden trotz Sperre „Fertig“. Das ist lokal nicht prüfbar, weil RustFS Object Lock nicht sicher beherrscht.
+- ✅ **Wiederherstellungstest** nach §13 mit dem echten Stand, auf einer fremden Maschine: Die Zeilenzahlen stimmen mit der Produktion überein. Erst danach gilt das Backup als funktionierend.
 
-- **Lokal** (RustFS, zweiter Bucket): Datenbank-Backup und Aufräumen laufen durch, die Dateien werden gespiegelt. Eine gelöschte Datei landet im Papierkorb. Ein absichtlich falsches Passwort löst die Fehler-Mail aus.
-- **Wiederherstellung:** Ein Stand wird in eine frische Datenbank eingespielt und ergibt dieselbe Zeilenzahl pro Tabelle, erst lokal, dann auf der Betriebs-Instanz mit einem echten Produktionsstand.
-- **Server:** Der erste nächtliche Lauf erscheint im Bucket, die Checkly-Heartbeats sind grün.
-
-**Doku danach:**
-
-- §13 beschreibt den Ist-Zustand.
-- §16 Punkt 03 wird erledigt.
-- Ein Betriebskapitel „Wiederherstellen“ kommt dazu.
-- Für die Vorlage der Datenschutzerklärung wird festgehalten, dass gelöschte Daten bis zu drei Monate in den Backups bleiben.
+*Danach:* §16 Punkt 03 als erledigt markieren, den Stand-Vermerk in §13 auf „aktiv“ setzen.
 
 ### 1b · Fehlerüberwachung mit GlitchTip
 
