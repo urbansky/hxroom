@@ -2,7 +2,7 @@
 
 *Begonnen 2026-08-20, **abgeschlossen 2026-09-29**. Fachliche und architektonische Grundlage ist `technisches-konzept.md` §6, §7 und §8; die Feature-Abgrenzung steht in `project.md` §5a.*
 
-> **Status: Phase 4 ist abgeschlossen.** Stufe A (A1–A6) und Stufe B (B1–B7) sind samt aller Nachträge umgesetzt, gepusht und im Betrieb auf Hetzner bestätigt. Was aus dem Videocall bewusst offen bleibt, steht in `technisches-konzept.md` §16: die Off-Site-Kopie des Objektspeichers (Punkt 03, seit 30.09.2026 mit dem Backup in Phase 5) sowie als Nice-to-have die Verschlüsselung der Sitzungsnotizen (02), die Lautsprecherwahl (06) und die Nachprüfung ungeprüft angenommener Dateien (07). VP9 für die Freigabe ist geprüft und verworfen (Nachtrag unten). Was ausdrücklich in spätere Phasen gehört, steht unter *Bewusst nicht Teil dieses Plans*.
+> **Status: Phase 4 ist abgeschlossen.** Stufe A (A1–A6) und Stufe B (B1–B7) sind samt aller Nachträge umgesetzt, gepusht und im Betrieb auf Hetzner bestätigt. Was aus dem Videocall bewusst offen bleibt, steht in `technisches-konzept.md` §16: die Off-Site-Kopie des Objektspeichers (Punkt 03, mit dem Backup in Phase 5) sowie als Nice-to-have die Verschlüsselung der Sitzungsnotizen (02), die Lautsprecherwahl (06) und die Nachprüfung ungeprüft angenommener Dateien (07). VP9 für die Freigabe ist geprüft und verworfen (Nachtrag unten). Was ausdrücklich in spätere Phasen gehört, steht unter *Bewusst nicht Teil dieses Plans*.
 
 ## Ausgangslage
 
@@ -554,7 +554,7 @@ Auf dem Server noch zu tun:
 - Nach dem Ende ist das Eingabefeld gesperrt, mit Begründung.
 - **Im Termin-Slideover** sieht der Coach den Verlauf einer Sitzung samt Dateien zum Nachlesen, wenn es einen gibt. Geladen wird er erst beim Öffnen, wie die Notiz.
 
-**Bewusst nicht dabei:** die Zusammenfassungsmail samt Filterregel (seit 29.09.2026 Nice-to-have), Bearbeiten oder Löschen einzelner Nachrichten und Dateien, ein Virenscan, eine Verschlüsselung auf Anwendungsebene (gleicher offener Punkt wie bei den Notizen, `technisches-konzept.md` §16) und eine Einwilligung zur Speicherung.
+**Bewusst nicht dabei:** die Zusammenfassungsmail samt Filterregel (Nice-to-have), Bearbeiten oder Löschen einzelner Nachrichten und Dateien, ein Virenscan, eine Verschlüsselung auf Anwendungsebene (gleicher offener Punkt wie bei den Notizen, `technisches-konzept.md` §16) und eine Einwilligung zur Speicherung.
 
 Die offenen Punkte kommen in §16:
 
@@ -709,7 +709,7 @@ Abnahme mit dem lokalen ClamAV-Container, per API in drei Betriebsarten: **aus**
 
 ## Bewusst nicht Teil dieses Plans
 
-Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14). Die konfigurierbare Danke-Seite ist seit 29.09.2026 auf später verschoben. Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl, Bildschirmfreigabe, der Technik-Check (als Geräte-Einrichtung im Warteraum) und die Notiz-Seitenleiste standen ursprünglich ebenfalls hier; alle vier sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
+Einwilligungs-Banner, Aufzeichnung und Egress, Whisper-Transkription, Warteraum-Branding, konfigurierbare Danke-Seite, Erinnerungsmails. Das gehört in die Phasen 5 und 6 (§14), die konfigurierbare Danke-Seite auf später. Die Seite `settings/waiting-room.vue` bleibt bis dahin Feature-Vorschau. Geräteauswahl, Bildschirmfreigabe, der Technik-Check (als Geräte-Einrichtung im Warteraum) und die Notiz-Seitenleiste standen ursprünglich ebenfalls hier; alle vier sind auf Wunsch vorgezogen und in den Nachträgen zu B5 beschrieben.
 
 ---
 

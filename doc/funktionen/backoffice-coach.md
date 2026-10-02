@@ -44,7 +44,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | 02 | **Klientenprofil** | Kontaktdaten, Notiz-Historie, alle vergangenen Sitzungen auf einen Blick, persönliche Anmerkungen des Coaches. | MVP |
 | 03 | **Klient manuell anlegen** | Coach kann Klienten direkt erfassen ohne vorherige Online-Buchung – für Bestandskunden aus anderen Systemen. | MVP |
 | 04 | **Buchung manuell einem Klienten zuordnen** | Coach kann in der Terminübersicht jede Buchung – ob automatisch per E-Mail gematcht oder nicht – jederzeit einem bestehenden Klienten zuordnen/umhängen, per Suche im Klientenstamm. Korrigiert falsches automatisches Matching (z.B. Klient bucht mit neuer E-Mail-Adresse) und verknüpft manuell angelegte Termine direkt mit einem bestehenden Klienten. Der Coach hat immer das letzte Wort über die Zuordnung. | MVP |
-| 05 | **Coaching-Ziele & Themen** | Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe – sichtbar nur für den Coach. *Festgelegt am 30.09.2026: zum Start ein Freitext in der rechten Spalte der Klientenseite, keine einzelnen Ziele mit Status.* | MVP |
+| 05 | **Coaching-Ziele & Themen** | Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe – sichtbar nur für den Coach. Zum Start ein Freitext in der rechten Spalte der Klientenseite. | MVP |
 | 06 | **Klienten-Suche & Filter** | Volltext-Suche, filterbar nach Status (aktiv, inaktiv), Datum letzter Sitzung. | Später |
 | 07 | **Klient archivieren / deaktivieren** | Beendete Coaching-Beziehungen archivieren, Daten bleiben erhalten, Klient taucht nicht mehr aktiv auf. | Später |
 
@@ -57,7 +57,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 |---|---|---|---|
 | 01 | **Sitzungsnotizen** | Freie Notizen pro Sitzung – bereits im Call schreibbar (Seitenleiste), nachträglich bearbeitbar. | MVP |
 | 02 | **Notizen-Chronik pro Klient** | Alle Sitzungsnotizen in zeitlicher Reihenfolge, direkt im Klientenprofil einsehbar. | MVP |
-| 03 | **KI-Sitzungszusammenfassung** | Nach dem Call: automatisch generierte Zusammenfassung auf Basis der Coach-Notizen. Editierbar, nicht an Klienten gesendet. *Am 29.09.2026 vom MVP zurückgestuft (Nice-to-have).* | Später |
+| 03 | **KI-Sitzungszusammenfassung** | Nach dem Call: automatisch generierte Zusammenfassung auf Basis der Coach-Notizen. Editierbar, nicht an Klienten gesendet. | Später |
 | 04 | **Aufgaben & nächste Schritte** | Strukturiertes Feld für Hausaufgaben / Aktionspunkte nach der Sitzung – bleibt im Klientenprofil sichtbar. | Später |
 | 05 | **Notizen exportieren (PDF)** | Sitzungsnotizen als sauber formatiertes PDF exportieren – für eigene Ablage oder DSGVO-Auskunftspflicht. | Später |
 
@@ -83,8 +83,8 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | # | Funktion | Detail | Prio |
 |---|---|---|---|
 | 01 | **Gebrandeter Warteraum** | Klient öffnet Link und landet in einem persönlichen Warteraum mit Foto, Name und Willkommensnachricht des Coaches. | MVP |
-| 02 | **Willkommensnachricht anpassen** | Freitext-Feld für persönliche Worte an den wartenden Klienten, z.B. „Ich bin gleich da – mach es dir bequem." *Am 29.09.2026 zurückgestuft (Nice-to-have); bis dahin zeigt der Warteraum einen festen Satz.* | Später |
-| 03 | **Danke-Seite nach Sitzung** | Klient wird nach Sitzungsende weitergeleitet – konfigurierbar: Dankestext, Link zur nächsten Buchung, externe URL. *Am 29.09.2026 zurückgestuft: Die feste Danke-Seite („Die Sitzung ist beendet“) reicht für den Start.* | Später |
+| 02 | **Willkommensnachricht anpassen** | Freitext-Feld für persönliche Worte an den wartenden Klienten, z.B. „Ich bin gleich da – mach es dir bequem." Bis dahin zeigt der Warteraum einen festen Satz. | Später |
+| 03 | **Danke-Seite nach Sitzung** | Klient wird nach Sitzungsende weitergeleitet – konfigurierbar: Dankestext, Link zur nächsten Buchung, externe URL. Bis dahin zeigt der Klient eine feste Danke-Seite („Die Sitzung ist beendet“). | Später |
 | 04 | **Technik-Check für Klienten** | Beim ersten Betreten des Warteraums: Kamera & Mikrofon automatisch prüfen, Hinweis bei Problemen. | Später |
 | 05 | **Klienten-Fragebogen (Intake)** | Optionales Formular vor der ersten Sitzung: Ziele, Erwartungen, Vorerfahrungen – Antworten im Klientenprofil gespeichert. | Später |
 
