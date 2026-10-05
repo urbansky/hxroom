@@ -25,6 +25,12 @@ ARG NUXT_PUBLIC_API_URL=https://api.hxroom.de/api/v1
 ARG NUXT_PUBLIC_AUTH_URL=https://api.hxroom.de
 ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 ENV NUXT_PUBLIC_AUTH_URL=$NUXT_PUBLIC_AUTH_URL
+# Fehlerüberwachung: DSN des GlitchTip-Projekts (öffentlich, keine Zugangsdaten) und Release
+# für die Source Maps. Ohne DSN ist sie aus. Gesetzt von der CI.
+ARG NUXT_PUBLIC_SENTRY_DSN=
+ARG NUXT_PUBLIC_SENTRY_RELEASE=
+ENV NUXT_PUBLIC_SENTRY_DSN=$NUXT_PUBLIC_SENTRY_DSN
+ENV NUXT_PUBLIC_SENTRY_RELEASE=$NUXT_PUBLIC_SENTRY_RELEASE
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 # Seit B5 hängt der Call-Screen an der Call-Mechanik. Das Paket liefert TypeScript-Quelle
@@ -33,7 +39,13 @@ COPY packages/livekit/ packages/livekit/
 COPY packages/ui/ packages/ui/
 COPY apps/coach/ apps/coach/
 RUN pnpm --filter @hxroom/shared build
-RUN pnpm --filter @hxroom/coach build
+# Das GlitchTip-Token kommt als BuildKit-Secret (CI: secrets: sentry_auth_token) und landet weder
+# in einer Image-Schicht noch in der History. Ohne Secret – lokaler Build – keine Source Maps.
+ARG SENTRY_URL=https://errors.hxcode.io
+RUN --mount=type=secret,id=sentry_auth_token,required=false \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
+    SENTRY_URL="$SENTRY_URL" \
+    pnpm --filter @hxroom/coach build
 
 # ---- Production ----
 FROM nginx:alpine

@@ -1,3 +1,5 @@
+// Muss das erste Modul bleiben, siehe instrument.ts
+import './instrument';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
@@ -46,6 +48,9 @@ async function bootstrap() {
   // API. Lokal fand Node es im gemeinsamen node_modules des Monorepos, im Docker-Image nicht
   // – die API startete dort gar nicht erst.
   app.useBodyParser('raw', { type: 'application/webhook+json', limit: '1mb' });
+  // Fehlermeldungen der Browser für den Monitoring-Tunnel: Das Sentry-SDK schickt seine
+  // Umschläge als text/plain (ohne CORS-Preflight). Kein anderer Endpunkt nimmt Text an.
+  app.useBodyParser('text', { type: ['text/plain', 'application/x-sentry-envelope'], limit: '200kb' });
   app.setGlobalPrefix('api/v1');
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port).catch((err: NodeJS.ErrnoException) => {

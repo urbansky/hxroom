@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { isReservedSlug } from './slugs.js';
 
 export { RESERVED_SLUGS, isReservedSlug, isValidSlugFormat } from './slugs.js';
+export {
+  MONITORING_EXCLUDED_INTEGRATIONS,
+  sanitizeMonitoringEvent,
+  scrubSensitiveData,
+  scrubSensitiveText,
+} from './monitoring.js';
 
 // Booking status
 // 'no_show': Der Termin war verbindlich, der Klient ist nicht erschienen (B6). Vom Coach

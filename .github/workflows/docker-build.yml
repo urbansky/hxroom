@@ -60,5 +60,15 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Fehlerüberwachung (GlitchTip): DSNs der Frontends als Repository-Variablen (öffentlich),
+          # Release = Commit. Jede App nimmt nur die ARGs, die ihr Dockerfile kennt.
+          build-args: |
+            VITE_SENTRY_DSN=${{ vars.SENTRY_DSN_BOOKINGPAGE }}
+            VITE_SENTRY_RELEASE=${{ github.sha }}
+            NUXT_PUBLIC_SENTRY_DSN=${{ vars.SENTRY_DSN_COACH }}
+            NUXT_PUBLIC_SENTRY_RELEASE=${{ github.sha }}
+          # Token zum Hochladen der Source Maps – nur im Build-Schritt, nie im Image
+          secrets: |
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,scope=${{ matrix.app }},mode=max

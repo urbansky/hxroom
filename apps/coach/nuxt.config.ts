@@ -1,7 +1,37 @@
 import { resolve } from 'node:path'
 import { mediapipeAssets } from '@hxroom/livekit/vite'
+import { sentryVitePlugin } from '@sentry/bundler-plugins/vite'
+
+// Source Maps für die Fehlerüberwachung: Nur wenn die CI ein Token mitgibt, entstehen versteckte
+// Source Maps des Client-Builds, werden nach GlitchTip hochgeladen und gelöscht, bevor Nitro den
+// Build nach .output/public kopiert – ins Image kommen sie nie. Zuordnung über Debug-IDs.
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN
 
 export default defineNuxtConfig({
+  sourcemap: { client: sentryAuthToken ? 'hidden' : false, server: false },
+
+  hooks: {
+    'vite:extendConfig'(config, { isClient }) {
+      if (!isClient || !sentryAuthToken) return
+      // Das Ausgabeverzeichnis des Client-Builds hängt vom buildDir ab (bei `nuxt generate`
+      // node_modules/.cache/nuxt/.nuxt/dist/client) – deshalb aus der Konfiguration, nicht fest.
+      const outDir = config.build?.outDir
+      if (!outDir) throw new Error('Client-Build ohne outDir – Source Maps würden ins Image gelangen')
+      const plugins = config.plugins as unknown[] | undefined
+      if (!plugins) throw new Error('Client-Build ohne Plugin-Liste – Source Maps nicht hochladbar')
+      plugins.push(sentryVitePlugin({
+        url: process.env.SENTRY_URL ?? 'https://errors.hxcode.io',
+        org: 'hxroom',
+        project: 'hxroom-coach',
+        authToken: sentryAuthToken,
+        release: { name: process.env.NUXT_PUBLIC_SENTRY_RELEASE || undefined, inject: false },
+        sourcemaps: { filesToDeleteAfterUpload: [`${outDir}/**/*.map`] },
+        // Keine Nutzungsdaten des Plugins an Sentry
+        telemetry: false,
+      }))
+    },
+  },
+
   modules: [
     '@nuxt/ui',
     // Die Dateien aus mediapipeAssets() (unten unter vite.plugins) landen im Client-Build unter
@@ -34,6 +64,10 @@ export default defineNuxtConfig({
       authUrl: process.env.NUXT_PUBLIC_AUTH_URL ?? 'http://localhost:3000',
       rootDomain: process.env.NUXT_PUBLIC_ROOT_DOMAIN ?? 'hxroom.de',
       rootDomainHttps: process.env.NUXT_PUBLIC_ROOT_DOMAIN_HTTPS !== 'false',
+      // Fehlerüberwachung (plugins/monitoring.client.ts). Ohne DSN aus.
+      sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN ?? '',
+      sentryEnvironment: process.env.NUXT_PUBLIC_SENTRY_ENVIRONMENT ?? '',
+      sentryRelease: process.env.NUXT_PUBLIC_SENTRY_RELEASE ?? '',
     },
   },
 

@@ -23,6 +23,12 @@ FROM deps AS build
 # VITE_* werden zur Build-Zeit ins SPA-Bundle eingebettet
 ARG VITE_API_URL=https://api.hxroom.de
 ENV VITE_API_URL=$VITE_API_URL
+# Fehlerüberwachung: DSN des GlitchTip-Projekts (öffentlich, keine Zugangsdaten) und Release
+# für die Source Maps. Ohne DSN ist sie aus. Gesetzt von der CI.
+ARG VITE_SENTRY_DSN=
+ARG VITE_SENTRY_RELEASE=
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ENV VITE_SENTRY_RELEASE=$VITE_SENTRY_RELEASE
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 # Seit B4 hängt die Klientenseite an der Call-Mechanik. Das Paket liefert TypeScript-
@@ -31,7 +37,13 @@ COPY packages/livekit/ packages/livekit/
 COPY packages/ui/ packages/ui/
 COPY apps/bookingpage/ apps/bookingpage/
 RUN pnpm --filter @hxroom/shared build
-RUN pnpm --filter bookingpage build
+# Das GlitchTip-Token kommt als BuildKit-Secret (CI: secrets: sentry_auth_token) und landet weder
+# in einer Image-Schicht noch in der History. Ohne Secret – lokaler Build – keine Source Maps.
+ARG SENTRY_URL=https://errors.hxcode.io
+RUN --mount=type=secret,id=sentry_auth_token,required=false \
+    SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token 2>/dev/null || true)" \
+    SENTRY_URL="$SENTRY_URL" \
+    pnpm --filter bookingpage build
 
 # ---- Production ----
 FROM nginx:alpine

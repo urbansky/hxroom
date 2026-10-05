@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DbModule } from './db/db.module';
 import { AuthModule } from './auth/auth.module';
@@ -18,9 +20,13 @@ import { ClientsModule } from './clients/clients.module';
 import { AdminModule } from './admin/admin.module';
 import { AccountModule } from './account/account.module';
 import { SessionNotesModule } from './session-notes/session-notes.module';
+import { MonitoringModule } from './monitoring/monitoring.module';
 
 @Module({
   imports: [
+    // Fehlerüberwachung (instrument.ts). Ohne SENTRY_DSN ist das SDK aus, Modul und Filter
+    // verhalten sich dann wie Nests Standard.
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     // Für periodische Aufgaben, aktuell nur den Verfall unbestätigter Buchungen
     // (BookingExpiryService). Achtung bei mehreren API-Instanzen: die Cron-Läufe
@@ -43,6 +49,12 @@ import { SessionNotesModule } from './session-notes/session-notes.module';
     AdminModule,
     AccountModule,
     SessionNotesModule,
+    MonitoringModule,
+  ],
+  providers: [
+    // Meldet unerwartete Fehler an GlitchTip und antwortet dann wie Nests Standard-Filter.
+    // HttpExceptions (bewusste 4xx) übergeht er.
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
   ],
 })
 export class AppModule {}
