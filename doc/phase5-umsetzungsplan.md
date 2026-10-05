@@ -42,7 +42,7 @@ Zwei Teile mit je eigener Abnahme und eigenem Commit: erst **1a Backup**, dann *
 | Backup-Läufe | **Checkly-Heartbeat** meldet, wenn ein Lauf ausbleibt. Fehler meldet das Skript sofort per Mail über Brevo, denn Checkly kennt nur Erfolgsmeldungen. |
 | Fehler in API und Oberflächen | **GlitchTip** auf der Betriebs-Instanz (1b) |
 
-Die **Betriebs-Instanz** ist eine eigene Hetzner-Instanz (4 GB RAM) neben dem Produktivserver. Sie überwacht HxRoom und weitere Apps von hxcode, deshalb laufen ihre Dienste unter `hxcode.io`: Beszel unter `status.hxcode.io`, GlitchTip unter `errors.hxcode.io`. Ihre Konfiguration liegt nicht im HxRoom-Repo, sondern in einem eigenen Repo (z. B. `hxcode-ops`).
+Die **Betriebs-Instanz** ist eine eigene Hetzner-Instanz (4 GB RAM) neben dem Produktivserver. Sie überwacht HxRoom und weitere Apps von hxcode, deshalb laufen ihre Dienste unter `hxcode.io`: Beszel unter `status.hxcode.io`, GlitchTip unter `errors.hxcode.io`. Ihre Konfiguration liegt im HxRoom-Repo unter `infra-status/`.
 
 ```
 Browser (Coach-App, Klientenseite)
@@ -124,33 +124,55 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 
 ### 1b · Fehlerüberwachung mit GlitchTip
 
-GlitchTip ist ein Open-Source-Nachbau von Sentry und versteht dieselben SDKs.
+**Stand:** umgesetzt und lokal abgenommen. Offen ist die Inbetriebnahme auf der Betriebs-Instanz und in Produktion. Wie die Fehlerüberwachung arbeitet, beschreibt `technisches-konzept.md` §17.
 
-**Betrieb auf der Betriebs-Instanz:**
+**Umgesetzt:**
 
-- GlitchTip (Web und Worker) mit eigener PostgreSQL-Datenbank, davor ein Caddy für TLS, unter `errors.hxcode.io`. Konfiguration im Ops-Repo, nicht im HxRoom-Repo.
-- Die Erreichbarkeitsprüfung von GlitchTip bleibt aus (`GLITCHTIP_ENABLE_UPTIME=false`), weil Beszel das abdeckt.
-- HxRoom bekommt eine eigene Organisation mit je einem Projekt für API, Coach-App und Klientenseite. Andere Apps liegen in eigenen Organisationen und sehen die HxRoom-Daten nicht.
-- Offene Registrierung und das Anlegen neuer Organisationen sind abgeschaltet, das Betreiber-Konto hat Zwei-Faktor-Anmeldung. Eine Mengenbegrenzung pro Projekt fängt massenhaft eingelieferten Müll ab. Der Schlüssel in der DSN ist kein Geheimnis, er erlaubt nur das Einliefern.
-- Alarm per Mail über Brevo-SMTP.
+- **Betriebs-Instanz** (`infra-status/`): GlitchTip 6.2 im All-in-one-Modus (ein Container für Web, Worker und Migrationen, Valkey abgeschaltet) mit eigener PostgreSQL-Datenbank, Caddy-Block `errors.hxcode.io`, Vorlage `infra-status/.env.example`. Registrierung und Anlegen weiterer Organisationen sind abgeschaltet, Ereignisse werden 90 Tage aufbewahrt. Lokal braucht GlitchTip samt Datenbank rund 255 MB RAM.
+- **Gemeinsame Bereinigung** (`packages/shared/src/monitoring.ts`): `scrubSensitiveText`, `scrubSensitiveData`, `sanitizeMonitoringEvent` und die Liste der abgeschalteten Browser-Integrationen. API, Tunnel und beide Frontends nutzen dieselbe Regel.
+- **API:**
+  - `src/instrument.ts` (als erstes Modul in `main.ts`) und `SentryGlobalFilter` in `app.module.ts`
+  - `src/monitoring/`: Tunnel `POST /api/v1/monitoring` und der Testfehler `POST /api/v1/monitoring/test-error` (nur Betreiber)
+  - Tests in `monitoring-tunnel.spec.ts`
+- **Coach-App** (`app/plugins/monitoring.client.ts`) und **Klientenseite** (`src/monitoring.ts`): `@sentry/vue` mit Tunnel. `?monitoring-test=1` löst nach dem Laden einen Testfehler aus.
+- **Source Maps:** `@sentry/bundler-plugins` in `vite.config.ts` bzw. `nuxt.config.ts`. Das Token kommt als BuildKit-Secret in den Docker-Build, die CI reicht DSN und Release (Commit) als Build-Argumente durch.
+- **Konfiguration:** `SENTRY_DSN`, `SENTRY_TUNNEL_DSNS` in `infra/docker-compose.yml` und `infra/.env.example`.
 
-**Einbindung in HxRoom:**
+**Lokal abgenommen** (GlitchTip-Container, Dev-API, beide Frontends, Chrome):
+- **Testfehler der API:** Er kommt an, Token in URL und Query als `[Filtered]`. Vom Request bleiben nur Methode, URL und User-Agent. Kein Cookie, kein weiterer Header, kein Benutzer, keine lokalen Variablen.
+- **Nicht gemeldet:** ein 401 und Warnungen beim Start.
+- **Tunnel:** Er reicht ein erlaubtes Projekt weiter, weist ein fremdes mit 403 ab, und nach 60 Meldungen pro Minute und Absender antwortet er mit 429.
+- **Testfehler beider Frontends:**
+  - Sie kommen an, mit `token=[Filtered]` und User-Agent.
+  - Der Browser spricht nur mit der eigenen Seite und der API.
+  - Schon die Meldung im Tunnel enthält den Token nicht mehr.
+- **Source Maps:**
+  - Ein Fehler aus dem gebauten Bundle erscheint als `src/monitoring.ts`, Zeile 44, mit Quelltextzeile.
+  - Im Build und im Docker-Image liegt keine `.map`-Datei, das Token steht nicht in der Image-History.
+  - Ohne Token baut alles wie bisher.
 
-- **API:** `@sentry/nestjs`, sendet direkt an `errors.hxcode.io`.
-- **Coach-App** (Nuxt-SDK) und **Klientenseite** (Vue-SDK) senden über einen **Tunnel**: Das SDK schickt seine Meldungen an einen Endpunkt der eigenen API (z. B. `POST /api/v1/monitoring`), die API reicht sie an GlitchTip weiter. Das hat drei Gründe:
-  - Werbeblocker erkennen das Sentry-Muster `/api/<id>/envelope/` nicht.
-  - Der Browser spricht weiterhin nur mit `api.hxroom.de`, die Klientenseite macht keine Drittanbieter-Requests (§17), und keine hxcode-Adresse wird sichtbar.
-  - Die API filtert ein zweites Mal Tokens heraus, bevor etwas den Server verlässt.
+**Inbetriebnahme:**
 
-  Der Endpunkt lässt nur Meldungen an die bekannten HxRoom-Projekte durch, mit eigener Mengenbegrenzung.
-- **Vor dem Senden** werden in den SDKs Tokens aus allen URLs entfernt, denn die Call-Links tragen ihren Zugangsschlüssel im Query-String. Namen und E-Mail-Adressen werden nicht übertragen, nur IDs.
-- **Source Maps** lädt die CI hoch (`.github/workflows/docker-build.yml`), damit Fehler aus dem gebauten Code lesbar sind.
-- **Umgebungsvariablen:** die DSNs je App in `infra/.env.example` bzw. den App-Konfigurationen.
+*Betriebs-Instanz:*
+1. ✅ Standort prüfen (Falkenstein oder Nürnberg) und den A-Eintrag `errors.hxcode.io` auf die Instanz setzen.
+2. ✅ Repo dort aktualisieren und `infra-status/.env` aus der Vorlage anlegen: `GLITCHTIP_SECRET_KEY`, `GLITCHTIP_DB_PASSWORD`, Brevo-SMTP als `GLITCHTIP_EMAIL_URL` (Login und SMTP-Schlüssel, nicht der API-Schlüssel), `GLITCHTIP_FROM_EMAIL` als in Brevo bestätigter Absender.
+3. ✅ In `infra-status/`: `docker compose up -d`. Caddy holt das Zertifikat für `errors.hxcode.io` selbst.
+4. ✅ Konto anlegen: `docker compose exec glitchtip ./manage.py createsuperuser`. Danach auf `errors.hxcode.io` anmelden und die Zwei-Faktor-Anmeldung einschalten.
+5. ✅ Organisation **HxRoom** mit dem Kürzel **`hxroom`** anlegen. Die erste Organisation ist auch bei abgeschaltetem Anlegen erlaubt. Weitere Organisationen für andere Apps: `ENABLE_ORGANIZATION_CREATION` kurz auf `true` setzen.
+6. ✅ Drei Projekte mit genau diesen Kürzeln: **`hxroom-api`**, **`hxroom-coach`**, **`hxroom-bookingpage`**. Das Source-Map-Plugin verwendet die Kürzel. Je Projekt eine Alarmregel „neues Problem → Mail“.
+7. ✅ Unter Profil → Auth Tokens ein Token mit `project:read`, `project:releases`, `org:read` anlegen.
 
-**Vorbereitung durch den Betreiber:**
+*GitHub (Repository → Settings → Secrets and variables → Actions):*
+- Secret `SENTRY_AUTH_TOKEN`: das Token aus Schritt 7
+- Variablen `SENTRY_DSN_COACH` und `SENTRY_DSN_BOOKINGPAGE`: die DSNs der beiden Frontend-Projekte
 
-- Standort der Betriebs-Instanz prüfen: Deutschland (Falkenstein oder Nürnberg)
-- Ops-Repo anlegen und A-Eintrag `errors.hxcode.io` auf die Betriebs-Instanz
-- Brevo-SMTP-Zugang für GlitchTip
+*Produktion (`infra/.env`):*
+- `SENTRY_DSN`: DSN von `hxroom-api`
+- `SENTRY_TUNNEL_DSNS`: DSN von `hxroom-coach` und `hxroom-bookingpage`, kommagetrennt
+- danach Push, die CI baut mit DSN und Source Maps, dann `./redeploy.sh`
 
-**Abnahme:** je ein absichtlich ausgelöster Fehler in API, Coach-App und Klientenseite. Er erscheint in GlitchTip lesbar und ohne Token in der URL, und die Alarm-Mail kommt an. Im Browser zeigt die Netzwerkansicht nur Anfragen an `api.hxroom.de`. Mit eingeschaltetem Werbeblocker (uBlock Origin) kommt der Fehler trotzdem an.
+*Abnahme in Produktion:*
+- **API:** Im Betreiber-Backoffice in der Browser-Konsole `fetch('https://admin-api.hxroom.de/api/v1/monitoring/test-error', { method: 'POST', credentials: 'include' })` ausführen. Der Fehler erscheint in `hxroom-api`, die Alarm-Mail kommt an.
+- **Coach-App:** `https://app.hxroom.de/?monitoring-test=1`.
+- **Klientenseite:** `https://demo.hxroom.de/?monitoring-test=1`.
+- **Je Frontend:** Der Fehler erscheint lesbar (Quelldatei und Zeile). In der Netzwerkansicht stehen nur Anfragen an die eigene Seite und `api.hxroom.de`. Mit eingeschaltetem uBlock Origin kommt der Fehler trotzdem an.
