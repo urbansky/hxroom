@@ -6,6 +6,9 @@ dist
 .nuxt/
 .data/
 
+# Betriebs-Instanz: Daten von Beszel liegen als Bind-Mount neben der Compose-Datei
+infra-status/beszel_data/
+
 # Environment
 .env
 .env.local

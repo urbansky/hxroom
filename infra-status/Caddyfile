@@ -1,0 +1,7 @@
+status.hxcode.io {
+    reverse_proxy beszel:8090
+}
+
+errors.hxcode.io {
+    reverse_proxy glitchtip:8000
+}

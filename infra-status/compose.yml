@@ -1,0 +1,94 @@
+# Betriebs-Instanz (status.hxcode.io, errors.hxcode.io): überwacht HxRoom und weitere Apps.
+# Beszel für den Server, GlitchTip für Fehler in den Anwendungen.
+# Siehe doc/phase5-umsetzungsplan.md (Schritt 1) und doc/technisches-konzept.md.
+#
+# Geheime Werte stehen in .env neben dieser Datei (Vorlage: .env.example).
+
+services:
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    restart: unless-stopped
+    environment:
+      APP_URL: https://status.hxcode.io
+    networks:
+      - beszel
+    volumes:
+      - ./beszel_data:/beszel_data
+
+  # GlitchTip im All-in-one-Modus: ein Container für Web, Worker und Migrationen beim Start.
+  # Valkey ist abgeschaltet (VALKEY_URL leer), Warteschlange und Cache laufen über Postgres.
+  glitchtip:
+    image: glitchtip/glitchtip:6.2
+    container_name: glitchtip
+    restart: unless-stopped
+    depends_on:
+      glitchtip-db:
+        condition: service_healthy
+    environment:
+      SERVER_ROLE: all_in_one
+      PORT: "8000"
+      DATABASE_URL: postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@glitchtip-db:5432/glitchtip
+      VALKEY_URL: ""
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
+      GLITCHTIP_DOMAIN: https://errors.hxcode.io
+      ALLOWED_HOSTS: errors.hxcode.io
+      CSRF_TRUSTED_ORIGINS: https://errors.hxcode.io
+      # Konten legt der Betreiber an (createsuperuser, Einladungen), niemand registriert sich selbst
+      ENABLE_USER_REGISTRATION: "false"
+      ENABLE_ORGANIZATION_CREATION: "false"
+      # Erreichbarkeit überwacht Beszel
+      GLITCHTIP_ENABLE_UPTIME: "false"
+      GLITCHTIP_MAX_EVENT_LIFE_DAYS: "90"
+      # Hochgeladene Dateien (Source Maps) auf dem Volume statt im Container
+      MEDIA_ROOT: /code/uploads
+      # Mail über Brevo-SMTP, z. B. smtp+tls://<login>:<smtp-schlüssel>@smtp-relay.brevo.com:587
+      EMAIL_URL: ${GLITCHTIP_EMAIL_URL}
+      DEFAULT_FROM_EMAIL: ${GLITCHTIP_FROM_EMAIL}
+    volumes:
+      - glitchtip_uploads:/code/uploads
+    networks:
+      - glitchtip
+
+  glitchtip-db:
+    image: postgres:17-alpine
+    container_name: glitchtip-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD}
+    volumes:
+      - glitchtip_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip"]
+      interval: 5s
+      retries: 10
+    networks:
+      - glitchtip
+
+  caddy:
+    image: caddy:latest
+    container_name: beszel-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    # Caddy erreicht beide Dienste, Beszel und GlitchTip sehen einander nicht
+    networks:
+      - beszel
+      - glitchtip
+
+networks:
+  beszel:
+  glitchtip:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  glitchtip_db:
+  glitchtip_uploads:
