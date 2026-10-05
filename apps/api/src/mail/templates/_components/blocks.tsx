@@ -63,10 +63,19 @@ export function Quote({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Haupt-Button. Der Abstand darunter sitzt als Padding auf einer Tabellenzelle: Der Button
+ * selbst ist ein Link, und Outlook ignoriert Margins auf Links und Padding auf Tabellen –
+ * ohne die Zelle klebte ein folgender Absatz direkt am Button.
+ */
 export function PrimaryButton({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Button href={href} style={styles.button}>
-      {children}
-    </Button>
+    <Row>
+      <Column style={{ padding: '0 0 24px' }}>
+        <Button href={href} style={styles.button}>
+          {children}
+        </Button>
+      </Column>
+    </Row>
   );
 }

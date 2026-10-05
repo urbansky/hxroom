@@ -214,6 +214,11 @@ export const bookings = pgTable('bookings', {
   cancelledAt:        timestamp('cancelled_at'),
   cancelledBy:        text('cancelled_by').$type<CancelledBy>(),
   cancellationReason: text('cancellation_reason'),
+  // Erinnerungsmails an den Klienten (BookingReminderService): gesetzt, sobald ein Lauf die
+  // Erinnerung beansprucht hat. Zwei feste Zeitpunkte brauchen keine eigene Job-Tabelle; die
+  // Spalte ist zugleich die Sperre gegen doppelten Versand.
+  reminder24hSentAt:  timestamp('reminder_24h_sent_at'),
+  reminder1hSentAt:   timestamp('reminder_1h_sent_at'),
   createdAt:          timestamp('created_at').notNull().defaultNow(),
   updatedAt:          timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 }, (table) => [

@@ -9,6 +9,7 @@ import { CoachBookingsController } from './coach-bookings.controller';
 import { BookingsService } from './bookings.service';
 import { CoachBookingsService } from './coach-bookings.service';
 import { BookingExpiryService } from './booking-expiry.service';
+import { BookingReminderService } from './booking-reminder.service';
 
 // CallModule liefert den Ereigniskanal, über den eine Absage des Coachs einen wartenden
 // Klienten sofort erreicht. Die Richtung ist bewusst diese: Das Call-Modul kennt die
@@ -16,6 +17,6 @@ import { BookingExpiryService } from './booking-expiry.service';
 @Module({
   imports: [OrganizationModule, MailModule, CallModule],
   controllers: [BookingCreationController, BookingConfirmationController, BookingCancellationController, CoachBookingsController],
-  providers: [BookingsService, CoachBookingsService, BookingExpiryService],
+  providers: [BookingsService, CoachBookingsService, BookingExpiryService, BookingReminderService],
 })
 export class BookingsModule {}

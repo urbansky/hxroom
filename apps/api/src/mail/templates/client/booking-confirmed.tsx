@@ -23,10 +23,10 @@ interface BookingConfirmedEmailProps {
 
 // Geht raus, sobald der Klient den Bestätigungslink geklickt hat und die Buchung final ist.
 //
-// Diese Mail trägt den Zugang zum Warteraum. Erinnerungsmails kurz vor dem Termin gibt es
-// nicht (die reminderJobs aus doc/technisches-konzept.md sind Entwurf, keine Tabelle) –
-// damit ist sie der einzige Weg, auf dem der Klient seinen Link je erhält. Deshalb steht er
-// hier als Haupt-Button, während die Selbstabsage im Fußtext bleibt.
+// Diese Mail trägt den Zugang zum Warteraum. Die Erinnerungen 24 h und 1 h vorher
+// (booking-reminder.tsx) wiederholen ihn, entfallen aber bei kurzfristiger Buchung – dann ist
+// diese Mail der einzige Weg in den Warteraum. Deshalb steht der Link hier als Haupt-Button,
+// während die Selbstabsage im Fußtext bleibt.
 export default function BookingConfirmedEmail({ clientName, coachName, appointment, cancelUrl, callUrl, callOpensMinutesBefore }: BookingConfirmedEmailProps) {
   return (
     <MailLayout preview={`Dein Termin steht: ${appointment.offerName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`}>

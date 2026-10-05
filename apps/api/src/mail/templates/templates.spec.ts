@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { offerColor } from '@hxroom/shared';
 import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
+import { renderBookingReminderEmail } from './client/booking-reminder';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
 import { renderBookingCancelledByClientEmail } from './coach/booking-cancelled-by-client';
 import { renderEmailVerificationEmail } from './coach/email-verification';
@@ -65,8 +66,8 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).toContain('#c5d0c4');
     });
 
-    // Diese Mail ist der einzige Ort, an dem der Klient den Absage-Link bekommt – fehlt
-    // er, bleibt ihm nur die Antwortmail und der Coach muss die Absage von Hand nachziehen.
+    // Fehlt der Absage-Link, bleibt dem Klienten nur die Antwortmail, und der Coach muss die
+    // Absage von Hand nachziehen.
     it('enthält den Absage-Link', async () => {
       const html = await renderBookingConfirmedEmail(props);
 
@@ -81,8 +82,8 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).toContain('Antworte einfach auf diese E-Mail');
     });
 
-    // Erinnerungsmails vor dem Termin gibt es nicht – diese Mail ist damit der einzige Weg,
-    // auf dem der Klient den Zugang zum Warteraum je erhält.
+    // Kurzfristig Buchende bekommen keine Erinnerung – für sie ist diese Mail der einzige Weg
+    // in den Warteraum.
     it('enthält den Link zum Warteraum', async () => {
       const html = await renderBookingConfirmedEmail(props);
 
@@ -103,6 +104,45 @@ describe('Buchungs-Mail-Templates', () => {
 
       expect(html).not.toContain('/call/');
       expect(html).not.toContain('Zum Warteraum');
+    });
+  });
+
+  describe('Klient: Erinnerung', () => {
+    const props = {
+      kind: '24h' as const,
+      clientName: 'Max Mustermann',
+      coachName: 'Anna Bergmann',
+      appointment,
+      dayLabel: 'morgen',
+      startTimeLabel: '09:00',
+      opensTimeLabel: '08:00',
+      callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
+      cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
+    };
+
+    it('24h: nennt Tag, Uhrzeit, Öffnung des Raums und beide Links', async () => {
+      const html = await renderBookingReminderEmail(props);
+
+      expect(html).toContain('Morgen um 09:00 Uhr');
+      expect(html).toContain('öffnet um 08:00 Uhr');
+      expect(html).toContain('https://anna.hxroom.de/call/b-123?token=abc');
+      expect(html).toContain('Termin absagen');
+      expect(html).not.toContain('undefined');
+    });
+
+    it('1h: meldet den offenen Warteraum', async () => {
+      const html = await renderBookingReminderEmail({ ...props, kind: '1h' });
+
+      expect(html).toContain('um 09:00 Uhr beginnt dein Termin');
+      expect(html).toContain('Der Warteraum ist ab jetzt geöffnet');
+      expect(html).toContain('Zum Warteraum');
+    });
+
+    it('kommt ohne Buchungsseite ohne Links aus', async () => {
+      const html = await renderBookingReminderEmail({ ...props, callUrl: null, cancelUrl: null });
+
+      expect(html).not.toContain('Zum Warteraum');
+      expect(html).toContain('Antworte einfach auf diese E-Mail');
     });
   });
 

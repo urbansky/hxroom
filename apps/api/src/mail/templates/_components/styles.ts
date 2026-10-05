@@ -66,8 +66,15 @@ export const value: CSSProperties = {
   color: colors.text,
 };
 
+/**
+ * Textlinks (z. B. „Termin absagen“ in der Fußnote). Unterstrichen und etwas kräftiger: Die
+ * Primärfarbe allein hebt sich vom gedämpften Grün der Fußnote kaum ab.
+ */
 export const link: CSSProperties = {
   color: colors.primary,
+  fontWeight: 500,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
 };
 
 export const button: CSSProperties = {
