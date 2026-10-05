@@ -2,7 +2,7 @@
 
 *Begonnen 2026-08-20, **abgeschlossen 2026-09-29**. Fachliche und architektonische Grundlage ist `technisches-konzept.md` §6, §7 und §8; die Feature-Abgrenzung steht in `project.md` §5a.*
 
-> **Status: Phase 4 ist abgeschlossen.** Stufe A (A1–A6) und Stufe B (B1–B7) sind samt aller Nachträge umgesetzt, gepusht und im Betrieb auf Hetzner bestätigt. Was aus dem Videocall bewusst offen bleibt, steht in `technisches-konzept.md` §16: die Off-Site-Kopie des Objektspeichers (Punkt 03, mit dem Backup in Phase 5) sowie als Nice-to-have die Verschlüsselung der Sitzungsnotizen (02), die Lautsprecherwahl (06) und die Nachprüfung ungeprüft angenommener Dateien (07). VP9 für die Freigabe ist geprüft und verworfen (Nachtrag unten). Was ausdrücklich in spätere Phasen gehört, steht unter *Bewusst nicht Teil dieses Plans*.
+> **Status: Phase 4 ist abgeschlossen.** Stufe A (A1–A6) und Stufe B (B1–B7) sind samt aller Nachträge umgesetzt, gepusht und im Betrieb auf Hetzner bestätigt. Was aus dem Videocall bewusst offen bleibt, steht in `technisches-konzept.md` §16: als Nice-to-have die Verschlüsselung der Sitzungsnotizen (02), die Lautsprecherwahl (06) und die Nachprüfung ungeprüft angenommener Dateien (07). VP9 für die Freigabe ist geprüft und verworfen (Nachtrag unten). Was ausdrücklich in spätere Phasen gehört, steht unter *Bewusst nicht Teil dieses Plans*.
 
 ## Ausgangslage
 

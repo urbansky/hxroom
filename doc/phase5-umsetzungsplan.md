@@ -12,7 +12,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 
 **Etappe A – vorführbereit (Ziel ~15.10.2026)**
 
-1. Backup und Fehlerüberwachung
+1. ✅ Backup und Fehlerüberwachung
 2. Erinnerungsmails 24 h / 1 h vor dem Termin
 3. Buchungsseite vollständig, samt Impressum und Datenschutzerklärung in den Einstellungen des Coachs
 4. `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
@@ -30,7 +30,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 
 ---
 
-## Schritt 1 · Backup und Fehlerüberwachung
+## Schritt 1 · Backup und Fehlerüberwachung ✅
 
 Zwei Teile mit je eigener Abnahme und eigenem Commit: erst **1a Backup**, dann **1b Fehlerüberwachung**.
 
@@ -58,7 +58,7 @@ Backup-Bucket (eigenes Hetzner-Projekt, Nürnberg) ◀── Wiederherstellungst
 
 ### 1a · Backup
 
-**Stand:** umgesetzt und lokal abgenommen. Offen ist die Inbetriebnahme auf dem Server. Aufbau, Ablauf und Wiederherstellung beschreibt `technisches-konzept.md` §13.
+**Stand:** ✅ in Betrieb und in Produktion abgenommen. Aufbau, Ablauf und Wiederherstellung beschreibt `technisches-konzept.md` §13.
 
 **Umgesetzt:**
 
@@ -116,15 +116,15 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 4. ✅ Fehlerfall einmal auslösen: `docker compose run --rm -e POSTGRES_PASSWORD=falsch backup backup-db.sh`. Erwartet: die Fehler-Mail kommt an.
 
 *Abnahme:*
-- Am nächsten Morgen liegen die Stände der Nacht im Bucket, die Checkly-Monitore sind grün.
-- **Object Lock:** Ein von Hand gelöschter Stand (`rclone deletefile`) verschwindet aus der Ansicht, die Version bleibt erhalten (`mc ls --versions hb/hxroom-backup/db/daily/`). Die Skripte melden trotz Sperre „Fertig“. Das ist lokal nicht prüfbar, weil RustFS Object Lock nicht sicher beherrscht.
+- ✅ Am nächsten Morgen liegen die Stände der Nacht im Bucket, die Checkly-Monitore sind grün.
+- ✅ **Object Lock:** Ein von Hand gelöschter Stand (`rclone deletefile`) verschwindet aus der Ansicht, die Version bleibt erhalten (`mc ls --versions hb/hxroom-backup/db/daily/`). Die Skripte melden trotz Sperre „Fertig“. Das ist lokal nicht prüfbar, weil RustFS Object Lock nicht sicher beherrscht.
 - ✅ **Wiederherstellungstest** nach §13 mit dem echten Stand, auf einer fremden Maschine: Die Zeilenzahlen stimmen mit der Produktion überein. Erst danach gilt das Backup als funktionierend.
 
-*Danach:* §16 Punkt 03 als erledigt markieren, den Stand-Vermerk in §13 auf „aktiv“ setzen.
+*Danach:* ✅ §16 Punkt 03 erledigt, §13 steht auf „aktiv“.
 
 ### 1b · Fehlerüberwachung mit GlitchTip
 
-**Stand:** umgesetzt und lokal abgenommen. Offen ist die Inbetriebnahme auf der Betriebs-Instanz und in Produktion. Wie die Fehlerüberwachung arbeitet, beschreibt `technisches-konzept.md` §17.
+**Stand:** ✅ in Betrieb und in Produktion abgenommen. API, Coach-App und Klientenseite melden an `errors.hxcode.io`, die Frontends über den Tunnel, mit lesbaren Stacktraces aus den Source Maps. Wie die Fehlerüberwachung arbeitet, beschreibt `technisches-konzept.md` §17.
 
 **Umgesetzt:**
 
@@ -162,16 +162,16 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 6. ✅ Drei Projekte mit genau diesen Kürzeln: **`hxroom-api`**, **`hxroom-coach`**, **`hxroom-bookingpage`**. Das Source-Map-Plugin verwendet die Kürzel. Je Projekt eine Alarmregel „neues Problem → Mail“.
 7. ✅ Unter Profil → Auth Tokens ein Token mit `project:read`, `project:releases`, `org:read` anlegen.
 
-*GitHub (Repository → Settings → Secrets and variables → Actions):*
+*GitHub (Repository → Settings → Secrets and variables → Actions):* ✅
 - Secret `SENTRY_AUTH_TOKEN`: das Token aus Schritt 7
 - Variablen `SENTRY_DSN_COACH` und `SENTRY_DSN_BOOKINGPAGE`: die DSNs der beiden Frontend-Projekte
 
-*Produktion (`infra/.env`):*
+*Produktion (`infra/.env`):* ✅
 - `SENTRY_DSN`: DSN von `hxroom-api`
 - `SENTRY_TUNNEL_DSNS`: DSN von `hxroom-coach` und `hxroom-bookingpage`, kommagetrennt
 - danach Push, die CI baut mit DSN und Source Maps, dann `./redeploy.sh`
 
-*Abnahme in Produktion:*
+*Abnahme in Produktion:* ✅
 - **API:** Im Betreiber-Backoffice in der Browser-Konsole `fetch('https://admin-api.hxroom.de/api/v1/monitoring/test-error', { method: 'POST', credentials: 'include' })` ausführen. Der Fehler erscheint in `hxroom-api`, die Alarm-Mail kommt an.
 - **Coach-App:** `https://app.hxroom.de/?monitoring-test=1`.
 - **Klientenseite:** `https://demo.hxroom.de/?monitoring-test=1`.

@@ -1008,7 +1008,7 @@ export const organizationBilling = pgTable('organization_billing', {
 
 ## 13. Backup-Konzept
 
-*Stand: umgesetzt in `infra/backup/` und lokal abgenommen. Auf dem Server aktiv nach der Inbetriebnahme aus `phase5-umsetzungsplan.md` (Schritt 1a). Das Backup gilt erst als funktionierend, wenn eine Wiederherstellung auf einer fremden Maschine einmal durchgespielt ist.*
+*Stand: aktiv in Produktion (`infra/backup/`). Die nächtlichen Läufe, Object Lock und eine Wiederherstellung auf einer fremden Maschine sind abgenommen.*
 
 **Aufbau.** Ein eigener Container `backup` im Compose-Stack (`infra/backup/`, gebaut auf dem Server wie Caddy), mit `pg_dump` 17, `rclone`, `age` und `supercronic`. Ziel ist ein Backup-Bucket in einem **eigenen Hetzner-Projekt in Nürnberg** (`nbg1`): anderer Standort als der Datei-Bucket in Falkenstein, aber in Deutschland. Die Zugänge stehen in `infra/.env` (`BACKUP_S3_*`). Das Server-Backup von Hetzner läuft zusätzlich, ersetzt den `pg_dump` aber nicht: gleiches Projekt, gleicher Standort, und eine Momentaufnahme des laufenden Servers ist für die Datenbank nicht garantiert konsistent.
 
@@ -1158,7 +1158,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 |---|---|---|---|
 | 01 | **Subdomain-Modell Studio** | Beim Studio-Plan: teilen alle Coaches dieselbe Subdomain (`studio.hxroom.de`) oder bekommt jeder Coach eine eigene? Auswirkung auf Buchungsseite, Warteraum-Branding und Routing. | Vor Studio-Launch klären |
 | 02 | **Verschlüsselung der Sitzungsnotizen** | `session_notes.content` liegt als JSONB im Klartext, geschützt wie die übrigen Fachdaten (Server, Netz, Backups). Coaching-Notizen können Gesundheitsdaten nach Art. 9 DSGVO enthalten; eine zusätzliche Verschlüsselung auf Anwendungsebene (z. B. AES-256-GCM, Schlüssel außerhalb der DB) wurde bei der Umsetzung bewusst zurückgestellt. Nachrüsten heißt: Spalte umschreiben, Schlüsselverwaltung und Backup-Wiederherstellung mitdenken, Suche im Inhalt entfällt. | Nice-to-have |
-| 03 | **Off-Site-Kopie des Objektspeichers** | Seit dem Wechsel auf Hetzner Object Storage (§10) deckt das Server-Backup die Dateien nicht mehr mit ab, und die in §13 vorgesehene tägliche Kopie in einen zweiten Bucket läuft noch nicht. Ein versehentliches Löschen ist damit endgültig. Mit den Chat-Dateien aus B7 liegen dort erstmals Daten von Klienten. | Phase 5, mit den Backup-Jobs |
+| 03 | ~~**Off-Site-Kopie des Objektspeichers**~~ | ✅ Erledigt 2026-10-05: Die Dateien werden jede Nacht in den Backup-Bucket im eigenen Hetzner-Projekt (Nürnberg) gespiegelt, Gelöschtes bleibt 30 Tage im Papierkorb, der Bucket hat Object Lock (§13). | – |
 | 04 | ~~**Geteilte Dateien: Löschen und Virenscan**~~ | ✅ Erledigt 2026-09-28: Geteilte Dateien lassen sich entfernen, und ClamAV prüft jede Datei vor dem Ablegen (`videocall-umsetzungsplan.md`, Nachträge zu B7). Offen bleibt nur die Nachprüfung ungeprüfter Dateien, siehe 07. | – |
 | 05 | ~~**Weichzeichner: Modell selbst ausliefern**~~ | ✅ Erledigt 2026-09-28: WASM und `selfie_segmenter.tflite` kommen von der eigenen Origin (`packages/livekit/vite.ts`, Modell unter `packages/livekit/assets/mediapipe/`). | – |
 | 06 | **Lautsprecherwahl im Call** | Die Call-Oberfläche bietet keine Wahl des Ausgabegeräts an. Der Ton läuft über eigene `<audio>`-Elemente (`CallAudioOutput`), auf die `switchActiveDevice('audiooutput')` nicht wirkt; nachrüsten hieße `setSinkId()` an diesen Elementen, wo der Browser es unterstützt. | Nice-to-have |
