@@ -872,14 +872,9 @@ export const offerAvailabilitySlots = pgTable('offer_availability_slots', {
   pk: primaryKey({ columns: [table.offerId, table.slotId] }),
 }));
 
-export const reminderJobs = pgTable('reminder_jobs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  bookingId: uuid('booking_id').references(() => bookings.id, { onDelete: 'cascade' }),
-  type: text('type').$type<'24h' | '1h'>().notNull(),
-  scheduledAt: timestamp('scheduled_at').notNull(),
-  sentAt: timestamp('sent_at'),
-});
 ```
+
+Erinnerungsmails brauchen keine eigene Tabelle: `bookings.reminder_24h_sent_at` und `bookings.reminder_1h_sent_at` halten fest, dass eine Erinnerung versendet ist, und dienen zugleich als Sperre gegen doppelten Versand (§12, „Erinnerungsmails“).
 
 ### 11.1 Validierungs- und DTO-Konvention
 
@@ -934,12 +929,22 @@ Rein API-interne Schemas (z.B. Webhook-Payloads, interne Job-DTOs) können lokal
 
 - Nach Buchung: Job `expire-unconfirmed-booking` einplanen (delay = TTL, z.B. 30 Minuten) – prüft bei Ausführung, ob `bookings.status` noch `pending` ist; falls ja: `status = 'cancelled'`, Slot wird freigegeben. Wurde die Buchung zwischenzeitlich bestätigt, ist der Job ein No-op. Bei kurzfristigen Buchungen (Sitzungsbeginn näher als die TTL) wird die TTL auf die verbleibende Vorlaufzeit gekappt – offene Detailfrage, siehe `idee-klienten-matching.md`.
   **Umgesetzt (2026-08-10) ohne BullMQ:** Solange kein Redis im Betrieb ist, erledigt `BookingExpiryService` (`apps/api/src/bookings/booking-expiry.service.ts`) dasselbe über `@nestjs/schedule` – ein Lauf alle 5 Minuten storniert alle abgelaufenen `pending`-Buchungen gesammelt. Die Ungenauigkeit von ±5 Minuten ist bei einer TTL von 30 Minuten unkritisch. Beim Umstieg auf BullMQ kann der Cron ersatzlos entfallen; die TTL-Kappung bei kurzfristigen Buchungen ist weiterhin offen.
-- Nach Bestätigung: Jobs einplanen (`reminder-24h`, `reminder-1h`)
+- Erinnerungsmails 24 h und 1 h vor dem Termin, **umgesetzt ohne BullMQ** (siehe unten, „Erinnerungsmails“)
 - Nach Sitzungsende: Job `transcribe-session` (wenn Einwilligung vorhanden)
 - Job-Worker in NestJS (`@Processor`-Decorator)
 - E-Mail-Versand via **Brevo** (französischer Anbieter, EU-Server, zuverlässige Zustellraten). Brevo deckt sowohl transaktionale Mails (Buchungsbestätigung, Erinnerung, Passwort-Reset) als auch Newsletter ab. Getrennte Sender-Adressen für Transaktional (`noreply@hxroom.de`) und Marketing (`newsletter@hxroom.de`) schützen die Zustellbarkeit. Setup-Details siehe `newsletter-brevo.md`.
 
 Claude Code kann die komplette BullMQ-Modul-Struktur inkl. Worker, Job-Definitionen und Whisper-Client aus einem einzigen Prompt generieren.
+
+### Erinnerungsmails
+
+Der Klient bekommt 24 Stunden und 1 Stunde vor dem Termin eine Erinnerung mit dem Link in den Warteraum (`BookingReminderService`, Vorlage `mail/templates/client/booking-reminder.tsx`). Die 1-h-Erinnerung fällt mit der Öffnung des Warteraums zusammen (`CALL_OPENS_MINUTES_BEFORE_START`). An den Coach geht keine Erinnerung, die Texte sind fest.
+
+- **Wer:** nur bestätigte Termine, keine Spontan-Termine (deren Einladung geht sofort raus).
+- **Kurzfristig gebucht:** Eine Erinnerung entfällt, wenn die Buchung erst nach ihrem Fälligkeitszeitpunkt bestätigt wurde. Die Bestätigung trägt den Link dann schon.
+- **Nachholen:** Nach einem Ausfall der API wird nur nachgeholt, was noch hilft, die 24-h-Erinnerung bis 2 Stunden vor Beginn, die 1-h-Erinnerung bis 5 Minuten vor Beginn. „Heute“ oder „morgen“ im Text richtet sich nach dem Kalendertag in Europe/Berlin.
+- **Ablauf:** ein Lauf alle 5 Minuten über `@nestjs/schedule`. Er beansprucht die fälligen Erinnerungen in einem `UPDATE … RETURNING` (Spalten `reminder_24h_sent_at`, `reminder_1h_sent_at`) und verschickt erst dann. Scheitert der Versand, gibt er den Vermerk frei, und der nächste Lauf versucht es erneut. Die Regel steht lesbar und getestet in `bookings/booking-reminders.ts`.
+- **Lokal testen:** Der Mailversand geht auch lokal an Brevo. Brevo lässt API-Aufrufe nur von freigegebenen IP-Adressen zu (Einstellungen → Sicherheit → Autorisierte IPs), die Adresse des eigenen Rechners muss dort eingetragen sein.
 
 ### Stripe – Subscription & Billing
 

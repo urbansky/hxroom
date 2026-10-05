@@ -176,3 +176,28 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 - **Coach-App:** `https://app.hxroom.de/?monitoring-test=1`.
 - **Klientenseite:** `https://demo.hxroom.de/?monitoring-test=1`.
 - **Je Frontend:** Der Fehler erscheint lesbar (Quelldatei und Zeile). In der Netzwerkansicht stehen nur Anfragen an die eigene Seite und `api.hxroom.de`. Mit eingeschaltetem uBlock Origin kommt der Fehler trotzdem an.
+
+---
+
+## Schritt 2 · Erinnerungsmails
+
+**Stand:** umgesetzt und lokal abgenommen, mit Versand an eine echte Adresse. Wie die Erinnerungen arbeiten, beschreibt `technisches-konzept.md` §12 („Erinnerungsmails“).
+
+**Umfang:** Der Klient bekommt 24 Stunden und 1 Stunde vor dem Termin eine Mail mit dem Warteraum-Link. Die 1-h-Erinnerung meldet den gerade geöffneten Warteraum. Keine Erinnerung an den Coach, feste Texte. Beides kann später über die Benachrichtigungs-Einstellungen (Funktionsliste 7.06) dazukommen.
+
+**Umgesetzt:**
+
+- `bookings/booking-reminders.ts`: Fälligkeitsregel `isReminderDue` (nur bestätigt, keine Spontan-Termine, Fenster mit Nachholgrenze, entfällt bei Bestätigung nach Fälligkeit), Tests in `booking-reminders.spec.ts`
+- `bookings/booking-reminder.service.ts`: Lauf alle 5 Minuten, Beanspruchen per `UPDATE … RETURNING`, Freigabe bei gescheitertem Versand
+- `mail/templates/client/booking-reminder.tsx`: eine Vorlage, zwei Varianten (`24h`, `1h`), Render-Tests in `templates.spec.ts`
+- `bookings/booking-formatting.ts`: `formatTimeLabel`, `relativeDayLabel` („heute“, „morgen“, Datum nach Kalendertag in Berlin)
+- Migration `0025`: Spalten `reminder_24h_sent_at`, `reminder_1h_sent_at` an `bookings`
+
+**Lokal abgenommen** (Dev-API, Versand über Brevo an die Adresse des Betreibers):
+- Von fünf Testterminen bekamen genau zwei eine Mail: 24 h vorher (vor drei Tagen bestätigt) die 24-h-Erinnerung, 55 Minuten vorher die 1-h-Erinnerung.
+- Keine Mail ging an den kurzfristig bestätigten Termin, den Spontan-Termin und den abgesagten.
+- Als Brevo zunächst ablehnte (IP nicht freigegeben), wurden die Vermerke freigegeben und beim nächsten Lauf beide Mails nachgeholt. Ein weiterer Lauf hat nichts doppelt verschickt.
+
+**Inbetriebnahme:** Push und `./redeploy.sh`. Die Migration läuft beim Start der API. Danach bekommen alle bestätigten Termine der nächsten 24 Stunden ihre Erinnerungen, soweit sie vor dem Fälligkeitszeitpunkt bestätigt wurden.
+
+**Abnahme in Produktion:** Eine Vorführung auf `demo.hxroom.de` für den nächsten Tag buchen und bestätigen. Die 24-h-Erinnerung kommt etwa 24 Stunden vorher, die 1-h-Erinnerung beim Öffnen des Warteraums, beide mit funktionierendem Link.
