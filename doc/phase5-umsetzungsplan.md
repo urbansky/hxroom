@@ -14,7 +14,8 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 
 1. ✅ Backup und Fehlerüberwachung
 2. Erinnerungsmails 24 h / 1 h vor dem Termin
-3. Buchungsseite vollständig, samt Impressum und Datenschutzerklärung in den Einstellungen des Coachs
+3. Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
+   - 3.1 Impressum und Datenschutzerklärung in den Einstellungen des Coachs, als eigene Seiten der Buchungsseite
 4. `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
@@ -201,3 +202,89 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 **Inbetriebnahme:** Push und `./redeploy.sh`. Die Migration läuft beim Start der API. Danach bekommen alle bestätigten Termine der nächsten 24 Stunden ihre Erinnerungen, soweit sie vor dem Fälligkeitszeitpunkt bestätigt wurden.
 
 **Abnahme in Produktion:** Eine Vorführung auf `demo.hxroom.de` für den nächsten Tag buchen und bestätigen. Die 24-h-Erinnerung kommt etwa 24 Stunden vorher, die 1-h-Erinnerung beim Öffnen des Warteraums, beide mit funktionierendem Link.
+
+---
+
+## Schritt 3 · Buchungsseite vollständig
+
+**Stand:** umgesetzt und lokal abgenommen.
+
+**Ausgangslage:** Die Buchungsseite zeigt für jeden Coach dieselben Platzhalter:
+- **Kopfbereich:** Titel, Ortszeile, Überschrift samt Text, Kennzahlen (Sitzungen, Bewertung), das Abzeichen „Verifiziert“, die Versprechen „DSGVO-konform“ und „Erstgespräch kostenlos“, ein Beispielfoto als Ersatz
+- **„Über mich“:** Zitat, Vorstellungstext und Qualifikationen eines Beispiel-Coachs
+- **Fußzeile:** Datenschutz, Impressum und AGB ohne Ziel, dazu „DSGVO-konform“
+
+Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich“, Button-Text und Einleitung zum Button. Der öffentliche Endpunkt liefert davon nur Name und Foto.
+
+**Inhaltsmodell:**
+
+| Auf der Seite | Quelle |
+|---|---|
+| Überschrift im Kopfbereich | Tagline (vorhanden) |
+| Text unter der Überschrift | Einleitung (`ctaIntro`, vorhanden) |
+| Beide Buchungs-Buttons | Button-Text (vorhanden) |
+| Titel auf der Profilkarte | **Berufsbezeichnung** (neu, z. B. „Systemischer Coach“) |
+| Schlagworte auf der Profilkarte | **Schwerpunkte** (neu, bis zu 6) |
+| „Über mich“-Text | Über mich (vorhanden) |
+| Zitat | **Zitat** (neu, optional) |
+| Qualifikationen | **Qualifikationen** (neu, Liste, optional) |
+| Foto | Profilfoto (vorhanden). Ohne Foto die Initiale statt des Beispielbilds. |
+
+- **Entfällt:** Kennzahlen, „Verifiziert“ und die Ortszeile. Bewertungen und eine Prüfung der Coachs gibt es nicht.
+- **Versprechen:** nur belegbare Fakten: „Kein Konto nötig“, „Videogespräch im Browser“, „Server in Deutschland“. Aus der Fußzeile verschwindet „DSGVO-konform“.
+- **Leere optionale Felder** werden ausgeblendet, nie durch Beispieltext ersetzt.
+- **Fußzeile:** Die Links auf Impressum, Datenschutz und AGB bleiben bis Schritt 3.1 ausgeblendet.
+
+**Umgesetzt:**
+- **Schema:** Migration `0026` mit den Spalten `job_title`, `topics` (Liste, bis 6 Schlagworte), `quote`, `qualifications` (Liste, bis 8 Einträge) an `booking_page`. Die Grenzen stehen in `bookingPageSchema`.
+- **API:**
+  - `PATCH /booking-page` speichert die neuen Felder.
+  - `GET /organizations/:slug` liefert über `OrganizationService.findPublicProfile` das gepflegte Profil, `deletionScheduledFor` nicht mehr.
+- **Coach-App** (Einstellungen → Buchungsseite):
+  - „Profil“ hat jetzt auch Berufsbezeichnung und Schwerpunkte (als Schlagworte).
+  - Neuer Bereich „Über mich“ mit Text, Zitat und Qualifikationen (eine pro Zeile).
+  - Die Vorschau zeigt Berufsbezeichnung und Schwerpunkte.
+  - Von den geplanten Funktionen fallen „Subdomain“ und „Schwerpunkte“ weg.
+  - Der Autosave hält fest, was er abgeschickt hat. Was während des Speicherns schon ins nächste Feld getippt wurde, geht so nicht verloren.
+- **Klientenseite:**
+  - Die Tagline ist die Überschrift, ohne Tagline der Name. Lange Taglines werden kleiner gesetzt.
+  - Die Einleitung steht darunter, beide Buttons tragen den Button-Text, Standard ist „Termin buchen“.
+  - Ohne Foto erscheint die Initiale.
+  - „Über mich“ samt Sprungmarke und „Mehr erfahren“ erscheint nur mit Inhalt, auch auf der Angebotsseite (`hasAboutContent`).
+  - Leerzeilen im Text trennen Absätze. Vom Coach mitgetippte Anführungszeichen am Zitat entfallen.
+- **Seed:** Anna mit allen Feldern, Martina mit Berufsbezeichnung und zwei Schwerpunkten, Tobias ohne Buchungsseite
+
+**Lokal abgenommen** (Dev-Umgebung, Chrome, 1280 px und 390 px):
+- Anna: Alle Felder erscheinen an ihrer Stelle, kein Platzhaltertext.
+- Tobias ohne Buchungsseite: Name als Überschrift, Initiale statt Foto, kein „Über mich“, keine Sprungmarke, keine Lücken.
+- Tobias über die Einstellungen befüllt: sieben Speichervorgänge kommen an, die Werte überstehen das Neuladen. Leere Zeilen in den Qualifikationen fallen weg, die lange Tagline bricht auf dem Handy sauber um.
+- Martina (Löschung läuft) antwortet weiter mit 404.
+
+**Inbetriebnahme:** Push und `./redeploy.sh`. Die Migration läuft beim Start der API.
+
+**Abnahme in Produktion:** Auf `demo.hxroom.de` die eigenen Inhalte pflegen (Schritt 4) und die Seite auf Handy und Rechner prüfen.
+
+---
+
+## Schritt 3.1 · Impressum und Datenschutzerklärung des Coachs
+
+**Stand:** geplant. Grundlage ist `legal.md` (3.2 Impressum, 4.3 Datenschutzerklärung, 5.2 AGB).
+
+**Umfang:**
+- **Impressum** unter `/impressum` der Buchungsseite, strukturiert nach `legal.md` 3.2:
+  - Pflichtfelder: Name bzw. Firma, Anschrift, E-Mail, Telefon
+  - optional: Rechtsform, USt-IdNr., Vertretungsberechtigte, Berufsbezeichnung und Aufsichtsbehörde bzw. Kammer, Freitext-Zusatz
+  - Bestätigung „Diese Angaben sind korrekt und vollständig“, mit Zeitpunkt gespeichert
+- **Datenschutzerklärung** unter `/datenschutz`. Der Coach ist Verantwortlicher, HxRoom Auftragsverarbeiter (`legal.md` 4.3, 4.4).
+- **AGB:** optional ein Link auf die eigenen AGB des Coachs. Eine Vorlage liefert HxRoom nicht (`legal.md` 5.2).
+- **Fußzeile:** auf allen Seiten der Buchungsseite Links auf Impressum und Datenschutz, auf die AGB nur, wenn ein Link hinterlegt ist.
+
+**Umsetzung:**
+- **Schema:** Impressum (JSON), Bestätigungszeitpunkt, Datenschutzerklärung, AGB-Link an `booking_page`
+- **API:** `GET /organizations/:slug/imprint` und `…/privacy`
+- **Coach-App:** neuer Bereich „Rechtliches“ in den Einstellungen der Buchungsseite
+- **Klientenseite:** Routen `/impressum` und `/datenschutz`, Fußzeile
+
+**Offen:**
+1. **Buchung erst mit Impressum und Datenschutzerklärung?** Vorschlag: Die Seite bleibt sichtbar, Buchen ist bis dahin gesperrt (Hinweis statt Buttons, die API lehnt Buchungen ab), das Backoffice zeigt, was fehlt. Dann braucht auch `demo.hxroom.de` das Impressum des Betreibers.
+2. **Datenschutzerklärung als Text in HxRoom, als Link auf die eigene Website oder beides?** Vorschlag: beides, mit einer Vorlage als Standard. Den Vorlagentext liefert der Betreiber bzw. lässt ihn prüfen.
