@@ -75,7 +75,7 @@ hxroom/
 ├── packages/
 │   ├── shared/       # Gemeinsame Types & Zod-Schemas
 │   ├── livekit/      # Geteilte Call-Mechanik: LiveKit-Composables (ohne Komponenten)
-│   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten (inkl. Call-Oberfläche)
+│   └── ui/           # Shared Theme, Nuxt UI Config & Vue-Komponenten (Call-Oberfläche, Bausteine der Buchungsseite)
 ├── infra/
 │   ├── docker-compose.yml          # Produktion
 │   ├── docker-compose.dev.yml      # Lokale Entwicklung
@@ -85,7 +85,7 @@ hxroom/
 └── CLAUDE.md         # Claude Code Instruktionsdatei
 ```
 
-Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Die drei Nuxt-Apps (`coach`, `admin`, `landing`) und die Vite-SPA `bookingpage` sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden. `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends, `packages/livekit` die Call-Schicht zwischen `bookingpage` und `coach` (§8).
+Ein **Monorepo** (pnpm Workspaces) hält den Overhead gering und erlaubt geteilte Typen zwischen Backend und Frontend – besonders wertvoll beim Einsatz von Claude Code, da der gesamte Kontext in einer Session verfügbar ist. Die drei Nuxt-Apps (`coach`, `admin`, `landing`) und die Vite-SPA `bookingpage` sind bewusst getrennt, um die Subdomain-Architektur sauber abzubilden. `@hxroom/ui` teilt Theme und Nuxt-UI-Konfiguration zwischen allen Frontends, `packages/livekit` die Call-Schicht zwischen `bookingpage` und `coach` (§8). Die Inhalte der Buchungsseite (Kopfbereich, Profilkarte, Angebotszeile, „Über mich“) liegen als Komponenten in `packages/ui/components/booking-page/`. So rendert die Vorschau unter Einstellungen → Buchungsseite in der Coach-App dieselben Bausteine wie die Buchungsseite selbst, gespeist aus dem Formular statt aus dem Gespeicherten. Die Darstellungsregeln dazu (Button-Text, Sichtbarkeit von „Über mich“, Preisformat) stehen in `packages/shared/src/booking-page.ts`.
 
 ---
 

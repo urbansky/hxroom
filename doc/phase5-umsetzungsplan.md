@@ -243,14 +243,14 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 - **Coach-App** (Einstellungen → Buchungsseite):
   - „Profil“ hat jetzt auch Berufsbezeichnung und Schwerpunkte (als Schlagworte).
   - Neuer Bereich „Über mich“ mit Text, Zitat und Qualifikationen (eine pro Zeile).
-  - Die Vorschau zeigt Berufsbezeichnung und Schwerpunkte.
+  - Die Vorschau rendert dieselben Komponenten wie die Buchungsseite (`packages/ui/components/booking-page/`), aus dem Formular und damit schon beim Tippen. Sie ist nicht bedienbar (`inert`) und scrollt in ihrem Rahmen.
   - Von den geplanten Funktionen fallen „Subdomain“ und „Schwerpunkte“ weg.
   - Der Autosave hält fest, was er abgeschickt hat. Was während des Speicherns schon ins nächste Feld getippt wurde, geht so nicht verloren.
 - **Klientenseite:**
   - Die Tagline ist die Überschrift, ohne Tagline der Name. Lange Taglines werden kleiner gesetzt.
   - Die Einleitung steht darunter, beide Buttons tragen den Button-Text, Standard ist „Termin buchen“.
   - Ohne Foto erscheint die Initiale.
-  - „Über mich“ samt Sprungmarke und „Mehr erfahren“ erscheint nur mit Inhalt, auch auf der Angebotsseite (`hasAboutContent`).
+  - „Über mich“ samt Sprungmarke und „Mehr erfahren“ erscheint nur mit Inhalt, auch auf der Angebotsseite (`hasBookingPageAbout`).
   - Leerzeilen im Text trennen Absätze. Vom Coach mitgetippte Anführungszeichen am Zitat entfallen.
 - **Seed:** Anna mit allen Feldern, Martina mit Berufsbezeichnung und zwei Schwerpunkten, Tobias ohne Buchungsseite
 
