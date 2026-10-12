@@ -1,41 +1,46 @@
 <script setup lang="ts">
-// Beispielinhalte: Zitat, Text und Qualifikationen sind Platzhalter, solange der
-// öffentliche Endpunkt die vom Coach gepflegten Felder (tagline, bio) nicht ausliefert.
-const credentials = [
-  { icon: 'i-lucide-graduation-cap', text: 'ICF-zertifiziert (ACC) · International Coaching Federation' },
-  { icon: 'i-lucide-clock', text: '8 Jahre Coaching-Erfahrung · 340+ begleitete Klienten' },
-  { icon: 'i-lucide-users', text: 'Ausgebildet in systemischem Coaching & NLP' },
-];
+import { computed } from 'vue';
+import type { CoachProfile } from '../composables/useCoach';
+
+// Wird nur eingebunden, wenn mindestens eines der drei Felder gefüllt ist (hasAboutContent).
+const { coach } = defineProps<{ coach: CoachProfile }>();
+
+// Leerzeilen im Text des Coachs trennen Absätze, einfache Umbrüche bleiben innerhalb eines Absatzes.
+const bioParagraphs = computed(() =>
+  (coach.bio ?? '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean),
+);
+
+// Die Anführungszeichen setzt die Seite selbst; tippt der Coach eigene mit, stünden sie sonst doppelt da.
+const quote = computed(() => (coach.quote ?? '').trim().replace(/^["'„“”‚‘»«]+|["'„“”‚‘»«]+$/g, '').trim());
 </script>
 
 <template>
   <section id="about" class="relative max-w-[720px] mx-auto px-6 py-10 flex flex-col gap-8 scroll-mt-20">
     <h2 class="font-serif text-3xl text-highlighted">Über mich</h2>
 
-    <blockquote class="border-l-2 border-primary pl-5 py-3 -mt-4 mb-0">
+    <blockquote v-if="quote" class="border-l-2 border-primary pl-5 py-3 -mt-4 mb-0">
       <p class="font-serif text-xl italic text-highlighted leading-relaxed">
-        „Klarheit entsteht nicht durch mehr Nachdenken – sondern durch andere Gespräche."
+        „{{ quote }}“
       </p>
     </blockquote>
 
-    <div>
-      <p class="text-base text-muted leading-loose mb-4">
-        Ich bin Anna, zertifizierte Life & Business Coach aus Berlin. Nach zehn Jahren in der Unternehmensberatung habe ich gemerkt: Die wichtigsten Veränderungen in meinem Leben kamen nicht aus Strategiepapieren, sondern aus echten Gesprächen, die mich herausgefordert haben.
-      </p>
-      <p class="text-base text-muted leading-loose">
-        Heute begleite ich Menschen, die an einem Wendepunkt stehen – die spüren, dass etwas nicht mehr stimmt, aber noch nicht wissen, wohin es gehen soll.
-      </p>
+    <div v-if="bioParagraphs.length || coach.qualifications.length" class="flex flex-col gap-7">
+      <div v-if="bioParagraphs.length" class="flex flex-col gap-4">
+        <p v-for="(paragraph, i) in bioParagraphs" :key="i" class="text-base text-muted leading-loose whitespace-pre-line">
+          {{ paragraph }}
+        </p>
+      </div>
 
-      <div class="mt-7 flex flex-col gap-3">
+      <div v-if="coach.qualifications.length" class="flex flex-col gap-3">
         <div
-          v-for="cred in credentials"
-          :key="cred.text"
+          v-for="qualification in coach.qualifications"
+          :key="qualification"
           class="flex items-center gap-4 p-4 rounded-xl border border-default bg-white dark:bg-neutral-900"
         >
           <div class="size-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-            <UIcon :name="cred.icon" class="size-5 text-primary" />
+            <UIcon name="i-lucide-award" class="size-5 text-primary" />
           </div>
-          <span class="text-sm text-muted">{{ cred.text }}</span>
+          <span class="text-sm text-muted">{{ qualification }}</span>
         </div>
       </div>
     </div>

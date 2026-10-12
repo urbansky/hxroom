@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, type Ref } from 'vue';
-import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
+import { COACH_KEY, bookingCtaLabel, getAvatarUrl, hasAboutContent, type CoachProfile } from '../composables/useCoach';
 import { OFFERS_KEY, type UseOffersReturn } from '../composables/useOffers';
 import SiteHeader from '../components/SiteHeader.vue';
 import SiteFooter from '../components/SiteFooter.vue';
@@ -13,21 +13,20 @@ const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 const { offers } = inject(OFFERS_KEY) as UseOffersReturn;
 
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
+const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
+const ctaLabel = computed(() => bookingCtaLabel(coachProfile?.value));
+const showAbout = computed(() => hasAboutContent(coachProfile?.value));
 
-// Titel, Bio, Themen und Kennzahlen sind Beispielinhalte: der öffentliche Endpunkt liefert
-// bisher nur Name und Profilbild, die vom Coach gepflegten Felder (tagline, bio) nicht.
-const coach = computed(() => ({
-  name: coachProfile?.value?.name ?? 'Coach',
-  title: 'Zertifizierte Life & Business Coach · 8 Jahre Erfahrung',
-  eyebrow: 'Life Coaching · Berlin & online',
-  bio: 'Ich arbeite mit Menschen, die an einem Wendepunkt stehen – beruflich oder persönlich – und Klarheit suchen, wo es gerade nur Nebel gibt.',
-  topics: ['Beruflicher Neustart', 'Selbstvertrauen', 'Work-Life-Balance', 'Führung'],
-  stats: [
-    { value: '340+', label: 'Sitzungen' },
-    { value: '8', label: 'Jahre' },
-    { value: '4.9', label: 'Bewertung' },
-  ],
-}));
+// Ohne Tagline trägt der Name die Überschrift. Eine lange Tagline (bis 160 Zeichen) bekommt
+// eine kleinere Schrift, sonst füllt sie auf dem Handy den ganzen ersten Bildschirm.
+const headline = computed(() => coachProfile?.value?.tagline || coachName.value);
+const headlineSize = computed(() =>
+  headline.value.length > 60 ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl lg:text-[58px]',
+);
+
+// Nur Aussagen, die für jeden Coach stimmen. Wertungen wie „DSGVO-konform“ gehören nicht
+// hierher, und ob ein Erstgespräch kostenlos ist, entscheidet der Coach mit seinen Angeboten.
+const promises = ['Kein Konto nötig', 'Videogespräch im Browser', 'Server in Deutschland'];
 
 // Ziel der beiden Haupt-CTAs: das erste Angebot der Liste (Reihenfolge pflegt der Coach).
 const featuredOfferId = computed(() => offers.value[0]?.id ?? null);
@@ -36,41 +35,40 @@ const featuredOfferId = computed(() => offers.value[0]?.id ?? null);
 <template>
   <SiteHeader nav>
     <template #cta>
-      <UButton :to="featuredOfferId ? `/offers/${featuredOfferId}` : '#offers'" color="primary" icon="i-lucide-calendar" size="lg" class="px-5">
-        Termin buchen
-      </UButton>
+      <UButton
+        :to="featuredOfferId ? `/offers/${featuredOfferId}` : '#offers'"
+        color="primary"
+        icon="i-lucide-calendar"
+        size="lg"
+        class="px-5 max-w-56"
+        :ui="{ label: 'truncate' }"
+        :label="ctaLabel"
+      />
     </template>
   </SiteHeader>
 
   <!-- Hero -->
   <section class="max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-24 pb-10">
     <div class="flex flex-col items-center text-center gap-8">
-      <div class="inline-flex items-center gap-2 bg-primary/10 rounded-full px-3.5 py-1.5 w-fit">
-        <div class="size-1.5 rounded-full bg-primary" />
-        <span class="text-xs text-primary tracking-[0.08em] uppercase">{{ coach.eyebrow }}</span>
-      </div>
-
-      <h1 class="font-serif text-5xl lg:text-[58px] leading-[1.08] text-highlighted tracking-tight">
-        Raum für das,<br>
-        was <em class="italic text-secondary">wirklich</em><br>
-        zählt.
+      <h1 class="font-serif leading-[1.08] text-highlighted tracking-tight text-balance" :class="headlineSize">
+        {{ headline }}
       </h1>
 
-      <p class="text-base text-muted leading-[1.7] max-w-[420px]">
-        Ich begleite Menschen in beruflichen Übergängen und persönlichen Wendepunkten – mit Klarheit, Offenheit und einer Methode, die zu dir passt.
+      <p v-if="coachProfile?.ctaIntro" class="text-base text-muted leading-[1.7] max-w-[420px] -mt-2">
+        {{ coachProfile.ctaIntro }}
       </p>
 
       <div class="flex flex-col sm:flex-row items-center gap-4">
         <UButton :to="featuredOfferId ? `/offers/${featuredOfferId}` : '#offers'" size="xl" color="primary" icon="i-lucide-calendar" class="px-4">
-          Erstgespräch buchen
+          {{ ctaLabel }}
         </UButton>
-        <UButton to="#about" size="xl" variant="outline" color="neutral" class="px-5">
+        <UButton v-if="showAbout" to="#about" size="xl" variant="outline" color="neutral" class="px-5">
           Mehr erfahren
         </UButton>
       </div>
 
       <div class="flex flex-wrap items-center justify-center gap-5">
-        <div v-for="promise in ['Kein Account nötig', 'DSGVO-konform', 'Erstgespräch kostenlos']" :key="promise" class="flex items-center gap-1.5 text-xs text-muted">
+        <div v-for="promise in promises" :key="promise" class="flex items-center gap-1.5 text-xs text-muted">
           <UIcon name="i-lucide-check" class="size-3.5 text-primary" />
           {{ promise }}
         </div>
@@ -79,35 +77,20 @@ const featuredOfferId = computed(() => offers.value[0]?.id ?? null);
 
     <!-- Coach-Karte: randloser Bildkopf, deshalb ohne Innenabstand der Karte -->
     <ContentCard :padded="false">
-      <div class="coach-card-header relative h-[240px]">
-        <img :src="avatarUrl ?? '/coach-example.jpg'" :alt="coach.name" class="absolute inset-0 size-full object-cover object-top" />
+      <div class="coach-card-header relative h-[240px] flex items-center justify-center">
+        <img v-if="avatarUrl" :src="avatarUrl" :alt="coachName" class="absolute inset-0 size-full object-cover object-top" />
+        <span v-else class="font-serif text-8xl text-primary/70 select-none" aria-hidden="true">{{ coachName.charAt(0) }}</span>
       </div>
       <div class="p-6 sm:p-7 flex flex-col gap-4">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="font-serif text-2xl text-highlighted leading-tight tracking-wide">{{ coach.name }}</h2>
-            <p class="text-base text-muted mt-1 tracking-wide">{{ coach.title }}</p>
-          </div>
-          <UBadge color="primary" variant="subtle" size="md" icon="i-lucide-check">
-            Verifiziert
-          </UBadge>
+        <div>
+          <h2 class="font-serif text-2xl text-highlighted leading-tight tracking-wide">{{ coachName }}</h2>
+          <p v-if="coachProfile?.jobTitle" class="text-base text-muted mt-1 tracking-wide">{{ coachProfile.jobTitle }}</p>
         </div>
 
-        <p class="text-sm text-muted leading-relaxed">{{ coach.bio }}</p>
-
-        <div class="flex flex-wrap gap-1.5">
-          <UBadge v-for="topic in coach.topics" :key="topic" color="neutral" variant="subtle" size="md">
+        <div v-if="coachProfile?.topics.length" class="flex flex-wrap gap-1.5">
+          <UBadge v-for="topic in coachProfile.topics" :key="topic" color="neutral" variant="subtle" size="md">
             {{ topic }}
           </UBadge>
-        </div>
-
-        <USeparator />
-
-        <div class="flex gap-6">
-          <div v-for="stat in coach.stats" :key="stat.label" class="flex flex-col gap-0.5">
-            <span class="font-serif text-2xl text-highlighted leading-none">{{ stat.value }}</span>
-            <span class="text-xs text-dimmed tracking-[0.06em] uppercase">{{ stat.label }}</span>
-          </div>
         </div>
       </div>
     </ContentCard>
@@ -123,15 +106,17 @@ const featuredOfferId = computed(() => offers.value[0]?.id ?? null);
     </div>
   </section>
 
-  <USeparator class="max-w-[720px] mx-auto" />
-  <AboutSection />
+  <template v-if="showAbout && coachProfile">
+    <USeparator class="max-w-[720px] mx-auto" />
+    <AboutSection :coach="coachProfile" />
+  </template>
 
   <SiteFooter />
 </template>
 
 <style scoped>
-/* Farbfläche hinter dem Profilbild – trägt den Bildkopf, wenn der Coach noch kein eigenes
-   Foto hochgeladen hat, und füllt bei Hochformat-Bildern die Ränder. */
+/* Farbfläche hinter dem Profilbild – trägt den Bildkopf samt Initiale, wenn der Coach noch
+   kein eigenes Foto hochgeladen hat, und füllt bei Hochformat-Bildern die Ränder. */
 .coach-card-header {
   background:
     radial-gradient(ellipse 60% 80% at 40% 60%, rgba(92, 110, 91, 0.2) 0%, transparent 60%),

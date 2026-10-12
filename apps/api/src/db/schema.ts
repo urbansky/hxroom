@@ -111,6 +111,10 @@ export const bookingPage = pgTable('booking_page', {
   bio:             text('bio'),
   ctaButton:       text('cta_button'),
   ctaIntro:        text('cta_intro'),
+  jobTitle:        text('job_title'),
+  topics:          text('topics').array().notNull().default(sql`'{}'::text[]`),
+  quote:           text('quote'),
+  qualifications:  text('qualifications').array().notNull().default(sql`'{}'::text[]`),
   // Separat von `updatedAt`, da Text-Autosave sonst unnötig den Avatar-Cache invalidiert.
   // NULL = kein Avatar gesetzt (Existenz-Flag), sonst Cache-Busting-Version für die Avatar-URL.
   avatarUpdatedAt: timestamp('avatar_updated_at'),

@@ -6,8 +6,8 @@ export class OrganizationController {
   constructor(private readonly organizationService: OrganizationService) {}
 
   @Get(':slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.organizationService.findBySlug(slug);
+  findPublicProfile(@Param('slug') slug: string) {
+    return this.organizationService.findPublicProfile(slug);
   }
 
   @Get(':slug/offers')

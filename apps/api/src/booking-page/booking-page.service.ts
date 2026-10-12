@@ -24,6 +24,10 @@ export class BookingPageService {
         bio:             bookingPage.bio,
         ctaButton:       bookingPage.ctaButton,
         ctaIntro:        bookingPage.ctaIntro,
+        jobTitle:        bookingPage.jobTitle,
+        topics:          bookingPage.topics,
+        quote:           bookingPage.quote,
+        qualifications:  bookingPage.qualifications,
         avatarUpdatedAt: bookingPage.avatarUpdatedAt,
         onboardingCelebratedAt: bookingPage.onboardingCelebratedAt,
       })
@@ -36,7 +40,9 @@ export class BookingPageService {
       throw new UnauthorizedException('Organization not found');
     }
 
-    return row;
+    // Ohne booking_page-Zeile (frisch registrierter Coach) liefert der LEFT JOIN auch für die
+    // NOT-NULL-Listen null – die Oberfläche bekommt trotzdem immer Listen.
+    return { ...row, topics: row.topics ?? [], qualifications: row.qualifications ?? [] };
   }
 
   async update(organizationId: string, dto: BookingPageDto) {
@@ -71,6 +77,10 @@ export class BookingPageService {
           bio:       dto.bio ?? null,
           ctaButton: dto.ctaButton ?? null,
           ctaIntro:  dto.ctaIntro ?? null,
+          jobTitle:  dto.jobTitle ?? null,
+          topics:    dto.topics ?? [],
+          quote:     dto.quote ?? null,
+          qualifications: dto.qualifications ?? [],
         })
         .onConflictDoUpdate({
           target: bookingPage.organizationId,
@@ -79,6 +89,10 @@ export class BookingPageService {
             ...(dto.bio       !== undefined && { bio:       dto.bio ?? null }),
             ...(dto.ctaButton !== undefined && { ctaButton: dto.ctaButton ?? null }),
             ...(dto.ctaIntro  !== undefined && { ctaIntro:  dto.ctaIntro ?? null }),
+            ...(dto.jobTitle  !== undefined && { jobTitle:  dto.jobTitle ?? null }),
+            ...(dto.topics    !== undefined && { topics:    dto.topics }),
+            ...(dto.quote     !== undefined && { quote:     dto.quote ?? null }),
+            ...(dto.qualifications !== undefined && { qualifications: dto.qualifications }),
           },
         });
     });

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, type Ref } from 'vue';
-import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
+import { COACH_KEY, getAvatarUrl, hasAboutContent, type CoachProfile } from '../composables/useCoach';
 
 // nav: die beiden Anker-Links "Über mich"/"Sitzungsarten" – nur auf Startseite und
 // Angebotsseite sinnvoll, nicht auf den Landeseiten aus den E-Mails.
@@ -9,6 +9,7 @@ const { nav = false } = defineProps<{ nav?: boolean }>();
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
+const showAbout = computed(() => hasAboutContent(coachProfile?.value));
 </script>
 
 <template>
@@ -31,7 +32,7 @@ const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
 
     <template v-if="nav" #default>
       <div class="hidden sm:flex items-center gap-6">
-        <RouterLink to="/#about" class="text-base text-muted hover:text-default transition-colors tracking-wide no-underline">Über mich</RouterLink>
+        <RouterLink v-if="showAbout" to="/#about" class="text-base text-muted hover:text-default transition-colors tracking-wide no-underline">Über mich</RouterLink>
         <RouterLink to="/#offers" class="text-base text-muted hover:text-default transition-colors tracking-wide no-underline">Sitzungsarten</RouterLink>
       </div>
     </template>

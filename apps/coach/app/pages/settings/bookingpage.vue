@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { OfferResponse } from '@hxroom/shared'
-import { bookingPageSchema } from '@hxroom/shared'
+import { BOOKING_PAGE_MAX_TOPICS, bookingPageSchema } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -16,39 +16,60 @@ interface BookingPageResponse {
   bio:             string | null
   ctaButton:       string | null
   ctaIntro:        string | null
+  jobTitle:        string | null
+  topics:          string[]
+  quote:           string | null
+  qualifications:  string[]
   avatarUpdatedAt: string | null
 }
 
-// Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`
+// Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`.
+// Qualifikationen pflegt der Coach als Textfeld mit einer Zeile pro Eintrag.
 interface BookingPageForm {
-  subdomain:   string | undefined
-  profileName: string | undefined
-  tagline:     string | undefined
-  bio:         string | undefined
-  ctaButton:   string | undefined
-  ctaIntro:    string | undefined
+  subdomain:      string | undefined
+  profileName:    string | undefined
+  tagline:        string | undefined
+  bio:            string | undefined
+  ctaButton:      string | undefined
+  ctaIntro:       string | undefined
+  jobTitle:       string | undefined
+  topics:         string[]
+  quote:          string | undefined
+  qualifications: string | undefined
 }
 
 function emptyForm(): BookingPageForm {
   return {
-    subdomain:   undefined,
-    profileName: undefined,
-    tagline:     undefined,
-    bio:         undefined,
-    ctaButton:   undefined,
-    ctaIntro:    undefined,
+    subdomain:      undefined,
+    profileName:    undefined,
+    tagline:        undefined,
+    bio:            undefined,
+    ctaButton:      undefined,
+    ctaIntro:       undefined,
+    jobTitle:       undefined,
+    topics:         [],
+    quote:          undefined,
+    qualifications: undefined,
   }
 }
 
 function toForm(data: BookingPageResponse): BookingPageForm {
   return {
-    subdomain:   data.subdomain   ?? undefined,
-    profileName: data.profileName ?? undefined,
-    tagline:     data.tagline     ?? undefined,
-    bio:         data.bio         ?? undefined,
-    ctaButton:   data.ctaButton   ?? undefined,
-    ctaIntro:    data.ctaIntro    ?? undefined,
+    subdomain:      data.subdomain   ?? undefined,
+    profileName:    data.profileName ?? undefined,
+    tagline:        data.tagline     ?? undefined,
+    bio:            data.bio         ?? undefined,
+    ctaButton:      data.ctaButton   ?? undefined,
+    ctaIntro:       data.ctaIntro    ?? undefined,
+    jobTitle:       data.jobTitle    ?? undefined,
+    topics:         [...data.topics],
+    quote:          data.quote       ?? undefined,
+    qualifications: data.qualifications.join('\n') || undefined,
   }
+}
+
+function qualificationList(text: string | undefined): string[] {
+  return (text ?? '').split('\n').map(line => line.trim()).filter(Boolean)
 }
 
 const form = reactive<BookingPageForm>(emptyForm())
@@ -122,7 +143,7 @@ async function deleteAvatar() {
 
 // Validierung: Fehler nur für Felder anzeigen, die bereits verlassen wurden
 const errors = computed(() => {
-  const r = bookingPageSchema.safeParse(form)
+  const r = bookingPageSchema.safeParse({ ...form, qualifications: qualificationList(form.qualifications) })
   if (r.success) return {} as Record<string, string>
   return Object.fromEntries(r.error.issues.map(i => [String(i.path[0]), i.message]))
 })
@@ -151,6 +172,9 @@ async function save() {
   }
   if (savedTimer) clearTimeout(savedTimer)
   saveStatus.value = 'saving'
+  // Schnappschuss beim Absenden, nicht bei der Antwort: Was währenddessen schon ins nächste
+  // Feld getippt wurde, gälte sonst als gespeichert und ginge beim Verlassen verloren.
+  const sent = { ...form, topics: [...form.topics] }
   try {
     await $api('/booking-page', {
       method: 'PATCH',
@@ -161,10 +185,14 @@ async function save() {
         bio:         form.bio         || null,
         ctaButton:   form.ctaButton   || null,
         ctaIntro:    form.ctaIntro    || null,
+        jobTitle:    form.jobTitle    || null,
+        topics:      form.topics,
+        quote:       form.quote       || null,
+        qualifications: qualificationList(form.qualifications),
       },
     })
     saveStatus.value = 'saved'
-    Object.assign(lastSaved, form)
+    Object.assign(lastSaved, sent)
     savedTimer = setTimeout(() => { saveStatus.value = 'idle' }, 3000)
   } catch (err: any) {
     saveStatus.value = 'error'
@@ -173,9 +201,16 @@ async function save() {
 
 function onBlur(field: keyof BookingPageForm) {
   touched[field] = true
-  if (form[field] === lastSaved[field]) return
+  // JSON-Vergleich, weil die Schwerpunkte ein Array sind
+  if (JSON.stringify(form[field]) === JSON.stringify(lastSaved[field])) return
   activeField.value = field
   save()
+}
+
+// Schwerpunkte speichern sofort beim Hinzufügen oder Entfernen eines Schlagworts: Der
+// Wechsel geschieht per Enter oder Klick aufs Kreuz, ohne dass das Feld verlassen wird.
+function onTopicsChange() {
+  onBlur('topics')
 }
 
 const offers = ref<OfferResponse[]>([])
@@ -195,11 +230,6 @@ const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
 const features = [
   {
-    icon: 'i-lucide-link',
-    title: 'Subdomain & Buchungslink',
-    description: 'Deine persönliche Subdomain (z. B. anna.hxroom.de) – sichtbar für Klienten beim Buchungslink.',
-  },
-  {
     icon: 'i-lucide-image-plus',
     title: 'Logo hochladen',
     description: 'Eigenes Logo für Warteraum, Buchungsseite und E-Mails – Klienten sehen deine Marke, nicht HxRoom.',
@@ -208,11 +238,6 @@ const features = [
     icon: 'i-lucide-palette',
     title: 'Primärfarbe',
     description: 'Wähle eine Akzentfarbe, die auf deiner Buchungsseite und im Warteraum verwendet wird.',
-  },
-  {
-    icon: 'i-lucide-user-circle',
-    title: 'Profilseite: Coaching-Schwerpunkte',
-    description: 'Deine Coaching-Schwerpunkte als Tags – Grundlage für deine öffentliche Buchungsseite.',
   },
   {
     icon: 'i-lucide-globe',
@@ -308,18 +333,65 @@ const features = [
               <UInput v-model="form.profileName" class="w-1/2" :ui="inputUi" @blur="onBlur('profileName')" />
             </UFormField>
 
-            <UFormField label="Tagline" :error="visibleErrors.tagline">
+            <UFormField label="Berufsbezeichnung" help="Steht unter deinem Namen, z. B. „Systemischer Coach“." :error="visibleErrors.jobTitle">
+              <template v-if="fieldStatus('jobTitle')" #hint>
+                <SaveStatusHint :status="fieldStatus('jobTitle')" />
+              </template>
+              <UInput v-model="form.jobTitle" class="w-1/2" :ui="inputUi" @blur="onBlur('jobTitle')" />
+            </UFormField>
+
+            <UFormField label="Tagline" help="Die große Überschrift deiner Seite." :error="visibleErrors.tagline">
               <template v-if="fieldStatus('tagline')" #hint>
                 <SaveStatusHint :status="fieldStatus('tagline')" />
               </template>
               <UInput v-model="form.tagline" class="w-full" :ui="inputUi" @blur="onBlur('tagline')" />
             </UFormField>
 
-            <UFormField label="Über mich" :error="visibleErrors.bio">
+            <UFormField
+              label="Schwerpunkte"
+              :help="`Bis zu ${BOOKING_PAGE_MAX_TOPICS} Schlagworte, jeweils mit Enter bestätigen.`"
+              :error="visibleErrors.topics"
+            >
+              <template v-if="fieldStatus('topics')" #hint>
+                <SaveStatusHint :status="fieldStatus('topics')" />
+              </template>
+              <UInputTags
+                v-model="form.topics"
+                :max="BOOKING_PAGE_MAX_TOPICS"
+                :max-length="40"
+                add-on-blur
+                add-on-paste
+                placeholder="z. B. Beruflicher Neustart"
+                class="w-full"
+                :ui="inputUi"
+                @update:model-value="onTopicsChange"
+              />
+            </UFormField>
+          </div>
+        </SettingsSection>
+
+        <!-- Über mich -->
+        <SettingsSection title="Über mich" description="Der Abschnitt „Über mich“ auf deiner Seite. Leere Felder werden dort nicht angezeigt.">
+          <div class="flex flex-col gap-5">
+            <UFormField label="Text" :error="visibleErrors.bio">
               <template v-if="fieldStatus('bio')" #hint>
                 <SaveStatusHint :status="fieldStatus('bio')" />
               </template>
               <UTextarea v-model="form.bio" :rows="4" resize class="w-full" :ui="inputUi" @blur="onBlur('bio')" />
+            </UFormField>
+
+            <UFormField label="Zitat" help="Optional: ein Satz, der deine Haltung beschreibt." :error="visibleErrors.quote">
+              <template v-if="fieldStatus('quote')" #hint>
+                <SaveStatusHint :status="fieldStatus('quote')" />
+              </template>
+              <UInput v-model="form.quote" class="w-full" :ui="inputUi" @blur="onBlur('quote')" />
+            </UFormField>
+
+            <UFormField label="Qualifikationen" help="Optional: Ausbildungen, Zertifikate, Erfahrung – eine pro Zeile." :error="visibleErrors.qualifications">
+              <template v-if="fieldStatus('qualifications')" #hint>
+                <SaveStatusHint :status="fieldStatus('qualifications')" />
+              </template>
+              <UTextarea v-model="form.qualifications" :rows="3" autoresize class="w-full" :ui="inputUi" @blur="onBlur('qualifications')" />
             </UFormField>
           </div>
         </SettingsSection>
@@ -368,10 +440,18 @@ const features = [
                 <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" alt="">
                 <template v-else>{{ nameInitial }}</template>
               </div>
-              <p class="font-serif text-xl text-neutral-900 mb-1">{{ form.profileName }}</p>
-              <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-4">{{ form.tagline }}</p>
+              <p class="font-serif text-xl text-neutral-900 mb-0.5">{{ form.profileName }}</p>
+              <p v-if="form.jobTitle" class="text-[11px] text-neutral-400 mb-2">{{ form.jobTitle }}</p>
+              <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-3">{{ form.tagline }}</p>
+              <div v-if="form.topics.length" class="flex flex-wrap justify-center gap-1 max-w-[320px] mx-auto mb-4">
+                <span
+                  v-for="topic in form.topics"
+                  :key="topic"
+                  class="text-[10px] text-neutral-600 bg-neutral-100 rounded-full px-2 py-0.5"
+                >{{ topic }}</span>
+              </div>
               <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
-                {{ form.ctaButton }}
+                {{ form.ctaButton || 'Termin buchen' }}
               </span>
             </div>
             <!-- Format-Liste -->

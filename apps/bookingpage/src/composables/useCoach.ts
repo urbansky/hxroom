@@ -7,6 +7,16 @@ export interface CoachProfile {
   slug: string;
   logo: string | null;
   avatarUpdatedAt: string | null;
+  // Vom Coach unter Einstellungen → Buchungsseite gepflegt. Leere Felder blendet die Seite
+  // aus, statt Beispieltext zu zeigen.
+  tagline: string | null;
+  bio: string | null;
+  ctaButton: string | null;
+  ctaIntro: string | null;
+  jobTitle: string | null;
+  topics: string[];
+  quote: string | null;
+  qualifications: string[];
 }
 
 export const COACH_KEY = Symbol('coach');
@@ -16,6 +26,16 @@ export const COACH_KEY = Symbol('coach');
 export function getAvatarUrl(coach: CoachProfile): string | null {
   if (!coach.avatarUpdatedAt) return null;
   return `${apiUrl}/api/v1/booking-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;
+}
+
+/** Ob „Über mich“ etwas zu zeigen hat – sonst entfallen Abschnitt, Sprungmarke und Button. */
+export function hasAboutContent(coach: CoachProfile | null | undefined): boolean {
+  return !!(coach?.bio || coach?.quote || coach?.qualifications.length);
+}
+
+/** Beschriftung der Buchungs-Buttons: der Text des Coachs, sonst ein neutraler Standard. */
+export function bookingCtaLabel(coach: CoachProfile | null | undefined): string {
+  return coach?.ctaButton || 'Termin buchen';
 }
 
 export function useCoach() {

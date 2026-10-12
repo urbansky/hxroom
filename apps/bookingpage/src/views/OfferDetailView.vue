@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, reactive, ref, watch, type Ref } from 'vue';
-import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
+import { COACH_KEY, getAvatarUrl, hasAboutContent, type CoachProfile } from '../composables/useCoach';
 import { OFFERS_KEY, type UseOffersReturn } from '../composables/useOffers';
 import { useAvailableSlots } from '../composables/useAvailableSlots';
 import { formatOfferPrice, renderDescription, descriptionProseClasses } from '../utils/offers';
@@ -417,8 +417,10 @@ async function submitBooking() {
       </section>
     </template>
 
-    <USeparator class="max-w-[720px] mx-auto" />
-    <AboutSection />
+    <template v-if="coachProfile && hasAboutContent(coachProfile)">
+      <USeparator class="max-w-[720px] mx-auto" />
+      <AboutSection :coach="coachProfile" />
+    </template>
   </template>
 
   <SiteFooter />

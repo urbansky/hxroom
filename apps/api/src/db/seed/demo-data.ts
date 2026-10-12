@@ -212,7 +212,16 @@ export interface DemoCoach {
   slug: string; // ID-Bestandteil und organization.slug (= Subdomain)
   name: string;
   email: string;
-  bookingPage: { tagline: string; bio: string; ctaButton: string; ctaIntro: string } | null;
+  bookingPage: {
+    tagline: string;
+    bio: string;
+    ctaButton: string;
+    ctaIntro: string;
+    jobTitle?: string;
+    topics?: string[];
+    quote?: string;
+    qualifications?: string[];
+  } | null;
   /** false = frisch registrierter Coach ohne Daten, für Empty-States. */
   populated: boolean;
   /**
@@ -238,6 +247,14 @@ export const DEMO_COACHES: DemoCoach[] = [
         + 'nächsten Schritt zu gewinnen. Meine Arbeit ist ruhig, direkt und ohne Ratschläge von der Stange.',
       ctaButton: 'Termin auswählen',
       ctaIntro: 'Wähle ein Angebot und einen Zeitpunkt, der dir passt.',
+      jobTitle: 'Systemischer Coach (DGfC)',
+      topics: ['Beruflicher Neustart', 'Führung', 'Selbstvertrauen', 'Work-Life-Balance'],
+      quote: 'Klarheit entsteht nicht durch mehr Nachdenken, sondern durch andere Gespräche.',
+      qualifications: [
+        'Systemische Coaching-Ausbildung (DGfC)',
+        'Zehn Jahre Unternehmensberatung, davon vier in leitender Rolle',
+        'Weiterbildung Lösungsfokussierte Kurzzeitberatung',
+      ],
     },
   },
   {
@@ -263,6 +280,8 @@ export const DEMO_COACHES: DemoCoach[] = [
         + 'Mein Zugang ist systemisch – wir schauen auf das Zusammenspiel, nicht auf einzelne Schuldige.',
       ctaButton: 'Termin anfragen',
       ctaIntro: 'Wähle ein Format und einen Zeitpunkt.',
+      jobTitle: 'Teamcoach',
+      topics: ['Teamentwicklung', 'Konflikte'],
     },
   },
 ];

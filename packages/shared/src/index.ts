@@ -43,6 +43,9 @@ export const DEFAULT_SESSION_DURATION = 60;
 export const DEFAULT_PRIMARY_COLOR = '#8B9E8A';
 
 // Booking page settings
+export const BOOKING_PAGE_MAX_TOPICS = 6;
+export const BOOKING_PAGE_MAX_QUALIFICATIONS = 8;
+
 export const bookingPageSchema = z.object({
   subdomain:   z.string().min(3).max(63).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/)
     .refine((s) => !isReservedSlug(s), 'This subdomain is reserved').optional(),
@@ -51,6 +54,10 @@ export const bookingPageSchema = z.object({
   bio:         z.string().max(2000).nullish(),
   ctaButton:   z.string().max(80).nullish(),
   ctaIntro:    z.string().max(160).nullish(),
+  jobTitle:    z.string().max(120).nullish(),
+  topics:      z.array(z.string().trim().min(1).max(40)).max(BOOKING_PAGE_MAX_TOPICS, `At most ${BOOKING_PAGE_MAX_TOPICS} topics`).optional(),
+  quote:       z.string().max(300).nullish(),
+  qualifications: z.array(z.string().trim().min(1).max(160)).max(BOOKING_PAGE_MAX_QUALIFICATIONS, `At most ${BOOKING_PAGE_MAX_QUALIFICATIONS} qualifications`).optional(),
 });
 export type BookingPageDto = z.infer<typeof bookingPageSchema>;
 

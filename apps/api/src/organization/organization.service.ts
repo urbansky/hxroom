@@ -46,6 +46,42 @@ export class OrganizationService {
     return org;
   }
 
+  /**
+   * Profil der öffentlichen Buchungsseite: die Auflösung aus findBySlug plus die Texte, die
+   * der Coach unter Einstellungen → Buchungsseite pflegt. Eigene Abfrage statt mehr Spalten in
+   * findBySlug, weil die übrigen Aufrufer nur ID und Namen brauchen.
+   */
+  async findPublicProfile(slug: string) {
+    const { deletionScheduledFor: _, ...org } = await this.findBySlug(slug);
+
+    const [profile] = await this.db
+      .select({
+        tagline:        bookingPage.tagline,
+        bio:            bookingPage.bio,
+        ctaButton:      bookingPage.ctaButton,
+        ctaIntro:       bookingPage.ctaIntro,
+        jobTitle:       bookingPage.jobTitle,
+        topics:         bookingPage.topics,
+        quote:          bookingPage.quote,
+        qualifications: bookingPage.qualifications,
+      })
+      .from(bookingPage)
+      .where(eq(bookingPage.organizationId, org.id))
+      .limit(1);
+
+    return {
+      ...org,
+      tagline:        profile?.tagline ?? null,
+      bio:            profile?.bio ?? null,
+      ctaButton:      profile?.ctaButton ?? null,
+      ctaIntro:       profile?.ctaIntro ?? null,
+      jobTitle:       profile?.jobTitle ?? null,
+      topics:         profile?.topics ?? [],
+      quote:          profile?.quote ?? null,
+      qualifications: profile?.qualifications ?? [],
+    };
+  }
+
   // Wie findBySlug, nur über die ID – gebraucht dort, wo nur die organizationId
   // vorliegt (z. B. BookingsService.confirm, das von der Buchung ausgeht).
   async findById(organizationId: string) {
