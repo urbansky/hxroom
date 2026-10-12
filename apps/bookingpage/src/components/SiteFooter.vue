@@ -3,7 +3,7 @@
     <template #left>
       <span class="text-xs text-dimmed">
         Gebrandeter HxRoom von
-        <a href="https://hxroom.io" target="_blank" class="text-muted hover:text-default transition-colors no-underline">hxroom.io</a>
+        <a href="https://hxroom.de" target="_blank" class="text-muted hover:text-default transition-colors no-underline">hxroom.de</a>
         &nbsp;·&nbsp;DSGVO-konform&nbsp;·&nbsp;Server Deutschland
       </span>
     </template>
