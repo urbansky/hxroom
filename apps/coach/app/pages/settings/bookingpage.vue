@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { OfferResponse } from '@hxroom/shared'
-import { BOOKING_PAGE_MAX_TOPICS, bookingPageSchema } from '@hxroom/shared'
+import type { BookingPageProfile, OfferResponse } from '@hxroom/shared'
+import { BOOKING_PAGE_MAX_TOPICS, bookingPageCtaLabel, bookingPageSchema, hasBookingPageAbout } from '@hxroom/shared'
+import { BookingPageAbout, BookingPageCoachCard, BookingPageHero, BookingPageOfferItem } from '@hxroom/ui'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -223,8 +224,22 @@ await useFetch<OfferResponse[]>('/offers', {
   },
 })
 
-// Cookie statt ref, damit die Einstellung Reloads und Seitenwechsel übersteht.
-const showOfferDescriptions = useCookie<boolean>('landingpage-show-offer-descriptions', { default: () => true })
+// Vorschau: dasselbe Profil, das die Buchungsseite vom öffentlichen Endpunkt bekommt, nur
+// aus dem Formular – leere Felder blendet sie genauso aus wie die echte Seite.
+const previewProfile = computed<BookingPageProfile>(() => ({
+  name:           form.profileName?.trim() || 'Dein Name',
+  avatarUrl:      avatarUrl.value,
+  tagline:        form.tagline || null,
+  bio:            form.bio || null,
+  ctaButton:      form.ctaButton || null,
+  ctaIntro:       form.ctaIntro || null,
+  jobTitle:       form.jobTitle || null,
+  topics:         form.topics,
+  quote:          form.quote || null,
+  qualifications: qualificationList(form.qualifications),
+}))
+const previewShowAbout = computed(() => hasBookingPageAbout(previewProfile.value))
+const previewCtaLabel = computed(() => bookingPageCtaLabel(previewProfile.value.ctaButton))
 
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
@@ -432,57 +447,54 @@ const features = [
               <span class="text-xs text-neutral-500 truncate">{{ form.subdomain }}.{{ rootDomain }}</span>
             </div>
           </div>
-          <!-- Seiten-Inhalt -->
-          <div class="bg-neutral-50 p-4 flex flex-col gap-3">
-            <!-- Hero -->
-            <div class="text-center px-4 py-6 rounded-xl bg-white border border-neutral-200">
-              <div class="w-16 h-16 rounded-full overflow-hidden bg-primary-500 flex items-center justify-center font-serif text-3xl text-white mx-auto mb-3 ring-2 ring-primary-500/25">
-                <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" alt="">
-                <template v-else>{{ nameInitial }}</template>
-              </div>
-              <p class="font-serif text-xl text-neutral-900 mb-0.5">{{ form.profileName }}</p>
-              <p v-if="form.jobTitle" class="text-[11px] text-neutral-400 mb-2">{{ form.jobTitle }}</p>
-              <p class="text-xs text-neutral-500 leading-relaxed max-w-[220px] mx-auto mb-3">{{ form.tagline }}</p>
-              <div v-if="form.topics.length" class="flex flex-wrap justify-center gap-1 max-w-[320px] mx-auto mb-4">
-                <span
-                  v-for="topic in form.topics"
-                  :key="topic"
-                  class="text-[10px] text-neutral-600 bg-neutral-100 rounded-full px-2 py-0.5"
-                >{{ topic }}</span>
-              </div>
-              <span class="inline-block bg-primary-600 text-white text-xs font-medium px-4 py-2 rounded-lg">
-                {{ form.ctaButton || 'Termin buchen' }}
-              </span>
-            </div>
-            <!-- Format-Liste -->
-            <div class="flex flex-col gap-2">
-              <div class="flex justify-end -mb-1">
-                <button
-                  type="button"
-                  class="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
-                  @click="showOfferDescriptions = !showOfferDescriptions"
-                >
-                  <UIcon :name="showOfferDescriptions ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="w-3 h-3" />
-                  {{ showOfferDescriptions ? 'Beschreibungen ausblenden' : 'Beschreibungen anzeigen' }}
-                </button>
-              </div>
-              <div
-                v-for="offer in activeOffers"
-                :key="offer.id"
-                class="flex items-center justify-between gap-3 px-3 py-2.5 bg-white border border-neutral-200 rounded-lg"
-              >
-                <div class="min-w-0">
-                  <p class="text-sm font-bold text-neutral-900">{{ offer.name }}</p>
-                  <p class="text-xs text-neutral-400">{{ offer.durationMinutes }} min · Video</p>
-                  <div
-                    v-if="showOfferDescriptions && descriptionPreview(offer.description)"
-                    class="mt-1 text-neutral-500 [&_h2]:text-neutral-900 [&_h3]:text-neutral-900 [&_strong]:text-neutral-900"
-                    :class="descriptionProseClasses"
-                    v-html="renderDescription(offer.description)"
-                  />
+          <!-- Seiten-Inhalt: dieselben Bausteine wie die Buchungsseite (@hxroom/ui), gespeist
+               aus dem Formular statt aus dem Gespeicherten – Änderungen erscheinen beim Tippen.
+               inert: Links und Buttons sind nur zu sehen, nicht zu benutzen. Eigener
+               Scrollbereich, damit die ganze Seite in den Rahmen passt. -->
+          <div class="bg-default max-h-[calc(100vh-11rem)] overflow-y-auto" inert>
+            <!-- Kopfzeile der Buchungsseite, nachgebaut ohne UHeader (der ist für den
+                 Seitenkopf der App gedacht, nicht für eine Fläche in der Seite) -->
+            <div class="h-16 border-b border-default px-6 lg:px-10 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="size-9 rounded-full overflow-hidden bg-primary flex items-center justify-center font-serif text-lg text-inverted shrink-0">
+                  <img v-if="avatarUrl" :src="avatarUrl" class="size-full object-cover" alt="">
+                  <template v-else>{{ previewProfile.name.charAt(0) }}</template>
                 </div>
-                <span class="font-serif text-base text-primary-600 shrink-0">{{ formatPrice(offer.priceCents) }}</span>
+                <span class="font-serif text-xl text-highlighted tracking-wide truncate">{{ previewProfile.name }}</span>
               </div>
+              <div class="hidden sm:flex items-center gap-6">
+                <span v-if="previewShowAbout" class="text-base text-muted tracking-wide">Über mich</span>
+                <span class="text-base text-muted tracking-wide">Sitzungsarten</span>
+              </div>
+              <UButton color="primary" icon="i-lucide-calendar" size="lg" class="px-5 max-w-56" :ui="{ label: 'truncate' }" :label="previewCtaLabel" />
+            </div>
+
+            <section class="max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-24 pb-10">
+              <BookingPageHero :profile="previewProfile" cta-to="#offers" />
+              <BookingPageCoachCard :profile="previewProfile" />
+            </section>
+
+            <USeparator class="max-w-[720px] mx-auto" />
+            <section class="max-w-[720px] mx-auto px-6 py-10">
+              <div class="flex items-baseline gap-4 mb-7">
+                <h2 class="font-serif text-3xl text-highlighted">Sitzungsarten</h2>
+                <span class="text-xs text-dimmed tracking-wide">Schritt 1 · Angebot wählen</span>
+              </div>
+              <div class="flex flex-col gap-3">
+                <BookingPageOfferItem v-for="offer in activeOffers" :key="offer.id" :offer="offer" to="#offers" />
+                <p v-if="!activeOffers.length" class="text-sm text-muted">
+                  Noch keine aktiven Sitzungsangebote – Klienten sehen hier deine Angebote.
+                </p>
+              </div>
+            </section>
+
+            <template v-if="previewShowAbout">
+              <USeparator class="max-w-[720px] mx-auto" />
+              <BookingPageAbout :profile="previewProfile" />
+            </template>
+
+            <div class="border-t border-default px-6 lg:px-10 py-8 text-xs text-dimmed">
+              Gebrandeter HxRoom von <span class="text-muted">hxroom.de</span>&nbsp;·&nbsp;Server in Deutschland
             </div>
           </div>
         </div>

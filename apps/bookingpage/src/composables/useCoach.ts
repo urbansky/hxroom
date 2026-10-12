@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue';
+import type { BookingPageProfile } from '@hxroom/shared';
 import { apiUrl, orgSlug } from '../utils/api';
 
 export interface CoachProfile {
@@ -28,14 +29,20 @@ export function getAvatarUrl(coach: CoachProfile): string | null {
   return `${apiUrl}/api/v1/booking-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;
 }
 
-/** Ob „Über mich“ etwas zu zeigen hat – sonst entfallen Abschnitt, Sprungmarke und Button. */
-export function hasAboutContent(coach: CoachProfile | null | undefined): boolean {
-  return !!(coach?.bio || coach?.quote || coach?.qualifications.length);
-}
-
-/** Beschriftung der Buchungs-Buttons: der Text des Coachs, sonst ein neutraler Standard. */
-export function bookingCtaLabel(coach: CoachProfile | null | undefined): string {
-  return coach?.ctaButton || 'Termin buchen';
+/** Profil in der Form der geteilten Buchungsseiten-Komponenten (@hxroom/ui). */
+export function toBookingPageProfile(coach: CoachProfile): BookingPageProfile {
+  return {
+    name:           coach.name,
+    avatarUrl:      getAvatarUrl(coach),
+    tagline:        coach.tagline,
+    bio:            coach.bio,
+    ctaButton:      coach.ctaButton,
+    ctaIntro:       coach.ctaIntro,
+    jobTitle:       coach.jobTitle,
+    topics:         coach.topics,
+    quote:          coach.quote,
+    qualifications: coach.qualifications,
+  };
 }
 
 export function useCoach() {

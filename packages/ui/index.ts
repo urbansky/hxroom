@@ -1,5 +1,12 @@
 export { default as Logo } from './components/Logo.vue';
 
+// Bausteine der öffentlichen Buchungsseite. Die Buchungsseite selbst und die Vorschau unter
+// Einstellungen → Buchungsseite (Coach-App) rendern dieselben Komponenten.
+export { default as BookingPageHero } from './components/booking-page/BookingPageHero.vue';
+export { default as BookingPageCoachCard } from './components/booking-page/BookingPageCoachCard.vue';
+export { default as BookingPageAbout } from './components/booking-page/BookingPageAbout.vue';
+export { default as BookingPageOfferItem } from './components/booking-page/BookingPageOfferItem.vue';
+
 // Die Call-Oberfläche. Rollenfrei gebaut: Was Coach und Klient unterscheidet, kommt beim
 // Einbinden als Props und Slots herein (technisches-konzept.md §8). Beide Frontends
 // importieren von hier – die Nuxt-App wie die Vite-SPA.

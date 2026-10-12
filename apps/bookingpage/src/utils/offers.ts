@@ -21,7 +21,5 @@ export function renderDescription(doc: RichTextDoc): string {
 
 export const descriptionProseClasses = 'text-[15px] text-(--ui-text-muted) leading-[1.8] [&_p]:my-0 [&_p+p]:mt-4 [&_ul]:my-0 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:my-0 [&_ol]:pl-5 [&_ol]:list-decimal [&_li]:my-0 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-normal [&_h2]:text-(--ui-text) [&_h3]:font-serif [&_h3]:text-lg [&_h3]:font-normal [&_h3]:text-(--ui-text) [&_strong]:font-medium [&_strong]:text-(--ui-text) [&_a]:text-primary [&_a]:underline';
 
-export function formatOfferPrice(cents: number | null): string {
-  if (cents === null) return 'Kostenlos';
-  return (cents / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
-}
+// Liegt in @hxroom/shared, weil die Vorschau in der Coach-App dieselbe Angebotszeile zeigt.
+export { formatOfferPrice } from '@hxroom/shared';

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject, computed, type Ref } from 'vue';
-import { COACH_KEY, getAvatarUrl, hasAboutContent, type CoachProfile } from '../composables/useCoach';
+import { hasBookingPageAbout } from '@hxroom/shared';
+import { COACH_KEY, getAvatarUrl, type CoachProfile } from '../composables/useCoach';
 
 // nav: die beiden Anker-Links "Über mich"/"Sitzungsarten" – nur auf Startseite und
 // Angebotsseite sinnvoll, nicht auf den Landeseiten aus den E-Mails.
@@ -9,7 +10,7 @@ const { nav = false } = defineProps<{ nav?: boolean }>();
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
-const showAbout = computed(() => hasAboutContent(coachProfile?.value));
+const showAbout = computed(() => hasBookingPageAbout(coachProfile?.value));
 </script>
 
 <template>

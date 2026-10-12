@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, computed, reactive, ref, watch, type Ref } from 'vue';
-import { COACH_KEY, getAvatarUrl, hasAboutContent, type CoachProfile } from '../composables/useCoach';
+import { COACH_KEY, getAvatarUrl, toBookingPageProfile, type CoachProfile } from '../composables/useCoach';
 import { OFFERS_KEY, type UseOffersReturn } from '../composables/useOffers';
 import { useAvailableSlots } from '../composables/useAvailableSlots';
 import { formatOfferPrice, renderDescription, descriptionProseClasses } from '../utils/offers';
@@ -10,12 +10,11 @@ import SiteHeader from '../components/SiteHeader.vue';
 import SiteFooter from '../components/SiteFooter.vue';
 import ContentCard from '../components/ContentCard.vue';
 import SectionHeading from '../components/SectionHeading.vue';
-import OfferListItem from '../components/OfferListItem.vue';
-import AboutSection from '../components/AboutSection.vue';
+import { BookingPageAbout, BookingPageOfferItem } from '@hxroom/ui';
 import StatusPanel from '../components/StatusPanel.vue';
 import AppointmentSummary from '../components/AppointmentSummary.vue';
 import LoadingState from '../components/LoadingState.vue';
-import { createBookingSchema, type AvailableSlotResponse } from '@hxroom/shared';
+import { createBookingSchema, hasBookingPageAbout, type AvailableSlotResponse } from '@hxroom/shared';
 
 const props = defineProps<{ id: string }>();
 
@@ -412,14 +411,14 @@ async function submitBooking() {
         <SectionHeading title="Andere Sitzungsarten" hint="Passt doch nicht ganz?" class="mb-7" />
 
         <div class="flex flex-col gap-3">
-          <OfferListItem v-for="other in otherOffers" :key="other.id" :offer="other" />
+          <BookingPageOfferItem v-for="other in otherOffers" :key="other.id" :offer="other" :to="`/offers/${other.id}`" />
         </div>
       </section>
     </template>
 
-    <template v-if="coachProfile && hasAboutContent(coachProfile)">
+    <template v-if="coachProfile && hasBookingPageAbout(coachProfile)">
       <USeparator class="max-w-[720px] mx-auto" />
-      <AboutSection :coach="coachProfile" />
+      <BookingPageAbout :profile="toBookingPageProfile(coachProfile)" />
     </template>
   </template>
 

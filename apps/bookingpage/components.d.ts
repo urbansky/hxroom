@@ -11,12 +11,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AboutSection: typeof import('./src/components/AboutSection.vue')['default']
     AppointmentSummary: typeof import('./src/components/AppointmentSummary.vue')['default']
     CallStage: typeof import('./src/components/CallStage.vue')['default']
     ContentCard: typeof import('./src/components/ContentCard.vue')['default']
     LoadingState: typeof import('./src/components/LoadingState.vue')['default']
-    OfferListItem: typeof import('./src/components/OfferListItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SectionHeading: typeof import('./src/components/SectionHeading.vue')['default']
@@ -36,6 +34,7 @@ declare module 'vue' {
     UHeader: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Header.vue')['default']
     UIcon: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/vue/components/Icon.vue')['default']
     UInput: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Input.vue')['default']
+    ULink: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/vue/overrides/vue-router/Link.vue')['default']
     UModal: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Modal.vue')['default']
     USelect: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
     USeparator: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Separator.vue')['default']
