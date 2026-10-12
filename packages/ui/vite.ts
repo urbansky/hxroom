@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ui from '@nuxt/ui/vite';
+import type { Plugin } from 'vite';
 
 type UIOptions = Parameters<typeof ui>[0];
 
@@ -46,7 +47,7 @@ function sharedIcons(dir = COMPONENTS_DIR, found = new Set<string>()): string[] 
  * `colorMode: false`, weil sie bewusst nur hell erscheint.
  */
 export function hxroomUI(options: UIOptions = {}) {
-  return ui({
+  return [dedupeRouter(), ui({
     theme: {
       colors: ['primary', 'secondary', 'sage', 'gold', 'success', 'info', 'warning', 'error'],
     },
@@ -77,5 +78,22 @@ export function hxroomUI(options: UIOptions = {}) {
             icons: [...sharedIcons(), ...(options.icon?.clientBundle?.icons ?? [])],
           },
     },
-  });
+  })];
+}
+
+/**
+ * Hält `vue-router` (und `vue`) im Bundle auf genau einer Kopie – der der App.
+ *
+ * Dieses Plugin kommt aus `@hxroom/ui`, und das Paket löst als Peer eine eigene @nuxt/ui-Kopie
+ * auf (pnpm-Peer-Variante, siehe pnpm-lock.yaml). Deren Resolver schreibt Importe mit Pfaden in
+ * *diese* Kopie, und ihre Link-Komponente holt `RouterLink`/`useRoute` dann aus einer zweiten
+ * vue-router-Kopie. Deren Injection-Keys sind andere Symbole als die des App-Routers: Jeder
+ * UButton mit internem `to` bricht beim Einhängen ab, `useRoute()` liefert undefined.
+ * `resolve.dedupe` löst beide Pakete stets vom App-Root aus auf.
+ */
+function dedupeRouter(): Plugin {
+  return {
+    name: 'hxroom:dedupe-router',
+    config: () => ({ resolve: { dedupe: ['vue', 'vue-router'] } }),
+  };
 }
