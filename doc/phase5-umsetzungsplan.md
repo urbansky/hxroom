@@ -13,9 +13,9 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 **Etappe A – vorführbereit (Ziel ~15.10.2026)**
 
 1. ✅ Backup und Fehlerüberwachung
-2. Erinnerungsmails 24 h / 1 h vor dem Termin
-3. Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
-   - 3.1 Impressum und Datenschutzerklärung in den Einstellungen des Coachs, als eigene Seiten der Buchungsseite
+2. Erinnerungsmails 24 h / 1 h vor dem Termin – umgesetzt, Inbetriebnahme offen
+3. Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten – umgesetzt, Inbetriebnahme offen
+   - 3.1 Impressum und Datenschutzerklärung in den Einstellungen des Coachs, als eigene Seiten der Buchungsseite – geplant
 4. `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
