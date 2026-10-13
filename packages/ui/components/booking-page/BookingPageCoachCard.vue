@@ -9,9 +9,14 @@ const { profile } = defineProps<{ profile: BookingPageProfile }>()
 
 <template>
   <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 overflow-hidden">
-    <div class="coach-card-header relative h-[240px] flex items-center justify-center">
-      <img v-if="profile.avatarUrl" :src="profile.avatarUrl" :alt="profile.name" class="absolute inset-0 size-full object-cover object-top">
-      <span v-else class="font-serif text-8xl text-primary/70 select-none" aria-hidden="true">{{ profile.name.charAt(0) }}</span>
+    <!-- Das Profilfoto ist immer quadratisch (512 × 512, siehe transcodeAvatar). Als Fläche über
+         die ganze Kartenbreite bliebe davon nur ein Streifen übrig – rund in der Mitte bleibt
+         das Gesicht ganz, und Foto und Initiale stehen an derselben Stelle. -->
+    <div class="coach-card-header h-[240px] flex items-center justify-center">
+      <div class="size-44 rounded-full overflow-hidden ring-4 ring-white/70 dark:ring-neutral-900/70 bg-white/30 dark:bg-neutral-900/30 flex items-center justify-center">
+        <img v-if="profile.avatarUrl" :src="profile.avatarUrl" :alt="profile.name" class="size-full object-cover">
+        <span v-else class="font-serif text-8xl text-primary/70 select-none" aria-hidden="true">{{ profile.name.charAt(0) }}</span>
+      </div>
     </div>
     <div class="p-6 sm:p-7 flex flex-col gap-4">
       <div>
@@ -29,8 +34,7 @@ const { profile } = defineProps<{ profile: BookingPageProfile }>()
 </template>
 
 <style scoped>
-/* Farbfläche hinter dem Profilbild – trägt den Bildkopf samt Initiale, wenn der Coach noch
-   kein eigenes Foto hochgeladen hat, und füllt bei Hochformat-Bildern die Ränder. */
+/* Farbfläche hinter dem runden Profilbild bzw. der Initiale. */
 .coach-card-header {
   background:
     radial-gradient(ellipse 60% 80% at 40% 60%, rgba(92, 110, 91, 0.2) 0%, transparent 60%),
