@@ -449,52 +449,55 @@ const features = [
           </div>
           <!-- Seiten-Inhalt: dieselben Bausteine wie die Buchungsseite (@hxroom/ui), gespeist
                aus dem Formular statt aus dem Gespeicherten – Änderungen erscheinen beim Tippen.
-               inert: Links und Buttons sind nur zu sehen, nicht zu benutzen. Eigener
-               Scrollbereich, damit die ganze Seite in den Rahmen passt. -->
-          <div class="bg-default max-h-[calc(100vh-11rem)] overflow-y-auto" inert>
-            <!-- Kopfzeile der Buchungsseite, nachgebaut ohne UHeader (der ist für den
-                 Seitenkopf der App gedacht, nicht für eine Fläche in der Seite) -->
-            <div class="h-16 border-b border-default px-6 lg:px-10 flex items-center justify-between gap-4">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <div class="size-9 rounded-full overflow-hidden bg-primary flex items-center justify-center font-serif text-lg text-inverted shrink-0">
-                  <img v-if="avatarUrl" :src="avatarUrl" class="size-full object-cover" alt="">
-                  <template v-else>{{ previewProfile.name.charAt(0) }}</template>
+               Eigener Scrollbereich, damit die ganze Seite in den Rahmen passt. inert nur am
+               Inhalt: Links und Buttons sind zu sehen, aber nicht zu benutzen. Am Scrollbereich
+               selbst schluckte es auch Mausrad und Wischen. -->
+          <div class="bg-default max-h-[calc(100vh-11rem)] overflow-y-auto overscroll-contain" data-preview-scroller>
+            <div inert>
+              <!-- Kopfzeile der Buchungsseite, nachgebaut ohne UHeader (der ist für den
+                   Seitenkopf der App gedacht, nicht für eine Fläche in der Seite) -->
+              <div class="h-16 border-b border-default px-6 lg:px-10 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="size-9 rounded-full overflow-hidden bg-primary flex items-center justify-center font-serif text-lg text-inverted shrink-0">
+                    <img v-if="avatarUrl" :src="avatarUrl" class="size-full object-cover" alt="">
+                    <template v-else>{{ previewProfile.name.charAt(0) }}</template>
+                  </div>
+                  <span class="font-serif text-xl text-highlighted tracking-wide truncate">{{ previewProfile.name }}</span>
                 </div>
-                <span class="font-serif text-xl text-highlighted tracking-wide truncate">{{ previewProfile.name }}</span>
+                <div class="hidden sm:flex items-center gap-6">
+                  <span v-if="previewShowAbout" class="text-base text-muted tracking-wide">Über mich</span>
+                  <span class="text-base text-muted tracking-wide">Sitzungsarten</span>
+                </div>
+                <UButton color="primary" icon="i-lucide-calendar" size="lg" class="px-5 max-w-56" :ui="{ label: 'truncate' }" :label="previewCtaLabel" />
               </div>
-              <div class="hidden sm:flex items-center gap-6">
-                <span v-if="previewShowAbout" class="text-base text-muted tracking-wide">Über mich</span>
-                <span class="text-base text-muted tracking-wide">Sitzungsarten</span>
-              </div>
-              <UButton color="primary" icon="i-lucide-calendar" size="lg" class="px-5 max-w-56" :ui="{ label: 'truncate' }" :label="previewCtaLabel" />
-            </div>
 
-            <section class="max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-24 pb-10">
-              <BookingPageHero :profile="previewProfile" cta-to="#offers" />
-              <BookingPageCoachCard :profile="previewProfile" />
-            </section>
+              <section class="max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-24 pb-10">
+                <BookingPageHero :profile="previewProfile" cta-to="#offers" />
+                <BookingPageCoachCard :profile="previewProfile" />
+              </section>
 
-            <USeparator class="max-w-[720px] mx-auto" />
-            <section class="max-w-[720px] mx-auto px-6 py-10">
-              <div class="flex items-baseline gap-4 mb-7">
-                <h2 class="font-serif text-3xl text-highlighted">Sitzungsarten</h2>
-                <span class="text-xs text-dimmed tracking-wide">Schritt 1 · Angebot wählen</span>
-              </div>
-              <div class="flex flex-col gap-3">
-                <BookingPageOfferItem v-for="offer in activeOffers" :key="offer.id" :offer="offer" to="#offers" />
-                <p v-if="!activeOffers.length" class="text-sm text-muted">
-                  Noch keine aktiven Sitzungsangebote – Klienten sehen hier deine Angebote.
-                </p>
-              </div>
-            </section>
-
-            <template v-if="previewShowAbout">
               <USeparator class="max-w-[720px] mx-auto" />
-              <BookingPageAbout :profile="previewProfile" />
-            </template>
+              <section class="max-w-[720px] mx-auto px-6 py-10">
+                <div class="flex items-baseline gap-4 mb-7">
+                  <h2 class="font-serif text-3xl text-highlighted">Sitzungsarten</h2>
+                  <span class="text-xs text-dimmed tracking-wide">Schritt 1 · Angebot wählen</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                  <BookingPageOfferItem v-for="offer in activeOffers" :key="offer.id" :offer="offer" to="#offers" />
+                  <p v-if="!activeOffers.length" class="text-sm text-muted">
+                    Noch keine aktiven Sitzungsangebote – Klienten sehen hier deine Angebote.
+                  </p>
+                </div>
+              </section>
 
-            <div class="border-t border-default px-6 lg:px-10 py-8 text-xs text-dimmed">
-              Gebrandeter HxRoom von <span class="text-muted">hxroom.de</span>&nbsp;·&nbsp;Server in Deutschland
+              <template v-if="previewShowAbout">
+                <USeparator class="max-w-[720px] mx-auto" />
+                <BookingPageAbout :profile="previewProfile" />
+              </template>
+
+              <div class="border-t border-default px-6 lg:px-10 py-8 text-xs text-dimmed">
+                Gebrandeter HxRoom von <span class="text-muted">hxroom.de</span>&nbsp;·&nbsp;Server in Deutschland
+              </div>
             </div>
           </div>
         </div>
