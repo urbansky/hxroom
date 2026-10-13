@@ -130,6 +130,8 @@ services:
 
 **Object Storage – zwei Umgebungen, ein Client:** In Produktion liegt der Speicher außerhalb des Stacks, bei **Hetzner Object Storage**; `docker-compose.yml` enthält deshalb keinen Object-Store-Container, und `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE` und `S3_BUCKET` kommen aus der `.env`. In der Entwicklung läuft weiter **RustFS** in `docker-compose.dev.yml`, mit festen Testschlüsseln. Der Client-Code ist in beiden Fällen derselbe, ebenso Bucket-Struktur und Key-Schema.
 
+**Redeploy** (`infra/redeploy.sh`, auf dem Server nach `git pull`): holt die Images aus der CI, baut `caddy` und `backup` und startet per `up -d` nur die Dienste neu, deren Image, Compose-Konfiguration oder `.env` sich geändert hat. Ein Frontend-Update unterbricht so kein laufendes Gespräch. Die als Einzeldatei eingebundene Konfiguration (`caddy/Caddyfile`, `livekit/livekit.yaml`) erkennt Compose nicht. Das Skript merkt sich deshalb ihre Prüfsummen in `infra/.redeploy-state/` und startet den Dienst nur nach einer Änderung neu. Ein `caddy reload` genügt dafür nicht: Git ersetzt die Datei durch eine neue, und der laufende Container sieht über die Einbindung weiter die alte.
+
 **Upgrade-Pfad:** Einzelne Services (z.B. `postgres`, `redis`) können ohne Architekturänderung auf verwaltete Hetzner-Managed-Angebote ausgelagert werden.
 
 ### Eingehende Ports und Hetzner-Cloud-Firewall
