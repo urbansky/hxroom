@@ -9,6 +9,9 @@ dist
 # Betriebs-Instanz: Daten von Beszel liegen als Bind-Mount neben der Compose-Datei
 infra-status/beszel_data/
 
+# Prüfsummen der eingebundenen Konfiguration, geführt von infra/redeploy.sh auf dem Server
+infra/.redeploy-state/
+
 # Environment
 .env
 .env.local
