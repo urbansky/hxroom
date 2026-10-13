@@ -363,8 +363,14 @@ async function submitBooking() {
                     :class="[
                       'aspect-square rounded-full text-sm flex items-center justify-center transition-colors outline-primary/25 focus-visible:outline-3',
                       !cell.inMonth && 'invisible',
-                      cell.hasSlots ? 'cursor-pointer bg-primary/15 font-medium text-primary hover:bg-primary/25' : 'text-dimmed cursor-default',
-                      cell.dateKey === selectedDayKey && 'bg-primary text-inverted hover:bg-primary',
+                      // Ausschließend statt übereinander: Bei bg-primary/15 und bg-primary am selben
+                      // Element entscheidet die Reihenfolge im erzeugten CSS, nicht die im Template –
+                      // der gewählte Tag blieb dadurch so blass wie jeder freie.
+                      cell.dateKey === selectedDayKey
+                        ? 'cursor-pointer bg-primary text-inverted font-medium shadow-sm'
+                        : cell.hasSlots
+                          ? 'cursor-pointer bg-primary/15 font-medium text-primary hover:bg-primary/25'
+                          : 'text-dimmed cursor-default',
                       cell.isToday && cell.dateKey !== selectedDayKey && 'ring-1 ring-inset ring-primary',
                     ]"
                     @click="selectDay(cell.dateKey)"
