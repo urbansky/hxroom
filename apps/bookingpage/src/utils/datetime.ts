@@ -1,6 +1,14 @@
 // Alle Zeiten der Buchungsseite erscheinen in der Zeitzone des Coachs, nicht in der des
-// Klienten: die Seite weist die Uhrzeiten ausdrücklich als MEZ aus.
+// Klienten: die Seite weist die Uhrzeiten ausdrücklich als deutsche Zeit (MEZ/MESZ) aus.
 export const TIME_ZONE = 'Europe/Berlin';
+
+const timeZoneNameFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, timeZoneName: 'short' });
+
+/** "MESZ" im Sommer, "MEZ" im Winter – für den Tag, zu dem die Uhrzeiten gehören. */
+export function formatTimeZoneName(value: Date | string): string {
+  const date = value instanceof Date ? value : new Date(value);
+  return timeZoneNameFormatter.formatToParts(date).find((p) => p.type === 'timeZoneName')?.value ?? 'MEZ';
+}
 
 const dayDateFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, weekday: 'long', day: 'numeric', month: 'long' });
 const timeFormatter = new Intl.DateTimeFormat('de-DE', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' });

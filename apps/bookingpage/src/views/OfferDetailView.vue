@@ -5,7 +5,7 @@ import { OFFERS_KEY, type UseOffersReturn } from '../composables/useOffers';
 import { useAvailableSlots } from '../composables/useAvailableSlots';
 import { formatOfferPrice, renderDescription, descriptionProseClasses } from '../utils/offers';
 import { apiUrl, orgSlug } from '../utils/api';
-import { dateKey, dateKeyToUtcNoon, formatDayDate, formatMonthYear, formatTimeRange, weekdayOfDateKey } from '../utils/datetime';
+import { dateKey, dateKeyToUtcNoon, formatDayDate, formatMonthYear, formatTimeRange, formatTimeZoneName, weekdayOfDateKey } from '../utils/datetime';
 import SiteHeader from '../components/SiteHeader.vue';
 import SiteFooter from '../components/SiteFooter.vue';
 import ContentCard from '../components/ContentCard.vue';
@@ -142,6 +142,9 @@ function nextMonth() {
 
 const selectedDaySlots = computed(() => selectedDayKey.value ? slotsByDay.value.get(selectedDayKey.value) ?? [] : [])
 
+const selectedDayTimeZone = computed(() =>
+  selectedDayKey.value ? formatTimeZoneName(dateKeyToUtcNoon(selectedDayKey.value)) : ''
+)
 const selectedDayLabel = computed(() =>
   selectedDayKey.value ? formatDayDate(dateKeyToUtcNoon(selectedDayKey.value)) : ''
 )
@@ -253,7 +256,7 @@ async function submitBooking() {
             <UAvatar :src="avatarUrl ?? undefined" :alt="coachName" size="lg" />
             <div>
               <div class="text-sm font-medium text-highlighted">{{ coachName }}</div>
-              <div class="text-xs text-dimmed mt-0.5">Life & Business Coach</div>
+              <div v-if="coachProfile?.jobTitle" class="text-xs text-dimmed mt-0.5">{{ coachProfile.jobTitle }}</div>
             </div>
           </div>
 
@@ -322,7 +325,9 @@ async function submitBooking() {
 
           <!-- Kalender -->
           <template v-else>
-            <SectionHeading id="slots" title="Freie Termine" hint="Alle Zeiten in MEZ" size="card" class="scroll-mt-20" />
+            <!-- Ein Monat kann über die Zeitumstellung reichen, deshalb hier ohne MEZ/MESZ;
+                 das genaue Kürzel steht beim gewählten Tag. -->
+            <SectionHeading id="slots" title="Freie Termine" hint="Alle Zeiten in deutscher Zeit" size="card" class="scroll-mt-20" />
 
             <UAlert
               v-if="calendarNotice"
@@ -379,7 +384,7 @@ async function submitBooking() {
                 <template v-else>
                   <div class="mb-3">
                     <div class="font-serif text-lg text-highlighted">{{ selectedDayLabel }}</div>
-                    <div class="text-xs text-dimmed">Alle Zeiten in MEZ</div>
+                    <div class="text-xs text-dimmed">Alle Zeiten in {{ selectedDayTimeZone }}</div>
                   </div>
                   <div class="flex flex-col gap-2 overflow-y-auto max-h-[260px]">
                     <button
