@@ -287,7 +287,7 @@ Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit. 3.1a hängt an keine
 | Spalte | Inhalt |
 |---|---|
 | `imprint_mode` | `form`, `link` oder leer |
-| `imprint` (JSON) | Pflicht: Name bzw. Firma, Straße, PLZ, Ort, Land, E-Mail, Telefon. Optional: Rechtsform, Vertretungsberechtigte (nur bei Gesellschaften), Register und Nummer, USt-IdNr., Freitext-Zusatz (z. B. Kleinunternehmer, Verband) |
+| `imprint` (JSON) | Pflicht: Name bzw. Firma, Straße, PLZ, Ort, Land, E-Mail, Telefon. Bei Unternehmen zusätzlich Rechtsform und Vertretungsberechtigte, bei UG, GmbH und PartG der Registereintrag. Falls vorhanden: USt-IdNr. oder Wirtschafts-ID. Freiwillig: Zusatz |
 | `imprint_url` | Link auf das eigene Impressum |
 | `imprint_confirmed_at` | Zeitpunkt der Bestätigung „Diese Angaben sind korrekt und vollständig“ |
 | `privacy_url` | Link auf eine eigene, zusätzliche Datenschutzerklärung (optional) |
@@ -322,6 +322,7 @@ Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit. 3.1a hängt an keine
 - Stile der Rechtsseiten als `packages/ui/theme/legal.css`, aus dem Impressum der Landingpage übernommen
 - Link „Impressum“ auch im Warteraum, der keine Fußzeile hat
 - Formular mit den Regeln aus `bookingPageLegalSchema`, deutsche Fehlertexte; jede Änderung hebt die Bestätigung auf
+- Formular kurz gehalten: erst „Als Einzelperson oder als Unternehmen?“, die Felder für Unternehmen erscheinen nur bei Bedarf. USt-IdNr. bzw. Wirtschafts-ID, Land und Zusatz sowie die eigenen Links liegen eingeklappt und öffnen sich, wenn darin etwas steht oder ein Fehler auftritt. Name und E-Mail sind aus Profil und Konto vorausgefüllt. Der Link auf ein eigenes Impressum ist eine Zeile unter dem Formular.
 - Die jeweils andere Form (Angaben bzw. Link) bleibt beim Wechsel gespeichert, maßgeblich ist `imprint_mode`.
 - Seed: Anna (Einzelunternehmen) und Martina (GmbH) mit Impressum, Tobias ohne
 - Tests in `booking-page/legal.spec.ts` und `mail/templates/templates.spec.ts`

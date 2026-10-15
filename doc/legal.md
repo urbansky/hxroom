@@ -59,7 +59,7 @@ Der Text steht auf `hxroom.de/impressum`. Dieselben Angaben erscheinen als Block
 Hier tritt der **Coach** als Anbieter auf → er braucht **sein eigenes** Impressum. Einen eigenen Text schreibt er dafür nicht:
 
 - **Eingabe** unter Einstellungen → Rechtliches in der Coach-App, wahlweise:
-  - **Formular:** Pflicht sind Name bzw. Firma, Anschrift, E-Mail und Telefon (zweiter schneller Kontaktweg neben der E-Mail). Optional sind Rechtsform, Vertretungsberechtigte (bei Gesellschaften), Register und Nummer, USt-IdNr. und ein Freitext-Zusatz (z. B. Kleinunternehmer, Verbandsmitgliedschaft).
+  - **Formular:** Pflicht sind Name bzw. Firma, Anschrift, E-Mail und Telefon (zweiter schneller Kontaktweg neben der E-Mail). Zuerst fragt es „Als Einzelperson oder als Unternehmen?“. Bei Unternehmen kommen Rechtsform und Vertretungsberechtigte als Pflicht hinzu, bei UG, GmbH und PartG auch der Registereintrag (bei der GbR freiwillig). USt-IdNr. oder Wirtschafts-ID sind Pflicht, falls vorhanden, eine von beiden genügt. Dazu ein freiwilliger Zusatz (z. B. Verbandsmitgliedschaft). Seltenes liegt eingeklappt, Name und E-Mail sind aus Profil und Konto vorausgefüllt.
   - **Link** auf ein vorhandenes Impressum, etwa auf der eigenen Website.
 - **Bestätigung per Klick:** „Diese Angaben sind korrekt und vollständig“, mit Zeitpunkt gespeichert. HxRoom übernimmt **keine** Haftung für unvollständige Coach-Angaben (das muss in den HxRoom-AGB stehen).
 - **Seite `/impressum` der Subdomain:** oben „Anbieter dieser Seite“ mit den Angaben des Coachs bzw. dem Link, darunter „Technischer Betrieb: HxRoom“ mit dem Betreiber-Impressum aus 3.1.
