@@ -3,6 +3,15 @@
 # Auf Hetzner: docker compose pull && docker compose up -d
 name: hxroom
 
+# Alle Container schreiben ins Systemjournal statt in Docker-eigene Dateien, die ohne
+# Rotation unbegrenzt wachsen. Das Journal löscht nach 14 Tagen (journald/hxroom.conf, einmal
+# auf dem Server einzurichten) – so stimmt die Speicherdauer der Server-Logs in der
+# Datenschutzerklärung. `docker compose logs` liest das Journal wie bisher.
+x-logging: &logging
+  driver: journald
+  options:
+    tag: "hxroom/{{.Name}}"
+
 services:
   caddy:
     build: ./caddy
@@ -24,6 +33,7 @@ services:
       - api
       - livekit
     restart: unless-stopped
+    logging: *logging
 
   landing:
     image: ghcr.io/urbansky/hxroom/landing:latest
@@ -31,6 +41,7 @@ services:
       context: ..
       dockerfile: apps/landing/Dockerfile
     restart: unless-stopped
+    logging: *logging
 
   coach:
     image: ghcr.io/urbansky/hxroom/coach:latest
@@ -38,6 +49,7 @@ services:
       context: ..
       dockerfile: apps/coach/Dockerfile
     restart: unless-stopped
+    logging: *logging
 
   bookingpage:
     image: ghcr.io/urbansky/hxroom/bookingpage:latest
@@ -45,6 +57,7 @@ services:
       context: ..
       dockerfile: apps/bookingpage/Dockerfile
     restart: unless-stopped
+    logging: *logging
 
   admin:
     image: ghcr.io/urbansky/hxroom/admin:latest
@@ -52,6 +65,7 @@ services:
       context: ..
       dockerfile: apps/admin/Dockerfile
     restart: unless-stopped
+    logging: *logging
 
   # LiveKit – WebRTC-Server (doc/technisches-konzept.md §8)
   # Signaling auf 7880 läuft über Caddy (livekit.hxroom.de), die Medien gehen daran
@@ -82,6 +96,7 @@ services:
       timeout: 5s
       retries: 3
     restart: unless-stopped
+    logging: *logging
 
   # ClamAV – Virenscan der im Call geteilten Dateien (doc/videocall-umsetzungsplan.md,
   # Nachtrag „Virenscan geteilter Dateien"). Die API spricht clamd auf 3310 im Docker-Netz an,
@@ -100,6 +115,7 @@ services:
     volumes:
       - clamav_data:/var/lib/clamav
     restart: unless-stopped
+    logging: *logging
 
   postgres:
     image: postgres:17-alpine
@@ -112,6 +128,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    logging: *logging
 
   api:
     image: ghcr.io/urbansky/hxroom/api:latest
@@ -164,6 +181,7 @@ services:
       postgres:
         condition: service_started
     restart: unless-stopped
+    logging: *logging
 
   # Nächtliches Backup: pg_dump nach 03:00, Dateien nach 03:30, beides in den Backup-Bucket im
   # eigenen Hetzner-Projekt (Nürnberg). Gebaut auf dem Server wie Caddy, nicht in der CI.
@@ -202,6 +220,7 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    logging: *logging
 
 volumes:
   postgres_data:
