@@ -10,6 +10,7 @@ export { default as BookingPageOfferItem } from './components/booking-page/Booki
 // Rechtsseiten: Impressum des Betreibers für hxroom.de und als Block im Impressum jeder
 // Buchungsseite (doc/legal.md §3). Stile in theme/legal.css.
 export { default as LegalOperatorImprint } from './components/legal/LegalOperatorImprint.vue';
+export { default as LegalPrivacyPolicy } from './components/legal/LegalPrivacyPolicy.vue';
 
 // Die Call-Oberfläche. Rollenfrei gebaut: Was Coach und Klient unterscheidet, kommt beim
 // Einbinden als Props und Slots herein (technisches-konzept.md §8). Beide Frontends

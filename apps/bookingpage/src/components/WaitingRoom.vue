@@ -177,9 +177,12 @@ const notice = computed(() => deviceNotice(cameraIssue.value, microphoneIssue.va
       <RouterLink :to="cancelHref" class="text-primary underline underline-offset-2">Termin absagen</RouterLink>
     </p>
 
-    <!-- Der Warteraum hat keine Fußzeile wie die übrigen Seiten; das Impressum soll trotzdem
-         von jeder Seite der Buchungsseite aus erreichbar sein (doc/legal.md §3.2). Neuer Tab,
-         damit der Warteraum offen bleibt. -->
-    <a href="/impressum" target="_blank" class="text-xs text-dimmed hover:text-muted transition-colors">Impressum</a>
+    <!-- Der Warteraum hat keine Fußzeile wie die übrigen Seiten; Impressum und Datenschutz
+         sollen trotzdem von jeder Seite der Buchungsseite aus erreichbar sein (doc/legal.md
+         §3.2, §4). Neuer Tab, damit der Warteraum offen bleibt. -->
+    <div class="flex items-center gap-4">
+      <a href="/impressum" target="_blank" class="text-xs text-dimmed hover:text-muted transition-colors">Impressum</a>
+      <a href="/datenschutz" target="_blank" class="text-xs text-dimmed hover:text-muted transition-colors">Datenschutz</a>
+    </div>
   </div>
 </template>

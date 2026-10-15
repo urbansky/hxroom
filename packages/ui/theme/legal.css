@@ -52,9 +52,78 @@
   text-transform: uppercase;
   margin-bottom: 14px;
   padding-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .dark .legal-section-label {
   color: var(--color-sage-200);
+}
+/* Abschnittsnummer der Datenschutzerklärung */
+.legal-section-label .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-gold-400) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-gold-400) 25%, transparent);
+  color: var(--color-gold-500);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+.dark .legal-section-label .num {
+  color: var(--color-gold-300);
+}
+
+/* „Auf einen Blick“-Kacheln der Datenschutzerklärung */
+.legal-glance {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 48px;
+}
+.legal-glance-tile {
+  background: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+.legal-glance-tile .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--color-sage-400) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-sage-400) 22%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.legal-glance-tile .icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-sage-700);
+  fill: none;
+}
+.dark .legal-glance-tile .icon svg {
+  stroke: var(--color-sage-200);
+}
+.legal-glance-tile h4 {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ui-text-highlighted);
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+.legal-glance-tile p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ui-text-muted);
 }
 
 .legal-card {
@@ -115,6 +184,85 @@
 .legal-card a:hover {
   color: var(--ui-text-highlighted);
 }
+.legal-card strong {
+  color: var(--ui-text-highlighted);
+  font-weight: 500;
+}
+
+.legal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.legal-list li {
+  position: relative;
+  padding: 6px 0 6px 20px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ui-text);
+}
+.legal-list li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 16px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-sage-500);
+  opacity: 0.8;
+}
+
+.legal-rights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.legal-rights-block {
+  background: var(--ui-bg-muted);
+  border: 1px solid var(--ui-border-muted);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.legal-rights-block h4 {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-sage-700);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.dark .legal-rights-block h4 {
+  color: var(--color-sage-200);
+}
+.legal-rights-block ul {
+  list-style: none;
+  padding: 0;
+}
+.legal-rights-block li {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ui-text);
+  padding: 4px 0;
+}
+
+.legal-callout {
+  background: color-mix(in srgb, var(--color-gold-400) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-gold-400) 18%, transparent);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ui-text-muted);
+}
+.legal-callout strong {
+  color: var(--color-gold-500);
+}
+.dark .legal-callout strong {
+  color: var(--color-gold-300);
+}
 
 .legal-address {
   font-size: 15px !important;
@@ -130,6 +278,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+}
+/* Abstand nur, wenn davor schon etwas in der Karte steht */
+.legal-meta-grid:not(:first-child) {
+  margin-top: 14px;
 }
 .legal-meta-item {
   background: var(--ui-bg-muted);
@@ -161,7 +313,9 @@
   .legal-card {
     padding: 22px 22px;
   }
-  .legal-meta-grid {
+  .legal-glance,
+  .legal-meta-grid,
+  .legal-rights-grid {
     grid-template-columns: 1fr;
   }
 }

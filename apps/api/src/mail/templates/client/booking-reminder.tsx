@@ -107,7 +107,7 @@ BookingReminderEmail.PreviewProps = {
   opensTimeLabel: '13:00',
   callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
   cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
-  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum', privacyUrl: 'https://anna.hxroom.de/datenschutz' },
 } satisfies BookingReminderEmailProps;
 
 export async function renderBookingReminderEmail(props: BookingReminderEmailProps): Promise<string> {

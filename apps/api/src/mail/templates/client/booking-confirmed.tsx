@@ -81,7 +81,7 @@ BookingConfirmedEmail.PreviewProps = {
   cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
   callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
   callOpensMinutesBefore: 60,
-  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum', privacyUrl: 'https://anna.hxroom.de/datenschutz' },
 } satisfies BookingConfirmedEmailProps;
 
 export async function renderBookingConfirmedEmail(props: BookingConfirmedEmailProps): Promise<string> {

@@ -519,6 +519,7 @@ const features = [
                 <span>Gebrandeter HxRoom von <span class="text-muted">hxroom.de</span>&nbsp;·&nbsp;Server in Deutschland</span>
                 <span class="flex items-center gap-5">
                   <span>Impressum</span>
+                  <span>Datenschutz</span>
                   <span v-if="termsUrl">AGB</span>
                 </span>
               </div>

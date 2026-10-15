@@ -52,7 +52,7 @@ SessionInvitationEmail.PreviewProps = {
     durationMinutes: 30,
   },
   callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
-  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum', privacyUrl: 'https://anna.hxroom.de/datenschutz' },
 } satisfies SessionInvitationEmailProps;
 
 export async function renderSessionInvitationEmail(props: SessionInvitationEmailProps): Promise<string> {

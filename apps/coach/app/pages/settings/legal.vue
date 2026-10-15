@@ -118,11 +118,13 @@ await useFetch<LegalResponse>('/booking-page/legal', {
   },
 })
 
-const imprintPreviewUrl = computed(() =>
+const bookingPageOrigin = computed(() =>
   bookingPage.value?.subdomain
-    ? `${rootDomainHttps ? 'https' : 'http'}://${bookingPage.value.subdomain}.${rootDomain}/impressum`
+    ? `${rootDomainHttps ? 'https' : 'http'}://${bookingPage.value.subdomain}.${rootDomain}`
     : null,
 )
+const imprintPreviewUrl = computed(() => bookingPageOrigin.value && `${bookingPageOrigin.value}/impressum`)
+const privacyPreviewUrl = computed(() => bookingPageOrigin.value && `${bookingPageOrigin.value}/datenschutz`)
 
 const saving = ref(false)
 const saveError = ref<string | null>(null)
@@ -431,7 +433,9 @@ const features = [
 
         <template v-if="linksOpen">
           <p class="text-sm text-muted -mt-2">
-            Die Datenschutzerklärung deiner Buchungsseite stellt HxRoom bereit, du bist darin als Verantwortlicher für die Daten deiner Klienten eingetragen. Sie folgt in Kürze. Eigene Texte kannst du hier zusätzlich verlinken.
+            Die Datenschutzerklärung deiner Buchungsseite stellt HxRoom bereit, du bist darin als Verantwortlicher für die Daten deiner Klienten eingetragen.
+            <ULink v-if="privacyPreviewUrl" :to="privacyPreviewUrl" target="_blank" class="text-primary underline underline-offset-2">So sieht sie aus</ULink>.
+            Eigene Texte kannst du hier zusätzlich verlinken.
           </p>
           <UFormField label="Eigene Datenschutzerklärung" name="privacyUrl" help="Die Buchungsseite verweist dann zusätzlich darauf.">
             <UInput v-model="state.privacyUrl" type="url" placeholder="https://deine-website.de/datenschutz" class="w-full" :ui="inputUi" />

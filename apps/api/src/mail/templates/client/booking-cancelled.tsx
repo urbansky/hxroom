@@ -87,7 +87,7 @@ BookingCancelledEmail.PreviewProps = {
   cancelledBy: 'coach',
   reason: 'Ich bin an dem Tag leider kurzfristig verhindert.',
   bookingPageUrl: 'https://anna.hxroom.de',
-  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum', privacyUrl: 'https://anna.hxroom.de/datenschutz' },
 } satisfies BookingCancelledEmailProps;
 
 export async function renderBookingCancelledEmail(props: BookingCancelledEmailProps): Promise<string> {

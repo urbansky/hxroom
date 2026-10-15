@@ -45,7 +45,7 @@ BookingConfirmationEmail.PreviewProps = {
   },
   confirmUrl: 'https://anna.hxroom.de/confirm/preview?token=preview',
   ttlMinutes: 30,
-  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum', privacyUrl: 'https://anna.hxroom.de/datenschutz' },
 } satisfies BookingConfirmationEmailProps;
 
 export async function renderBookingConfirmationEmail(props: BookingConfirmationEmailProps): Promise<string> {

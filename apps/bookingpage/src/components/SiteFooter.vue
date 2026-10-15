@@ -2,8 +2,8 @@
 import { inject, type Ref } from 'vue';
 import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
 
-// Auf jeder Seite der Buchungsseite: das Impressum (Pflicht, doc/legal.md §3.2) und die AGB
-// des Coachs, wenn er welche verlinkt hat. Die Datenschutzerklärung kommt mit Schritt 3.1b.
+// Auf jeder Seite der Buchungsseite: Impressum und Datenschutzerklärung (doc/legal.md §3.2,
+// §4) und die AGB des Coachs, wenn er welche verlinkt hat.
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 </script>
 
@@ -18,6 +18,7 @@ const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
     <template #right>
       <div class="flex items-center gap-5">
         <RouterLink to="/impressum" class="text-xs text-dimmed hover:text-muted transition-colors no-underline">Impressum</RouterLink>
+        <RouterLink to="/datenschutz" class="text-xs text-dimmed hover:text-muted transition-colors no-underline">Datenschutz</RouterLink>
         <a
           v-if="coachProfile?.termsUrl"
           :href="coachProfile.termsUrl"

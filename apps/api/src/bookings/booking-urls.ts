@@ -15,7 +15,8 @@ export function buildBookingPageUrl(config: ConfigService, slug: string): string
 
 /** Rechtliche Links der Buchungsseite für die Fußzeile der Mails an Klienten. */
 export function buildLegalLinks(config: ConfigService, slug: string): MailLegalLinks {
-  return { imprintUrl: `${buildOrigin(config, slug)}/impressum` };
+  const origin = buildOrigin(config, slug);
+  return { imprintUrl: `${origin}/impressum`, privacyUrl: `${origin}/datenschutz` };
 }
 
 export function buildConfirmUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {

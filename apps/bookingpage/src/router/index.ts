@@ -61,6 +61,10 @@ export const router = createRouter({
       path: '/impressum',
       component: () => import('../views/ImprintView.vue'),
     },
+    {
+      path: '/datenschutz',
+      component: () => import('../views/PrivacyView.vue'),
+    },
     // Warteraum, Gespräch und Abschluss liegen bewusst auf einer Route: Den Zustand kennt
     // der Server, ein Reload landet damit immer an der richtigen Stelle. Der Zugang ist
     // wie bei /confirm und /cancel der Token aus der Mail (?token=…).
