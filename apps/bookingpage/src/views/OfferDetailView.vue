@@ -14,7 +14,7 @@ import { BookingPageAbout, BookingPageOfferItem } from '@hxroom/ui';
 import StatusPanel from '../components/StatusPanel.vue';
 import AppointmentSummary from '../components/AppointmentSummary.vue';
 import LoadingState from '../components/LoadingState.vue';
-import { createBookingSchema, hasBookingPageAbout, type AvailableSlotResponse } from '@hxroom/shared';
+import { bookingPageCtaLabel, createBookingSchema, hasBookingPageAbout, type AvailableSlotResponse } from '@hxroom/shared';
 
 const props = defineProps<{ id: string }>();
 
@@ -27,6 +27,8 @@ const { slots: availableSlots, loading: slotsLoading, refresh: refreshSlots } = 
 
 const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile.value) : null);
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
+// Derselbe Button-Text wie auf der Startseite der Buchungsseite.
+const ctaLabel = computed(() => bookingPageCtaLabel(coachProfile?.value?.ctaButton));
 
 const offer = computed(() => offers.value.find((o) => o.id === props.id) ?? null);
 const notFound = computed(() => !loading.value && !offer.value);
@@ -206,7 +208,16 @@ async function submitBooking() {
 <template>
   <SiteHeader nav>
     <template #cta>
-      <UButton v-if="offer" href="#slots" color="primary" icon="i-lucide-calendar" size="lg" class="px-5">Termin buchen</UButton>
+      <UButton
+        v-if="offer"
+        href="#slots"
+        color="primary"
+        icon="i-lucide-calendar"
+        size="lg"
+        class="px-5 max-w-56"
+        :ui="{ label: 'truncate' }"
+        :label="ctaLabel"
+      />
     </template>
   </SiteHeader>
 
