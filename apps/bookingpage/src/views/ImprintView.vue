@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref, type Ref } from 'vue';
-import { LEGAL_FORMS, isCompanyLegalForm, type Imprint } from '@hxroom/shared';
+import { LEGAL_FORMS, isBusinessId, isCompanyLegalForm, type Imprint } from '@hxroom/shared';
 import { LegalOperatorImprint } from '@hxroom/ui';
 import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
 import { apiUrl, orgSlug } from '../utils/api';
@@ -102,7 +102,7 @@ const showRepresentative = computed(() => isCompanyLegalForm(imprint.value?.lega
                 <div class="val">{{ imprint.register }}</div>
               </div>
               <div v-if="imprint.vatId" class="legal-meta-item">
-                <div class="lbl">USt-IdNr.</div>
+                <div class="lbl">{{ isBusinessId(imprint.vatId) ? 'Wirtschafts-ID' : 'USt-IdNr.' }}</div>
                 <div class="val">{{ imprint.vatId }}</div>
               </div>
             </div>

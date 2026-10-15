@@ -20,11 +20,27 @@ export function isCompanyLegalForm(form: LegalForm | null | undefined): boolean 
   return !!form && form !== 'sole';
 }
 
+/**
+ * Rechtsformen, die immer in einem Register stehen (Handels- bzw. Partnerschaftsregister) –
+ * dort ist der Registereintrag Pflicht. Die GbR wird nur freiwillig eingetragen.
+ */
+export function requiresRegister(form: LegalForm | null | undefined): boolean {
+  return form === 'ug' || form === 'gmbh' || form === 'partg';
+}
+
+/** Wirtschafts-Identifikationsnummer (§ 139c AO): DE, neun Ziffern, Bindestrich, fünf Ziffern. */
+export function isBusinessId(value: string | null | undefined): boolean {
+  return !!value && /^DE\s?\d{9}-\d{5}$/i.test(value.trim());
+}
+
 const httpUrl = z.string().trim().max(500).url().refine((v) => /^https?:\/\//i.test(v), 'Only http(s) links are allowed');
 
 /**
  * Angaben nach § 5 DDG. Telefon ist Pflicht: Neben der E-Mail verlangt das Gesetz einen
  * zweiten schnellen Kontaktweg, und ein Kontaktformular gibt es auf der Buchungsseite nicht.
+ * Bei Gesellschaften kommen Vertretungsberechtigte hinzu, bei eingetragenen Rechtsformen der
+ * Registereintrag. `vatId` nimmt die USt-IdNr. oder die Wirtschafts-ID auf – beide sind
+ * Pflicht, falls vorhanden, und eine von beiden genügt.
  */
 export const imprintSchema = z.object({
   name:           z.string().trim().min(1).max(160),
@@ -37,8 +53,15 @@ export const imprintSchema = z.object({
   legalForm:      z.enum(LEGAL_FORM_KEYS).nullish(),
   representative: z.string().trim().max(200).nullish(),
   register:       z.string().trim().max(200).nullish(),
-  vatId:          z.string().trim().max(20).nullish(),
+  vatId:          z.string().trim().max(30).nullish(),
   addition:       z.string().trim().max(1000).nullish(),
+}).superRefine((value, ctx) => {
+  if (isCompanyLegalForm(value.legalForm) && !value.representative?.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['representative'], message: 'Companies must name their authorised representatives' });
+  }
+  if (requiresRegister(value.legalForm) && !value.register?.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['register'], message: 'This legal form requires a register entry' });
+  }
 });
 export type Imprint = z.infer<typeof imprintSchema>;
 

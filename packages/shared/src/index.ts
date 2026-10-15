@@ -6,6 +6,8 @@ export { bookingPageCtaLabel, hasBookingPageAbout, formatOfferPrice, type Bookin
 export {
   LEGAL_FORMS,
   isCompanyLegalForm,
+  requiresRegister,
+  isBusinessId,
   imprintSchema,
   bookingPageLegalSchema,
   isImprintComplete,
