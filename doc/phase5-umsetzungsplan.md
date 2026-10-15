@@ -13,10 +13,10 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 **Etappe A – vorführbereit (Ziel ~15.10.2026)**
 
 1. ✅ Backup und Fehlerüberwachung
-2. Erinnerungsmails 24 h / 1 h vor dem Termin – umgesetzt, Inbetriebnahme offen
-3. Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten – umgesetzt, Inbetriebnahme offen
+2. ✅ Erinnerungsmails 24 h / 1 h vor dem Termin
+3. ✅ Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
    - 3.1 Impressum und Datenschutzerklärung in den Einstellungen des Coachs, als eigene Seiten der Buchungsseite – geplant
-4. `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
+4. ✅ `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
 
@@ -24,8 +24,9 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 6. Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
 7. Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
+9. Landingpage inhaltlich und gestalterisch überarbeiten
 
-**Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung und Feedback-Knopf.
+**Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf und die überarbeitete Landingpage.
 
 **Außerhalb des Codes:** Die Rechtstexte (Impressum- und Datenschutz-Vorlage für Coaches, AGB, AVV) liefert der Betreiber. Sie haben Vorlauf und sollten früh angestoßen werden.
 
@@ -180,9 +181,9 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 
 ---
 
-## Schritt 2 · Erinnerungsmails
+## Schritt 2 · Erinnerungsmails ✅
 
-**Stand:** umgesetzt und lokal abgenommen, mit Versand an eine echte Adresse. Wie die Erinnerungen arbeiten, beschreibt `technisches-konzept.md` §12 („Erinnerungsmails“).
+**Stand:** ✅ in Betrieb und in Produktion abgenommen. Wie die Erinnerungen arbeiten, beschreibt `technisches-konzept.md` §12 („Erinnerungsmails“).
 
 **Umfang:** Der Klient bekommt 24 Stunden und 1 Stunde vor dem Termin eine Mail mit dem Warteraum-Link. Die 1-h-Erinnerung meldet den gerade geöffneten Warteraum. Keine Erinnerung an den Coach, feste Texte. Beides kann später über die Benachrichtigungs-Einstellungen (Funktionsliste 7.06) dazukommen.
 
@@ -205,9 +206,9 @@ Die Fehler-Mail über Brevo und der Checkly-Ping sind lokal nur bis zum Aufruf g
 
 ---
 
-## Schritt 3 · Buchungsseite vollständig
+## Schritt 3 · Buchungsseite vollständig ✅
 
-**Stand:** umgesetzt und lokal abgenommen.
+**Stand:** ✅ in Betrieb, auf `demo.hxroom.de` auf Handy und Rechner abgenommen.
 
 **Ausgangslage:** Die Buchungsseite zeigt für jeden Coach dieselben Platzhalter:
 - **Kopfbereich:** Titel, Ortszeile, Überschrift samt Text, Kennzahlen (Sitzungen, Bewertung), das Abzeichen „Verifiziert“, die Versprechen „DSGVO-konform“ und „Erstgespräch kostenlos“, ein Beispielfoto als Ersatz
@@ -249,7 +250,8 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 - **Klientenseite:**
   - Die Tagline ist die Überschrift, ohne Tagline der Name. Lange Taglines werden kleiner gesetzt.
   - Die Einleitung steht darunter, beide Buttons tragen den Button-Text, Standard ist „Termin buchen“.
-  - Ohne Foto erscheint die Initiale.
+  - Das Profilfoto (immer quadratisch) steht rund in der Mitte des Bildkopfs, ohne Foto an derselben Stelle die Initiale.
+  - Angebotsseite: Berufsbezeichnung unter dem Namen, Button oben rechts mit dem Button-Text, Zeitzone beim gewählten Tag als MEZ bzw. MESZ, gewählter Kalendertag deutlich hervorgehoben.
   - „Über mich“ samt Sprungmarke und „Mehr erfahren“ erscheint nur mit Inhalt, auch auf der Angebotsseite (`hasBookingPageAbout`).
   - Leerzeilen im Text trennen Absätze. Vom Coach mitgetippte Anführungszeichen am Zitat entfallen.
 - **Seed:** Anna mit allen Feldern, Martina mit Berufsbezeichnung und zwei Schwerpunkten, Tobias ohne Buchungsseite
@@ -262,7 +264,7 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 
 **Inbetriebnahme:** Push und `./redeploy.sh`. Die Migration läuft beim Start der API.
 
-**Abnahme in Produktion:** Auf `demo.hxroom.de` die eigenen Inhalte pflegen (Schritt 4) und die Seite auf Handy und Rechner prüfen.
+**Abnahme in Produktion:** ✅ Auf `demo.hxroom.de` mit den eigenen Inhalten auf Handy und Rechner geprüft, ohne Fehler in der Konsole.
 
 ---
 
@@ -288,3 +290,24 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 **Offen:**
 1. **Buchung erst mit Impressum und Datenschutzerklärung?** Vorschlag: Die Seite bleibt sichtbar, Buchen ist bis dahin gesperrt (Hinweis statt Buttons, die API lehnt Buchungen ab), das Backoffice zeigt, was fehlt. Dann braucht auch `demo.hxroom.de` das Impressum des Betreibers.
 2. **Datenschutzerklärung als Text in HxRoom, als Link auf die eigene Website oder beides?** Vorschlag: beides, mit einer Vorlage als Standard. Den Vorlagentext liefert der Betreiber bzw. lässt ihn prüfen.
+
+---
+
+## Schritt 4 · Vorführ-Seite `demo.hxroom.de` ✅
+
+**Stand:** ✅ eingerichtet. Vorführungen sind buchbar.
+
+- **Konto:** gewöhnliches Coach-Konto des Betreibers mit der Subdomain `demo`
+- **Angebot:** „Produktvorführung“, 20 Minuten, kostenlos
+- **Inhalte:** Tagline, Einleitung, Button-Text „Vorführung buchen“, Berufsbezeichnung, Schwerpunkte (die gezeigten Funktionen), Zitat, „Über mich“ und Qualifikationen des Betreibers
+- **Landingpage:** Knopf „Vorführung buchen“ verlinkt auf `demo.hxroom.de`
+
+**Offen:** Die Fußzeile verlinkt noch kein Impressum (kommt mit Schritt 3.1). Für eine öffentlich beworbene Seite ist es Pflicht.
+
+---
+
+## Schritt 9 · Landingpage überarbeiten
+
+**Stand:** aufgenommen, Umfang noch offen.
+
+Die Landingpage (`apps/landing`, `hxroom.de`) wird inhaltlich und gestalterisch überarbeitet. Sie ist die erste Station des Marketings und führt zu „Vorführung buchen“. Was sich an Inhalt und Gestaltung ändert, wird vor der Umsetzung in einem eigenen Plan festgelegt.

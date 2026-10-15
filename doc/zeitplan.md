@@ -165,6 +165,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 - **Vorführ-Buchungsseite des Betreibers** unter `demo.hxroom.de`: ein gewöhnliches Coach-Konto mit dem Angebot „Produktvorführung“. Interessenten erleben so Buchungsseite, Bestätigungsmail, Warteraum und Call aus Sicht eines Klienten.
 - **Erinnerungsmails** 24 h und 1 h vor dem Termin an den Klienten (Funktionsliste 2.05). Bisher gibt es keine.
 - **Knopf „Vorführung buchen“ auf der Landingpage**, verlinkt auf die Vorführ-Buchungsseite. Heute bietet sie nur die Early-Access-Anmeldung an.
+- **Landingpage überarbeiten:** Inhalt und Gestaltung von `hxroom.de` neu fassen, als erste Station des Marketings und Weg zur Vorführung. Der genaue Umfang wird vor der Umsetzung festgelegt.
 
 *Selbst als Coach ausprobieren:*
 - **Probe-Sitzung mit sich selbst:** Ein Knopf legt einen Testklienten an (den Coach selbst) und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Testtermine zählen nicht in Kennzahlen und Klientenliste.
@@ -204,6 +205,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 - Datenschutz-Kasten im Warteraum, abgeleitet aus dem tatsächlichen Zustand
 - Erinnerungsmails 24 h / 1 h vor dem Termin
 - Vorführ-Buchungsseite `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage
+- Landingpage inhaltlich und gestalterisch überarbeiten
 - Probe-Sitzung mit sich selbst (Testklient, QR-Code), Onboarding-Checkliste anpassen
 - „Kommt bald“-Menüpunkte für die Beta ausblenden
 - Feedback-Knopf in der Coach-App, Aktivität der Coaches im Betreiber-Backoffice
