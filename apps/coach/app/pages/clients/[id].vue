@@ -94,6 +94,31 @@ function onSaved(saved: ClientResponse) {
   // Nur die Stammdaten ersetzen – die Sitzungshistorie ändert sich beim Bearbeiten nicht.
   client.value = { ...client.value, ...saved }
 }
+
+// Löschen auf Anfrage (doc/funktionen/backoffice-coach.md 7.04, Art. 17 DSGVO). Anstehende
+// Termine sperren die Löschung – die API prüft das ebenso; hier wird es vorab erklärt.
+const deleteOpen = ref(false)
+const deleting = ref(false)
+const deleteError = ref<string | null>(null)
+const hasOpenBookings = computed(() => upcoming.value.some(b => b.status === 'pending' || b.status === 'confirmed'))
+const toast = useToast()
+
+async function deleteClient() {
+  if (!client.value) return
+  deleting.value = true
+  deleteError.value = null
+  try {
+    await $api(`/clients/${client.value.id}`, { method: 'DELETE' })
+    toast.add({ title: `${client.value.name} wurde gelöscht`, color: 'success', icon: 'i-lucide-check' })
+    await navigateTo('/clients')
+  } catch (err: any) {
+    deleteError.value = err?.statusCode === 409
+      ? 'Für diesen Klienten stehen noch Termine an. Sage sie zuerst ab.'
+      : 'Löschen fehlgeschlagen. Bitte versuche es noch einmal.'
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -282,6 +307,57 @@ function onSaved(saved: ClientResponse) {
           description="Strukturierte Felder für Ziele, Schwerpunkte und persönliche Hintergründe."
         />
       </div>
+
+      <!-- Klient löschen -->
+      <div class="mt-12 pt-6 border-t border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-medium text-highlighted">Klient löschen</h2>
+          <p class="text-sm text-muted">Entfernt den Klienten mit allen Terminen, Notizen und Dateien – etwa auf seinen Wunsch.</p>
+        </div>
+        <UButton
+          label="Klient löschen"
+          icon="i-lucide-trash-2"
+          color="error"
+          variant="outline"
+          size="sm"
+          class="shrink-0 self-start sm:self-auto"
+          @click="deleteError = null; deleteOpen = true"
+        />
+      </div>
+
+      <UModal v-model:open="deleteOpen" :title="`${client.name} löschen?`">
+        <template #body>
+          <div class="flex flex-col gap-3 text-sm">
+            <template v-if="hasOpenBookings">
+              <UAlert
+                icon="i-lucide-calendar-clock"
+                color="warning"
+                variant="soft"
+                title="Es stehen noch Termine an"
+                description="Sage sie zuerst ab – dann bekommt der Klient seine Absage-Mail. Danach kannst du ihn löschen."
+              />
+            </template>
+            <template v-else>
+              <p>Gelöscht werden die Kontaktdaten, alle Termine samt Notizen, Chatverlauf und geteilten Dateien. Das lässt sich nicht rückgängig machen.</p>
+              <p class="text-muted">Aus den Datensicherungen verschwinden die Daten nach rund vier Monaten. HxRoom vermerkt die Löschung ohne Namen oder Adresse.</p>
+            </template>
+            <UAlert v-if="deleteError" icon="i-lucide-circle-x" color="error" variant="soft" :description="deleteError" />
+          </div>
+        </template>
+        <template #footer>
+          <div class="flex justify-end gap-2 w-full">
+            <UButton label="Abbrechen" color="neutral" variant="outline" @click="deleteOpen = false" />
+            <UButton
+              v-if="!hasOpenBookings"
+              label="Endgültig löschen"
+              color="error"
+              icon="i-lucide-trash-2"
+              :loading="deleting"
+              @click="deleteClient"
+            />
+          </div>
+        </template>
+      </UModal>
 
       <BookingDetailSlideover
         v-model:open="isDetailOpen"

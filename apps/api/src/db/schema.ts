@@ -388,3 +388,18 @@ export interface DeletedCounts {
   bookings: number;
   offers:   number;
 }
+
+// Löschprotokoll für einzelne Klienten (doc/funktionen/backoffice-coach.md 7.04, Löschung
+// auf Anfrage nach Art. 17 DSGVO). Wie coach_deletions: nur IDs und Anzahlen, keine Namen
+// oder Adressen, und bewusst ohne references() – das Protokoll soll die Löschung belegen,
+// auch über die Löschung des Kontos hinaus.
+export const clientDeletions = pgTable('client_deletions', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull(),
+  clientId:       text('client_id').notNull(),
+  // Wer gelöscht hat (better-auth User-ID des Coachs).
+  deletedBy:      text('deleted_by').notNull(),
+  deletedAt:      timestamp('deleted_at').notNull().defaultNow(),
+  bookingsDeleted: integer('bookings_deleted').notNull(),
+  filesDeleted:    integer('files_deleted').notNull(),
+});

@@ -1,7 +1,8 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
+import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { and, asc, desc, eq, gte, inArray, lt, or, sql } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { bookings, clients } from '../db/schema';
+import { bookings, clientDeletions, clients } from '../db/schema';
+import { S3Service } from '../storage/s3.service';
 import { coachBookingColumns, toCoachBookingResponse } from '../bookings/coach-booking.mapper';
 import { HELD_SESSION_STATUSES } from '../bookings/booking.constants';
 import { isUniqueViolation } from '../common/pg-errors';
@@ -27,7 +28,12 @@ const HELD_SESSION = inArray(bookings.status, [...HELD_SESSION_STATUSES]);
 
 @Injectable()
 export class ClientsService {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+  private readonly logger = new Logger(ClientsService.name);
+
+  constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+    private readonly s3: S3Service,
+  ) {}
 
   /**
    * Klientenliste mit den Kennzahlen aus Funktion 01 (doc/funktionen/backoffice-coach.md):
@@ -144,6 +150,67 @@ export class ClientsService {
     } catch (err) {
       throw this.translateUniqueViolation(err);
     }
+  }
+
+  /**
+   * Löscht einen Klienten mit allem, was zu ihm gehört (doc/funktionen/backoffice-coach.md
+   * 7.04, Art. 17 DSGVO): Termine samt Notizen, Chat und geteilten Dateien.
+   *
+   * Termine hängen nur lose am Klienten (`client_id` mit onDelete 'set null') und tragen
+   * Name und E-Mail als Kopie; unbestätigte Anfragen haben gar keine `client_id`, weil der
+   * Klient erst beim Bestätigen entsteht. Deshalb zählen auch Termine derselben Organisation
+   * mit derselben E-Mail-Adresse dazu.
+   *
+   * Anstehende Termine blockieren die Löschung: Ein Termin, der still verschwindet, ließe
+   * den Klienten vor einem leeren Warteraum stehen. Der Coach sagt ihn zuerst ab – dabei
+   * bekommt der Klient seine Absage-Mail.
+   */
+  async delete(organizationId: string, id: string, deletedBy: string): Promise<{ bookingsDeleted: number, filesDeleted: number }> {
+    const client = await this.findOwn(organizationId, id);
+
+    const belongsToClient = and(
+      eq(bookings.organizationId, organizationId),
+      client.email
+        ? or(eq(bookings.clientId, id), sql`lower(trim(${bookings.clientEmail})) = ${client.email}`)
+        : eq(bookings.clientId, id),
+    );
+
+    const [upcoming] = await this.db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(and(belongsToClient, inArray(bookings.status, ['pending', 'confirmed']), gte(bookings.endTime, new Date())))
+      .limit(1);
+    if (upcoming) {
+      throw new ConflictException('Client has upcoming bookings');
+    }
+
+    const bookingIds = await this.db.transaction(async (tx) => {
+      const deleted = await tx.delete(bookings).where(belongsToClient).returning({ id: bookings.id });
+      await tx.delete(clients).where(eq(clients.id, id));
+      return deleted.map((b) => b.id);
+    });
+
+    // Dateien erst nach dem Commit: Schlüge die Transaktion fehl, verwiesen sonst noch
+    // Chatnachrichten auf gelöschte Objekte. Ein Fehler hier hinterlässt nur verwaiste
+    // Objekte ohne Bezug in der Datenbank – geloggt wird ohne personenbezogene Daten.
+    let filesDeleted = 0;
+    for (const bookingId of bookingIds) {
+      try {
+        filesDeleted += await this.s3.deletePrefix(`${organizationId}/sessions/${bookingId}/`);
+      } catch (err) {
+        this.logger.error(`Failed to delete files of booking ${bookingId} after client deletion`, err instanceof Error ? err.stack : err);
+      }
+    }
+
+    await this.db.insert(clientDeletions).values({
+      organizationId,
+      clientId: id,
+      deletedBy,
+      bookingsDeleted: bookingIds.length,
+      filesDeleted,
+    });
+
+    return { bookingsDeleted: bookingIds.length, filesDeleted };
   }
 
   // Ownership über die organizationId: ein fremder Klient ist für diesen Coach schlicht
