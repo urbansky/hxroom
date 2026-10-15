@@ -15,7 +15,8 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 1. ✅ Backup und Fehlerüberwachung
 2. ✅ Erinnerungsmails 24 h / 1 h vor dem Termin
 3. ✅ Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
-   - 3.1 Impressum des Coachs mit Buchungssperre, gemeinsame Datenschutzerklärung für alle Seiten – geplant
+   - 3.1a ✅ Impressum des Coachs mit Buchungssperre
+   - 3.1b gemeinsame Datenschutzerklärung für alle Seiten – umgesetzt, Inbetriebnahme offen
 4. ✅ `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
@@ -270,7 +271,7 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 
 ## Schritt 3.1 · Impressum und Datenschutzerklärung
 
-**Stand:** 3.1a umgesetzt und lokal abgenommen, 3.1b geplant. Grundlage ist `legal.md` (§3 Impressum, §4 Datenschutzerklärung). Wie Impressum und Sperre arbeiten, beschreibt `technisches-konzept.md` §6.
+**Stand:** 3.1a ✅ in Betrieb und abgenommen, 3.1b umgesetzt und lokal abgenommen. Grundlage ist `legal.md` (§3 Impressum, §4 Datenschutzerklärung). Wie Impressum und Sperre arbeiten, beschreibt `technisches-konzept.md` §6.
 
 **Ziel:**
 - **Impressum:** Jede Buchungsseite hat unter `/impressum` die Angaben des Coachs und einen Block zu HxRoom als technischem Betreiber.
@@ -280,7 +281,7 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 
 Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit. 3.1a hängt an keinem neuen Text und kann vorher live gehen.
 
-### 3.1a · Impressum und Buchungssperre
+### 3.1a · Impressum und Buchungssperre ✅
 
 **Datenmodell:** neue Spalten an `booking_page`, Migration `0027`, Grenzen als Zod-Schema in `@hxroom/shared`
 
@@ -351,13 +352,27 @@ Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit. 3.1a hängt an keine
 
    Auf der Buchungsseite setzt die Komponente Name und Kontakt des Coachs ein, auf hxroom.de steht „siehe Impressum der jeweiligen Buchungsseite“.
 
-Die neuen Abschnitte folgen Stil und Aufbau des vorhandenen Textes, mit Karten für Zweck, Rechtsgrundlage und Speicherdauer. Inhaltlich halten sie sich an den tatsächlichen technischen Stand (`technisches-konzept.md` §12, §13, §17). **Der Betreiber prüft sie, erst danach geht 3.1b live.**
+Die neuen Abschnitte folgen Stil und Aufbau des vorhandenen Textes, mit Karten für Zweck, Rechtsgrundlage und Speicherdauer. Inhaltlich halten sie sich an den tatsächlichen technischen Stand (`technisches-konzept.md` §12, §13, §17). Der Betreiber hat den Text freigegeben.
 
 **Einbindung:**
 - `/datenschutz` auf hxroom.de und auf der Buchungsseite
 - Fußzeile der Buchungsseite und Mails an Klienten: zusätzlich „Datenschutz“
-- „Rechtliches“ in der Coach-App: Verweis „So sieht deine Datenschutzerklärung aus ↗“
+- „Rechtliches“ in der Coach-App: Verweis „So sieht sie aus“ auf die eigene Datenschutzerklärung
 - Die Coach-App verlinkt wie bisher auf hxroom.de.
+
+**Damit der Text stimmt, dazu umgesetzt:**
+- **Klienten löschen** (Funktionsliste 7.04, Art. 17 DSGVO): `DELETE /api/v1/clients/:id`, auf der Klientenseite unter „Klient löschen“ mit Bestätigungsdialog.
+  - Gelöscht werden der Klient, seine Termine samt Notizen, Chat und geteilten Dateien. Dazu gehören auch unbestätigte Anfragen derselben Organisation mit derselben E-Mail-Adresse, die keine `client_id` haben.
+  - Die Dateien im Speicher werden nach dem Commit entfernt.
+  - Anstehende Termine sperren die Löschung (`409`). Der Coach sagt sie zuerst ab, damit der Klient seine Absage-Mail bekommt.
+  - Löschprotokoll in `client_deletions` (Migration `0028`): nur IDs und Anzahlen.
+- **Server-Logs nach 14 Tagen gelöscht:** Alle Container schreiben ins Systemjournal (`logging: journald` in `infra/docker-compose.yml`). `infra/journald/hxroom.conf` begrenzt das Journal auf 14 Tage und 1 GB.
+
+**Lokal abgenommen** (Dev-Umgebung, Chrome):
+- hxroom.de/datenschutz und `anna.hxroom.localhost/datenschutz` zeigen alle 14 Abschnitte, auf der Buchungsseite mit Annas Angaben in Abschnitt 8, auf hxroom.de mit dem allgemeinen Verweis. Rechner und Handy, auch im Produktions-Build der Landingpage.
+- Die Fußzeile der Buchungsseite verlinkt Impressum und Datenschutz.
+- Klient mit anstehenden Terminen: Der Dialog erklärt die Sperre, die API antwortet `409`.
+- Peter Lang (zwei vergangene Termine, dazu eine Notiz, eine Chatnachricht mit Datei und eine verfallene Anfrage ohne `client_id`): Nach dem Löschen sind Klient, alle drei Termine, Notiz, Nachricht, Dateieintrag und das Objekt im Speicher weg, das Protokoll steht. Peter als Klient von Martina bleibt unberührt.
 
 ### Abnahme im Browser
 
@@ -369,7 +384,13 @@ Die neuen Abschnitte folgen Stil und Aufbau des vorhandenen Textes, mit Karten f
 
 ### Inbetriebnahme
 
-Sobald 3.1a ausgerollt ist, sind alle Buchungsseiten ohne Impressum gesperrt, auch `demo.hxroom.de`. Deshalb direkt nach dem Redeploy unter Einstellungen → Rechtliches das eigene Impressum eintragen. Für 3.1b vorher den Text der neuen Abschnitte freigeben.
+Sobald 3.1a ausgerollt ist, sind alle Buchungsseiten ohne Impressum gesperrt, auch `demo.hxroom.de`. Deshalb direkt nach dem Redeploy unter Einstellungen → Rechtliches das eigene Impressum eintragen.
+
+Für 3.1b auf dem Server:
+1. Vor dem Redeploy das Journal einrichten: `sudo mkdir -p /etc/systemd/journald.conf.d && sudo cp infra/journald/hxroom.conf /etc/systemd/journald.conf.d/ && sudo systemctl restart systemd-journald`. Prüfen mit `systemd-analyze cat-config systemd/journald.conf | grep MaxRetentionSec`.
+2. `git pull` und `./redeploy.sh`. Weil sich bei allen Diensten der Log-Treiber ändert, erstellt `up -d` diesmal **alle** Container neu, auch LiveKit. Also außerhalb eines Termins ausführen. Die Migration `0028` läuft beim Start der API.
+3. Prüfen: `docker compose logs --tail 20 api` zeigt Ausgaben, `journalctl -t hxroom/hxroom-api-1 -n 5` ebenso. Die alten Docker-Logdateien verschwinden mit den neu erstellten Containern.
+4. `demo.hxroom.de/datenschutz` zeigt deine Angaben in Abschnitt 8, hxroom.de/datenschutz den neuen Text.
 
 ---
 
@@ -382,7 +403,7 @@ Sobald 3.1a ausgerollt ist, sind alle Buchungsseiten ohne Impressum gesperrt, au
 - **Inhalte:** Tagline, Einleitung, Button-Text „Vorführung buchen“, Berufsbezeichnung, Schwerpunkte (die gezeigten Funktionen), Zitat, „Über mich“ und Qualifikationen des Betreibers
 - **Landingpage:** Knopf „Vorführung buchen“ verlinkt auf `demo.hxroom.de`
 
-**Offen:** Die Fußzeile verlinkt noch kein Impressum (kommt mit Schritt 3.1). Für eine öffentlich beworbene Seite ist es Pflicht.
+**Impressum:** seit Schritt 3.1a in der Fußzeile verlinkt, mit den Angaben des Betreibers.
 
 ---
 

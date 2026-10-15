@@ -104,7 +104,7 @@ Verantwortlicher: **Coach**, HxRoom ist Auftragsverarbeiter. Der Abschnitt ist T
 - Chat und geteilte Dateien (Speicherung, Virenprüfung)
 - Welche Notizen macht der Coach (Sitzungsnotizen)
 - Auftragsverarbeiter HxRoom + Unter-Auftragsverarbeiter (Liste aus 4.4)
-- Aufbewahrungsfristen nach den Löschregeln von HxRoom (`technisches-konzept.md` §13 und §17)
+- Aufbewahrung: bis der Coach den Klienten löscht (Löschfunktion samt Protokoll), spätestens mit seinem Konto; Backups nach den Fristen in `technisches-konzept.md` §13
 - Rechte der Klienten
 
 Was der Coach außerhalb von HxRoom verarbeitet (z. B. Rechnungen, eigene Kommunikation), deckt der Abschnitt nicht ab. Dafür kann er unter Einstellungen → Rechtliches eine eigene Erklärung zusätzlich verlinken, die Buchungsseite verweist dann darauf.
@@ -245,6 +245,7 @@ Wichtig für unsere AGB-Klauseln (Pflichten des Coaches):
 - [ ] eRecht24 / Dr. Schwenke-Konto evaluieren als Generator-Quelle
 - [ ] Coach-Impressum und gemeinsame Datenschutzerklärung umsetzen (`phase5-umsetzungsplan.md`, Schritt 3.1)
 - [ ] Klausel in HxRoom-AGB bzw. AVV: Der Coach übernimmt den Klienten-Abschnitt der gemeinsamen Datenschutzerklärung für die Verarbeitung in HxRoom (siehe 4.3)
+- [ ] Rechtsgrundlagen der gemeinsamen Datenschutzerklärung (Abschnitte 7 bis 9, v. a. Erinnerungsmails und Notizen) anwaltlich bestätigen lassen
 - [ ] Im Onboarding-Flow Trial-Conversion-Logik rechtssicher beschreiben
 
 ---
