@@ -256,6 +256,13 @@ Der Host ist ausdrücklich **keine** Autorisierungsgrenze: welche Rolle was darf
 
 Wer einen neuen Host im Caddyfile anlegt, trägt ihn in die Liste mit ein.
 
+**Impressum und Buchungssperre** (`legal.md` §3.2): Auf seiner Subdomain tritt der Coach als Anbieter auf und braucht ein eigenes Impressum.
+- **Eingabe:** unter Einstellungen → Rechtliches (`/settings/legal`), als Angaben im Formular oder als Link auf ein vorhandenes Impressum. Telefon ist Pflicht.
+- **Speichern:** ausdrücklich und nur mit der Bestätigung „korrekt und vollständig“ (`PUT /api/v1/booking-page/legal`), Spalten `imprint_*` an `booking_page`.
+- **Seite `/impressum` der Subdomain:** oben die Angaben des Coachs (`GET /api/v1/organizations/:slug/imprint`), darunter „Technischer Betrieb: HxRoom“. Die Angaben zum Betreiber stehen einmal in `LegalOperatorImprint` (`packages/ui/components/legal/`) und erscheinen ebenso auf `hxroom.de/impressum`. Die Stile der Rechtsseiten liegen in `packages/ui/theme/legal.css`.
+- **Sperre:** Ohne vollständiges Impressum (`isImprintComplete` in `packages/shared/src/legal.ts`) liefert das öffentliche Profil `bookable: false`. Die Buchungsseite zeigt dann „Buchungen sind bald möglich“ statt der Buttons, und `POST …/bookings` lehnt mit `403` ab. Spontan-Termine des Coachs bleiben möglich.
+- **Verlinkt:** in der Fußzeile jeder Seite der Buchungsseite, im Warteraum und unter jeder Mail an Klienten (`legalLinks` im `MailLayout`, aufgebaut in `bookings/booking-urls.ts`).
+
 **Die Call-Pfade brauchen keine eigene Caddy-Regel.** `/call/*` ist in beiden Apps eine gewöhnliche interne Route und wird über die bestehenden Host-Blöcke bedient:
 
 ```

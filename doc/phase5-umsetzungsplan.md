@@ -15,7 +15,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 1. ✅ Backup und Fehlerüberwachung
 2. ✅ Erinnerungsmails 24 h / 1 h vor dem Termin
 3. ✅ Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
-   - 3.1 Impressum und Datenschutzerklärung in den Einstellungen des Coachs, als eigene Seiten der Buchungsseite – geplant
+   - 3.1 Impressum des Coachs mit Buchungssperre, gemeinsame Datenschutzerklärung für alle Seiten – geplant
 4. ✅ `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
@@ -28,7 +28,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 
 **Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf und die überarbeitete Landingpage.
 
-**Außerhalb des Codes:** Die Rechtstexte (Impressum- und Datenschutz-Vorlage für Coaches, AGB, AVV) liefert der Betreiber. Sie haben Vorlauf und sollten früh angestoßen werden.
+**Außerhalb des Codes:** AGB und AVV liefert der Betreiber, ebenso die Freigabe der neuen Abschnitte der Datenschutzerklärung (Schritt 3.1b). Sie haben Vorlauf und sollten früh angestoßen werden.
 
 ---
 
@@ -268,28 +268,107 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 
 ---
 
-## Schritt 3.1 · Impressum und Datenschutzerklärung des Coachs
+## Schritt 3.1 · Impressum und Datenschutzerklärung
 
-**Stand:** geplant. Grundlage ist `legal.md` (3.2 Impressum, 4.3 Datenschutzerklärung, 5.2 AGB).
+**Stand:** 3.1a umgesetzt und lokal abgenommen, 3.1b geplant. Grundlage ist `legal.md` (§3 Impressum, §4 Datenschutzerklärung). Wie Impressum und Sperre arbeiten, beschreibt `technisches-konzept.md` §6.
 
-**Umfang:**
-- **Impressum** unter `/impressum` der Buchungsseite, strukturiert nach `legal.md` 3.2:
-  - Pflichtfelder: Name bzw. Firma, Anschrift, E-Mail, Telefon
-  - optional: Rechtsform, USt-IdNr., Vertretungsberechtigte, Berufsbezeichnung und Aufsichtsbehörde bzw. Kammer, Freitext-Zusatz
-  - Bestätigung „Diese Angaben sind korrekt und vollständig“, mit Zeitpunkt gespeichert
-- **Datenschutzerklärung** unter `/datenschutz`. Der Coach ist Verantwortlicher, HxRoom Auftragsverarbeiter (`legal.md` 4.3, 4.4).
-- **AGB:** optional ein Link auf die eigenen AGB des Coachs. Eine Vorlage liefert HxRoom nicht (`legal.md` 5.2).
-- **Fußzeile:** auf allen Seiten der Buchungsseite Links auf Impressum und Datenschutz, auf die AGB nur, wenn ein Link hinterlegt ist.
+**Ziel:**
+- **Impressum:** Jede Buchungsseite hat unter `/impressum` die Angaben des Coachs und einen Block zu HxRoom als technischem Betreiber.
+- **Datenschutzerklärung:** Es gibt eine gemeinsame Erklärung für alle Personengruppen (Besucher von hxroom.de, Coachs, Klienten). hxroom.de, die Coach-App und die Buchungsseiten zeigen denselben Text. Auf der Buchungsseite unter `/datenschutz` ist der Coach automatisch als Verantwortlicher eingetragen.
+- **Buchungssperre:** Ohne Impressum ist eine Buchungsseite zu sehen, aber nicht buchbar.
+- **Links überall:** Die Fußzeile der Buchungsseite und die Mails an Klienten verlinken Impressum und Datenschutzerklärung der Buchungsseite.
 
-**Umsetzung:**
-- **Schema:** Impressum (JSON), Bestätigungszeitpunkt, Datenschutzerklärung, AGB-Link an `booking_page`
-- **API:** `GET /organizations/:slug/imprint` und `…/privacy`
-- **Coach-App:** neuer Bereich „Rechtliches“ in den Einstellungen der Buchungsseite
-- **Klientenseite:** Routen `/impressum` und `/datenschutz`, Fußzeile
+Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit. 3.1a hängt an keinem neuen Text und kann vorher live gehen.
 
-**Offen:**
-1. **Buchung erst mit Impressum und Datenschutzerklärung?** Vorschlag: Die Seite bleibt sichtbar, Buchen ist bis dahin gesperrt (Hinweis statt Buttons, die API lehnt Buchungen ab), das Backoffice zeigt, was fehlt. Dann braucht auch `demo.hxroom.de` das Impressum des Betreibers.
-2. **Datenschutzerklärung als Text in HxRoom, als Link auf die eigene Website oder beides?** Vorschlag: beides, mit einer Vorlage als Standard. Den Vorlagentext liefert der Betreiber bzw. lässt ihn prüfen.
+### 3.1a · Impressum und Buchungssperre
+
+**Datenmodell:** neue Spalten an `booking_page`, Migration `0027`, Grenzen als Zod-Schema in `@hxroom/shared`
+
+| Spalte | Inhalt |
+|---|---|
+| `imprint_mode` | `form`, `link` oder leer |
+| `imprint` (JSON) | Pflicht: Name bzw. Firma, Straße, PLZ, Ort, Land, E-Mail, Telefon. Optional: Rechtsform, Vertretungsberechtigte (nur bei Gesellschaften), Register und Nummer, USt-IdNr., Freitext-Zusatz (z. B. Kleinunternehmer, Verband) |
+| `imprint_url` | Link auf das eigene Impressum |
+| `imprint_confirmed_at` | Zeitpunkt der Bestätigung „Diese Angaben sind korrekt und vollständig“ |
+| `privacy_url` | Link auf eine eigene, zusätzliche Datenschutzerklärung (optional) |
+| `terms_url` | Link auf die eigenen AGB (optional, `legal.md` §5.2) |
+
+„Impressum vollständig“ heißt: Die Pflichtfelder bzw. der Link sind gefüllt, und die Bestätigung liegt vor.
+
+**API:**
+- `GET` und `PUT /booking-page/legal`: ausdrückliches Speichern statt Autosave, damit die Bestätigung immer für genau einen gespeicherten Stand gilt. Ohne Bestätigung `400`, jedes Speichern setzt `imprint_confirmed_at` neu.
+- Öffentlich: `GET /organizations/:slug/imprint` liefert die Angaben bzw. den Link. Das öffentliche Profil bekommt `bookable` sowie `privacyUrl` und `termsUrl`.
+- **Sperre:** `BookingsService.create` lehnt ohne vollständiges Impressum mit `403 Bookings are not available for this coach yet` ab. Spontan-Termine, die der Coach selbst anlegt, bleiben erlaubt.
+
+**Coach-App:**
+- **Neue Seite `/settings/legal` („Rechtliches“).** Sie ersetzt `/settings/privacy`, der alte Pfad leitet weiter, der Menüpunkt heißt „Rechtliches“.
+  - **Impressum:** Auswahl zwischen Formular und Link, Felder, Bestätigung, „Speichern“, „Vorschau ansehen ↗“.
+  - **Datenschutzerklärung:** optionaler Link auf eine eigene Erklärung. Der Verweis auf die gemeinsame Erklärung kommt mit 3.1b.
+  - **AGB:** optionaler Link auf die eigenen AGB.
+  - **„Kommt bald“:** AVV und Löschanfragen bleiben vorerst als Kacheln. Der Generator für Datenschutztexte entfällt.
+- **Hinweise, solange das Impressum fehlt:** oben auf der Seite „Buchungsseite“ („Ohne Impressum können Klienten noch nicht buchen → Rechtliches“) und als Schritt „Impressum hinterlegen“ in der Onboarding-Checkliste.
+
+**Klientenseite:**
+- **Route `/impressum`:** Block „Anbieter dieser Seite“ mit den Angaben des Coachs bzw. dem Link darauf, darunter der Block „Technischer Betrieb: HxRoom“.
+- **Fußzeile** auf allen Seiten: „Impressum“, dazu „AGB“, wenn ein Link hinterlegt ist.
+- **Ohne Impressum:** Hinweis „Buchungen sind bald möglich.“ statt der Buchungs-Buttons und auf der Angebotsseite statt des Kalenders. Die Seite selbst bleibt sichtbar.
+
+**Mails an Klienten** (`mail/templates/client/*`): eine Fußzeile mit dem Link „Impressum“ auf die Buchungsseite des Coachs.
+
+**Gemeinsamer Block zu HxRoom:** eine Komponente in `@hxroom/ui` mit den Angaben aus dem heutigen Impressum der Landingpage (Anbieter, Kontakt, inhaltlich Verantwortlicher), ohne den überholten Absatz „HxRoom ist in Entwicklung“. Die Landingpage nutzt sie unter `/impressum` ebenfalls, so stehen die Angaben nur an einer Stelle.
+
+**Umgesetzt:** wie oben beschrieben, dazu:
+- `LegalOperatorImprint` mit zwei Varianten: vollständig auf hxroom.de, auf der Buchungsseite nur Anbieter und Kontakt. Haftung und Streitbeilegung gehören zum Anbieter der Inhalte, auf der Buchungsseite also zum Coach.
+- Stile der Rechtsseiten als `packages/ui/theme/legal.css`, aus dem Impressum der Landingpage übernommen
+- Link „Impressum“ auch im Warteraum, der keine Fußzeile hat
+- Formular mit den Regeln aus `bookingPageLegalSchema`, deutsche Fehlertexte; jede Änderung hebt die Bestätigung auf
+- Die jeweils andere Form (Angaben bzw. Link) bleibt beim Wechsel gespeichert, maßgeblich ist `imprint_mode`.
+- Seed: Anna (Einzelunternehmen) und Martina (GmbH) mit Impressum, Tobias ohne
+- Tests in `booking-page/legal.spec.ts` und `mail/templates/templates.spec.ts`
+
+**Lokal abgenommen** (Dev-Umgebung, Chrome, Rechner und Handy):
+- Anna: `/impressum` zeigt ihre Angaben und den Block zu HxRoom, die Fußzeile verlinkt dorthin, Buchen geht.
+- Tobias ohne Impressum: Hinweis statt Buttons, die API lehnt eine Buchung mit `403` ab, `/impressum` meldet das fehlende Impressum. In der Coach-App zeigen Checkliste, Seite „Buchungsseite“ und deren Vorschau den Hinweis.
+- Formular: Ohne Bestätigung und ohne Pflichtfelder wird nichts gesendet, ohne Telefon ebenso. Eine Änderung hebt das Häkchen auf. Nach dem Speichern ist Tobias buchbar.
+- Wechsel auf Link mit AGB: `/impressum` zeigt den Link, die Fußzeile „AGB“. Die gespeicherten Angaben bleiben erhalten.
+- `/settings/privacy` leitet auf `/settings/legal` weiter.
+- hxroom.de/impressum sieht aus wie zuvor, ohne den Absatz „in Entwicklung“, auch im Produktions-Build.
+
+### 3.1b · Gemeinsame Datenschutzerklärung
+
+**Text:** eine Komponente `LegalPrivacyPolicy` in `@hxroom/ui`, gegliedert nach Personengruppen:
+1. **Allgemein und Besucher von hxroom.de:** die heutige Erklärung der Landingpage, unverändert übernommen (Verantwortlicher, Hosting und Server-Logs, Newsletter, Plausible, Schriften, Cookies, Rechte, Beschwerde, Drittland, keine automatisierte Entscheidung, Änderungen).
+2. **Coachs (app.hxroom.de):** neu, als Entwurf. Konto und Anmeldung, Mails, Fehlerüberwachung, Backups, Löschung des Kontos.
+3. **Klienten einer Buchungsseite:** neu, als Entwurf. Verantwortlich ist der jeweilige Coach, HxRoom verarbeitet im Auftrag. Inhalt:
+   - Daten aus der Buchung
+   - Bestätigungs- und Erinnerungsmails
+   - Warteraum und Videocall ohne Aufzeichnung
+   - Chat und Dateien samt Virenprüfung
+   - Notizen des Coachs
+   - Löschfristen und Unterauftragsverarbeiter
+   - Verweis auf eine eigene Erklärung des Coachs, falls hinterlegt
+
+   Auf der Buchungsseite setzt die Komponente Name und Kontakt des Coachs ein, auf hxroom.de steht „siehe Impressum der jeweiligen Buchungsseite“.
+
+Die neuen Abschnitte folgen Stil und Aufbau des vorhandenen Textes, mit Karten für Zweck, Rechtsgrundlage und Speicherdauer. Inhaltlich halten sie sich an den tatsächlichen technischen Stand (`technisches-konzept.md` §12, §13, §17). **Der Betreiber prüft sie, erst danach geht 3.1b live.**
+
+**Einbindung:**
+- `/datenschutz` auf hxroom.de und auf der Buchungsseite
+- Fußzeile der Buchungsseite und Mails an Klienten: zusätzlich „Datenschutz“
+- „Rechtliches“ in der Coach-App: Verweis „So sieht deine Datenschutzerklärung aus ↗“
+- Die Coach-App verlinkt wie bisher auf hxroom.de.
+
+### Abnahme im Browser
+
+- **Anna ohne Impressum:** Die Seite zeigt den Hinweis statt der Buttons, die API lehnt eine Buchung mit `403` ab, die Checkliste zeigt den offenen Schritt.
+- **Anna mit Formular:** `/impressum` zeigt beide Blöcke, Buchen geht wieder. **Mit Link:** Der Block verweist auf den Link.
+- **Bestätigung:** Ohne Haken wird nicht gespeichert, eine Änderung setzt den Zeitpunkt neu. Ohne Telefon wird nicht gespeichert.
+- **Ansichten:** Rechner und Handy. Die Fußzeile zeigt die Links auf allen Seiten der Buchungsseite, die Mails tragen sie ebenfalls.
+- **Mit 3.1b:** `/datenschutz` zeigt Anna als Verantwortliche, hxroom.de den allgemeinen Verweis. Der Text ist auf allen Seiten derselbe.
+
+### Inbetriebnahme
+
+Sobald 3.1a ausgerollt ist, sind alle Buchungsseiten ohne Impressum gesperrt, auch `demo.hxroom.de`. Deshalb direkt nach dem Redeploy unter Einstellungen → Rechtliches das eigene Impressum eintragen. Für 3.1b vorher den Text der neuen Abschnitte freigeben.
 
 ---
 
