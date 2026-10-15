@@ -1,4 +1,4 @@
-import { MailLayout } from '../layout';
+import { MailLayout, type MailLegalLinks } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
 import { Footnote, Greeting, Paragraph, PrimaryButton } from '../_components/blocks';
 import { renderEmail } from '../../render';
@@ -9,6 +9,8 @@ interface SessionInvitationEmailProps {
   appointment: AppointmentInfo;
   /** Zugang zum Warteraum – anders als sonst bereits offen, der Termin beginnt jetzt. */
   callUrl: string;
+  /** Impressum und Datenschutz der Buchungsseite. */
+  legalLinks: MailLegalLinks;
 }
 
 // Spontan-Termin (backoffice-coach.md 2.04): Der Coach hat die Sitzung eben angelegt, sie
@@ -18,9 +20,9 @@ interface SessionInvitationEmailProps {
 // Kein Kalenderanhang und kein Absage-Link: Ein Termin, der jetzt beginnt, wandert in
 // keinen Kalender mehr, und absagen lässt er sich ohnehin nicht (canClientCancel verlangt
 // einen Beginn in der Zukunft). Bleibt die Antwort auf diese Mail, die beim Coach landet.
-export default function SessionInvitationEmail({ clientName, coachName, appointment, callUrl }: SessionInvitationEmailProps) {
+export default function SessionInvitationEmail({ clientName, coachName, appointment, callUrl, legalLinks }: SessionInvitationEmailProps) {
   return (
-    <MailLayout preview={`${coachName} möchte jetzt mit dir sprechen`}>
+    <MailLayout preview={`${coachName} möchte jetzt mit dir sprechen`} legalLinks={legalLinks}>
       <Greeting>Hallo {clientName},</Greeting>
       <Paragraph>{coachName} hat gerade eine Sitzung für dich geöffnet – der Raum ist ab sofort bereit.</Paragraph>
       <AppointmentBlock
@@ -50,6 +52,7 @@ SessionInvitationEmail.PreviewProps = {
     durationMinutes: 30,
   },
   callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
 } satisfies SessionInvitationEmailProps;
 
 export async function renderSessionInvitationEmail(props: SessionInvitationEmailProps): Promise<string> {

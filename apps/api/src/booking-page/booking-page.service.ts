@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, Unauthorize
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookingPage } from '../db/schema';
-import type { BookingPageDto } from '@hxroom/shared';
+import { isImprintComplete, type BookingPageDto, type BookingPageLegalDto } from '@hxroom/shared';
 import { S3Service, isNoSuchKeyError, type S3Object } from '../storage/s3.service';
 import { coachAvatarKey } from '../storage/paths';
 import { transcodeAvatar } from '../storage/image-transcode.util';
@@ -30,6 +30,10 @@ export class BookingPageService {
         qualifications:  bookingPage.qualifications,
         avatarUpdatedAt: bookingPage.avatarUpdatedAt,
         onboardingCelebratedAt: bookingPage.onboardingCelebratedAt,
+        imprintMode:        bookingPage.imprintMode,
+        imprint:            bookingPage.imprint,
+        imprintUrl:         bookingPage.imprintUrl,
+        imprintConfirmedAt: bookingPage.imprintConfirmedAt,
       })
       .from(organization)
       .leftJoin(bookingPage, eq(bookingPage.organizationId, organization.id))
@@ -40,9 +44,62 @@ export class BookingPageService {
       throw new UnauthorizedException('Organization not found');
     }
 
+    const { imprintMode, imprint, imprintUrl, imprintConfirmedAt, ...page } = row;
+
     // Ohne booking_page-Zeile (frisch registrierter Coach) liefert der LEFT JOIN auch für die
-    // NOT-NULL-Listen null – die Oberfläche bekommt trotzdem immer Listen.
-    return { ...row, topics: row.topics ?? [], qualifications: row.qualifications ?? [] };
+    // NOT-NULL-Listen null – die Oberfläche bekommt trotzdem immer Listen. Vom Impressum nur
+    // der Status: Hinweis und Checkliste brauchen nicht mehr, die Angaben selbst stehen unter
+    // GET /booking-page/legal.
+    return {
+      ...page,
+      topics: page.topics ?? [],
+      qualifications: page.qualifications ?? [],
+      imprintComplete: isImprintComplete({ imprintMode, imprint, imprintUrl, imprintConfirmedAt }),
+    };
+  }
+
+  async getLegal(organizationId: string) {
+    const [row] = await this.db
+      .select({
+        imprintMode:        bookingPage.imprintMode,
+        imprint:            bookingPage.imprint,
+        imprintUrl:         bookingPage.imprintUrl,
+        imprintConfirmedAt: bookingPage.imprintConfirmedAt,
+        privacyUrl:         bookingPage.privacyUrl,
+        termsUrl:           bookingPage.termsUrl,
+      })
+      .from(bookingPage)
+      .where(eq(bookingPage.organizationId, organizationId))
+      .limit(1);
+
+    const state = row ?? {
+      imprintMode: null, imprint: null, imprintUrl: null, imprintConfirmedAt: null, privacyUrl: null, termsUrl: null,
+    };
+    return { ...state, imprintComplete: isImprintComplete(state) };
+  }
+
+  /**
+   * Speichert Impressum und Links. Die Bestätigung prüft schon das Schema; ihr Zeitpunkt wird
+   * bei jedem Speichern neu gesetzt, weil sie immer für genau diesen Stand gilt. Die jeweils
+   * andere Form (Angaben bzw. Link) bleibt erhalten, damit ein Wechsel hin und zurück nichts
+   * Eingetipptes verwirft – maßgeblich ist allein `imprintMode`.
+   */
+  async updateLegal(organizationId: string, dto: BookingPageLegalDto) {
+    const values = {
+      imprintMode: dto.imprintMode,
+      ...(dto.imprint !== undefined && { imprint: dto.imprint ?? null }),
+      ...(dto.imprintUrl !== undefined && { imprintUrl: dto.imprintUrl ?? null }),
+      privacyUrl: dto.privacyUrl ?? null,
+      termsUrl: dto.termsUrl ?? null,
+      imprintConfirmedAt: new Date(),
+    };
+
+    await this.db
+      .insert(bookingPage)
+      .values({ organizationId, ...values })
+      .onConflictDoUpdate({ target: bookingPage.organizationId, set: values });
+
+    return this.getLegal(organizationId);
   }
 
   async update(organizationId: string, dto: BookingPageDto) {

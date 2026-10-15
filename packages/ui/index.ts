@@ -7,6 +7,10 @@ export { default as BookingPageCoachCard } from './components/booking-page/Booki
 export { default as BookingPageAbout } from './components/booking-page/BookingPageAbout.vue';
 export { default as BookingPageOfferItem } from './components/booking-page/BookingPageOfferItem.vue';
 
+// Rechtsseiten: Impressum des Betreibers für hxroom.de und als Block im Impressum jeder
+// Buchungsseite (doc/legal.md §3). Stile in theme/legal.css.
+export { default as LegalOperatorImprint } from './components/legal/LegalOperatorImprint.vue';
+
 // Die Call-Oberfläche. Rollenfrei gebaut: Was Coach und Klient unterscheidet, kommt beim
 // Einbinden als Props und Slots herein (technisches-konzept.md §8). Beide Frontends
 // importieren von hier – die Nuxt-App wie die Vite-SPA.

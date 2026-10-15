@@ -36,6 +36,7 @@ describe('Buchungs-Mail-Templates', () => {
       cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
       callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
       callOpensMinutesBefore: 60,
+      legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
     };
 
     it('rendert alle Termindaten', async () => {
@@ -105,6 +106,31 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).not.toContain('/call/');
       expect(html).not.toContain('Zum Warteraum');
     });
+
+    // Mails an Klienten gehen im Namen des Coachs hinaus und verlinken deshalb das Impressum
+    // seiner Buchungsseite (doc/legal.md §3.2).
+    it('verlinkt unter der Mail das Impressum der Buchungsseite', async () => {
+      const html = await renderBookingConfirmedEmail(props);
+
+      expect(html).toContain('https://anna.hxroom.de/impressum');
+      expect(html).toContain('Impressum');
+      expect(html).not.toContain('Datenschutz');
+    });
+
+    it('nennt die Datenschutzerklärung, sobald es einen Link gibt', async () => {
+      const html = await renderBookingConfirmedEmail({
+        ...props,
+        legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum', privacyUrl: 'https://anna.hxroom.de/datenschutz' },
+      });
+
+      expect(html).toContain('https://anna.hxroom.de/datenschutz');
+    });
+
+    it('kommt ohne Buchungsseite ohne Fußzeile aus', async () => {
+      const html = await renderBookingConfirmedEmail({ ...props, legalLinks: null });
+
+      expect(html).not.toContain('/impressum');
+    });
   });
 
   describe('Klient: Erinnerung', () => {
@@ -118,6 +144,7 @@ describe('Buchungs-Mail-Templates', () => {
       opensTimeLabel: '08:00',
       callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
       cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
+      legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
     };
 
     it('24h: nennt Tag, Uhrzeit, Öffnung des Raums und beide Links', async () => {
@@ -153,6 +180,7 @@ describe('Buchungs-Mail-Templates', () => {
       appointment,
       cancelledBy: 'coach' as const,
       bookingPageUrl: 'https://anna.hxroom.de',
+      legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
     }
 
     it('rendert Termindaten und Link zur Buchungsseite', async () => {

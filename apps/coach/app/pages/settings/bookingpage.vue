@@ -22,6 +22,7 @@ interface BookingPageResponse {
   quote:           string | null
   qualifications:  string[]
   avatarUpdatedAt: string | null
+  imprintComplete: boolean
 }
 
 // Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`.
@@ -89,6 +90,11 @@ const avatarUrl = computed(() =>
     : null,
 )
 
+// Für Hinweis und Vorschau: Ohne Impressum ist die Buchungsseite nicht buchbar (doc/legal.md
+// §3.2). Gepflegt wird es unter Einstellungen → Rechtliches, hier nur der Status. Vor dem
+// Fetch deklariert, weil onResponse schon während des await läuft.
+const imprintComplete = ref(true)
+
 await useFetch<BookingPageResponse>('/booking-page', {
   $fetch: $api,
   onResponse({ response }) {
@@ -96,8 +102,12 @@ await useFetch<BookingPageResponse>('/booking-page', {
     Object.assign(lastSaved, toForm(response._data as BookingPageResponse))
     organizationId.value = response._data?.organizationId ?? null
     avatarUpdatedAt.value = response._data?.avatarUpdatedAt ?? null
+    imprintComplete.value = response._data?.imprintComplete ?? false
   },
 })
+
+const { data: legal } = await useFetch<{ termsUrl: string | null }>('/booking-page/legal', { $fetch: $api })
+const termsUrl = computed(() => legal.value?.termsUrl ?? null)
 
 type AvatarStatus = 'idle' | 'uploading' | 'saved' | 'error'
 const avatarStatus = ref<AvatarStatus>('idle')
@@ -270,6 +280,16 @@ const features = [
       <h1 class="font-serif text-3xl text-highlighted mb-1">Deine Buchungsseite</h1>
       <p class="text-sm text-muted">So sehen dich potenzielle Klienten – passe Profil, Angebot und Buchungs-CTA an.</p>
     </div>
+
+    <UAlert
+      v-if="!imprintComplete"
+      icon="i-lucide-triangle-alert"
+      color="warning"
+      variant="soft"
+      title="Ohne Impressum können Klienten noch nicht buchen"
+      description="Deine Seite ist zu sehen, statt der Buchungs-Buttons steht dort aber ein Hinweis. Trag dein Impressum unter Rechtliches ein."
+      :actions="[{ label: 'Zu Rechtliches', to: '/settings/legal', color: 'warning', variant: 'outline', trailingIcon: 'i-lucide-arrow-right' }]"
+    />
 
     <!-- Zweispaltiges Layout: Editor + Vorschau -->
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_900px] gap-12 items-start">
@@ -468,11 +488,11 @@ const features = [
                   <span v-if="previewShowAbout" class="text-base text-muted tracking-wide">Über mich</span>
                   <span class="text-base text-muted tracking-wide">Sitzungsarten</span>
                 </div>
-                <UButton color="primary" icon="i-lucide-calendar" size="lg" class="px-5 max-w-56" :ui="{ label: 'truncate' }" :label="previewCtaLabel" />
+                <UButton v-if="imprintComplete" color="primary" icon="i-lucide-calendar" size="lg" class="px-5 max-w-56" :ui="{ label: 'truncate' }" :label="previewCtaLabel" />
               </div>
 
               <section class="max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-24 pb-10">
-                <BookingPageHero :profile="previewProfile" cta-to="#offers" />
+                <BookingPageHero :profile="previewProfile" cta-to="#offers" :bookable="imprintComplete" />
                 <BookingPageCoachCard :profile="previewProfile" />
               </section>
 
@@ -495,8 +515,12 @@ const features = [
                 <BookingPageAbout :profile="previewProfile" />
               </template>
 
-              <div class="border-t border-default px-6 lg:px-10 py-8 text-xs text-dimmed">
-                Gebrandeter HxRoom von <span class="text-muted">hxroom.de</span>&nbsp;·&nbsp;Server in Deutschland
+              <div class="border-t border-default px-6 lg:px-10 py-8 text-xs text-dimmed flex items-center justify-between gap-4">
+                <span>Gebrandeter HxRoom von <span class="text-muted">hxroom.de</span>&nbsp;·&nbsp;Server in Deutschland</span>
+                <span class="flex items-center gap-5">
+                  <span>Impressum</span>
+                  <span v-if="termsUrl">AGB</span>
+                </span>
               </div>
             </div>
           </div>

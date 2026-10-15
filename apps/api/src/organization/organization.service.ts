@@ -3,6 +3,7 @@ import { and, asc, eq, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, offers, bookingPage, availabilitySlots, availabilitySettings, bookings, member, user } from '../db/schema';
 import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS, type DateRange } from '../availability/slot-calculation';
+import { isImprintComplete } from '@hxroom/shared';
 
 @Injectable()
 export class OrganizationService {
@@ -64,6 +65,12 @@ export class OrganizationService {
         topics:         bookingPage.topics,
         quote:          bookingPage.quote,
         qualifications: bookingPage.qualifications,
+        privacyUrl:     bookingPage.privacyUrl,
+        termsUrl:       bookingPage.termsUrl,
+        imprintMode:        bookingPage.imprintMode,
+        imprint:            bookingPage.imprint,
+        imprintUrl:         bookingPage.imprintUrl,
+        imprintConfirmedAt: bookingPage.imprintConfirmedAt,
       })
       .from(bookingPage)
       .where(eq(bookingPage.organizationId, org.id))
@@ -79,7 +86,44 @@ export class OrganizationService {
       topics:         profile?.topics ?? [],
       quote:          profile?.quote ?? null,
       qualifications: profile?.qualifications ?? [],
+      privacyUrl:     profile?.privacyUrl ?? null,
+      termsUrl:       profile?.termsUrl ?? null,
+      // Dieselbe Regel wie die Sperre in BookingsService.create – die Seite blendet damit die
+      // Buchungs-Buttons aus, statt Klienten in eine Ablehnung laufen zu lassen.
+      bookable:       isImprintComplete(profile),
     };
+  }
+
+  /**
+   * Impressum der Buchungsseite (Seite /impressum): die Angaben des Coachs bzw. der Link auf
+   * sein eigenes Impressum. Unvollständige Angaben gibt es nicht heraus – lieber gar kein
+   * Impressum als ein unbestätigtes.
+   */
+  async findImprint(slug: string) {
+    const org = await this.findBySlug(slug);
+    const state = await this.findImprintState(org.id);
+
+    if (!isImprintComplete(state)) {
+      return { mode: null, imprint: null, url: null };
+    }
+    return state!.imprintMode === 'form'
+      ? { mode: 'form' as const, imprint: state!.imprint, url: null }
+      : { mode: 'link' as const, imprint: null, url: state!.imprintUrl };
+  }
+
+  /** Gespeicherter Stand des Impressums, für isImprintComplete. */
+  async findImprintState(organizationId: string) {
+    const [state] = await this.db
+      .select({
+        imprintMode:        bookingPage.imprintMode,
+        imprint:            bookingPage.imprint,
+        imprintUrl:         bookingPage.imprintUrl,
+        imprintConfirmedAt: bookingPage.imprintConfirmedAt,
+      })
+      .from(bookingPage)
+      .where(eq(bookingPage.organizationId, organizationId))
+      .limit(1);
+    return state ?? null;
   }
 
   // Wie findBySlug, nur über die ID – gebraucht dort, wo nur die organizationId

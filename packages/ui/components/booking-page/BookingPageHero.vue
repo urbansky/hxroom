@@ -5,10 +5,15 @@ import { bookingPageCtaLabel, hasBookingPageAbout, type BookingPageProfile } fro
 
 // Kopfbereich der Buchungsseite. Geteilt mit der Vorschau in der Coach-App, damit beide
 // dieselbe Seite zeigen; Verlinkung und Interaktion regelt die einbindende App.
-const { profile, ctaTo } = defineProps<{
+const { profile, ctaTo, bookable = true } = defineProps<{
   profile: BookingPageProfile
   /** Ziel der Buchungs-Buttons, auf der Buchungsseite das erste Angebot. */
   ctaTo: string
+  /**
+   * false ohne vollständiges Impressum (doc/legal.md §3.2): Statt des Buchungs-Buttons steht
+   * ein Hinweis, die Seite selbst bleibt sichtbar.
+   */
+  bookable?: boolean
 }>()
 
 const ctaLabel = computed(() => bookingPageCtaLabel(profile.ctaButton))
@@ -37,9 +42,13 @@ const promises = ['Kein Konto nötig', 'Videogespräch im Browser', 'Server in D
     </p>
 
     <div class="flex flex-col sm:flex-row items-center gap-4">
-      <UButton :to="ctaTo" size="xl" color="primary" icon="i-lucide-calendar" class="px-4">
+      <UButton v-if="bookable" :to="ctaTo" size="xl" color="primary" icon="i-lucide-calendar" class="px-4">
         {{ ctaLabel }}
       </UButton>
+      <div v-else class="flex items-center gap-2 rounded-lg border border-default bg-elevated px-4 py-3 text-sm text-muted">
+        <UIcon name="i-lucide-calendar-clock" class="size-4 text-primary shrink-0" />
+        Buchungen sind bald möglich.
+      </div>
       <UButton v-if="showAbout" to="#about" size="xl" variant="outline" color="neutral" class="px-5">
         Mehr erfahren
       </UButton>

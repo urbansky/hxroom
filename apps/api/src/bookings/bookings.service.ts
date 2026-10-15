@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
 import { and, eq } from 'drizzle-orm';
@@ -15,9 +15,10 @@ import { renderBookingCancelledByClientEmail } from '../mail/templates/coach/boo
 import { isUniqueViolation } from '../common/pg-errors';
 import { tokenMatches } from '../common/client-token';
 import { normalizeEmail } from '../clients/normalize-email';
+import { isImprintComplete } from '@hxroom/shared';
 import { CONFIRMATION_TTL_MINUTES, canClientCancel, isExpiredPending } from './booking.constants';
 import { formatDayLabel, toAppointmentInfo } from './booking-formatting';
-import { buildBookingPageUrl, buildCallUrl, buildCancelUrl, buildConfirmUrl } from './booking-urls';
+import { buildBookingPageUrl, buildCallUrl, buildCancelUrl, buildConfirmUrl, buildLegalLinks } from './booking-urls';
 import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
 import type { CreateBookingDto, BookingResponse, ClientBookingView } from '@hxroom/shared';
 import type { bookings as bookingsTable } from '../db/schema';
@@ -51,6 +52,14 @@ export class BookingsService {
   async create(slug: string, offerId: string, dto: CreateBookingDto) {
     const org = await this.organizationService.findBySlug(slug);
     const requestedStart = new Date(dto.start);
+
+    // Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/legal.md
+    // §3.2). Die Seite selbst blendet die Buttons dann schon aus (Profil: `bookable`); das
+    // hier fängt ab, wer die API direkt aufruft. Spontan-Termine des Coachs laufen nicht hier
+    // durch und bleiben möglich.
+    if (!isImprintComplete(await this.organizationService.findImprintState(org.id))) {
+      throw new ForbiddenException('Bookings are not available for this coach yet');
+    }
 
     const booking = await this.db.transaction(async (tx) => {
       // Sperrt die Organisation-Zeile für die Dauer der Transaktion: eine zweite,
@@ -111,6 +120,7 @@ export class BookingsService {
             appointment: toAppointmentInfo(booking),
             confirmUrl,
             ttlMinutes: CONFIRMATION_TTL_MINUTES,
+            legalLinks: buildLegalLinks(this.config, org.slug),
           }),
         });
       } catch (err) {
@@ -297,6 +307,7 @@ export class BookingsService {
           cancelledBy: 'client',
           reason: reason ?? null,
           bookingPageUrl: org.slug ? buildBookingPageUrl(this.config, org.slug) : null,
+          legalLinks: org.slug ? buildLegalLinks(this.config, org.slug) : null,
         }),
       });
     } catch (err) {
@@ -370,6 +381,7 @@ export class BookingsService {
           cancelUrl: org.slug ? buildCancelUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null,
           callUrl,
           callOpensMinutesBefore: CALL_OPENS_MINUTES_BEFORE_START,
+          legalLinks: org.slug ? buildLegalLinks(this.config, org.slug) : null,
         }),
         attachment: [{ name: 'termin.ics', content: Buffer.from(ics, 'utf8').toString('base64') }],
       });

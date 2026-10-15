@@ -89,10 +89,12 @@ export interface OnboardingBookingPage {
   avatarUpdatedAt: string | null
   /** Zeitpunkt, an dem die Erfolgsmeldung weggeklickt wurde; null = noch nicht gesehen. */
   onboardingCelebratedAt: string | null
+  /** Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/legal.md §3.2). */
+  imprintComplete: boolean
 }
 
 /**
- * Vier Schritte bis zur ersten Buchung (doc/funktionen/backoffice-coach.md, Funktion 1.04).
+ * Fünf Schritte bis zur ersten Buchung (doc/funktionen/backoffice-coach.md, Funktion 1.04).
  * Der Zustand wird bei jedem Laden neu aus den Daten abgeleitet und nirgends gespeichert:
  * ein erledigter Schritt bleibt erledigt, weil die Daten da sind, nicht weil ein Flag
  * gesetzt wurde.
@@ -124,6 +126,14 @@ export function onboardingSteps(input: {
       description: 'Zeiten, zu denen Klienten buchen können',
       done: input.slots.length > 0,
       to: '/bookings/availability',
+    },
+    // Vor der ersten Buchung, weil sie ohne Impressum gar nicht möglich ist.
+    {
+      key: 'imprint',
+      label: 'Impressum hinterlegen',
+      description: 'Ohne Impressum können Klienten nicht buchen',
+      done: !!input.bookingPage?.imprintComplete,
+      to: '/settings/legal',
     },
     {
       key: 'booking',

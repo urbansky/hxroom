@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "./legal.css";
 
 /* Damit Tailwind Klassen aus geteilten Komponenten (z. B. Logo.vue) auch in
    Apps generiert, die dieses Theme importieren, aber packages/ui nicht selbst scannen */

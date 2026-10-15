@@ -1,4 +1,4 @@
-import { MailLayout } from '../layout';
+import { MailLayout, type MailLegalLinks } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
 import { Footnote, Greeting, Paragraph, PrimaryButton } from '../_components/blocks';
 import { renderEmail } from '../../render';
@@ -10,11 +10,13 @@ interface BookingConfirmationEmailProps {
   /** Gültigkeitsdauer des Links – kommt aus CONFIRMATION_TTL_MINUTES, damit Text und
    *  tatsächliche Prüfung nicht auseinanderlaufen. */
   ttlMinutes: number;
+  /** Impressum und Datenschutz der Buchungsseite. */
+  legalLinks: MailLegalLinks;
 }
 
-export default function BookingConfirmationEmail({ clientName, appointment, confirmUrl, ttlMinutes }: BookingConfirmationEmailProps) {
+export default function BookingConfirmationEmail({ clientName, appointment, confirmUrl, ttlMinutes, legalLinks }: BookingConfirmationEmailProps) {
   return (
-    <MailLayout preview={`Bitte bestätige deinen Termin: ${appointment.offerName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`}>
+    <MailLayout preview={`Bitte bestätige deinen Termin: ${appointment.offerName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`} legalLinks={legalLinks}>
       <Greeting>Hallo {clientName},</Greeting>
       <Paragraph>bitte bestätige deinen Termin – erst dann ist er für dich reserviert.</Paragraph>
       <AppointmentBlock
@@ -43,6 +45,7 @@ BookingConfirmationEmail.PreviewProps = {
   },
   confirmUrl: 'https://anna.hxroom.de/confirm/preview?token=preview',
   ttlMinutes: 30,
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
 } satisfies BookingConfirmationEmailProps;
 
 export async function renderBookingConfirmationEmail(props: BookingConfirmationEmailProps): Promise<string> {

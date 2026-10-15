@@ -1,6 +1,6 @@
 import { bigserial, index, pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy } from '@hxroom/shared';
+import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy, Imprint, ImprintMode } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -115,6 +115,15 @@ export const bookingPage = pgTable('booking_page', {
   topics:          text('topics').array().notNull().default(sql`'{}'::text[]`),
   quote:           text('quote'),
   qualifications:  text('qualifications').array().notNull().default(sql`'{}'::text[]`),
+  // Impressum der Buchungsseite (doc/legal.md §3.2): Angaben im Formular (`form`) oder ein
+  // Link auf ein vorhandenes Impressum (`link`). Erst mit Bestätigung vollständig – ohne
+  // vollständiges Impressum ist die Seite nicht buchbar (isImprintComplete).
+  imprintMode:        text('imprint_mode').$type<ImprintMode>(),
+  imprint:            jsonb('imprint').$type<Imprint>(),
+  imprintUrl:         text('imprint_url'),
+  imprintConfirmedAt: timestamp('imprint_confirmed_at'),
+  privacyUrl:         text('privacy_url'),
+  termsUrl:           text('terms_url'),
   // Separat von `updatedAt`, da Text-Autosave sonst unnötig den Avatar-Cache invalidiert.
   // NULL = kein Avatar gesetzt (Existenz-Flag), sonst Cache-Busting-Version für die Avatar-URL.
   avatarUpdatedAt: timestamp('avatar_updated_at'),

@@ -212,6 +212,7 @@ async function seedCoach(
         id: `${SEED_ID_PREFIX}bookingpage-${coach.slug}`,
         organizationId,
         ...coach.bookingPage,
+        ...(coach.bookingPage.imprint && { imprintMode: 'form' as const, imprintConfirmedAt: now }),
         avatarUpdatedAt,
         createdAt: now,
         updatedAt: now,

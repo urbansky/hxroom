@@ -1,4 +1,5 @@
 import type { ConfigService } from '@nestjs/config';
+import type { MailLegalLinks } from '../mail/templates/layout';
 
 // Die öffentliche Buchungsseite eines Coachs liegt auf seiner eigenen Subdomain.
 // ROOT_DOMAIN_HTTPS trennt lokale Entwicklung (hxroom.localhost, http) vom Betrieb.
@@ -10,6 +11,11 @@ function buildOrigin(config: ConfigService, slug: string): string {
 
 export function buildBookingPageUrl(config: ConfigService, slug: string): string {
   return buildOrigin(config, slug);
+}
+
+/** Rechtliche Links der Buchungsseite für die Fußzeile der Mails an Klienten. */
+export function buildLegalLinks(config: ConfigService, slug: string): MailLegalLinks {
+  return { imprintUrl: `${buildOrigin(config, slug)}/impressum` };
 }
 
 export function buildConfirmUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {

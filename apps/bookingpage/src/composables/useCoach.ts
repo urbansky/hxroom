@@ -18,6 +18,14 @@ export interface CoachProfile {
   topics: string[];
   quote: string | null;
   qualifications: string[];
+  /** Eigene, zusätzliche Datenschutzerklärung bzw. AGB des Coachs (Einstellungen → Rechtliches). */
+  privacyUrl: string | null;
+  termsUrl: string | null;
+  /**
+   * Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/legal.md §3.2) –
+   * statt der Buchungs-Buttons steht dann ein Hinweis. Die API lehnt Buchungen ebenso ab.
+   */
+  bookable: boolean;
 }
 
 export const COACH_KEY = Symbol('coach');

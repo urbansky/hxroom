@@ -12,7 +12,7 @@ import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, canMarkNoShow } from './boo
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderSessionInvitationEmail } from '../mail/templates/client/session-invitation';
 import { toAppointmentInfo } from './booking-formatting';
-import { buildBookingPageUrl, buildCallUrl } from './booking-urls';
+import { buildBookingPageUrl, buildCallUrl, buildLegalLinks } from './booking-urls';
 import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
 import { CallEventsService } from '../call/call-events.service';
 import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CoachBookingResponse, CreateAdHocBookingDto, ListCoachBookingsQuery } from '@hxroom/shared';
@@ -287,6 +287,7 @@ export class CoachBookingsService {
           coachName: coachDisplayName,
           appointment: toAppointmentInfo(booking),
           callUrl,
+          legalLinks: buildLegalLinks(this.config, org.slug),
         }),
       });
     } catch (err) {
@@ -349,6 +350,7 @@ export class CoachBookingsService {
         cancelledBy: 'coach',
         reason: reason ?? null,
         bookingPageUrl: buildBookingPageUrl(this.config, org.slug),
+        legalLinks: buildLegalLinks(this.config, org.slug),
       }),
     });
   }

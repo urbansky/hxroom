@@ -1,11 +1,24 @@
-import { Body, Column, Container, Head, Html, Preview, Row, Text } from 'react-email';
+import { Body, Column, Container, Head, Html, Link, Preview, Row, Text } from 'react-email';
 import type { ReactNode } from 'react';
 import { colors, fonts } from './_components/styles';
+
+/**
+ * Impressum und Datenschutzerklärung der Buchungsseite, unter jeder Mail an Klienten: Diese
+ * Mails gehen im Namen des Coachs hinaus (doc/legal.md §3.2). Aufgebaut in booking-urls.ts.
+ */
+export interface MailLegalLinks {
+  imprintUrl: string;
+  privacyUrl?: string;
+}
 
 interface MailLayoutProps {
   preview: string;
   children: ReactNode;
+  /** Nur bei Mails an Klienten; Mails an Coachs kommen von HxRoom selbst. */
+  legalLinks?: MailLegalLinks | null;
 }
+
+const legalLinkStyle = { color: colors.muted, textDecoration: 'underline', textUnderlineOffset: '2px' };
 
 // Gemeinsames Grundgerüst für alle HxRoom-Mails, bewusst wie eine Seite der Coach-App
 // gebaut: warmer Hintergrund, links darüber die Wortmarke, darunter eine weiße Karte mit
@@ -16,7 +29,7 @@ interface MailLayoutProps {
 // das <table>, und die Word-Engine von Outlook ignoriert Padding auf Tabellen – der Text
 // würde dort am Rand kleben. Auf einer <td> (= Column) hält jeder Client Padding,
 // Hintergrund und Rand; nur den Radius lässt Word weg.
-export function MailLayout({ preview, children }: MailLayoutProps) {
+export function MailLayout({ preview, children, legalLinks }: MailLayoutProps) {
   return (
     <Html lang="de">
       <Head>
@@ -45,6 +58,17 @@ export function MailLayout({ preview, children }: MailLayoutProps) {
               {children}
             </Column>
           </Row>
+          {legalLinks ? (
+            <Text style={{ margin: '16px 4px 0', fontSize: 12, lineHeight: 1.5, color: colors.muted }}>
+              <Link href={legalLinks.imprintUrl} style={legalLinkStyle}>Impressum</Link>
+              {legalLinks.privacyUrl ? (
+                <>
+                  {' · '}
+                  <Link href={legalLinks.privacyUrl} style={legalLinkStyle}>Datenschutz</Link>
+                </>
+              ) : null}
+            </Text>
+          ) : null}
         </Container>
       </Body>
     </Html>

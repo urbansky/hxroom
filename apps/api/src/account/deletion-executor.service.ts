@@ -223,8 +223,9 @@ export class DeletionExecutorService {
             appointment: toAppointmentInfo(booking),
             cancelledBy: 'coach',
             reason: null,
-            // Kein Link: die Buchungsseite verschwindet mit dem Konto.
+            // Keine Links: die Buchungsseite verschwindet mit dem Konto, samt Impressum.
             bookingPageUrl: null,
+            legalLinks: null,
           }),
         });
       } catch (err) {

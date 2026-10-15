@@ -10,7 +10,7 @@ import { renderBookingReminderEmail } from '../mail/templates/client/booking-rem
 import { OrganizationService } from '../organization/organization.service';
 import { formatTimeLabel, relativeDayLabel, toAppointmentInfo } from './booking-formatting';
 import { REMINDER_KINDS, REMINDER_WINDOWS, type ReminderKind } from './booking-reminders';
-import { buildCallUrl, buildCancelUrl } from './booking-urls';
+import { buildCallUrl, buildCancelUrl, buildLegalLinks } from './booking-urls';
 
 const sentAtColumn = {
   '24h': bookings.reminder24hSentAt,
@@ -117,6 +117,7 @@ export class BookingReminderService {
           opensTimeLabel: formatTimeLabel(new Date(booking.startTime.getTime() - CALL_OPENS_MINUTES_BEFORE_START * 60_000)),
           callUrl: org.slug ? buildCallUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null,
           cancelUrl: org.slug ? buildCancelUrl(this.config, org.slug, booking.id, booking.clientAccessToken) : null,
+          legalLinks: org.slug ? buildLegalLinks(this.config, org.slug) : null,
         }),
       });
       this.logger.log(`Erinnerung ${kind} gesendet für Buchung ${booking.id}`);

@@ -1,5 +1,5 @@
 import { Link } from 'react-email';
-import { MailLayout } from '../layout';
+import { MailLayout, type MailLegalLinks } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
 import { Footnote, Greeting, Paragraph, PrimaryButton } from '../_components/blocks';
 import { link } from '../_components/styles';
@@ -21,6 +21,8 @@ interface BookingReminderEmailProps {
   callUrl: string | null;
   /** Selbstabsage; `null` aus demselben Grund wie callUrl. */
   cancelUrl: string | null;
+  /** Impressum und Datenschutz der Buchungsseite; `null` aus demselben Grund wie callUrl. */
+  legalLinks: MailLegalLinks | null;
 }
 
 // Erinnerung an den Klienten, 24 Stunden und 1 Stunde vor dem Termin (BookingReminderService).
@@ -28,14 +30,14 @@ interface BookingReminderEmailProps {
 // suchen. Die 1-h-Erinnerung geht raus, wenn der Raum öffnet, und lädt deshalb ein, Kamera
 // und Mikrofon schon jetzt einzurichten.
 export default function BookingReminderEmail(props: BookingReminderEmailProps) {
-  const { kind, clientName, coachName, appointment, dayLabel, startTimeLabel, opensTimeLabel, callUrl, cancelUrl } = props;
+  const { kind, clientName, coachName, appointment, dayLabel, startTimeLabel, opensTimeLabel, callUrl, cancelUrl, legalLinks } = props;
   const isDayBefore = kind === '24h';
   const preview = isDayBefore
     ? `Erinnerung: ${appointment.offerName} ${dayLabel} um ${startTimeLabel} Uhr`
     : `Der Warteraum ist offen – dein Termin beginnt um ${startTimeLabel} Uhr`;
 
   return (
-    <MailLayout preview={preview}>
+    <MailLayout preview={preview} legalLinks={legalLinks}>
       <Greeting>Hallo {clientName},</Greeting>
       {isDayBefore ? (
         <Paragraph>
@@ -105,6 +107,7 @@ BookingReminderEmail.PreviewProps = {
   opensTimeLabel: '13:00',
   callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
   cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
 } satisfies BookingReminderEmailProps;
 
 export async function renderBookingReminderEmail(props: BookingReminderEmailProps): Promise<string> {

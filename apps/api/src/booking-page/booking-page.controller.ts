@@ -6,6 +6,7 @@ import {
   Get,
   Patch,
   Post,
+  Put,
   UnauthorizedException,
   UploadedFile,
   UseGuards,
@@ -15,7 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { bookingPageSchema, type BookingPageDto } from '@hxroom/shared';
+import { bookingPageLegalSchema, bookingPageSchema, type BookingPageDto, type BookingPageLegalDto } from '@hxroom/shared';
 import { BookingPageService } from './booking-page.service';
 
 const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -39,6 +40,23 @@ export class BookingPageController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.bookingPageService.update(org.id, dto);
+  }
+
+  @Get('legal')
+  getLegal(@CurrentOrganization() org: { id: string } | undefined) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.bookingPageService.getLegal(org.id);
+  }
+
+  // PUT statt PATCH und getrennt vom Autosave oben: Impressum und Links werden als Ganzes
+  // gespeichert, und die Bestätigung gilt für genau diesen Stand.
+  @Put('legal')
+  updateLegal(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Body(new ZodValidationPipe(bookingPageLegalSchema)) dto: BookingPageLegalDto,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.bookingPageService.updateLegal(org.id, dto);
   }
 
   // Eigener Endpunkt statt eines Feldes im PATCH oben: der ist der Autosave der

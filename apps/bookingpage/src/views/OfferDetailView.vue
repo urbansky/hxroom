@@ -29,6 +29,8 @@ const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
 // Derselbe Button-Text wie auf der Startseite der Buchungsseite.
 const ctaLabel = computed(() => bookingPageCtaLabel(coachProfile?.value?.ctaButton));
+// Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/legal.md §3.2).
+const bookable = computed(() => coachProfile?.value?.bookable ?? false);
 
 const offer = computed(() => offers.value.find((o) => o.id === props.id) ?? null);
 const notFound = computed(() => !loading.value && !offer.value);
@@ -209,7 +211,7 @@ async function submitBooking() {
   <SiteHeader nav>
     <template #cta>
       <UButton
-        v-if="offer"
+        v-if="offer && bookable"
         href="#slots"
         color="primary"
         icon="i-lucide-calendar"
@@ -333,6 +335,16 @@ async function submitBooking() {
               </form>
             </div>
           </template>
+
+          <!-- Ohne vollständiges Impressum keine Buchung (doc/legal.md §3.2): Das Angebot
+               bleibt lesbar, nur der Kalender weicht einem Hinweis. -->
+          <div v-else-if="!bookable" class="flex items-start gap-3 rounded-lg border border-default bg-muted p-4">
+            <UIcon name="i-lucide-calendar-clock" class="size-5 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p class="text-sm font-medium text-highlighted">Buchungen sind bald möglich.</p>
+              <p class="text-sm text-muted mt-1">{{ coachName }} richtet die Seite gerade ein. Schau bald wieder vorbei.</p>
+            </div>
+          </div>
 
           <!-- Kalender -->
           <template v-else>

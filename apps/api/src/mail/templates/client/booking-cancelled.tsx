@@ -1,4 +1,4 @@
-import { MailLayout } from '../layout';
+import { MailLayout, type MailLegalLinks } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
 import { Footnote, Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_components/blocks';
 import { renderEmail } from '../../render';
@@ -20,18 +20,20 @@ interface BookingCancelledEmailProps {
    * den Klienten sonst ins Leere schicken.
    */
   bookingPageUrl: string | null;
+  /** Impressum und Datenschutz der Buchungsseite; `null` aus demselben Grund wie bookingPageUrl. */
+  legalLinks: MailLegalLinks | null;
 }
 
 // Geht raus, wenn der Coach einen Termin im Backoffice absagt, wenn der Klient ihn über
 // den Link aus der Bestätigungsmail selbst absagt (beides
 // doc/funktionen/backoffice-coach.md 2.06) oder wenn das Coach-Konto gelöscht wird und
 // noch Termine offen sind (DeletionExecutorService).
-export default function BookingCancelledEmail({ clientName, coachName, appointment, cancelledBy, reason, bookingPageUrl }: BookingCancelledEmailProps) {
+export default function BookingCancelledEmail({ clientName, coachName, appointment, cancelledBy, reason, bookingPageUrl, legalLinks }: BookingCancelledEmailProps) {
   const byClient = cancelledBy === 'client';
   const when = `${appointment.dayLabel}, ${appointment.timeRangeLabel}`;
 
   return (
-    <MailLayout preview={byClient ? `Deine Absage für ${when} ist eingegangen` : `Dein Termin am ${when} wurde abgesagt`}>
+    <MailLayout preview={byClient ? `Deine Absage für ${when} ist eingegangen` : `Dein Termin am ${when} wurde abgesagt`} legalLinks={legalLinks}>
       <Greeting>Hallo {clientName},</Greeting>
       <Paragraph>
         {byClient
@@ -85,6 +87,7 @@ BookingCancelledEmail.PreviewProps = {
   cancelledBy: 'coach',
   reason: 'Ich bin an dem Tag leider kurzfristig verhindert.',
   bookingPageUrl: 'https://anna.hxroom.de',
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
 } satisfies BookingCancelledEmailProps;
 
 export async function renderBookingCancelledEmail(props: BookingCancelledEmailProps): Promise<string> {

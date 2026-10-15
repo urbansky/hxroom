@@ -1,5 +1,5 @@
 import { Link } from 'react-email';
-import { MailLayout } from '../layout';
+import { MailLayout, type MailLegalLinks } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
 import { Footnote, Greeting, Paragraph, PrimaryButton } from '../_components/blocks';
 import { link } from '../_components/styles';
@@ -19,6 +19,8 @@ interface BookingConfirmedEmailProps {
   /** Wie lange vor Beginn der Raum öffnet – kommt aus CALL_OPENS_MINUTES_BEFORE_START,
    *  damit Text und tatsächliche Prüfung nicht auseinanderlaufen. */
   callOpensMinutesBefore: number;
+  /** Impressum und Datenschutz der Buchungsseite; `null` aus demselben Grund wie cancelUrl. */
+  legalLinks: MailLegalLinks | null;
 }
 
 // Geht raus, sobald der Klient den Bestätigungslink geklickt hat und die Buchung final ist.
@@ -27,9 +29,9 @@ interface BookingConfirmedEmailProps {
 // (booking-reminder.tsx) wiederholen ihn, entfallen aber bei kurzfristiger Buchung – dann ist
 // diese Mail der einzige Weg in den Warteraum. Deshalb steht der Link hier als Haupt-Button,
 // während die Selbstabsage im Fußtext bleibt.
-export default function BookingConfirmedEmail({ clientName, coachName, appointment, cancelUrl, callUrl, callOpensMinutesBefore }: BookingConfirmedEmailProps) {
+export default function BookingConfirmedEmail({ clientName, coachName, appointment, cancelUrl, callUrl, callOpensMinutesBefore, legalLinks }: BookingConfirmedEmailProps) {
   return (
-    <MailLayout preview={`Dein Termin steht: ${appointment.offerName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`}>
+    <MailLayout preview={`Dein Termin steht: ${appointment.offerName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`} legalLinks={legalLinks}>
       <Greeting>Hallo {clientName},</Greeting>
       <Paragraph>dein Termin bei {coachName} ist bestätigt und fest reserviert.</Paragraph>
       <AppointmentBlock
@@ -79,6 +81,7 @@ BookingConfirmedEmail.PreviewProps = {
   cancelUrl: 'https://anna.hxroom.de/cancel/b-123?token=abc',
   callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
   callOpensMinutesBefore: 60,
+  legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
 } satisfies BookingConfirmedEmailProps;
 
 export async function renderBookingConfirmedEmail(props: BookingConfirmedEmailProps): Promise<string> {

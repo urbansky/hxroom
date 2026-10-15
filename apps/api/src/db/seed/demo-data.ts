@@ -5,7 +5,7 @@
  * Die Angebotstexte folgen doc/example-data/beispiel-sitzungsangebote.md, gekürzt auf
  * das, was im Editor mit den dort verfügbaren Werkzeugen reproduzierbar ist.
  */
-import type { RichTextDoc } from '@hxroom/shared';
+import type { Imprint, RichTextDoc } from '@hxroom/shared';
 
 /**
  * Alle Seed-IDs tragen dieses Präfix. Der Reset löscht ausschließlich Zeilen, deren ID
@@ -221,6 +221,8 @@ export interface DemoCoach {
     topics?: string[];
     quote?: string;
     qualifications?: string[];
+    /** Ohne Impressum ist die Buchungsseite nicht buchbar (isImprintComplete). */
+    imprint?: Imprint;
   } | null;
   /** false = frisch registrierter Coach ohne Daten, für Empty-States. */
   populated: boolean;
@@ -255,6 +257,17 @@ export const DEMO_COACHES: DemoCoach[] = [
         'Zehn Jahre Unternehmensberatung, davon vier in leitender Rolle',
         'Weiterbildung Lösungsfokussierte Kurzzeitberatung',
       ],
+      imprint: {
+        name: 'Anna Bergmann',
+        street: 'Musterstraße 12',
+        postalCode: '10115',
+        city: 'Berlin',
+        country: 'Deutschland',
+        email: 'anna@hxroom.test',
+        phone: '+49 30 1234567',
+        legalForm: 'sole',
+        addition: 'Kleinunternehmerin nach § 19 UStG.',
+      },
     },
   },
   {
@@ -282,6 +295,19 @@ export const DEMO_COACHES: DemoCoach[] = [
       ctaIntro: 'Wähle ein Format und einen Zeitpunkt.',
       jobTitle: 'Teamcoach',
       topics: ['Teamentwicklung', 'Konflikte'],
+      imprint: {
+        name: 'Kühl Teamentwicklung GmbH',
+        street: 'Beispielweg 3',
+        postalCode: '20095',
+        city: 'Hamburg',
+        country: 'Deutschland',
+        email: 'martina@hxroom.test',
+        phone: '+49 40 7654321',
+        legalForm: 'gmbh',
+        representative: 'Martina Kühl (Geschäftsführerin)',
+        register: 'Amtsgericht Hamburg, HRB 000000',
+        vatId: 'DE000000000',
+      },
     },
   },
 ];

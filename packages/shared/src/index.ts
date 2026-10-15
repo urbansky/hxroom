@@ -4,6 +4,18 @@ import { isReservedSlug } from './slugs.js';
 export { RESERVED_SLUGS, isReservedSlug, isValidSlugFormat } from './slugs.js';
 export { bookingPageCtaLabel, hasBookingPageAbout, formatOfferPrice, type BookingPageProfile } from './booking-page.js';
 export {
+  LEGAL_FORMS,
+  isCompanyLegalForm,
+  imprintSchema,
+  bookingPageLegalSchema,
+  isImprintComplete,
+  type LegalForm,
+  type Imprint,
+  type ImprintMode,
+  type ImprintState,
+  type BookingPageLegalDto,
+} from './legal.js';
+export {
   MONITORING_EXCLUDED_INTEGRATIONS,
   sanitizeMonitoringEvent,
   scrubSensitiveData,

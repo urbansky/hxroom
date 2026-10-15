@@ -39,7 +39,7 @@ const baseNavItems: NavItem[][] = [
     { label: 'Warteraum', icon: 'i-lucide-door-open', to: '/settings/waiting-room', description: 'Digitalen Empfang für Klienten gestalten' },
     { label: 'Benachrichtigungen', icon: 'i-lucide-bell', to: '/settings/notifications', description: 'E-Mail-Einstellungen für Buchungen' },
     { label: 'Plan & Abrechnung', icon: 'i-lucide-credit-card', to: '/settings/billing', description: 'Abo und Zahlungsmethode verwalten' },
-    { label: 'Datenschutz', icon: 'i-lucide-shield', to: '/settings/privacy', description: 'DSGVO und Datenverwaltung' },
+    { label: 'Rechtliches', icon: 'i-lucide-scale', to: '/settings/legal', description: 'Impressum und Datenschutz deiner Buchungsseite' },
   ],
 ]
 
@@ -135,7 +135,7 @@ const pageTitle = computed(() => {
     '/settings/waiting-room': 'Warteraum',
     '/settings/notifications': 'Benachrichtigungen',
     '/settings/billing': 'Plan & Abrechnung',
-    '/settings/privacy': 'Datenschutz',
+    '/settings/legal': 'Rechtliches',
     '/settings/account': 'Account',
   }
   // Die Map trifft nur exakte Pfade – dynamische Routen brauchen einen eigenen Zweig.

@@ -16,6 +16,8 @@ const { offers } = inject(OFFERS_KEY) as UseOffersReturn;
 const profile = computed(() => coachProfile?.value ? toBookingPageProfile(coachProfile.value) : null);
 const ctaLabel = computed(() => bookingPageCtaLabel(profile.value?.ctaButton));
 const showAbout = computed(() => hasBookingPageAbout(profile.value));
+// Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/legal.md §3.2).
+const bookable = computed(() => coachProfile?.value?.bookable ?? false);
 
 // Ziel der beiden Haupt-CTAs: das erste Angebot der Liste (Reihenfolge pflegt der Coach).
 const ctaTo = computed(() => offers.value[0] ? `/offers/${offers.value[0].id}` : '#offers');
@@ -23,7 +25,7 @@ const ctaTo = computed(() => offers.value[0] ? `/offers/${offers.value[0].id}` :
 
 <template>
   <SiteHeader nav>
-    <template #cta>
+    <template v-if="bookable" #cta>
       <UButton
         :to="ctaTo"
         color="primary"
@@ -38,7 +40,7 @@ const ctaTo = computed(() => offers.value[0] ? `/offers/${offers.value[0].id}` :
 
   <template v-if="profile">
     <section class="max-w-[720px] mx-auto px-6 flex flex-col items-stretch gap-14 pt-24 pb-10">
-      <BookingPageHero :profile="profile" :cta-to="ctaTo" />
+      <BookingPageHero :profile="profile" :cta-to="ctaTo" :bookable="bookable" />
       <BookingPageCoachCard :profile="profile" />
     </section>
 

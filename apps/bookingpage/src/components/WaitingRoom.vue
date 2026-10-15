@@ -176,5 +176,10 @@ const notice = computed(() => deviceNotice(cameraIssue.value, microphoneIssue.va
       Du kannst den Termin nicht wahrnehmen?
       <RouterLink :to="cancelHref" class="text-primary underline underline-offset-2">Termin absagen</RouterLink>
     </p>
+
+    <!-- Der Warteraum hat keine Fußzeile wie die übrigen Seiten; das Impressum soll trotzdem
+         von jeder Seite der Buchungsseite aus erreichbar sein (doc/legal.md §3.2). Neuer Tab,
+         damit der Warteraum offen bleibt. -->
+    <a href="/impressum" target="_blank" class="text-xs text-dimmed hover:text-muted transition-colors">Impressum</a>
   </div>
 </template>

@@ -10,6 +10,11 @@ export class OrganizationController {
     return this.organizationService.findPublicProfile(slug);
   }
 
+  @Get(':slug/imprint')
+  findImprint(@Param('slug') slug: string) {
+    return this.organizationService.findImprint(slug);
+  }
+
   @Get(':slug/offers')
   findActiveOffers(@Param('slug') slug: string) {
     return this.organizationService.findActiveOffersBySlug(slug);
