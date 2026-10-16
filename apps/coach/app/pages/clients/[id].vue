@@ -300,7 +300,7 @@ async function deleteClient() {
       </template>
 
       <!-- Angekündigt, siehe doc/funktionen/backoffice-coach.md Funktion 05 -->
-      <div class="mt-8">
+      <div v-if="SHOW_UPCOMING_FEATURES" class="mt-8">
         <UpcomingFeature
           icon="i-lucide-target"
           title="Coaching-Ziele & Themen"

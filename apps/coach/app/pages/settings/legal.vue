@@ -467,7 +467,7 @@ const features = [
       </SettingsSection>
     </UForm>
 
-    <SettingsSection title="Geplante Features" description="Das kommt als Nächstes.">
+    <SettingsSection v-if="SHOW_UPCOMING_FEATURES" title="Geplante Features" description="Das kommt als Nächstes.">
       <div class="flex flex-col gap-2">
         <UpcomingFeature v-for="item in features" :key="item.title" v-bind="item" />
       </div>

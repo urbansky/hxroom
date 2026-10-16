@@ -7,7 +7,9 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex items-center gap-4 p-4 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated)">
+  <!-- In der Beta ausgeblendet (utils/beta.ts). Umgebende Abschnitte prüfen den Schalter selbst,
+       sonst blieben leere Rahmen stehen. -->
+  <div v-if="SHOW_UPCOMING_FEATURES" class="flex items-center gap-4 p-4 rounded-xl border border-(--ui-border) bg-(--ui-bg-elevated)">
     <div class="size-9 rounded-lg bg-(--ui-bg-accented) border border-(--ui-border) flex items-center justify-center shrink-0">
       <UIcon :name="icon" class="size-4 text-highlighted" />
     </div>

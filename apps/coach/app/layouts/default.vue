@@ -43,19 +43,25 @@ const baseNavItems: NavItem[][] = [
   ],
 ]
 
+// Beta (utils/beta.ts): Menüpunkte ohne Funktion fallen heraus; eine Gruppe, in der nur noch
+// ihre Überschrift stünde, verschwindet ganz.
+const visibleNavItems: NavItem[][] = baseNavItems
+  .map(group => group.filter(item => typeof item.to !== 'string' || !isBetaHidden(item.to)))
+  .filter(group => group.some(item => item.type !== 'label'))
+
 // Ein Menüpunkt bleibt auch auf seinen Unterseiten markiert (Klientenliste auf
 // /clients/:id). Von sich aus markiert ULink nur exakte Treffer, weil die Detailseiten
 // keine verschachtelten Routen sind. Es gewinnt der längste passende Pfad – sonst stünde
 // „Kalender“ (/bookings) auf /bookings/offers neben „Sitzungsangebote“.
 const activeNavPath = computed(() => {
-  const paths = baseNavItems.flat().map(item => item.to).filter((to): to is string => typeof to === 'string')
+  const paths = visibleNavItems.flat().map(item => item.to).filter((to): to is string => typeof to === 'string')
   return paths
     .filter(to => route.path === to || (to !== '/' && route.path.startsWith(`${to}/`)))
     .sort((a, b) => b.length - a.length)[0] ?? null
 })
 
 const navItems = computed<NavItem[][]>(() =>
-  baseNavItems.map(group => group.map(item =>
+  visibleNavItems.map(group => group.map(item =>
     typeof item.to === 'string' ? { ...item, active: item.to === activeNavPath.value } : item,
   )),
 )

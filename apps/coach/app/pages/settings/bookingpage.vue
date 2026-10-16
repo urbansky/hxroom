@@ -537,7 +537,7 @@ const features = [
     </div>
 
     <!-- Geplante Features -->
-    <SettingsSection title="Geplante Features" description="Das kommt als Nächstes für deine Landingpage." class="mt-94">
+    <SettingsSection v-if="SHOW_UPCOMING_FEATURES" title="Geplante Features" description="Das kommt als Nächstes für deine Landingpage." class="mt-94">
       <div class="flex flex-col gap-2">
         <UpcomingFeature
           v-for="item in features"
