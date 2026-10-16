@@ -22,7 +22,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
 
 5. AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
-6. Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
+6. Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden – umgesetzt, Inbetriebnahme offen
 7. Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
 9. Landingpage inhaltlich und gestalterisch überarbeiten
@@ -409,7 +409,7 @@ Für 3.1b auf dem Server:
 
 ## Schritt 6 · Probe-Sitzung, Checkliste, „Kommt bald“ ausblenden
 
-**Stand:** 6a und 6b umgesetzt und lokal abgenommen, 6c geplant.
+**Stand:** 6a, 6b und 6c umgesetzt und lokal abgenommen.
 
 **Ziel:** Ein Beta-Coach erlebt HxRoom in wenigen Minuten selbst und stößt nirgends auf Ankündigungen, die noch nichts tun. Drei Teile, jeweils mit eigener Abnahme und eigenem Commit.
 
@@ -473,6 +473,17 @@ Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit f
 - **Alte Adressen** leiten aufs Dashboard. Die Seiten bleiben im Code.
 - **Kacheln „Geplante Features“** in echten Seiten verschwinden ebenfalls: Buchungsseite, Rechtliches, Sitzungsangebote, Account, „Coaching-Ziele“ beim Klienten.
 - **Ein Schalter:** Ausgeblendet wird über eine einzige Liste in der Coach-App. Kommt eine Funktion, nimmt man sie dort heraus.
+
+**Umgesetzt:**
+- **`app/utils/beta.ts`:** `BETA_HIDDEN_ROUTES` (die sechs Seiten) und `SHOW_UPCOMING_FEATURES` (Kacheln).
+- **Menü:** Das Layout filtert danach. Gruppen, in denen nur die Überschrift bliebe, entfallen.
+- **Weiterleitung:** `middleware/beta.global.ts` leitet ausgeblendete Seiten aufs Dashboard.
+- **Kacheln:** `UpcomingFeature` zeigt ohne Schalter nichts. Die umgebenden Abschnitte prüfen ihn selbst, damit keine leeren Rahmen bleiben.
+
+**Lokal abgenommen** (Anna, Chrome):
+- Menü: Dashboard · Kalender, Sitzungsangebote, Verfügbarkeit, Buchungsseite · Klientenliste · Rechtliches.
+- Die sechs alten Adressen führen aufs Dashboard, `/settings/privacy` weiter auf `/settings/legal`.
+- Buchungsseite, Rechtliches, Account, Klientenseite und Sitzungsangebote ohne „Demnächst“ und ohne „Geplante Features“.
 
 ### Abnahme im Browser
 
