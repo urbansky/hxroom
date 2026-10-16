@@ -174,7 +174,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 
 *Feedback einholen:*
 - **Feedback-Knopf in der Coach-App:** ein kurzes Formular, gespeichert und per Mail an den Betreiber, mit der Seite, auf der der Coach gerade war.
-- **Aktivität der Beta-Coaches im Betreiber-Backoffice:** letzter Login, Angebote, Buchungen, gehaltene Sitzungen.
+- **Aktivität der Beta-Coaches im Betreiber-Backoffice:** zuletzt aktiv, Angebote, Buchungen, gehaltene Sitzungen und wie weit der Coach startklar ist (Impressum, Probe-Sitzung, Link geteilt).
 
 #### Voraussetzungen für echte Klienten
 

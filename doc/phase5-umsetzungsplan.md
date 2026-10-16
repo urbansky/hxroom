@@ -23,7 +23,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 
 5. AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
 6. Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden – umgesetzt, Inbetriebnahme offen
-7. Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
+7. Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice – umgesetzt, Inbetriebnahme offen
 8. Terminseite, breitere Klientenseite, Abschlusskarte
 9. Landingpage inhaltlich und gestalterisch überarbeiten
 
@@ -494,6 +494,83 @@ Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit f
 - **Aufräumen:** Eine 25 Stunden alte Probe-Sitzung verschwindet samt Chat und Datei, der Merker bleibt.
 - **Checkliste:** sechs Schritte, Link kopieren hakt „Buchungslink teilen“ ab.
 - **Menü und Seiten:** nur noch echte Menüpunkte und keine Kacheln „Geplante Features“, alte Adressen leiten weiter. Rechner und Handy.
+
+---
+
+## Schritt 7 · Feedback-Knopf und Aktivität der Coachs
+
+**Stand:** 7a und 7b umgesetzt und lokal abgenommen. Der Mailversand an `FEEDBACK_EMAIL` wird bei der Inbetriebnahme geprüft.
+
+**Ziel:** Beta-Coachs geben Rückmeldung, ohne die App zu verlassen. Der Betreiber sieht, wer HxRoom tatsächlich nutzt und wo jemand hängen bleibt. Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit.
+
+### 7a · Feedback-Knopf
+
+**Ablauf:**
+1. „Feedback geben“ steht in der Fußzeile der Seitenleiste, über dem Benutzermenü, auf jeder Seite des Coach-Backoffice.
+2. Ein Fenster mit der Art (Problem · Idee · Sonstiges, vorbelegt „Sonstiges“) und einem Textfeld (Pflicht, höchstens 2000 Zeichen). Darunter der Hinweis, dass die aktuelle Seite mitgeschickt wird.
+3. Nach dem Absenden: Toast „Danke für dein Feedback“, das Fenster schließt.
+
+**Umsetzung:**
+- **API:** `POST /api/v1/feedback` (`AuthGuard`), Schema `createFeedbackSchema` in `@hxroom/shared`: `category`, `message`, `page`.
+  - `page` ist der Pfad der Seite ohne Query-String, etwa `/clients/abc123`. So landen keine Token oder Suchbegriffe im Feedback.
+  - Dazu speichert die API den User-Agent aus dem Request, für Fehlermeldungen mit Browserbezug.
+- **Tabelle `feedback`:** `id`, `organization_id` (Cascade), `user_id` (Cascade), `category`, `message`, `page`, `user_agent`, `created_at`. Wird ein Konto gelöscht, verschwindet das Feedback mit.
+- **Mail an den Betreiber:** an die neue Variable `FEEDBACK_EMAIL`, Betreff „Feedback (Problem): Anna Beispiel“, Inhalt Text, Seite, Browser und Zeitpunkt. `replyTo` ist der Coach, der Betreiber antwortet also direkt aus dem Postfach.
+  - Erst speichern, dann senden. Scheitert die Mail, bleibt das Feedback gespeichert, und die API protokolliert nur die Feedback-ID.
+  - Ohne `FEEDBACK_EMAIL` wird nur gespeichert.
+- **Betreiber-Backoffice:** neue Seite „Feedback“ (`/feedback`), neueste zuerst. Spalten Datum, Coach, Art, Seite und Text, Filter nach Art. Endpunkt `GET /api/v1/admin/feedback` hinter dem `AdminGuard`.
+- **Missbrauchsschutz:** höchstens 20 Einsendungen pro Coach und Stunde, darüber `429`.
+
+**Umgesetzt** wie beschrieben (Migration `0031`, `FeedbackModule`, `FeedbackModal.vue`, Mailvorlage `operator/feedback-received.tsx`, Seite `/feedback` im Betreiber-Backoffice). `FEEDBACK_EMAIL` steht in `infra/.env.example` und wird in `docker-compose.yml` an die API gereicht.
+
+**Lokal abgenommen** (Anna, Chrome):
+- Ohne Text ist „Senden“ gesperrt. Bei 2001 Zeichen steht „Höchstens 2000 Zeichen.“ am Feld.
+- „Problem“ von der Klientenseite: `204`, Toast, Fenster schließt. In der Datenbank stehen Pfad `/clients/seed-client-anna-1` und der User-Agent.
+- An der API: `/bookings?token=geheim#x` wird als `/bookings` gespeichert, die 21. Einsendung in einer Stunde bekommt `429`.
+- Löschen der Organisation (in einer zurückgerollten Transaktion) nimmt das Feedback mit.
+- Betreiber-Backoffice: Eintrag mit Coach, Art, Seite und Text, der Filter nach Art wirkt.
+- Ohne `FEEDBACK_EMAIL` wird nur gespeichert. Die Mailvorlage ist per Test abgedeckt.
+
+### 7b · Aktivität in der Coach-Liste
+
+Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorhanden sind Coach, Subdomain, Registriert, Klienten, Sitzungen und Status.
+
+| Spalte | Bedeutung |
+|---|---|
+| **Zuletzt aktiv** | letzte Anfrage des Coachs an die API, als „heute“, „gestern“ oder Datum. Leer, solange er nie angemeldet war. |
+| **Angebote** | aktive Sitzungsangebote (`is_active`) |
+| **Buchungen** | über die Buchungsseite eingegangene Termine (Herkunft `booking_page`), jeder Status |
+| **Sitzungen** | wie bisher: gehaltene Sitzungen ohne Probe-Sitzungen |
+| **Startklar** | Häkchen-Reihe: Impressum vollständig, Probe-Sitzung gemacht, Link geteilt. Tooltip nennt, was fehlt. |
+
+**Umsetzung:**
+- **`user.last_active_at`:** Der `AuthGuard` setzt das Feld nach einer erfolgreichen Prüfung, höchstens einmal pro Stunde und Coach. Den Zeitpunkt des letzten Schreibens merkt sich die API im Speicher, damit nicht jede Anfrage in die Datenbank schreibt. Übernommene Sitzungen (`session.impersonated_by`) zählen nicht.
+- **Abfrage:** Angebote und Buchungen kommen als zwei weitere vorgruppierte Unterabfragen hinzu, nach dem Muster von `clientCounts` und `sessionCounts` in `admin-coaches.service.ts`. Die drei Merker für „Startklar“ kommen aus `booking_page` (`test_session_at`, `link_shared_at`) und aus `isImprintComplete`.
+- **Sortieren:** nach „Zuletzt aktiv“, Angeboten und Buchungen, zusätzlich zu den bisherigen Spalten. Coachs, die nie aktiv waren, stehen bei absteigender Sortierung unten.
+- **`CoachListItem`** in `@hxroom/shared` bekommt `lastActiveAt`, `offerCount`, `bookingCount` und `readiness` (drei Wahrheitswerte).
+
+**Umgesetzt** wie beschrieben (Migration `0032`, `auth/activity-tracker.ts` mit Test). „Link geteilt“ gilt wie in der Checkliste auch dann als erledigt, wenn schon eine Buchung eingegangen ist.
+
+**Lokal abgenommen** (Tobias und Betreiber, Chrome):
+- Nach Tobias’ Anmeldung steht er auf „heute“, `user.last_active_at` ist gesetzt. Coachs ohne Anfrage seit der Migration haben „—“.
+- Sortierung nach „Zuletzt aktiv“: in beiden Richtungen Tobias oben, die übrigen darunter.
+- Angebote, Buchungen und „Startklar“ stimmen für alle vier Coachs mit SQL überein. Der Tooltip nennt die offenen Schritte.
+- Mit gesetztem Merker der Probe-Sitzung bekommt Tobias das zweite Häkchen.
+
+### Abnahme im Browser
+
+- **Feedback (Anna):** auf der Klientenseite „Problem“ absenden. Danach stehen Toast, Zeile in der Datenbank und Seite `/clients/…` ohne Query-String. Die Mail geht über Brevo an `FEEDBACK_EMAIL` und trägt Anna als Antwortadresse.
+- **Ohne Text:** Absenden gesperrt. Bei mehr als 2000 Zeichen erscheint eine Fehlermeldung am Feld.
+- **Betreiber:** Die Seite „Feedback“ zeigt den Eintrag, und der Filter nach Art wirkt.
+- **Aktivität:** Nach Annas Anmeldung steht sie in der Coach-Liste auf „heute“. Ein Coach ohne Anmeldung hat eine leere Zelle.
+- **Kennzahlen gegen die Seed-Daten geprüft:** Angebote, Buchungen und „Startklar“. Für Tobias erscheint nach einer Probe-Sitzung das zweite Häkchen.
+- **Konto löschen:** Annas Feedback verschwindet mit.
+
+### Inbetriebnahme
+
+- `FEEDBACK_EMAIL` in der `.env` des Servers setzen und in `docker-compose.yml` an die API durchreichen.
+- `git pull` und `./redeploy.sh` (Migrationen `0031` und `0032`)
+- Ein Feedback aus der Produktion absenden, Mail und Eintrag im Betreiber-Backoffice prüfen.
 
 ---
 

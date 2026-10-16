@@ -386,6 +386,10 @@ Schema-seitig ergänzt das Plugin `user` um `role`, `banned`, `banReason`, `banE
 
 Serverseitig kommt zum bestehenden `AuthGuard` ein `AdminGuard`, der zusätzlich `session.user.role` gegen die Betreiber-Rollen prüft. Coach-Verwaltung, Sperren, Rollen und Impersonation liefert das Plugin unter `/api/auth/admin/*`; die fachlichen Auswertungen (MRR, Churn, Plattform-Metriken) bekommen ein eigenes NestJS-Admin-Modul hinter dem `AdminGuard`.
 
+**Aktivität der Coachs.** Die Coach-Liste (`GET /api/v1/admin/coaches`) zeigt neben Klienten und Sitzungen: zuletzt aktiv, aktive Angebote, Buchungen über die Buchungsseite und „Startklar“ (Impressum vollständig, Probe-Sitzung gemacht, Link geteilt oder erste Buchung). „Zuletzt aktiv“ ist `user.last_active_at`. Der `AuthGuard` setzt es über den `ActivityTracker` (`apps/api/src/auth/activity-tracker.ts`) höchstens einmal pro Stunde und Coach, übernommene Sitzungen zählen nicht. Die session-Tabelle taugt dafür nicht: Zeilen verschwinden beim Abmelden, und eine Sitzung hält Tage.
+
+**Feedback.** Der Knopf „Feedback geben“ in der Seitenleiste der Coach-App schickt Art, Text und Pfad der Seite an `POST /api/v1/feedback`. Die API speichert dazu den User-Agent in `feedback` und meldet die Einsendung per Mail an `FEEDBACK_EMAIL`, mit dem Coach als Antwortadresse. Ohne die Variable wird nur gespeichert. Höchstens 20 Einsendungen pro Coach und Stunde. Der Betreiber sieht alles unter „Feedback“ (`GET /api/v1/admin/feedback`).
+
 ---
 
 ## 8. Videocall-Architektur (LiveKit self-hosted)
@@ -1205,6 +1209,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
   - **Prüfen im Betrieb:** `POST /api/v1/monitoring/test-error` (nur Betreiber) und `?monitoring-test=1` an einer Seite der Coach-App oder der Klientenseite.
 - AVV automatisch bei Registrierung abgeschlossen
 - DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.
+- **Feedback der Coachs** (`feedback`): Text, Pfad der Seite ohne Query-String und User-Agent. Hängt mit Cascade an Organisation und User und verschwindet mit dem Konto. Bei einem Fehler beim Mailversand loggt die API nur die Feedback-ID.
 - **Probe-Sitzungen** (Herkunft `test`, `POST /api/v1/bookings/test-session`): Der Coach spricht mit sich selbst, ohne Klient und ohne Mail. Sie zählen in keiner Kennzahl, und `TestSessionCleanupService` löscht sie 24 Stunden nach dem Ende samt Notizen, Chat und Dateien.
 - **Klienten löschen** (Art. 17 DSGVO, `DELETE /api/v1/clients/:id`): Der Coach löscht einen Klienten samt Terminen, Notizen, Chat und geteilten Dateien. Termine hängen nur lose am Klienten (`client_id` mit `set null`), und unbestätigte Anfragen haben noch keine `client_id` – deshalb zählen auch Termine derselben Organisation mit derselben E-Mail-Adresse dazu. Die Objekte im Speicher (`{org}/sessions/{booking}/`) fallen nach dem Commit. Anstehende Termine sperren die Löschung mit `409`. Protokoll in `client_deletions`, nur IDs und Anzahlen, ohne Fremdschlüssel.
 - Audioaufnahme / Transkription: aktive Klienten-Einwilligung pro Sitzung, dokumentiert mit Timestamp, IP und Version
