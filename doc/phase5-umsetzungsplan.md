@@ -16,7 +16,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 2. ✅ Erinnerungsmails 24 h / 1 h vor dem Termin
 3. ✅ Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
    - 3.1a ✅ Impressum des Coachs mit Buchungssperre
-   - 3.1b gemeinsame Datenschutzerklärung für alle Seiten – umgesetzt, Inbetriebnahme offen
+   - 3.1b ✅ gemeinsame Datenschutzerklärung für alle Seiten
 4. ✅ `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
@@ -269,9 +269,9 @@ Der Coach pflegt in den Einstellungen bereits Name, Foto, Tagline, „Über mich
 
 ---
 
-## Schritt 3.1 · Impressum und Datenschutzerklärung
+## Schritt 3.1 · Impressum und Datenschutzerklärung ✅
 
-**Stand:** 3.1a ✅ in Betrieb und abgenommen, 3.1b umgesetzt und lokal abgenommen. Grundlage ist `legal.md` (§3 Impressum, §4 Datenschutzerklärung). Wie Impressum und Sperre arbeiten, beschreibt `technisches-konzept.md` §6.
+**Stand:** ✅ 3.1a und 3.1b in Betrieb und abgenommen. Grundlage ist `legal.md` (§3 Impressum, §4 Datenschutzerklärung). Wie Impressum und Sperre arbeiten, beschreibt `technisches-konzept.md` §6.
 
 **Ziel:**
 - **Impressum:** Jede Buchungsseite hat unter `/impressum` die Angaben des Coachs und einen Block zu HxRoom als technischem Betreiber.
@@ -336,7 +336,7 @@ Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit. 3.1a hängt an keine
 - `/settings/privacy` leitet auf `/settings/legal` weiter.
 - hxroom.de/impressum sieht aus wie zuvor, ohne den Absatz „in Entwicklung“, auch im Produktions-Build.
 
-### 3.1b · Gemeinsame Datenschutzerklärung
+### 3.1b · Gemeinsame Datenschutzerklärung ✅
 
 **Text:** eine Komponente `LegalPrivacyPolicy` in `@hxroom/ui`, gegliedert nach Personengruppen:
 1. **Allgemein und Besucher von hxroom.de:** die heutige Erklärung der Landingpage, unverändert übernommen (Verantwortlicher, Hosting und Server-Logs, Newsletter, Plausible, Schriften, Cookies, Rechte, Beschwerde, Drittland, keine automatisierte Entscheidung, Änderungen).
@@ -387,10 +387,10 @@ Die neuen Abschnitte folgen Stil und Aufbau des vorhandenen Textes, mit Karten f
 Sobald 3.1a ausgerollt ist, sind alle Buchungsseiten ohne Impressum gesperrt, auch `demo.hxroom.de`. Deshalb direkt nach dem Redeploy unter Einstellungen → Rechtliches das eigene Impressum eintragen.
 
 Für 3.1b auf dem Server:
-1. Vor dem Redeploy das Journal einrichten: `sudo mkdir -p /etc/systemd/journald.conf.d && sudo cp infra/journald/hxroom.conf /etc/systemd/journald.conf.d/ && sudo systemctl restart systemd-journald`. Prüfen mit `systemd-analyze cat-config systemd/journald.conf | grep MaxRetentionSec`.
-2. `git pull` und `./redeploy.sh`. Weil sich bei allen Diensten der Log-Treiber ändert, erstellt `up -d` diesmal **alle** Container neu, auch LiveKit. Also außerhalb eines Termins ausführen. Die Migration `0028` läuft beim Start der API.
-3. Prüfen: `docker compose logs --tail 20 api` zeigt Ausgaben, `journalctl -t hxroom/hxroom-api-1 -n 5` ebenso. Die alten Docker-Logdateien verschwinden mit den neu erstellten Containern.
-4. `demo.hxroom.de/datenschutz` zeigt deine Angaben in Abschnitt 8, hxroom.de/datenschutz den neuen Text.
+1. ✅ Vor dem Redeploy das Journal einrichten: `sudo mkdir -p /etc/systemd/journald.conf.d && sudo cp infra/journald/hxroom.conf /etc/systemd/journald.conf.d/ && sudo systemctl restart systemd-journald`. Prüfen mit `systemd-analyze cat-config systemd/journald.conf | grep MaxRetentionSec`.
+2. ✅ `git pull` und `./redeploy.sh`. Weil sich bei allen Diensten der Log-Treiber ändert, erstellt `up -d` diesmal **alle** Container neu, auch LiveKit. Also außerhalb eines Termins ausführen. Die Migration `0028` läuft beim Start der API.
+3. ✅ Prüfen: `docker compose logs --tail 20 api` zeigt Ausgaben, `journalctl -t hxroom/hxroom-api-1 -n 5` ebenso. Die alten Docker-Logdateien verschwinden mit den neu erstellten Containern.
+4. ✅ `demo.hxroom.de/datenschutz` zeigt deine Angaben in Abschnitt 8, hxroom.de/datenschutz den neuen Text.
 
 ---
 
@@ -404,6 +404,70 @@ Für 3.1b auf dem Server:
 - **Landingpage:** Knopf „Vorführung buchen“ verlinkt auf `demo.hxroom.de`
 
 **Impressum:** seit Schritt 3.1a in der Fußzeile verlinkt, mit den Angaben des Betreibers.
+
+---
+
+## Schritt 6 · Probe-Sitzung, Checkliste, „Kommt bald“ ausblenden
+
+**Stand:** 6a umgesetzt und lokal abgenommen, 6b und 6c geplant.
+
+**Ziel:** Ein Beta-Coach erlebt HxRoom in wenigen Minuten selbst und stößt nirgends auf Ankündigungen, die noch nichts tun. Drei Teile, jeweils mit eigener Abnahme und eigenem Commit.
+
+### 6a · Probe-Sitzung mit sich selbst
+
+Der Coach spielt beide Rollen: am Rechner als Coach, auf dem Handy als Klient. Technisch eine Variante des Spontan-Termins (`CoachBookingsService.createAdHoc`), ohne Klient und ohne Mail.
+
+**Ablauf:**
+1. „Probe-Sitzung“ auf dem Dashboard (neben „Spontan-Termin“) oder als Schritt der Checkliste.
+2. Ein Fenster zeigt einen QR-Code und den Link zum Warteraum sowie den Hinweis, auf einem Gerät das Mikrofon stummzuschalten oder Kopfhörer zu nutzen (sonst Rückkopplung).
+3. Mit dem Handy kommt der Coach als Klient in den Warteraum seiner Buchungsseite.
+4. Am Rechner führt „Zum Gespräch“ auf die vorhandene Call-Seite. Dort lässt er sich selbst ein und kann Chat, Dateien, Notizen und Weichzeichner ausprobieren.
+
+**Umsetzung:**
+- **API:** `POST /api/v1/bookings/test-session`
+  - Termin mit neuer Herkunft `test` (`BookingOrigin` in `@hxroom/shared`): sofort, 15 Minuten, bestätigt, „Probe-Sitzung“.
+  - Name und E-Mail des Coachs stehen nur am Termin, es entsteht **kein Eintrag in der Klientenliste**. Es geht keine Mail hinaus.
+  - Die Antwort enthält den Link zum Warteraum. Ohne Subdomain gibt es wie beim Spontan-Termin `409`.
+- **Sichtbar** im Kalender und in der Agenda auf dem Dashboard, mit dem Abzeichen „Probe-Sitzung“. Über den Termin findet der Coach zurück in den Call.
+- **Zählt nicht:** in der Wochenkennzahl des Dashboards, bei den Sitzungen in der Coach-Liste des Betreiber-Backoffices (`admin-coaches.service.ts`) und bei den Erinnerungsmails.
+- **Merker** `booking_page.test_session_at`, gesetzt beim Einlassen. Die Checkliste liest ihn, er bleibt auch nach dem Aufräumen stehen.
+- **Aufräumen:** Ein nächtlicher Lauf löscht Probe-Sitzungen 24 Stunden nach ihrem Ende, samt Notizen, Chat und Dateien im Speicher.
+- **QR-Code** im Browser mit `uqr` (ohne weitere Abhängigkeiten, keine Anfrage an Dritte).
+
+**Umgesetzt** wie beschrieben (Migration `0029`, `TestSessionModal.vue`, `TestSessionCleanupService` täglich um 04:00), dazu:
+- **Keine Absage-Mail:** Sagt der Coach eine Probe-Sitzung ab, geht keine Mail hinaus. Er wäre selbst der Empfänger.
+- **Termin-Detail:** zeigt statt „Klient zuordnen“ einen Hinweis auf die Probe-Sitzung.
+- **Erste Buchung:** Die Terminliste der API kennt den Filter `origin`. Die Checkliste fragt damit nur echte Termine ab, eine Probe-Sitzung hakt „Erste Buchung erhalten“ nicht ab.
+
+**Lokal abgenommen** (Tobias ohne Klienten, Chrome mit simulierter Kamera, Handyformat für den Klienten):
+- Fenster mit QR-Code und Link. Der Link führt auf dem „Handy“ in den Warteraum, „Zum Gespräch“ und „Klient einlassen“ bringen beide ins Gespräch.
+- Danach: Herkunft `test`, kein Klient angelegt, Merker gesetzt, Wochenkennzahl weiter 0, Agenda mit Abzeichen, „Erste Buchung erhalten“ nicht abgehakt.
+- Aufräumen: Eine auf 25 Stunden zurückdatierte Probe-Sitzung samt Datei im Speicher ist nach dem Lauf weg, der Merker bleibt.
+- Produktions-Build der Coach-App mit `uqr` im Bundle.
+
+### 6b · Checkliste auf die Beta ausrichten
+
+Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit festlegen · Impressum hinterlegen · **Probe-Sitzung machen** · **Buchungslink teilen** (statt „Erste Buchung erhalten“).
+
+- „Buchungslink teilen“ ist erledigt, sobald der Coach den Link einmal kopiert hat (Merker `booking_page.link_shared_at`) oder es eine echte Buchung gibt.
+- Die Erfolgsmeldung am Ende passt sich an.
+
+### 6c · „Kommt bald“ ausblenden
+
+- **Menü:** Umsatz, Rechnungen, Warteraum, Benachrichtigungen und Plan & Abrechnung verschwinden, ebenso Notizen (aus Schritt 8 vorgezogen). Die Gruppe „Finanzen“ entfällt. „Rechtliches“ bleibt.
+- **Alte Adressen** leiten aufs Dashboard. Die Seiten bleiben im Code.
+- **Kacheln „Geplante Features“** in echten Seiten verschwinden ebenfalls: Buchungsseite, Rechtliches, Sitzungsangebote, Account, „Coaching-Ziele“ beim Klienten.
+- **Ein Schalter:** Ausgeblendet wird über eine einzige Liste in der Coach-App. Kommt eine Funktion, nimmt man sie dort heraus.
+
+### Abnahme im Browser
+
+- **Probe-Sitzung mit Tobias:**
+  - starten, den Link in einem zweiten Browserfenster im Handyformat öffnen, sich einlassen
+  - Chat und Datei ausprobieren, beenden
+  - danach: Checkliste abgehakt, kein neuer Klient, Wochenkennzahl unverändert, Kalender und Agenda mit Abzeichen
+- **Aufräumen:** Eine 25 Stunden alte Probe-Sitzung verschwindet samt Chat und Datei, der Merker bleibt.
+- **Checkliste:** sechs Schritte, Link kopieren hakt „Buchungslink teilen“ ab.
+- **Menü und Seiten:** nur noch echte Menüpunkte und keine Kacheln „Geplante Features“, alte Adressen leiten weiter. Rechner und Handy.
 
 ---
 

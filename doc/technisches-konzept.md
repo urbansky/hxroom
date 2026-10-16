@@ -950,7 +950,7 @@ Claude Code kann die komplette BullMQ-Modul-Struktur inkl. Worker, Job-Definitio
 
 Der Klient bekommt 24 Stunden und 1 Stunde vor dem Termin eine Erinnerung mit dem Link in den Warteraum (`BookingReminderService`, Vorlage `mail/templates/client/booking-reminder.tsx`). Die 1-h-Erinnerung fällt mit der Öffnung des Warteraums zusammen (`CALL_OPENS_MINUTES_BEFORE_START`). An den Coach geht keine Erinnerung, die Texte sind fest.
 
-- **Wer:** nur bestätigte Termine, keine Spontan-Termine (deren Einladung geht sofort raus).
+- **Wer:** nur bestätigte Termine, keine Spontan-Termine (deren Einladung geht sofort raus) und keine Probe-Sitzungen.
 - **Kurzfristig gebucht:** Eine Erinnerung entfällt, wenn die Buchung erst nach ihrem Fälligkeitszeitpunkt bestätigt wurde. Die Bestätigung trägt den Link dann schon.
 - **Nachholen:** Nach einem Ausfall der API wird nur nachgeholt, was noch hilft, die 24-h-Erinnerung bis 2 Stunden vor Beginn, die 1-h-Erinnerung bis 5 Minuten vor Beginn. „Heute“ oder „morgen“ im Text richtet sich nach dem Kalendertag in Europe/Berlin.
 - **Ablauf:** ein Lauf alle 5 Minuten über `@nestjs/schedule`. Er beansprucht die fälligen Erinnerungen in einem `UPDATE … RETURNING` (Spalten `reminder_24h_sent_at`, `reminder_1h_sent_at`) und verschickt erst dann. Scheitert der Versand, gibt er den Vermerk frei, und der nächste Lauf versucht es erneut. Die Regel steht lesbar und getestet in `bookings/booking-reminders.ts`.
@@ -1205,6 +1205,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
   - **Prüfen im Betrieb:** `POST /api/v1/monitoring/test-error` (nur Betreiber) und `?monitoring-test=1` an einer Seite der Coach-App oder der Klientenseite.
 - AVV automatisch bei Registrierung abgeschlossen
 - DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.
+- **Probe-Sitzungen** (Herkunft `test`, `POST /api/v1/bookings/test-session`): Der Coach spricht mit sich selbst, ohne Klient und ohne Mail. Sie zählen in keiner Kennzahl, und `TestSessionCleanupService` löscht sie 24 Stunden nach dem Ende samt Notizen, Chat und Dateien.
 - **Klienten löschen** (Art. 17 DSGVO, `DELETE /api/v1/clients/:id`): Der Coach löscht einen Klienten samt Terminen, Notizen, Chat und geteilten Dateien. Termine hängen nur lose am Klienten (`client_id` mit `set null`), und unbestätigte Anfragen haben noch keine `client_id` – deshalb zählen auch Termine derselben Organisation mit derselben E-Mail-Adresse dazu. Die Objekte im Speicher (`{org}/sessions/{booking}/`) fallen nach dem Commit. Anstehende Termine sperren die Löschung mit `409`. Protokoll in `client_deletions`, nur IDs und Anzahlen, ohne Fremdschlüssel.
 - Audioaufnahme / Transkription: aktive Klienten-Einwilligung pro Sitzung, dokumentiert mit Timestamp, IP und Version
 - Audio-Recordings werden nach erfolgreicher Transkription automatisch aus S3 gelöscht

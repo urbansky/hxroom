@@ -168,9 +168,9 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 - **Landingpage überarbeiten:** Inhalt und Gestaltung von `hxroom.de` neu fassen, als erste Station des Marketings und Weg zur Vorführung. Der genaue Umfang wird vor der Umsetzung festgelegt.
 
 *Selbst als Coach ausprobieren:*
-- **Probe-Sitzung mit sich selbst:** Ein Knopf legt einen Testklienten an (den Coach selbst) und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Testtermine zählen nicht in Kennzahlen und Klientenliste.
-- **Onboarding-Checkliste** auf die Beta ausrichten: Profil, Angebot, Verfügbarkeit, Probe-Sitzung, Buchungslink teilen.
-- **„Kommt bald“-Seiten ausblenden:** Menüpunkte, die nur Ankündigungs-Kacheln zeigen (Rechnungen, Umsatz, Abrechnung, Benachrichtigungen, Datenschutz, Warteraum), verschwinden für die Beta, statt anzukündigen.
+- **Probe-Sitzung mit sich selbst:** Ein Knopf startet eine Sitzung mit dem Coach als Klient und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Probe-Sitzungen erscheinen im Kalender, zählen aber nicht in Kennzahlen und legen keinen Eintrag in der Klientenliste an. Nach 24 Stunden werden sie gelöscht.
+- **Onboarding-Checkliste** auf die Beta ausrichten: Profil, Angebot, Verfügbarkeit, Impressum, Probe-Sitzung, Buchungslink teilen.
+- **„Kommt bald“ ausblenden:** Menüpunkte, die nur Ankündigungs-Kacheln zeigen (Notizen, Umsatz, Rechnungen, Warteraum, Benachrichtigungen, Plan & Abrechnung), verschwinden für die Beta, ebenso die Kacheln „Geplante Features“ in den übrigen Seiten.
 
 *Feedback einholen:*
 - **Feedback-Knopf in der Coach-App:** ein kurzes Formular, gespeichert und per Mail an den Betreiber, mit der Seite, auf der der Coach gerade war.
@@ -206,7 +206,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 - Erinnerungsmails 24 h / 1 h vor dem Termin
 - Vorführ-Buchungsseite `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage
 - Landingpage inhaltlich und gestalterisch überarbeiten
-- Probe-Sitzung mit sich selbst (Testklient, QR-Code), Onboarding-Checkliste anpassen
+- Probe-Sitzung mit sich selbst (QR-Code, ohne Eintrag in der Klientenliste), Onboarding-Checkliste anpassen
 - „Kommt bald“-Menüpunkte für die Beta ausblenden
 - Feedback-Knopf in der Coach-App, Aktivität der Coaches im Betreiber-Backoffice
 - Impressum und Datenschutzerklärung des Coachs in den Einstellungen, AGB und AVV bei der Registrierung
