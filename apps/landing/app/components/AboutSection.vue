@@ -15,7 +15,7 @@ const content = {
 </script>
 
 <template>
-  <section class="relative z-1 py-[120px] px-12 max-sm:py-20 max-sm:px-6">
+  <section id="ueber-mich" class="relative z-1 py-[120px] px-12 max-sm:py-20 max-sm:px-6 bg-(--ui-bg-muted) scroll-mt-16">
     <div class="about-inner max-w-[780px] mx-auto grid gap-12 items-center" style="grid-template-columns: 160px 1fr;">
       <!-- Photo -->
       <div class="about-photo size-[160px] rounded-full overflow-hidden shrink-0">
@@ -32,7 +32,7 @@ const content = {
         <p
           v-for="(p, i) in content.paragraphs"
           :key="i"
-          class="text-[15px] text-(--ui-text-muted) leading-[1.75] mb-[18px] [&_strong]:text-(--ui-text) [&_strong]:font-medium"
+          class="text-[16px] text-(--ui-text) opacity-85 leading-[1.75] mb-[18px] [&_strong]:font-medium"
           v-html="p"
         />
         <div class="flex gap-[18px] mt-5">
