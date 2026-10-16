@@ -388,7 +388,7 @@ Serverseitig kommt zum bestehenden `AuthGuard` ein `AdminGuard`, der zusätzlich
 
 **Aktivität der Coachs.** Die Coach-Liste (`GET /api/v1/admin/coaches`) zeigt neben Klienten und Sitzungen: zuletzt aktiv, aktive Angebote, Buchungen über die Buchungsseite und „Startklar“ (Impressum vollständig, Probe-Sitzung gemacht, Link geteilt oder erste Buchung). „Zuletzt aktiv“ ist `user.last_active_at`. Der `AuthGuard` setzt es über den `ActivityTracker` (`apps/api/src/auth/activity-tracker.ts`) höchstens einmal pro Stunde und Coach, übernommene Sitzungen zählen nicht. Die session-Tabelle taugt dafür nicht: Zeilen verschwinden beim Abmelden, und eine Sitzung hält Tage.
 
-**Feedback.** Der Knopf „Feedback geben“ in der Seitenleiste der Coach-App schickt Art, Text und Pfad der Seite an `POST /api/v1/feedback`. Die API speichert dazu den User-Agent in `feedback` und meldet die Einsendung per Mail an `FEEDBACK_EMAIL`, mit dem Coach als Antwortadresse. Ohne die Variable wird nur gespeichert. Höchstens 20 Einsendungen pro Coach und Stunde. Der Betreiber sieht alles unter „Feedback“ (`GET /api/v1/admin/feedback`).
+**Feedback.** Der Menüpunkt „Feedback“ (Abzeichen „Beta“) unten in der Seitenleiste der Coach-App schickt Art, Text und Pfad der Seite an `POST /api/v1/feedback`. Die API speichert dazu den User-Agent in `feedback` und meldet die Einsendung per Mail an `FEEDBACK_EMAIL`, mit dem Coach als Antwortadresse. Ohne die Variable wird nur gespeichert. Höchstens 20 Einsendungen pro Coach und Stunde. Der Betreiber sieht alles unter „Feedback“ (`GET /api/v1/admin/feedback`), liest den vollen Text im Fenster und löscht Einträge endgültig (`DELETE /api/v1/admin/feedback/:id`).
 
 ---
 

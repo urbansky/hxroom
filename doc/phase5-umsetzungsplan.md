@@ -22,8 +22,8 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
 
 5. AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
-6. Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden – umgesetzt, Inbetriebnahme offen
-7. Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice – umgesetzt, Inbetriebnahme offen
+6. ✅ Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
+7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
 9. Landingpage inhaltlich und gestalterisch überarbeiten
 
@@ -407,9 +407,9 @@ Für 3.1b auf dem Server:
 
 ---
 
-## Schritt 6 · Probe-Sitzung, Checkliste, „Kommt bald“ ausblenden
+## Schritt 6 · Probe-Sitzung, Checkliste, „Kommt bald“ ausblenden ✅
 
-**Stand:** 6a, 6b und 6c umgesetzt und lokal abgenommen.
+**Stand:** ✅ 6a, 6b und 6c umgesetzt, lokal und in Produktion abgenommen.
 
 **Ziel:** Ein Beta-Coach erlebt HxRoom in wenigen Minuten selbst und stößt nirgends auf Ankündigungen, die noch nichts tun. Drei Teile, jeweils mit eigener Abnahme und eigenem Commit.
 
@@ -497,16 +497,16 @@ Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit f
 
 ---
 
-## Schritt 7 · Feedback-Knopf und Aktivität der Coachs
+## Schritt 7 · Feedback-Knopf und Aktivität der Coachs ✅
 
-**Stand:** 7a und 7b umgesetzt und lokal abgenommen. Der Mailversand an `FEEDBACK_EMAIL` wird bei der Inbetriebnahme geprüft.
+**Stand:** ✅ 7a und 7b umgesetzt, lokal und in Produktion abgenommen, samt Mailversand an `FEEDBACK_EMAIL`.
 
 **Ziel:** Beta-Coachs geben Rückmeldung, ohne die App zu verlassen. Der Betreiber sieht, wer HxRoom tatsächlich nutzt und wo jemand hängen bleibt. Zwei Teile, jeweils mit eigener Abnahme und eigenem Commit.
 
 ### 7a · Feedback-Knopf
 
 **Ablauf:**
-1. „Feedback geben“ steht in der Fußzeile der Seitenleiste, über dem Benutzermenü, auf jeder Seite des Coach-Backoffice.
+1. Der Menüpunkt „Feedback“ mit dem Abzeichen „Beta“ steht am unteren Rand des Menüs, über der Trennlinie zum Konto, auf jeder Seite des Coach-Backoffice.
 2. Ein Fenster mit der Art (Problem · Idee · Sonstiges, vorbelegt „Sonstiges“) und einem Textfeld (Pflicht, höchstens 2000 Zeichen). Darunter der Hinweis, dass die aktuelle Seite mitgeschickt wird.
 3. Nach dem Absenden: Toast „Danke für dein Feedback“, das Fenster schließt.
 
@@ -530,6 +530,8 @@ Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit f
 - Löschen der Organisation (in einer zurückgerollten Transaktion) nimmt das Feedback mit.
 - Betreiber-Backoffice: Eintrag mit Coach, Art, Seite und Text, der Filter nach Art wirkt.
 - Ohne `FEEDBACK_EMAIL` wird nur gespeichert. Die Mailvorlage ist per Test abgedeckt.
+
+**Nachtrag Betreiber-Backoffice:** Lange Nachrichten stehen in der Tabelle auf drei Zeilen gekürzt, ein Klick zeigt den vollen Text mit Coach, Seite und Browser im Fenster. Löschen geht aus der Zeile oder dem Fenster, immer mit Rückfrage (`DELETE /api/v1/admin/feedback/:id`, `404` bei unbekannter ID). Lokal abgenommen: Kürzung auf drei Zeilen, Volltext im Fenster, beide Löschwege, `404` und `403` für Coachs.
 
 ### 7b · Aktivität in der Coach-Liste
 
@@ -568,9 +570,9 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 ### Inbetriebnahme
 
-- `FEEDBACK_EMAIL` in der `.env` des Servers setzen und in `docker-compose.yml` an die API durchreichen.
-- `git pull` und `./redeploy.sh` (Migrationen `0031` und `0032`)
-- Ein Feedback aus der Produktion absenden, Mail und Eintrag im Betreiber-Backoffice prüfen.
+- ✅ `FEEDBACK_EMAIL` in der `.env` des Servers setzen. `docker-compose.yml` reicht die Variable an die API durch.
+- ✅ `git pull` und `./redeploy.sh` (Migrationen `0031` und `0032`)
+- ✅ Ein Feedback aus der Produktion absenden, Mail und Eintrag im Betreiber-Backoffice prüfen.
 
 ---
 
