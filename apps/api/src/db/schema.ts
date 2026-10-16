@@ -1,6 +1,6 @@
 import { bigserial, index, pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy, Imprint, ImprintMode } from '@hxroom/shared';
+import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy, FeedbackCategory, Imprint, ImprintMode } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -410,3 +410,21 @@ export const clientDeletions = pgTable('client_deletions', {
   bookingsDeleted: integer('bookings_deleted').notNull(),
   filesDeleted:    integer('files_deleted').notNull(),
 });
+
+// Rückmeldungen der Coachs über den Feedback-Knopf (doc/phase5-umsetzungsplan.md, 7a).
+// Hängt mit Cascade an Organisation und User: Mit dem Konto verschwindet auch das Feedback.
+export const feedback = pgTable('feedback', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  userId:         text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  category:       text('category').$type<FeedbackCategory>().notNull(),
+  message:        text('message').notNull(),
+  // Pfad ohne Query-String, z. B. /clients/abc123
+  page:           text('page').notNull(),
+  userAgent:      text('user_agent'),
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+}, (table) => [
+  index('feedback_created_at_idx').on(table.createdAt),
+  // Für die Begrenzung auf 20 Einsendungen pro Stunde
+  index('feedback_user_created_at_idx').on(table.userId, table.createdAt),
+]);

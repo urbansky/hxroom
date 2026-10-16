@@ -21,6 +21,7 @@ import { AdminModule } from './admin/admin.module';
 import { AccountModule } from './account/account.module';
 import { SessionNotesModule } from './session-notes/session-notes.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { MonitoringModule } from './monitoring/monitoring.module';
     AccountModule,
     SessionNotesModule,
     MonitoringModule,
+    FeedbackModule,
   ],
   providers: [
     // Meldet unerwartete Fehler an GlitchTip und antwortet dann wie Nests Standard-Filter.

@@ -10,6 +10,8 @@ const route = useRoute()
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 const { $api } = useApi()
 
+const feedbackOpen = ref(false)
+
 const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`)
 
 const baseNavItems: NavItem[][] = [
@@ -181,23 +183,41 @@ const pageTitle = computed(() => {
       </template>
 
       <template #footer="{ collapsed }">
-        <UDropdownMenu
-          :items="userMenuItems"
-          :content="{ align: 'center', collisionPadding: 12 }"
-          :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
-        >
-          <UButton
-            color="neutral"
-            variant="ghost"
-            block
-            :square="collapsed"
-            :avatar="{ alt: session.data?.user?.name ?? '', size: 'md' }"
-            :label="collapsed ? undefined : (session.data?.user?.name ?? '')"
-            :trailing-icon="collapsed ? undefined : 'i-lucide-chevrons-up-down'"
-            class="data-[state=open]:bg-elevated"
-            :ui="{ base: 'text-highlighted', trailingIcon: 'text-dimmed' }"
-          />
-        </UDropdownMenu>
+        <div class="flex flex-col gap-1 w-full">
+          <!-- Beta: Rückmeldung von jeder Seite aus (phase5-umsetzungsplan.md, 7a) -->
+          <UTooltip text="Feedback geben" :disabled="!collapsed" :content="{ side: 'right' }">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              block
+              :square="collapsed"
+              icon="i-lucide-message-square-heart"
+              :label="collapsed ? undefined : 'Feedback geben'"
+              :aria-label="collapsed ? 'Feedback geben' : undefined"
+              :class="collapsed ? undefined : 'justify-start'"
+              :ui="{ leadingIcon: 'text-dimmed' }"
+              @click="feedbackOpen = true"
+            />
+          </UTooltip>
+          <UDropdownMenu
+            :items="userMenuItems"
+            :content="{ align: 'center', collisionPadding: 12 }"
+            :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
+          >
+            <UButton
+              color="neutral"
+              variant="ghost"
+              block
+              :square="collapsed"
+              :avatar="{ alt: session.data?.user?.name ?? '', size: 'md' }"
+              :label="collapsed ? undefined : (session.data?.user?.name ?? '')"
+              :trailing-icon="collapsed ? undefined : 'i-lucide-chevrons-up-down'"
+              class="data-[state=open]:bg-elevated"
+              :ui="{ base: 'text-highlighted', trailingIcon: 'text-dimmed' }"
+            />
+          </UDropdownMenu>
+        </div>
+        <FeedbackModal v-model:open="feedbackOpen" />
       </template>
     </UDashboardSidebar>
 

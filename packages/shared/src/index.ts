@@ -18,6 +18,18 @@ export {
   type BookingPageLegalDto,
 } from './legal.js';
 export {
+  FEEDBACK_CATEGORIES,
+  FEEDBACK_CATEGORY_LABELS,
+  FEEDBACK_MESSAGE_MAX_LENGTH,
+  FeedbackCategory,
+  createFeedbackSchema,
+  feedbackItemSchema,
+  listFeedbackQuerySchema,
+  type CreateFeedbackDto,
+  type FeedbackItem,
+  type ListFeedbackQuery,
+} from './feedback.js';
+export {
   MONITORING_EXCLUDED_INTEGRATIONS,
   sanitizeMonitoringEvent,
   scrubSensitiveData,

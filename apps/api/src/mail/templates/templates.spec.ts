@@ -12,6 +12,7 @@ import { renderPasswordResetEmail } from './coach/password-reset';
 import { renderDeletionRequestedEmail } from './coach/deletion-requested';
 import { renderDeletionReminderEmail } from './coach/deletion-reminder';
 import { renderDeletionExecutedEmail } from './coach/deletion-executed';
+import { renderFeedbackReceivedEmail } from './operator/feedback-received';
 
 // Termindaten, wie toAppointmentInfo() sie liefert – Tag und Zeitspanne getrennt, weil der
 // Termin-Block sie in zwei Zeilen zeigt (wie die Agenda im Coach-Dashboard).
@@ -364,6 +365,29 @@ describe('Account-Mail-Templates', () => {
 
       expect(html).toContain('24');
       expect(html).toContain('118');
+    });
+  });
+});
+
+describe('Betreiber-Mail-Templates', () => {
+  describe('Feedback eingegangen', () => {
+    it('rendert Art, Nachricht, Coach und Seite', async () => {
+      const html = await renderFeedbackReceivedEmail({
+        categoryLabel: 'Idee',
+        coachName: 'Anna Bergmann',
+        coachEmail: 'anna@example.com',
+        subdomain: 'anna',
+        message: 'Ein Export der Notizen als PDF wäre toll.',
+        page: '/clients/c-1',
+        userAgent: null,
+        receivedAtLabel: 'Freitag, 16. Oktober 2026, 14:32',
+      });
+
+      expect(html).toContain('Neues Feedback: Idee');
+      expect(html).toContain('Ein Export der Notizen als PDF wäre toll.');
+      expect(html).toContain('anna@example.com');
+      expect(html).toContain('/clients/c-1');
+      expect(html).toContain('unbekannt');
     });
   });
 });

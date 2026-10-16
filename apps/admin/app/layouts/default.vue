@@ -17,6 +17,7 @@ const navItems: NavItem[][] = [
     { type: 'label', label: 'Kunden' },
     { label: 'Coachs', icon: 'i-lucide-users', to: '/coaches', description: 'Alle registrierten Coachs verwalten' },
     { label: 'Subscriptions', icon: 'i-lucide-credit-card', to: '/subscriptions', description: 'Abos, Pläne und Kündigungen' },
+    { label: 'Feedback', icon: 'i-lucide-message-square-heart', to: '/feedback', description: 'Rückmeldungen der Coachs aus der App' },
   ],
   [
     { type: 'label', label: 'Auswertung' },

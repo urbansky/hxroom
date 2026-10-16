@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AdminCoachesController } from './admin-coaches.controller';
 import { AdminCoachesService } from './admin-coaches.service';
+import { AdminFeedbackController } from './admin-feedback.controller';
+import { AdminFeedbackService } from './admin-feedback.service';
 
 /**
  * Betreiber-Backoffice (admin.hxroom.de).
@@ -15,7 +17,7 @@ import { AdminCoachesService } from './admin-coaches.service';
  * keine Registrierung – Nest instanziiert klassenreferenzierte Guards selbst.
  */
 @Module({
-  controllers: [AdminCoachesController],
-  providers: [AdminCoachesService],
+  controllers: [AdminCoachesController, AdminFeedbackController],
+  providers: [AdminCoachesService, AdminFeedbackService],
 })
 export class AdminModule {}

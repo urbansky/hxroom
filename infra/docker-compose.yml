@@ -152,6 +152,7 @@ services:
       - BREVO_API_KEY=${BREVO_API_KEY}
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
+      - FEEDBACK_EMAIL=${FEEDBACK_EMAIL:-}
       # Hetzner Object Storage (extern, S3-kompatibel). Anders als in der
       # Entwicklung (docker-compose.dev.yml, RustFS) läuft hier kein eigener
       # Object-Store-Container; Endpunkt, Region und Schlüssel kommen aus der .env.
