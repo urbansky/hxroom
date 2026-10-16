@@ -15,7 +15,16 @@ const props = defineProps<{
   bookingPageUrl?: string | null
 }>()
 
-const emit = defineEmits<{ dismiss: [] }>()
+// `action`: Schritte ohne eigene Seite (Probe-Sitzung, Link kopieren) führt das Dashboard aus.
+const emit = defineEmits<{ dismiss: [], action: [OnboardingAction] }>()
+
+function stepTarget(step: OnboardingStep) {
+  return step.action ? undefined : step.to
+}
+
+function onStepClick(step: OnboardingStep) {
+  if (step.action) emit('action', step.action)
+}
 
 const { copyBookingLink } = useBookingLink()
 
@@ -54,8 +63,9 @@ const firstName = computed(() => props.coachName?.trim().split(/\s+/)[0] ?? null
         Dein Raum steht<template v-if="firstName">, {{ firstName }}</template>.
       </h2>
       <p class="text-muted text-balance">
-        Buchungsseite, Angebot und Zeiten sind eingerichtet. Ab jetzt kümmert sich HxRoom um
-        den Rahmen – du dich um die Gespräche.
+        Buchungsseite, Angebot, Zeiten und Impressum stehen, und deinen Raum kennst du jetzt von
+        beiden Seiten. Sobald Klienten buchen, kümmert sich HxRoom um den Rahmen – du dich um
+        die Gespräche.
       </p>
     </div>
 
@@ -94,9 +104,12 @@ const firstName = computed(() => props.coachName?.trim().split(/\s+/)[0] ?? null
 
     <ul class="flex flex-col gap-1">
       <li v-for="step in steps" :key="step.key">
-        <NuxtLink
-          :to="step.to"
-          class="flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted"
+        <!-- ULink statt NuxtLink: ohne `to` wird daraus ein Knopf für die Aktion des Schritts. -->
+        <ULink
+          :to="stepTarget(step)"
+          raw
+          class="w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted cursor-pointer"
+          @click="onStepClick(step)"
         >
           <UIcon
             :name="step.done ? 'i-lucide-circle-check' : 'i-lucide-circle-dashed'"
@@ -113,17 +126,18 @@ const firstName = computed(() => props.coachName?.trim().split(/\s+/)[0] ?? null
             <span v-if="!step.done" class="block text-sm text-muted truncate">{{ step.description }}</span>
           </span>
           <UIcon v-if="!step.done" name="i-lucide-chevron-right" class="size-4 text-muted shrink-0" />
-        </NuxtLink>
+        </ULink>
       </li>
     </ul>
 
     <div v-if="nextStep">
       <UButton
-        :to="nextStep.to"
+        :to="stepTarget(nextStep)"
         :label="nextStep.label"
         trailing-icon="i-lucide-arrow-right"
         color="primary"
         size="sm"
+        @click="onStepClick(nextStep)"
       />
     </div>
   </section>

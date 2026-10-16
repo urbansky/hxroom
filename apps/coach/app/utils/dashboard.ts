@@ -67,12 +67,17 @@ export function countThisWeek(bookings: CoachBookingResponse[], now = new Date()
   }).length
 }
 
+/** Was ein Schritt ohne eigene Seite tut: die Probe-Sitzung öffnen oder den Link kopieren. */
+export type OnboardingAction = 'test-session' | 'copy-link'
+
 export interface OnboardingStep {
   key: string
   label: string
   description: string
   done: boolean
-  to: string
+  /** Ziel des Schritts – oder eine Aktion, die das Dashboard ausführt. */
+  to?: string
+  action?: OnboardingAction
 }
 
 /**
@@ -92,13 +97,18 @@ export interface OnboardingBookingPage {
   onboardingCelebratedAt: string | null
   /** Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/legal.md §3.2). */
   imprintComplete: boolean
+  /** Erste Probe-Sitzung, in der sich der Coach selbst eingelassen hat. */
+  testSessionAt: string | null
+  /** Erstes Kopieren des Buchungslinks. */
+  linkSharedAt: string | null
 }
 
 /**
- * Fünf Schritte bis zur ersten Buchung (doc/funktionen/backoffice-coach.md, Funktion 1.04).
- * Der Zustand wird bei jedem Laden neu aus den Daten abgeleitet und nirgends gespeichert:
- * ein erledigter Schritt bleibt erledigt, weil die Daten da sind, nicht weil ein Flag
- * gesetzt wurde.
+ * Sechs Schritte bis zur ersten Buchung, auf die Beta ausgerichtet (doc/funktionen/
+ * backoffice-coach.md 1.04, phase5-umsetzungsplan.md Schritt 6b). Der Zustand wird bei jedem
+ * Laden neu aus den Daten abgeleitet. Nur Probe-Sitzung und geteilter Link haben einen
+ * eigenen Merker an der Buchungsseite: Die Probe-Sitzung wird nach 24 Stunden gelöscht, und
+ * das Teilen hinterlässt sonst keine Spur.
  */
 export function onboardingSteps(input: {
   bookingPage: OnboardingBookingPage | null
@@ -128,7 +138,7 @@ export function onboardingSteps(input: {
       done: input.slots.length > 0,
       to: '/bookings/availability',
     },
-    // Vor der ersten Buchung, weil sie ohne Impressum gar nicht möglich ist.
+    // Vor dem Teilen des Links, weil ohne Impressum niemand buchen kann.
     {
       key: 'imprint',
       label: 'Impressum hinterlegen',
@@ -137,11 +147,20 @@ export function onboardingSteps(input: {
       to: '/settings/legal',
     },
     {
-      key: 'booking',
-      label: 'Erste Buchung erhalten',
-      description: 'Teile deinen Buchungslink mit Klienten',
-      done: input.hasBooking,
-      to: '/bookings',
+      key: 'test-session',
+      label: 'Probe-Sitzung machen',
+      description: 'Erlebe HxRoom von beiden Seiten – mit dem Handy als Klient',
+      done: !!input.bookingPage?.testSessionAt,
+      action: 'test-session',
+    },
+    // Ob der Link wirklich weitergegeben wurde, sieht HxRoom nicht: Das Kopieren zählt, und
+    // eine echte Buchung (Probe-Sitzungen ausgenommen) beweist es ohnehin.
+    {
+      key: 'share-link',
+      label: 'Buchungslink teilen',
+      description: 'Schick deinen Link an Klienten oder setz ihn auf deine Website',
+      done: !!input.bookingPage?.linkSharedAt || input.hasBooking,
+      action: 'copy-link',
     },
   ]
 }

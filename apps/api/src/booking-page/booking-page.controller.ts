@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Patch,
   Post,
   Put,
@@ -65,6 +67,15 @@ export class BookingPageController {
   markOnboardingCelebrated(@CurrentOrganization() org: { id: string } | undefined) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.bookingPageService.markOnboardingCelebrated(org.id);
+  }
+
+  // Erstes Kopieren des Buchungslinks, für die Checkliste. Wie das Onboarding-Flag ein
+  // eigener Endpunkt neben dem Autosave.
+  @Post('link-shared')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  markLinkShared(@CurrentOrganization() org: { id: string } | undefined) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.bookingPageService.markLinkShared(org.id);
   }
 
   @Post('avatar')

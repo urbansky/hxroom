@@ -1,0 +1,1 @@
+ALTER TABLE "booking_page" ADD COLUMN "link_shared_at" timestamp;

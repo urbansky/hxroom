@@ -77,6 +77,7 @@ function qualificationList(text: string | undefined): string[] {
 const form = reactive<BookingPageForm>(emptyForm())
 
 const previewUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${form.subdomain}.${rootDomain}`)
+const { copyBookingLink } = useBookingLink()
 const nameInitial = computed(() => form.profileName?.charAt(0).toUpperCase() || 'A')
 
 // Snapshot der zuletzt gespeicherten Werte, um unveränderte Felder beim Blur zu erkennen
@@ -313,7 +314,7 @@ const features = [
                 />
                 <UBadge color="neutral" variant="outline" size="lg" :label="'.' + rootDomain" class="text-muted" />
               </UFieldGroup>
-              <UButton variant="outline" color="neutral">
+              <UButton variant="outline" color="neutral" :disabled="!form.subdomain" @click="copyBookingLink(previewUrl)">
                 Link kopieren
               </UButton>
             </div>

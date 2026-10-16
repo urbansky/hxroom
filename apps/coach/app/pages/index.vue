@@ -69,12 +69,24 @@ const nextBooking = computed(() => agenda.value[0] ?? null)
 const weekCount = computed(() => countThisWeek(bookings.value))
 const clientsWithNext = computed(() => clients.value.filter(c => c.nextSessionAt).length)
 
+const { copyBookingLink, linkCopied } = useBookingLink()
+
 const steps = computed(() => onboardingSteps({
-  bookingPage: bookingPage.value,
+  // linkCopied: gerade eben kopiert – der Merker an der Buchungsseite kommt erst beim
+  // nächsten Laden zurück.
+  bookingPage: bookingPage.value && linkCopied.value && !bookingPage.value.linkSharedAt
+    ? { ...bookingPage.value, linkSharedAt: new Date().toISOString() }
+    : bookingPage.value,
   offers: offers.value,
   slots: slots.value,
   hasBooking: hasAnyBooking.value,
 }))
+
+// Schritte der Checkliste ohne eigene Seite
+function onOnboardingAction(action: OnboardingAction) {
+  if (action === 'test-session') testSessionOpen.value = true
+  else copyBookingLink(bookingPageUrl.value)
+}
 
 // Die Buchungsseite läuft auf der eigenen Subdomain – identisch zum Slug der Organisation,
 // den /booking-page mitliefert.
@@ -177,6 +189,7 @@ async function onClientSaved(_client: ClientResponse) {
         :coach-name="session.data?.user?.name"
         :booking-page-url="bookingPageUrl"
         @dismiss="onCelebrationDismissed"
+        @action="onOnboardingAction"
       />
 
       <div class="grid gap-4 lg:grid-cols-3 items-start">

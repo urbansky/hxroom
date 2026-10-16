@@ -30,6 +30,8 @@ export class BookingPageService {
         qualifications:  bookingPage.qualifications,
         avatarUpdatedAt: bookingPage.avatarUpdatedAt,
         onboardingCelebratedAt: bookingPage.onboardingCelebratedAt,
+        testSessionAt:      bookingPage.testSessionAt,
+        linkSharedAt:       bookingPage.linkSharedAt,
         imprintMode:        bookingPage.imprintMode,
         imprint:            bookingPage.imprint,
         imprintUrl:         bookingPage.imprintUrl,
@@ -181,6 +183,23 @@ export class BookingPageService {
       .limit(1);
 
     return { onboardingCelebratedAt: row?.onboardingCelebratedAt ?? onboardingCelebratedAt };
+  }
+
+  /**
+   * Merkt sich das erste Kopieren des Buchungslinks – der Schritt „Buchungslink teilen“ der
+   * Checkliste. Wie oben nur beim ersten Mal gesetzt.
+   */
+  async markLinkShared(organizationId: string) {
+    const linkSharedAt = new Date();
+
+    await this.db
+      .insert(bookingPage)
+      .values({ organizationId, linkSharedAt })
+      .onConflictDoUpdate({
+        target: bookingPage.organizationId,
+        set: { linkSharedAt },
+        setWhere: isNull(bookingPage.linkSharedAt),
+      });
   }
 
   async uploadAvatar(organizationId: string, source: Buffer) {
