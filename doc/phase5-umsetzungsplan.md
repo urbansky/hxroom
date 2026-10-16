@@ -409,7 +409,7 @@ Für 3.1b auf dem Server:
 
 ## Schritt 6 · Probe-Sitzung, Checkliste, „Kommt bald“ ausblenden
 
-**Stand:** 6a umgesetzt und lokal abgenommen, 6b und 6c geplant.
+**Stand:** 6a und 6b umgesetzt und lokal abgenommen, 6c geplant.
 
 **Ziel:** Ein Beta-Coach erlebt HxRoom in wenigen Minuten selbst und stößt nirgends auf Ankündigungen, die noch nichts tun. Drei Teile, jeweils mit eigener Abnahme und eigenem Commit.
 
@@ -451,6 +451,21 @@ Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit f
 
 - „Buchungslink teilen“ ist erledigt, sobald der Coach den Link einmal kopiert hat (Merker `booking_page.link_shared_at`) oder es eine echte Buchung gibt.
 - Die Erfolgsmeldung am Ende passt sich an.
+
+**Umgesetzt:**
+- **Merker** `booking_page.link_shared_at` (Migration `0030`), gesetzt über `POST /booking-page/link-shared`. `GET /booking-page` liefert beide Merker.
+- **Schritte ohne eigene Seite:** Sie haben statt eines Ziels eine Aktion (`OnboardingStep.action`).
+  - „Probe-Sitzung machen“ öffnet das Fenster der Probe-Sitzung.
+  - „Buchungslink teilen“ kopiert den Link.
+- **`useBookingLink`** meldet jedes erfolgreiche Kopieren an die API und an einen gemeinsamen Zustand. So springt der Schritt sofort um, egal ob über Checkliste, Schnellzugriff oder Erfolgsmeldung kopiert wurde.
+- **„Link kopieren“** auf der Seite „Buchungsseite“ hatte bisher keine Funktion und kopiert jetzt den Link.
+
+**Lokal abgenommen** (Tobias, Chrome mit Zugriff auf die Zwischenablage):
+- Sechs Schritte, „0 von 6“.
+- „Probe-Sitzung machen“ öffnet das Fenster.
+- „Buchungslink teilen“ kopiert `http://tobias.hxroom.localhost`, ist sofort abgehakt, der Merker steht in der Datenbank.
+- Mit gesetztem Merker der Probe-Sitzung: nach dem Neuladen „2 von 6“.
+- „Link kopieren“ auf der Seite „Buchungsseite“ kopiert den Link.
 
 ### 6c · „Kommt bald“ ausblenden
 
