@@ -8,7 +8,7 @@ import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { isUniqueViolation } from '../common/pg-errors';
-import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, canMarkNoShow } from './booking.constants';
+import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, TEST_SESSION_DURATION_MINUTES, TEST_SESSION_NAME, canMarkNoShow } from './booking.constants';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderSessionInvitationEmail } from '../mail/templates/client/session-invitation';
 import { toAppointmentInfo } from './booking-formatting';
@@ -41,6 +41,7 @@ export class CoachBookingsService {
     if (query.from) filters.push(gte(bookings.startTime, new Date(query.from)));
     if (query.to) filters.push(lte(bookings.startTime, new Date(query.to)));
     if (query.status) filters.push(inArray(bookings.status, query.status));
+    if (query.origin) filters.push(inArray(bookings.origin, query.origin));
 
     const rows = await this.db
       .select(coachBookingColumns)
@@ -79,10 +80,13 @@ export class CoachBookingsService {
 
     // Wie beim übrigen Mailversand: nach dem Update, in try/catch. Die Absage steht
     // bereits in der DB und der Slot ist frei – ein Mail-Fehler darf daran nichts ändern.
-    try {
-      await this.sendCancellationMail(organizationId, cancelled, dto.reason);
-    } catch (err) {
-      this.logger.error(`Failed to send cancellation email for booking ${bookingId}`, err instanceof Error ? err.stack : err);
+    // Bei einer Probe-Sitzung ist der Coach selbst der Klient: keine Mail an sich selbst.
+    if (cancelled.origin !== 'test') {
+      try {
+        await this.sendCancellationMail(organizationId, cancelled, dto.reason);
+      } catch (err) {
+        this.logger.error(`Failed to send cancellation email for booking ${bookingId}`, err instanceof Error ? err.stack : err);
+      }
     }
 
     return toCoachBookingResponse(cancelled);
@@ -295,6 +299,55 @@ export class CoachBookingsService {
     }
 
     return { ...toCoachBookingResponse(booking), callUrl };
+  }
+
+  /**
+   * Probe-Sitzung des Coachs mit sich selbst (phase5-umsetzungsplan.md, Schritt 6a): ein
+   * Spontan-Termin ohne Klient und ohne Mail. Name und E-Mail des Coachs stehen nur am Termin,
+   * in der Klientenliste entsteht kein Eintrag. Den Link zum Warteraum öffnet der Coach per
+   * QR-Code auf dem Handy und lässt sich am Rechner selbst ein.
+   *
+   * Herkunft 'test': zählt in keiner Kennzahl, bekommt keine Erinnerung und wird
+   * TEST_SESSION_RETENTION_HOURS nach dem Ende gelöscht (TestSessionCleanupService).
+   */
+  async createTestSession(organizationId: string, coach: { name: string; email: string }): Promise<AdHocBookingResponse> {
+    const org = await this.organizationService.findById(organizationId);
+    if (!org.slug) {
+      throw new ConflictException('Organization has no booking page yet');
+    }
+
+    const startTime = new Date();
+    const endTime = new Date(startTime.getTime() + TEST_SESSION_DURATION_MINUTES * 60_000);
+    const clientAccessToken = randomBytes(32).toString('hex');
+
+    let booking: CoachBookingRow;
+    try {
+      [booking] = await this.db
+        .insert(bookings)
+        .values({
+          organizationId,
+          clientId:        null,
+          offerId:         null,
+          offerName:       TEST_SESSION_NAME,
+          durationMinutes: TEST_SESSION_DURATION_MINUTES,
+          startTime,
+          endTime,
+          clientName:      coach.name,
+          clientEmail:     coach.email,
+          status:          'confirmed',
+          origin:          'test',
+          confirmedAt:     startTime,
+          clientAccessToken,
+        })
+        .returning(coachBookingColumns);
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        throw new ConflictException('A session already starts at this time');
+      }
+      throw err;
+    }
+
+    return { ...toCoachBookingResponse(booking), callUrl: buildCallUrl(this.config, org.slug, booking.id, clientAccessToken) };
   }
 
   /** iCalendar-Datei für einen einzelnen Termin – zum Import in den Kalender des Coachs. */

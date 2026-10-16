@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post
 import type { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
+import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { assignBookingClientSchema, cancelBookingSchema, createAdHocBookingSchema, listCoachBookingsQuerySchema, type AssignBookingClientDto, type CancelBookingDto, type CreateAdHocBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
 import { CoachBookingsService } from './coach-bookings.service';
@@ -32,6 +33,16 @@ export class CoachBookingsController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.coachBookingsService.createAdHoc(org.id, dto);
+  }
+
+  // Probe-Sitzung des Coachs mit sich selbst (Schritt 6a). Ebenfalls vor ':id/cancel'.
+  @Post('test-session')
+  createTestSession(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @CurrentUser() user: SessionUser | undefined,
+  ) {
+    if (!org || !user) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.createTestSession(org.id, { name: user.name, email: user.email });
   }
 
   @Post(':id/cancel')

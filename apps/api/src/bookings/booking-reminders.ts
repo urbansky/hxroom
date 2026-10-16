@@ -49,7 +49,7 @@ export interface ReminderCandidate {
  */
 export function isReminderDue(kind: ReminderKind, booking: ReminderCandidate, now: Date): boolean {
   const { dueMinutesBefore, latestMinutesBefore } = REMINDER_WINDOWS[kind];
-  if (booking.status !== 'confirmed' || booking.origin === 'ad_hoc' || booking.sentAt) return false;
+  if (booking.status !== 'confirmed' || booking.origin === 'ad_hoc' || booking.origin === 'test' || booking.sentAt) return false;
 
   const start = booking.startTime.getTime();
   const dueAt = start - dueMinutesBefore * 60_000;

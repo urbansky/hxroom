@@ -170,6 +170,14 @@ export function isAdHoc(booking: Pick<CoachBookingResponse, 'origin'>): boolean 
 
 export const AD_HOC_LABEL = 'Spontan'
 
+// Probe-Sitzung des Coachs mit sich selbst (Schritt 6a): erscheint in Kalender und Agenda,
+// damit er zurück in den Call findet, zählt aber in keiner Kennzahl.
+export function isTestSession(booking: Pick<CoachBookingResponse, 'origin'>): boolean {
+  return booking.origin === 'test'
+}
+
+export const TEST_SESSION_LABEL = 'Probe-Sitzung'
+
 // In der engen Wochenkachel ist kein Platz für ein Badge; dort steht die Herkunft als
 // Präfix der Angebotszeile. Ohne Angebot heißt der Snapshot bereits „Spontan-Termin“ –
 // ein Präfix wäre dort eine Dopplung.

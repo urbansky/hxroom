@@ -195,6 +195,7 @@ async function cancelBooking() {
 
         <div class="flex items-center gap-2">
           <UBadge v-if="isAdHoc(booking)" :label="AD_HOC_LABEL" color="info" variant="subtle" />
+          <UBadge v-if="isTestSession(booking)" :label="TEST_SESSION_LABEL" icon="i-lucide-flask-conical" color="neutral" variant="subtle" />
           <UBadge
             v-if="booking.status === 'confirmed'"
             :label="STATUS_LABELS.confirmed"
@@ -230,7 +231,12 @@ async function cancelBooking() {
             <ULink v-if="booking.clientPhone" :to="`tel:${booking.clientPhone}`" class="text-primary">{{ booking.clientPhone }}</ULink>
           </div>
 
-          <div class="mt-3 flex items-center gap-2 flex-wrap">
+          <!-- Probe-Sitzung: Der Coach ist selbst der Klient, eine Zuordnung ergäbe keinen Sinn. -->
+          <p v-if="isTestSession(booking)" class="text-xs text-muted mt-2">
+            Deine Probe-Sitzung mit dir selbst. Sie zählt in keiner Kennzahl und wird 24 Stunden nach dem Ende gelöscht.
+          </p>
+
+          <div v-if="!isTestSession(booking)" class="mt-3 flex items-center gap-2 flex-wrap">
             <UButton
               v-if="booking.clientId && !isOnClientProfile"
               :to="`/clients/${booking.clientId}`"
@@ -250,7 +256,7 @@ async function cancelBooking() {
             />
           </div>
 
-          <p v-if="!booking.clientId" class="text-xs text-muted mt-2">
+          <p v-if="!booking.clientId && !isTestSession(booking)" class="text-xs text-muted mt-2">
             Noch keinem Klienten zugeordnet – das geschieht automatisch, sobald die Buchung bestätigt ist.
           </p>
         </div>

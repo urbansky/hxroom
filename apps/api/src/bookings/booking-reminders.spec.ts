@@ -44,11 +44,12 @@ describe('isReminderDue', () => {
     expect(isReminderDue('24h', booking({ sentAt: at(24) }), at(23))).toBe(false);
   });
 
-  it('nur bestätigte Termine, keine Spontan-Termine', () => {
+  it('nur bestätigte Termine, keine Spontan-Termine oder Probe-Sitzungen', () => {
     for (const status of ['pending', 'cancelled', 'no_show', 'completed'] as const) {
       expect(isReminderDue('1h', booking({ status }), at(1))).toBe(false);
     }
     expect(isReminderDue('1h', booking({ origin: 'ad_hoc' }), at(1))).toBe(false);
+    expect(isReminderDue('1h', booking({ origin: 'test' }), at(1))).toBe(false);
   });
 
   // Wer kurzfristig bucht, hat gerade die Bestätigung mit Link bekommen.

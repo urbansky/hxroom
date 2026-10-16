@@ -1,0 +1,1 @@
+ALTER TABLE "booking_page" ADD COLUMN "test_session_at" timestamp;

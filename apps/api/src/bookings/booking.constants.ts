@@ -22,6 +22,13 @@ export function isExpiredPending(createdAt: Date, now: Date, ttlMinutes = CONFIR
 export const AD_HOC_OFFER_NAME = 'Spontan-Termin';
 export const AD_HOC_DURATION_MINUTES = 60;
 
+// Probe-Sitzung des Coachs mit sich selbst (phase5-umsetzungsplan.md, Schritt 6a). Kurz,
+// weil sie nur zum Ausprobieren dient; gelöscht wird sie TEST_SESSION_RETENTION_HOURS nach
+// ihrem Ende (TestSessionCleanupService).
+export const TEST_SESSION_NAME = 'Probe-Sitzung';
+export const TEST_SESSION_DURATION_MINUTES = 15;
+export const TEST_SESSION_RETENTION_HOURS = 24;
+
 // Der Klient darf seinen Termin über den Link aus der Bestätigungsmail bis zum
 // Terminbeginn selbst absagen (doc/funktionen/backoffice-coach.md 2.06). Danach ist die
 // Sitzung entweder gelaufen oder läuft gerade – dann gehört die Absage in die Hand des

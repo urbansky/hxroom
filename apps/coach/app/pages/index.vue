@@ -23,6 +23,7 @@ const loadError = ref<string | null>(null)
 // Spontan-Termin: Klienten und Angebote liegen für das Dashboard bereits vor, das Modal
 // braucht keinen eigenen Abruf.
 const adHocOpen = ref(false)
+const testSessionOpen = ref(false)
 
 async function loadDashboard() {
   loading.value = true
@@ -32,8 +33,9 @@ async function loadDashboard() {
       // Ein Request für Agenda und Wochenkennzahl – der Zeitraum deckt beides ab.
       $api<CoachBookingResponse[]>('/bookings', { query: dashboardBookingsQuery() }),
       // Separat und ohne Zeitfenster, nur für die Checkliste: eine Erstbuchung, die
-      // länger zurückliegt, wäre in der Abfrage darüber unsichtbar.
-      $api<CoachBookingResponse[]>('/bookings', { query: { limit: '1' } }),
+      // länger zurückliegt, wäre in der Abfrage darüber unsichtbar. Probe-Sitzungen zählen
+      // nicht als Buchung.
+      $api<CoachBookingResponse[]>('/bookings', { query: { limit: '1', origin: 'booking_page,ad_hoc' } }),
       $api<ClientListItem[]>('/clients'),
       $api<OfferResponse[]>('/offers'),
       $api<AvailabilitySlotResponse[]>('/availability-slots'),
@@ -134,16 +136,27 @@ async function onClientSaved(_client: ClientResponse) {
       <!-- Der Weg ins spontane Gespräch: von hier aus, ohne erst einen Klienten zu
            suchen. Erst sichtbar, wenn beides vorliegt – ohne Klienten oder Angebote
            führte der Knopf in ein Modal, in dem nichts zu wählen ist. -->
-      <UButton
-        v-if="!loading && clients.length && offers.length"
-        label="Spontan-Termin"
-        icon="i-lucide-video"
-        class="shrink-0"
-        @click="adHocOpen = true"
-      />
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- Probe-Sitzung mit sich selbst (Schritt 6a): braucht weder Klienten noch Angebote. -->
+        <UButton
+          v-if="!loading"
+          label="Probe-Sitzung"
+          icon="i-lucide-flask-conical"
+          color="neutral"
+          variant="subtle"
+          @click="testSessionOpen = true"
+        />
+        <UButton
+          v-if="!loading && clients.length && offers.length"
+          label="Spontan-Termin"
+          icon="i-lucide-video"
+          @click="adHocOpen = true"
+        />
+      </div>
     </div>
 
     <AdHocSessionModal v-model:open="adHocOpen" :clients="clients" :offers="offers" />
+    <TestSessionModal v-model:open="testSessionOpen" @created="loadDashboard" />
 
     <p v-if="loadError" class="text-sm text-error">{{ loadError }}</p>
 

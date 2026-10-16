@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, lt, lte, ne, or, sql, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings, clients, member, organization, user } from '../db/schema';
 import { HELD_SESSION_STATUSES } from '../bookings/booking.constants';
@@ -113,7 +113,8 @@ export class AdminCoachesService {
       .from(bookings)
       // Gehalten heißt: bestätigt/abgeschlossen UND in der Vergangenheit – gleiche
       // Semantik wie in der Klientenliste des Coachs.
-      .where(and(inArray(bookings.status, [...HELD_SESSION_STATUSES]), lt(bookings.startTime, now)))
+      // Probe-Sitzungen des Coachs mit sich selbst zählen nicht.
+      .where(and(inArray(bookings.status, [...HELD_SESSION_STATUSES]), lt(bookings.startTime, now), ne(bookings.origin, 'test')))
       .groupBy(bookings.organizationId)
       .as('session_counts');
 

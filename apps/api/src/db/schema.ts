@@ -124,6 +124,10 @@ export const bookingPage = pgTable('booking_page', {
   imprintConfirmedAt: timestamp('imprint_confirmed_at'),
   privacyUrl:         text('privacy_url'),
   termsUrl:           text('terms_url'),
+  // Erste Probe-Sitzung, in der sich der Coach selbst eingelassen hat – für die
+  // Onboarding-Checkliste. Bleibt stehen, auch wenn die Probe-Sitzung selbst nach 24 Stunden
+  // gelöscht ist.
+  testSessionAt:      timestamp('test_session_at'),
   // Separat von `updatedAt`, da Text-Autosave sonst unnötig den Avatar-Cache invalidiert.
   // NULL = kein Avatar gesetzt (Existenz-Flag), sonst Cache-Busting-Version für die Avatar-URL.
   avatarUpdatedAt: timestamp('avatar_updated_at'),

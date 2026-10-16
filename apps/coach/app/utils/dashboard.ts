@@ -60,7 +60,8 @@ export function countThisWeek(bookings: CoachBookingResponse[], now = new Date()
   until.setDate(until.getDate() + 7)
 
   return bookings.filter((b) => {
-    if (b.status === 'cancelled') return false
+    // Probe-Sitzungen des Coachs mit sich selbst sind keine Termine mit Klienten.
+    if (b.status === 'cancelled' || b.origin === 'test') return false
     const start = new Date(b.start).getTime()
     return start >= from && start < until.getTime()
   }).length

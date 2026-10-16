@@ -1,9 +1,9 @@
 import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException, type MessageEvent } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Observable, concat, concatMap, defer, finalize, interval, map, merge, of } from 'rxjs';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { bookings } from '../db/schema';
+import { bookingPage, bookings } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { tokenMatches } from '../common/client-token';
 import { callWindowClosesAt, callWindowOpensAt } from '@hxroom/shared';
@@ -129,7 +129,7 @@ export class CallService {
    * dem Klick des Coachs und dem Eintreffen des Klienten läge sonst ein Rennen.
    */
   async admit(organizationId: string, userId: string, bookingId: string): Promise<CallAccessResponse> {
-    return this.transition(organizationId, userId, bookingId, {
+    const result = await this.transition(organizationId, userId, bookingId, {
       // Zweimal einlassen ist kein Fehler, sondern derselbe Zustand – der Coach klickt
       // erfahrungsgemäß nach, wenn beim Klienten nicht sofort etwas passiert.
       alreadyDone: (state) => state === 'admitted',
@@ -137,6 +137,29 @@ export class CallService {
       values: () => ({ admittedAt: new Date() }),
       conflict: 'Session cannot be opened in its current state',
     });
+    await this.markTestSessionDone(organizationId, bookingId);
+    return result;
+  }
+
+  /**
+   * Hat sich der Coach in einer Probe-Sitzung selbst eingelassen, gilt der Schritt
+   * „Probe-Sitzung machen“ der Onboarding-Checkliste als erledigt. Ein eigener Merker an der
+   * Buchungsseite, weil die Probe-Sitzung selbst nach 24 Stunden gelöscht wird. Nur beim
+   * ersten Mal gesetzt.
+   */
+  private async markTestSessionDone(organizationId: string, bookingId: string): Promise<void> {
+    const [booking] = await this.db
+      .select({ origin: bookings.origin })
+      .from(bookings)
+      .where(and(eq(bookings.id, bookingId), eq(bookings.organizationId, organizationId)))
+      .limit(1);
+    if (booking?.origin !== 'test') return;
+
+    const testSessionAt = new Date();
+    await this.db
+      .insert(bookingPage)
+      .values({ organizationId, testSessionAt })
+      .onConflictDoUpdate({ target: bookingPage.organizationId, set: { testSessionAt }, setWhere: isNull(bookingPage.testSessionAt) });
   }
 
   /**

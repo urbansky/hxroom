@@ -39,10 +39,11 @@ export const CancelledBy = z.enum(['coach', 'client', 'system']);
 export type CancelledBy = z.infer<typeof CancelledBy>;
 
 // Herkunft einer Buchung. 'booking_page' ist der öffentliche Weg über die Buchungsseite,
-// 'ad_hoc' der vom Coach selbst gestartete Spontan-Termin. Als Enum statt als Flag, weil
-// der zweite Teil von Funktion 2.04 (Termin zu einem gewählten Zeitpunkt anlegen) hier
-// später als 'manual' dazukommt.
-export const BookingOrigin = z.enum(['booking_page', 'ad_hoc']);
+// 'ad_hoc' der vom Coach selbst gestartete Spontan-Termin, 'test' die Probe-Sitzung des
+// Coachs mit sich selbst (zählt in keiner Kennzahl, wird nach 24 Stunden gelöscht). Als Enum
+// statt als Flag, weil der zweite Teil von Funktion 2.04 (Termin zu einem gewählten
+// Zeitpunkt anlegen) hier später als 'manual' dazukommt.
+export const BookingOrigin = z.enum(['booking_page', 'ad_hoc', 'test']);
 export type BookingOrigin = z.infer<typeof BookingOrigin>;
 
 // Plan types
@@ -408,6 +409,11 @@ export const listCoachBookingsQuerySchema = z.object({
   status: z.preprocess(
     (value) => (typeof value === 'string' ? value.split(',') : value),
     z.array(BookingStatus).min(1),
+  ).optional(),
+  // Etwa 'booking_page,ad_hoc', um Probe-Sitzungen auszulassen
+  origin: z.preprocess(
+    (value) => (typeof value === 'string' ? value.split(',') : value),
+    z.array(BookingOrigin).min(1),
   ).optional(),
   order:  z.enum(['asc', 'desc']).default('asc'),
   limit:  z.coerce.number().int().min(1).max(500).default(200),

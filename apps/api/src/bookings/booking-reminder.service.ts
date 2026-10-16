@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { and, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, eq, isNull, notInArray, sql } from 'drizzle-orm';
 import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings } from '../db/schema';
@@ -69,7 +69,7 @@ export class BookingReminderService {
       .where(
         and(
           eq(bookings.status, 'confirmed'),
-          ne(bookings.origin, 'ad_hoc'),
+          notInArray(bookings.origin, ['ad_hoc', 'test']),
           isNull(column),
           sql`${bookings.startTime} <= now() + make_interval(mins => ${dueMinutesBefore})`,
           sql`${bookings.startTime} >= now() + make_interval(mins => ${latestMinutesBefore})`,
