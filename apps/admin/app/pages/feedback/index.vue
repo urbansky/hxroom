@@ -40,6 +40,43 @@ async function loadFeedback() {
 await loadFeedback()
 watch(category, loadFeedback)
 
+// Volltext im Fenster: In der Tabelle steht die Nachricht auf drei Zeilen gekürzt.
+const selected = ref<FeedbackItem | null>(null)
+const detailOpen = ref(false)
+
+function openDetail(item: FeedbackItem) {
+  selected.value = item
+  detailOpen.value = true
+}
+
+// Löschen ist endgültig, deshalb immer mit Rückfrage – aus der Zeile wie aus dem Fenster.
+const toast = useToast()
+const deleteTarget = ref<FeedbackItem | null>(null)
+const confirmOpen = ref(false)
+const deleting = ref(false)
+
+function askDelete(item: FeedbackItem) {
+  deleteTarget.value = item
+  confirmOpen.value = true
+}
+
+async function confirmDelete() {
+  const target = deleteTarget.value
+  if (!target) return
+  deleting.value = true
+  try {
+    await $api(`/admin/feedback/${target.id}`, { method: 'DELETE' })
+    items.value = items.value.filter((item) => item.id !== target.id)
+    confirmOpen.value = false
+    if (selected.value?.id === target.id) detailOpen.value = false
+    toast.add({ title: 'Feedback gelöscht', icon: 'i-lucide-check', color: 'success' })
+  } catch {
+    toast.add({ title: 'Löschen fehlgeschlagen', description: 'Bitte versuch es noch einmal.', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
+}
+
 const dateFormatter = new Intl.DateTimeFormat('de-DE', {
   day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
 })
@@ -53,6 +90,7 @@ const columns: TableColumn<FeedbackItem>[] = [
   { accessorKey: 'category', header: 'Art' },
   { accessorKey: 'page', header: 'Seite' },
   { accessorKey: 'message', header: 'Nachricht' },
+  { id: 'actions', header: '' },
 ]
 </script>
 
@@ -107,7 +145,29 @@ const columns: TableColumn<FeedbackItem>[] = [
           </template>
 
           <template #message-cell="{ row }">
-            <p class="text-sm whitespace-pre-line min-w-72 max-w-xl">{{ row.original.message }}</p>
+            <button
+              type="button"
+              class="block text-left min-w-72 max-w-xl rounded-md -mx-1.5 px-1.5 py-1 hover:bg-elevated transition-colors cursor-pointer"
+              :aria-label="`Feedback von ${row.original.coachName} ganz lesen`"
+              @click="openDetail(row.original)"
+            >
+              <span class="text-sm whitespace-pre-line line-clamp-3">{{ row.original.message }}</span>
+            </button>
+          </template>
+
+          <template #actions-cell="{ row }">
+            <div class="flex justify-end">
+              <UTooltip text="Löschen">
+                <UButton
+                  icon="i-lucide-trash-2"
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="`Feedback von ${row.original.coachName} löschen`"
+                  @click="askDelete(row.original)"
+                />
+              </UTooltip>
+            </div>
           </template>
 
           <template #empty>
@@ -119,5 +179,60 @@ const columns: TableColumn<FeedbackItem>[] = [
         </UTable>
       </div>
     </div>
+
+    <UModal
+      v-model:open="detailOpen"
+      :title="selected ? `Feedback von ${selected.coachName}` : 'Feedback'"
+      :description="selected ? formatDate(selected.createdAt) : undefined"
+      :ui="{ content: 'sm:max-w-2xl' }"
+    >
+      <template #body>
+        <div v-if="selected" class="flex flex-col gap-5">
+          <UBadge :color="CATEGORY_COLORS[selected.category]" variant="subtle" class="self-start">
+            {{ FEEDBACK_CATEGORY_LABELS[selected.category] }}
+          </UBadge>
+
+          <p class="text-sm text-highlighted whitespace-pre-line break-words">{{ selected.message }}</p>
+
+          <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm border-t border-default pt-4">
+            <dt class="text-muted">Coach</dt>
+            <dd>
+              {{ selected.coachName }} ·
+              <ULink :to="`mailto:${selected.coachEmail}`" class="hover:text-primary">{{ selected.coachEmail }}</ULink>
+            </dd>
+            <dt class="text-muted">Seite</dt>
+            <dd><code class="text-xs">{{ selected.page }}</code></dd>
+            <dt class="text-muted">Browser</dt>
+            <dd class="text-xs text-muted break-all">{{ selected.userAgent ?? 'unbekannt' }}</dd>
+          </dl>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-3 justify-between w-full">
+          <UButton
+            icon="i-lucide-trash-2"
+            color="error"
+            variant="ghost"
+            label="Löschen"
+            @click="selected && askDelete(selected)"
+          />
+          <UButton color="neutral" variant="outline" label="Schließen" @click="detailOpen = false" />
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="confirmOpen"
+      title="Feedback löschen?"
+      :description="deleteTarget ? `Das Feedback von ${deleteTarget.coachName} wird endgültig gelöscht.` : undefined"
+    >
+      <template #footer>
+        <div class="flex gap-3 justify-end w-full">
+          <UButton color="neutral" variant="outline" label="Abbrechen" @click="confirmOpen = false" />
+          <UButton color="error" icon="i-lucide-trash-2" label="Löschen" :loading="deleting" @click="confirmDelete" />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

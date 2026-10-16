@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import type { FeedbackItem, ListFeedbackQuery } from '@hxroom/shared';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
@@ -30,5 +30,11 @@ export class AdminFeedbackService {
       .limit(query.limit);
 
     return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+  }
+
+  /** Endgültig, ohne Protokoll: Feedback ist kein Nachweis, nur Arbeitsmaterial. */
+  async remove(id: string): Promise<void> {
+    const deleted = await this.db.delete(feedback).where(eq(feedback.id, id)).returning({ id: feedback.id });
+    if (deleted.length === 0) throw new NotFoundException('Feedback not found');
   }
 }

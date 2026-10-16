@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { AdminGuard } from '../auth/admin.guard';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { listFeedbackQuerySchema, type ListFeedbackQuery } from '@hxroom/shared';
@@ -13,5 +13,11 @@ export class AdminFeedbackController {
   @Get()
   list(@Query(new ZodValidationPipe(listFeedbackQuerySchema)) query: ListFeedbackQuery) {
     return this.adminFeedbackService.list(query);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string) {
+    return this.adminFeedbackService.remove(id);
   }
 }

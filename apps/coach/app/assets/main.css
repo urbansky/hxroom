@@ -15,7 +15,9 @@
   background-color: #faf8f4;
 }
 
-.coach-sidebar .sidebar-nav [data-slot="label"] {
+/* Gruppenüberschriften. Das Abzeichen eines Menüpunkts („Beta“) trägt intern ebenfalls
+   data-slot="label" und ist deshalb ausgenommen. */
+.coach-sidebar .sidebar-nav [data-slot="label"]:not([data-slot="linkTrailingBadge"] *) {
   font-weight: 400;
   font-size: 11px;
   letter-spacing: 0.2em;
