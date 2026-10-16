@@ -799,6 +799,17 @@ export const coachListItemSchema = z.object({
   subdomain:        z.string().nullable(), // organization.slug, laut Schema nullable
   clientCount:      z.number(),
   sessionCount:     z.number(),            // stattgefundene Sitzungen (bestätigt/abgeschlossen, in der Vergangenheit)
+  // Aktivität der Beta-Coachs (phase5-umsetzungsplan.md, 7b)
+  lastActiveAt:     z.string().nullable(), // ISO 8601, user.last_active_at; null = nie aktiv
+  offerCount:       z.number(),            // aktive Sitzungsangebote
+  bookingCount:     z.number(),            // über die Buchungsseite eingegangene Termine, jeder Status
+  // Startklar: die Schritte der Onboarding-Checkliste, die über Einrichten hinausgehen.
+  // linkShared folgt der Checkliste: erledigt auch dann, wenn schon eine Buchung kam.
+  readiness: z.object({
+    imprint:     z.boolean(),
+    testSession: z.boolean(),
+    linkShared:  z.boolean(),
+  }),
 });
 export type CoachListItem = z.infer<typeof coachListItemSchema>;
 
@@ -811,7 +822,7 @@ export const listCoachesQuerySchema = z.object({
   status:         CoachStatus.optional(),
   registeredFrom: z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
   registeredTo:   z.string().datetime({ message: 'Ungültiger Zeitpunkt' }).optional(),
-  sort:           z.enum(['registeredAt', 'name', 'email', 'sessionCount', 'clientCount']).default('registeredAt'),
+  sort:           z.enum(['registeredAt', 'name', 'email', 'sessionCount', 'clientCount', 'lastActiveAt', 'offerCount', 'bookingCount']).default('registeredAt'),
   order:          z.enum(['asc', 'desc']).default('desc'),
   limit:          z.coerce.number().int().min(1).max(500).default(200),
 });

@@ -225,6 +225,13 @@
       "when": 1792125522114,
       "tag": "0031_naive_lady_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792125990914,
+      "tag": "0032_wooden_juggernaut",
+      "breakpoints": true
     }
   ]
 }

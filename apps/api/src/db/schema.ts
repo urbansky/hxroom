@@ -19,6 +19,9 @@ export const user = pgTable('user', {
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
+  // Letzte Anfrage des Coachs an die API, gesetzt vom AuthGuard höchstens einmal pro Stunde
+  // (ActivityTracker). Für die Coach-Liste im Betreiber-Backoffice. Kein better-auth-Feld.
+  lastActiveAt: timestamp('last_active_at'),
 });
 
 export const session = pgTable('session', {

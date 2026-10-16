@@ -82,6 +82,7 @@ function toggleSort(column: ListCoachesQuery['sort']) {
   }
   sort.value = column
   // Namen liest man von A an, Zahlen und Daten interessieren am oberen Ende zuerst.
+  // Coachs ohne Aktivität stehen bei „Zuletzt aktiv“ in beiden Richtungen unten (API).
   order.value = column === 'name' || column === 'email' ? 'asc' : 'desc'
 }
 
@@ -103,14 +104,42 @@ function bookingPageUrl(subdomain: string) {
   return `${rootDomainHttps ? 'https' : 'http'}://${subdomain}.${rootDomain}`
 }
 
+// „heute“ und „gestern“ nach Kalendertag, nicht nach 24-Stunden-Abstand.
+function formatLastActive(iso: string | null) {
+  if (!iso) return null
+  const date = new Date(iso)
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const dayMs = 24 * 60 * 60 * 1000
+  if (date >= startOfToday) return 'heute'
+  if (date >= new Date(startOfToday.getTime() - dayMs)) return 'gestern'
+  return formatDate(iso)
+}
+
+// Startklar: die Checklisten-Schritte, an denen ein Beta-Coach hängen bleiben kann.
+const READINESS_STEPS = [
+  { key: 'imprint', label: 'Impressum', icon: 'i-lucide-scale' },
+  { key: 'testSession', label: 'Probe-Sitzung', icon: 'i-lucide-flask-conical' },
+  { key: 'linkShared', label: 'Link geteilt', icon: 'i-lucide-share-2' },
+] as const
+
+function readinessTooltip(readiness: CoachListItem['readiness']) {
+  const missing = READINESS_STEPS.filter((step) => !readiness[step.key]).map((step) => step.label)
+  return missing.length ? `Offen: ${missing.join(', ')}` : 'Alles erledigt'
+}
+
 const hasFilter = computed(() => Boolean(search.value) || status.value !== 'all')
 
 const columns: TableColumn<CoachListItem>[] = [
   { accessorKey: 'name', header: 'Coach' },
   { accessorKey: 'subdomain', header: 'Subdomain' },
   { accessorKey: 'registeredAt', header: 'Registriert' },
+  { accessorKey: 'lastActiveAt', header: 'Zuletzt aktiv' },
+  { accessorKey: 'offerCount', header: 'Angebote' },
+  { accessorKey: 'bookingCount', header: 'Buchungen' },
   { accessorKey: 'clientCount', header: 'Klienten' },
   { accessorKey: 'sessionCount', header: 'Sitzungen' },
+  { accessorKey: 'readiness', header: 'Startklar' },
   { accessorKey: 'status', header: 'Status' },
 ]
 </script>
@@ -189,6 +218,42 @@ const columns: TableColumn<CoachListItem>[] = [
             />
           </template>
 
+          <template #lastActiveAt-header>
+            <UButton
+              label="Zuletzt aktiv"
+              :trailing-icon="sortIcon('lastActiveAt')"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="-mx-2"
+              @click="toggleSort('lastActiveAt')"
+            />
+          </template>
+
+          <template #offerCount-header>
+            <UButton
+              label="Angebote"
+              :trailing-icon="sortIcon('offerCount')"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="-mx-2"
+              @click="toggleSort('offerCount')"
+            />
+          </template>
+
+          <template #bookingCount-header>
+            <UButton
+              label="Buchungen"
+              :trailing-icon="sortIcon('bookingCount')"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              class="-mx-2"
+              @click="toggleSort('bookingCount')"
+            />
+          </template>
+
           <!-- Name und E-Mail in einer Zelle: spart eine Spalte, ohne dass die
                Adresse verloren geht – sie ist die Kennung, nach der gesucht wird. -->
           <template #name-cell="{ row }">
@@ -220,6 +285,34 @@ const columns: TableColumn<CoachListItem>[] = [
 
           <template #registeredAt-cell="{ row }">
             <span class="text-sm">{{ formatDate(row.original.registeredAt) }}</span>
+          </template>
+
+          <template #lastActiveAt-cell="{ row }">
+            <span v-if="row.original.lastActiveAt" class="text-sm">{{ formatLastActive(row.original.lastActiveAt) }}</span>
+            <span v-else class="text-sm text-dimmed">—</span>
+          </template>
+
+          <template #offerCount-cell="{ row }">
+            <span class="tabular-nums">{{ row.original.offerCount }}</span>
+          </template>
+
+          <template #bookingCount-cell="{ row }">
+            <span class="tabular-nums">{{ row.original.bookingCount }}</span>
+          </template>
+
+          <template #readiness-cell="{ row }">
+            <UTooltip :text="readinessTooltip(row.original.readiness)">
+              <div class="flex items-center gap-1.5">
+                <UIcon
+                  v-for="step in READINESS_STEPS"
+                  :key="step.key"
+                  :name="step.icon"
+                  :aria-label="`${step.label}: ${row.original.readiness[step.key] ? 'erledigt' : 'offen'}`"
+                  class="size-4"
+                  :class="row.original.readiness[step.key] ? 'text-success' : 'text-dimmed opacity-40'"
+                />
+              </div>
+            </UTooltip>
           </template>
 
           <template #clientCount-cell="{ row }">

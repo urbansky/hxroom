@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, count, desc, eq, gte, ilike, inArray, isNull, lt, lte, ne, or, sql, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { bookings, clients, member, organization, user } from '../db/schema';
+import { bookingPage, bookings, clients, member, offers, organization, user } from '../db/schema';
 import { HELD_SESSION_STATUSES } from '../bookings/booking.constants';
 import { ADMIN_ROLES } from '../auth/roles';
 import { escapeLikePattern } from '../common/sql-like';
 import { deriveCoachStatus } from './coach-status';
-import type { CoachListItem, ListCoachesQuery } from '@hxroom/shared';
+import { isImprintComplete, type CoachListItem, type Imprint, type ImprintMode, type ListCoachesQuery } from '@hxroom/shared';
 
 /**
  * SQL-Spiegel von isAdminRole() (auth/roles.ts).
@@ -34,7 +34,7 @@ const NOT_ADMIN = or(
 );
 
 // Whitelist statt dynamischem Spaltennamen: Der Query-Parameter darf nie in die
-// SQL-Struktur durchschlagen. Die beiden Aggregate werden über ihren Ausgabe-Alias
+// SQL-Struktur durchschlagen. Die Aggregate werden über ihren Ausgabe-Alias
 // referenziert (Postgres-Feature, gleicher Kniff wie in ClientsService.list) – sonst
 // müssten die Ausdrücke hier wortgleich wiederholt werden.
 const SORT_COLUMNS = {
@@ -43,6 +43,9 @@ const SORT_COLUMNS = {
   email:        user.email,
   sessionCount: sql`"sessionCount"`,
   clientCount:  sql`"clientCount"`,
+  offerCount:   sql`"offerCount"`,
+  bookingCount: sql`"bookingCount"`,
+  lastActiveAt: user.lastActiveAt,
 } as const;
 
 type CoachRow = {
@@ -58,6 +61,15 @@ type CoachRow = {
   subdomain: string | null;
   clientCount: number;
   sessionCount: number;
+  offerCount: number;
+  bookingCount: number;
+  lastActiveAt: Date | null;
+  imprintMode: ImprintMode | null;
+  imprint: Imprint | null;
+  imprintUrl: string | null;
+  imprintConfirmedAt: Date | null;
+  testSessionAt: Date | null;
+  linkSharedAt: Date | null;
 };
 
 function toCoachListItem(row: CoachRow, now: Date): CoachListItem {
@@ -72,6 +84,15 @@ function toCoachListItem(row: CoachRow, now: Date): CoachListItem {
     subdomain: row.subdomain,
     clientCount: row.clientCount,
     sessionCount: row.sessionCount,
+    lastActiveAt: row.lastActiveAt?.toISOString() ?? null,
+    offerCount: row.offerCount,
+    bookingCount: row.bookingCount,
+    readiness: {
+      // Dieselbe Regel wie in der Checkliste und der Buchungssperre, deshalb in JS statt SQL.
+      imprint: isImprintComplete(row),
+      testSession: row.testSessionAt !== null,
+      linkShared: row.linkSharedAt !== null || row.bookingCount > 0,
+    },
   };
 }
 
@@ -118,6 +139,28 @@ export class AdminCoachesService {
       .groupBy(bookings.organizationId)
       .as('session_counts');
 
+    const offerCounts = this.db
+      .select({
+        organizationId: offers.organizationId,
+        offerCount:     count().as('offer_count'),
+      })
+      .from(offers)
+      .where(eq(offers.isActive, true))
+      .groupBy(offers.organizationId)
+      .as('offer_counts');
+
+    // Nur Buchungen über die Buchungsseite: Sie zeigen, ob der Link draußen ankommt.
+    // Spontan-Termine und Probe-Sitzungen legt der Coach selbst an.
+    const bookingCounts = this.db
+      .select({
+        organizationId: bookings.organizationId,
+        bookingCount:   count().as('booking_count'),
+      })
+      .from(bookings)
+      .where(eq(bookings.origin, 'booking_page'))
+      .groupBy(bookings.organizationId)
+      .as('booking_counts');
+
     const rows = await this.db
       .select({
         id:               user.id,
@@ -134,6 +177,15 @@ export class AdminCoachesService {
         // .mapWith(Number): count() kommt aus Postgres als bigint-String zurück.
         clientCount:  sql<number>`coalesce(${clientCounts.clientCount}, 0)`.mapWith(Number).as('clientCount'),
         sessionCount: sql<number>`coalesce(${sessionCounts.sessionCount}, 0)`.mapWith(Number).as('sessionCount'),
+        offerCount:   sql<number>`coalesce(${offerCounts.offerCount}, 0)`.mapWith(Number).as('offerCount'),
+        bookingCount: sql<number>`coalesce(${bookingCounts.bookingCount}, 0)`.mapWith(Number).as('bookingCount'),
+        lastActiveAt:       user.lastActiveAt,
+        imprintMode:        bookingPage.imprintMode,
+        imprint:            bookingPage.imprint,
+        imprintUrl:         bookingPage.imprintUrl,
+        imprintConfirmedAt: bookingPage.imprintConfirmedAt,
+        testSessionAt:      bookingPage.testSessionAt,
+        linkSharedAt:       bookingPage.linkSharedAt,
       })
       .from(user)
       // Der eigentliche Coach-Filter: Ein Betreiber ist Mitglied keiner Organisation, der
@@ -145,6 +197,10 @@ export class AdminCoachesService {
       .innerJoin(organization, eq(organization.id, member.organizationId))
       .leftJoin(clientCounts, eq(clientCounts.organizationId, organization.id))
       .leftJoin(sessionCounts, eq(sessionCounts.organizationId, organization.id))
+      .leftJoin(offerCounts, eq(offerCounts.organizationId, organization.id))
+      .leftJoin(bookingCounts, eq(bookingCounts.organizationId, organization.id))
+      // booking_page ist 1:1 zur Organisation (unique), kein Kreuzprodukt.
+      .leftJoin(bookingPage, eq(bookingPage.organizationId, organization.id))
       // NOT_ADMIN ist die zweite Verteidigungslinie: Bekommt ein bestehender Coach
       // nachträglich die Admin-Rolle, bleibt seine member-Zeile bestehen.
       .where(and(NOT_ADMIN, ...buildFilters(query)))
@@ -188,5 +244,10 @@ function buildFilters(query: ListCoachesQuery): SQL[] {
 
 function orderExpression(query: ListCoachesQuery) {
   const column = SORT_COLUMNS[query.sort];
+  // Nie aktive Coachs ans Ende, in beiden Richtungen. Postgres stellt NULL bei DESC
+  // sonst nach vorn.
+  if (query.sort === 'lastActiveAt') {
+    return query.order === 'asc' ? sql`${column} asc nulls last` : sql`${column} desc nulls last`;
+  }
   return query.order === 'asc' ? asc(column) : desc(column);
 }
