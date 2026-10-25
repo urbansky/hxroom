@@ -1,6 +1,10 @@
 name: Build & Push Docker Images
 
 on:
+  # Manuell neu bauen, ohne dass sich Code ändert – etwa wenn die Basis-Images
+  # (node:22-alpine, nginx:alpine) Sicherheitsupdates bekommen haben. BuildKit löst die
+  # Tags bei jedem Build neu auf und zieht dann den aktuellen Stand.
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
