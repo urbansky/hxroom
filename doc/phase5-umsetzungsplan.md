@@ -26,7 +26,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
 9. Landingpage inhaltlich und gestalterisch überarbeiten – in Arbeit
-10. Datenexport auf Knopfdruck für Coachs
+10. Datenexport auf Knopfdruck für Coachs – umgesetzt, Inbetriebnahme offen
 
 **Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf, die überarbeitete Landingpage und der Datenexport, weil die Landingpage ihn zusagt.
 
@@ -672,8 +672,64 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 ## Schritt 10 · Datenexport auf Knopfdruck
 
-**Stand:** aufgenommen. Der Umfang wird vor der Umsetzung in einem eigenen Plan festgelegt.
+**Stand:** umgesetzt im Branch `data-export` und lokal abgenommen.
 
 **Ziel:** Der Coach lädt seine Klienten, Termine und Notizen jederzeit selbst herunter, ohne beim Betreiber anfragen zu müssen. Das deckt das Recht auf Datenübertragbarkeit ab (`legal.md`, „Kündigung & Datenexport“) und ist der Weg vor einer Kontolöschung.
 
 **Abhängigkeit:** Die FAQ der neuen Landingpage (Schritt 9) sagt den Export zu. Die Landingpage geht deshalb erst mit diesem Schritt in Betrieb.
+
+### Ablauf
+
+1. Einstellungen → Account, neuer Abschnitt „Daten exportieren“ über „Konto löschen“: kurzer Text, was enthalten ist, und der Knopf „Export herunterladen“.
+2. Ein Klick lädt sofort eine ZIP-Datei herunter: `hxroom-export-{subdomain}-{datum}.zip`.
+3. Im Abschnitt „Konto löschen“ und im Löschdialog steht der Hinweis, vorher den Export herunterzuladen, mit Link auf den Abschnitt.
+
+### Inhalt der ZIP-Datei
+
+| Datei | Inhalt |
+|---|---|
+| `LIESMICH.txt` | Was enthalten ist, Zeitpunkt des Exports, Hinweis auf Zeitzone und Formate |
+| `klienten.csv` | Name, E-Mail, Telefon, interne Notiz zum Klienten, angelegt am, Zahl der gehaltenen Sitzungen |
+| `termine.csv` | Datum, Beginn, Ende (deutsche Zeit), Angebot, Dauer, Status, Herkunft, Name, E-Mail und Telefon des Klienten, Nachricht zur Buchung, Absage durch und Grund |
+| `notizen/{datum}_{uhrzeit}_{klient}.md` | Je Termin mit Notizen eine Markdown-Datei: Kopf mit Termin und Klient, darunter die Notizen |
+| `chat/{datum}_{uhrzeit}_{klient}.md` | Je Termin mit Chat der Verlauf: Zeit, Absender, Text, Namen geteilter Dateien |
+| `daten.json` | Alles oben in einem maschinenlesbaren Dokument, dazu Angebote, Verfügbarkeiten und die Texte der Buchungsseite |
+
+Nicht enthalten: Probe-Sitzungen (sie werden nach 24 Stunden ohnehin gelöscht), die Dateien selbst aus dem Chat, Protokolle und Zugangstoken.
+
+### Umsetzung
+
+- **API:** `GET /api/v1/account/export` (`AuthGuard`, nur die eigene Organisation) antwortet direkt mit der ZIP-Datei (`application/zip`, `Content-Disposition: attachment`). Kein Umweg über den Speicher: Die Datenmengen einer Beta sind klein, und es bleibt keine Datei zum Aufräumen liegen.
+- **Bauplan:** `ExportService` im Account-Modul sammelt die Daten in wenigen Abfragen, baut CSV, Markdown und JSON und packt sie mit `fflate` (klein, ohne Abhängigkeiten) zu einer ZIP-Datei.
+- **CSV:** UTF-8 mit BOM und Semikolon als Trenner, damit Excel Umlaute und Spalten richtig liest. Felder, die mit `=`, `+`, `-` oder `@` beginnen, bekommen ein vorangestelltes `'`, damit Excel sie nicht als Formel ausführt.
+- **Notizen:** Umwandlung des Tiptap-Dokuments in Markdown (Absätze, Überschriften, Listen, fett, kursiv, Links) als reine Funktion, mit Tests.
+- **Zeiten:** in Europe/Berlin formatiert wie in den Mails; `daten.json` enthält zusätzlich die ISO-Zeitpunkte.
+- **Begrenzung:** höchstens ein Export alle 30 Sekunden pro Coach, darüber `429`.
+- **Logs:** nur Organisations-ID und Größe, keine Namen.
+- **Coach-App:** Abschnitt in `pages/settings/account.vue`. Der Download läuft über `fetch` mit Cookie und einen Blob-Link, damit Fehler (etwa `429`) als Toast erscheinen statt als kaputte Datei.
+
+### Abnahme im Browser
+
+- **Anna (Seed):** „Export herunterladen“ liefert die ZIP-Datei. Entpackt enthält sie alle 8 Klienten, alle Termine außer Probe-Sitzungen, eine Notizdatei je Termin mit Notizen und den Chat-Verlauf.
+- **CSV in Excel bzw. Numbers:** Umlaute und Spalten stimmen. Ein Klient mit dem Namen `=1+1` erscheint als Text.
+- **Markdown:** Listen, fett und Links sind erhalten.
+- **Fremde Organisation:** Martinas Daten tauchen in Annas Export nicht auf.
+- **Zweiter Klick innerhalb von 30 Sekunden:** Toast statt Download.
+- **Coach ohne Daten (Tobias):** gültige ZIP-Datei mit leeren Tabellen und `LIESMICH.txt`.
+
+**Umgesetzt** wie beschrieben: `account/export/` mit `ExportService`, `csv.ts` und `rich-text-markdown.ts` (beide mit Tests) in der API, Abschnitt „Daten exportieren“ in `pages/settings/account.vue`, Hinweis samt Export-Knopf im Löschdialog. Dazu:
+- **Telefonnummern** stehen in der CSV als `="+49 …"`. So zeigt Excel sie als Text, ohne sichtbares Apostroph. Alle übrigen Felder, die mit `=`, `+`, `-` oder `@` beginnen, bekommen das Apostroph.
+- **Dateiname:** Die API gibt `Content-Disposition` für die Coach-App frei (`Access-Control-Expose-Headers`), sonst käme der Name auf dem anderen Host nicht an.
+
+**Lokal abgenommen** (Chrome, Seed-Coachs und Demo-Konto):
+- Anna: 8 Klienten, 28 Termine, alle IDs aus ihrer Organisation; Umlaute, Spalten und Telefonnummern stimmen.
+- Demo-Konto: Notiz- und Chat-Datei des Vorführ-Termins, Markdown mit Kopf und Inhalt, `daten.json` mit Angeboten (Beschreibung als Markdown) und Verfügbarkeiten.
+- Tobias ohne Daten: gültige ZIP-Datei mit leeren Tabellen und `LIESMICH.txt`.
+- Download über den Knopf mit Dateiname `hxroom-export-tobias-2026-10-26.zip`, Erfolgs-Toast. Ein zweiter Klick innerhalb von 30 Sekunden zeigt den Hinweis statt eines Downloads.
+- Der Link im Abschnitt „Konto löschen“ springt zum Export, der Löschdialog zeigt den Export-Knopf.
+- Docker-Image der API gebaut, `fflate` ist darin auflösbar.
+
+### Inbetriebnahme
+
+- `git pull` und `./redeploy.sh`, Export mit dem Demo-Konto in der Produktion prüfen.
+- Danach geht auch die neue Landingpage in Betrieb (Schritt 9).
