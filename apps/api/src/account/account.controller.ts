@@ -1,11 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Delete, Get, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { requestAccountDeletionSchema, type RequestAccountDeletionDto } from '@hxroom/shared';
 import { AccountDeletionService } from './account-deletion.service';
+import { ExportService } from './export/export.service';
 
 /**
  * Eigenes Konto des Coachs. Passwort ändern und E-Mail-Adresse wechseln laufen direkt über
@@ -19,7 +20,10 @@ import { AccountDeletionService } from './account-deletion.service';
 @Controller('account')
 @UseGuards(AuthGuard)
 export class AccountController {
-  constructor(private readonly deletionService: AccountDeletionService) {}
+  constructor(
+    private readonly deletionService: AccountDeletionService,
+    private readonly exportService: ExportService,
+  ) {}
 
   @Get('deletion')
   status(@CurrentOrganization() org: { id: string } | undefined) {
@@ -45,5 +49,24 @@ export class AccountController {
   revoke(@CurrentOrganization() org: { id: string } | undefined) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.deletionService.revoke(org.id);
+  }
+
+  /** Datenexport als ZIP-Datei (phase5-umsetzungsplan.md, Schritt 10). */
+  @Get('export')
+  async export(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Res() res: Response,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    const { fileName, zip } = await this.exportService.build(org.id);
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Length': String(zip.byteLength),
+      'Cache-Control': 'no-store',
+      // Die Coach-App liegt auf einem anderen Host; ohne Freigabe liest sie den Dateinamen nicht.
+      'Access-Control-Expose-Headers': 'Content-Disposition',
+    });
+    res.send(Buffer.from(zip));
   }
 }

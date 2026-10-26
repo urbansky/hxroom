@@ -108,6 +108,38 @@ async function onSubmitPassword(event: FormSubmitEvent<PasswordSchema>) {
   }
 }
 
+// ─── Daten exportieren ─────────────────────────────────────────────────────────────────
+// Über $api statt eines schlichten Links: Ein Fehler (etwa 429 bei schnellem Doppelklick)
+// soll als Hinweis erscheinen, nicht als kaputte Datei im Download-Ordner.
+const toast = useToast()
+const exportPending = ref(false)
+
+async function downloadExport() {
+  exportPending.value = true
+  try {
+    const response = await $api.raw<Blob>('/account/export', { responseType: 'blob' })
+    const disposition = response.headers.get('content-disposition') ?? ''
+    const fileName = /filename="([^"]+)"/.exec(disposition)?.[1] ?? 'hxroom-export.zip'
+    const url = URL.createObjectURL(response._data!)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(url)
+    toast.add({ title: 'Export heruntergeladen', description: fileName, icon: 'i-lucide-check', color: 'success' })
+  } catch (err: any) {
+    toast.add({
+      title: 'Export nicht möglich',
+      description: err?.statusCode === 429
+        ? 'Du hast gerade erst exportiert. Versuch es in einer halben Minute noch einmal.'
+        : 'Der Export konnte nicht erstellt werden. Bitte versuch es noch einmal.',
+      color: 'error',
+    })
+  } finally {
+    exportPending.value = false
+  }
+}
+
 // ─── Konto löschen ─────────────────────────────────────────────────────────────────────
 const { data: deletion, refresh: refreshDeletion } = await useFetch<AccountDeletionStatus>('/account/deletion', {
   $fetch: $api,
@@ -344,6 +376,31 @@ async function revokeDeletion() {
       description="Konto mit einem zweiten Faktor absichern."
     />
 
+    <!-- Daten exportieren (phase5-umsetzungsplan.md, Schritt 10) -->
+    <SettingsSection
+      id="export"
+      title="Daten exportieren"
+      description="Alles, was du in HxRoom angelegt hast, als ZIP-Datei – jederzeit und mit einem Klick."
+    >
+      <div class="text-sm text-muted flex flex-col gap-2">
+        <p>Enthalten sind:</p>
+        <ul class="list-disc pl-5 flex flex-col gap-1">
+          <li>deine Klienten und alle Termine als Tabellen für Excel oder Numbers</li>
+          <li>deine Notizen und die Chat-Verläufe je Termin als Textdateien</li>
+          <li>alles zusammen in einer maschinenlesbaren Datei, dazu Angebote, Verfügbarkeiten und deine Buchungsseite</li>
+        </ul>
+        <p>Die im Chat geteilten Dateien selbst sind nicht dabei, ihre Namen stehen im Verlauf.</p>
+      </div>
+      <div>
+        <UButton
+          icon="i-lucide-download"
+          :loading="exportPending"
+          label="Export herunterladen"
+          @click="downloadExport"
+        />
+      </div>
+    </SettingsSection>
+
     <!-- Konto löschen -->
     <SettingsSection
       v-if="scheduledFor"
@@ -391,6 +448,10 @@ async function revokeDeletion() {
           Deine Buchungsseite geht sofort offline, gelöscht wird aber erst 30 Tage später.
           Bis dahin kannst du dich normal anmelden und die Löschung zurücknehmen.
         </p>
+        <p>
+          Lade vorher deinen <ULink to="#export" class="text-primary underline">Datenexport</ULink> herunter,
+          wenn du deine Klienten, Termine und Notizen behalten möchtest.
+        </p>
       </div>
       <div>
         <UButton
@@ -431,6 +492,18 @@ async function revokeDeletion() {
             Wir schicken dir eine Bestätigung per E-Mail, dazu eine Erinnerung eine Woche vor
             dem Stichtag.
           </p>
+          <div class="flex items-center justify-between gap-3 rounded-lg bg-elevated px-3 py-2.5 text-sm">
+            <span class="text-muted">Schon deine Daten gesichert?</span>
+            <UButton
+              size="sm"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-download"
+              :loading="exportPending"
+              label="Export herunterladen"
+              @click="downloadExport"
+            />
+          </div>
         </div>
       </template>
       <template #footer>
