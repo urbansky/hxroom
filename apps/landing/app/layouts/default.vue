@@ -1,5 +1,16 @@
 <script setup lang="ts">
 import { Logo } from '@hxroom/ui'
+
+const { demoUrl } = useLandingLinks()
+
+// Sprungmarken der Startseite. Absolut („/#…“), damit sie auch von Impressum und
+// Datenschutz aus funktionieren, falls diese das Layout einmal teilen.
+const anchors = [
+  { label: 'So funktioniert’s', href: '/#so-funktionierts' },
+  { label: 'Für wen', href: '/#fuer-wen' },
+  { label: 'Über mich', href: '/#ueber-mich' },
+  { label: 'Fragen', href: '/#fragen' },
+]
 </script>
 
 <template>
@@ -11,16 +22,23 @@ import { Logo } from '@hxroom/ui'
     <div class="glow-mid" />
 
     <!-- Nav -->
-    <nav class="fixed top-0 left-0 right-0 z-100 flex items-center justify-between px-6 lg:px-12 h-17 bg-(--ui-bg)/70 backdrop-blur-xl border-b border-(--ui-border)">
-      <Logo />
-      <div class="flex items-center gap-4">
-        <!-- <NuxtLink to="/blog" class="hidden md:inline text-sm text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">
-          Blog
-        </NuxtLink> -->
-        <span class="hidden md:inline-flex items-center gap-2 text-[11px] text-sage-600 dark:text-sage-200 tracking-[0.1em] uppercase px-3.5 py-1.5 border border-sage-400/20 bg-sage-400/6 rounded-full">
-          <span class="size-1.5 rounded-full bg-sage-400 animate-pulse" />
-          In Entstehung
-        </span>
+    <nav class="fixed top-0 left-0 right-0 z-100 flex items-center justify-between gap-6 px-6 lg:px-12 h-17 bg-(--ui-bg)/75 backdrop-blur-xl border-b border-(--ui-border)">
+      <!-- Logo ist selbst ein Link auf „/“, deshalb nicht noch einmal in einen Link packen. -->
+      <Logo class="no-underline" />
+      <div class="flex items-center gap-8">
+        <ul class="hidden lg:flex items-center gap-7">
+          <li v-for="item in anchors" :key="item.href">
+            <a :href="item.href" class="text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">{{ item.label }}</a>
+          </li>
+        </ul>
+        <UButton
+          :to="demoUrl"
+          color="primary"
+          size="md"
+          icon="i-lucide-calendar-heart"
+          label="Vorführung buchen"
+          @click="useTrackEvent('demo_click')"
+        />
       </div>
     </nav>
 
@@ -67,5 +85,12 @@ html { scroll-behavior: smooth; }
   background: radial-gradient(ellipse, rgba(181, 147, 90, 0.05) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
+}
+</style>
+
+<style>
+/* Sprungmarken in der Navigation */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
 }
 </style>

@@ -51,7 +51,15 @@ function createS3Service(): S3Service {
  */
 export async function uploadDemoAvatar(organizationId: string): Promise<string | null> {
   try {
-    const source = await readFile(SOURCE_IMAGE);
+    return await uploadAvatar(organizationId, await readFile(SOURCE_IMAGE));
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+/** Wie uploadDemoAvatar, aber mit beliebigem Quellbild (seed-demo.ts: Foto von demo.hxroom.de). */
+export async function uploadAvatar(organizationId: string, source: Buffer): Promise<string | null> {
+  try {
     const webp = await transcodeAvatar(source);
     await createS3Service().putObject(coachAvatarKey(organizationId), webp, 'image/webp');
     return null;

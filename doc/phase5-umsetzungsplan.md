@@ -17,7 +17,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 3. ✅ Buchungsseite vollständig: echte Inhalte des Coachs statt Platzhaltertexten
    - 3.1a ✅ Impressum des Coachs mit Buchungssperre
    - 3.1b ✅ gemeinsame Datenschutzerklärung für alle Seiten
-4. ✅ `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage. Danach sind Vorführungen möglich.
+4. ✅ `demo.hxroom.de` einrichten. Danach sind Vorführungen möglich. Den Knopf „Vorführung buchen“ auf der Landingpage bringt Schritt 9.
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
 
@@ -25,9 +25,10 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 6. ✅ Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
-9. Landingpage inhaltlich und gestalterisch überarbeiten
+9. Landingpage inhaltlich und gestalterisch überarbeiten – in Arbeit
+10. Datenexport auf Knopfdruck für Coachs
 
-**Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf und die überarbeitete Landingpage.
+**Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf, die überarbeitete Landingpage und der Datenexport, weil die Landingpage ihn zusagt.
 
 **Außerhalb des Codes:** AGB und AVV liefert der Betreiber, ebenso die Freigabe der neuen Abschnitte der Datenschutzerklärung (Schritt 3.1b). Sie haben Vorlauf und sollten früh angestoßen werden.
 
@@ -401,7 +402,7 @@ Für 3.1b auf dem Server:
 - **Konto:** gewöhnliches Coach-Konto des Betreibers mit der Subdomain `demo`
 - **Angebot:** „Produktvorführung“, 20 Minuten, kostenlos
 - **Inhalte:** Tagline, Einleitung, Button-Text „Vorführung buchen“, Berufsbezeichnung, Schwerpunkte (die gezeigten Funktionen), Zitat, „Über mich“ und Qualifikationen des Betreibers
-- **Landingpage:** Knopf „Vorführung buchen“ verlinkt auf `demo.hxroom.de`
+- **Landingpage:** Der Knopf „Vorführung buchen“ auf `demo.hxroom.de` kommt mit Schritt 9.
 
 **Impressum:** seit Schritt 3.1a in der Fußzeile verlinkt, mit den Angaben des Betreibers.
 
@@ -578,6 +579,101 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 ## Schritt 9 · Landingpage überarbeiten
 
-**Stand:** aufgenommen, Umfang noch offen.
+**Stand:** 9a und 9b umgesetzt im Branch `landing-relaunch`, Texte zur Freigabe.
 
-Die Landingpage (`apps/landing`, `hxroom.de`) wird inhaltlich und gestalterisch überarbeitet. Sie ist die erste Station des Marketings und führt zu „Vorführung buchen“. Was sich an Inhalt und Gestaltung ändert, wird vor der Umsetzung in einem eigenen Plan festgelegt.
+**Ziel:** Die Landingpage (`apps/landing`, `hxroom.de`) ist die erste Station des Marketings. Sie zeigt das echte Produkt und führt zu zwei Aktionen: **„Vorführung buchen“** (Hauptaktion, `demo.hxroom.de`) und **„Kostenlos ausprobieren“** (Registrierung, `app.hxroom.de/auth/register`). Der Newsletter bleibt als Nebenoption am Ende.
+
+**Bleibt:** Schriften (Cormorant Garamond, DM Sans), Farben (Salbei, Gold, Sand), heller und dunkler Modus, Du-Ansprache nach `marketing.md` §0, Abschnitt „Wer das baut“, Impressum und Datenschutz.
+
+### Aufbau der Seite
+
+| # | Abschnitt | Inhalt und Gestaltung |
+|---|---|---|
+| 1 | **Navigation** | Fest oben. Desktop: Logo, Sprungmarken (So funktioniert’s · Für wen · Über mich · Fragen), Knopf „Vorführung buchen“. Handy: Logo und Knopf. |
+| 2 | **Hero** | Desktop zweispaltig: links Kennzeichen „Videoplattform für Coaches · Beta“, Überschrift „Terminbuchung und Videocall für dein Coaching – *in einem.*“, Unterzeile ab „Statt Calendly und Zoom: …“, beide Aktionen; rechts Screenshot des Warteraums im Browserrahmen. Handy: Überschrift, Satz, Aktionen, Bild. Die Aktionen sind auf dem ersten Bildschirm sichtbar. |
+| 3 | **Vertrauenszeile** | Schmale Zeile mit Symbolen: Ersetzt Calendly + Zoom · Klienten ohne Konto · Server in Deutschland · AVV inklusive. |
+| 4 | **Das Problem** | Dunkles Salbei-Band mit einer großen Aussage („Du verkaufst Vertrauen. Dein Tool verkauft Firmen-Meeting.“) und einem kurzen Absatz über den Tool-Salat und das fremde Logo, ohne Karten. |
+| 5 | **So funktioniert’s** | Überschrift „Dein Coaching. Dein Raum. *Dein Name.*“ Produkt-Tour aus Sicht des Klienten in vier Stationen, Bild und Text im Wechsel: Buchungsseite → Bestätigungsmail → Warteraum → Gespräch. Echte Screenshots. |
+| 6 | **Für dich als Coach** | Raster mit sechs Funktionen, die es heute gibt: Buchungsseite mit deinem Namen, Kalender und Verfügbarkeit, Erinnerungsmails, Notizen während des Gesprächs, Chat und Dateien im Call, Probe-Sitzung mit dir selbst. Dazu ein Screenshot des Dashboards. |
+| 7 | **Für wen** | Zielgruppen als lockere Reihe von Abzeichen, darunter „Nicht gemacht für“. |
+| 8 | **Wer das baut** | Wie bisher, mit Foto. |
+| 9 | **Fragen** | Überarbeitete FAQ (siehe unten). |
+| 10 | **Abschluss** | Beide Aktionen, eine persönliche Zeile von Stefan mit Foto. Darunter klein: „Lieber erst mal Neuigkeiten?“ mit dem Newsletter-Formular. |
+| 11 | **Fußzeile** | Zweispaltig: Produkt (Vorführung, Ausprobieren, Anmelden) und Rechtliches (Impressum, Datenschutz, Kontakt), Hell/Dunkel-Schalter. |
+
+**Rhythmus:** Die Hintergründe wechseln zwischen warmem Weiß, Sand und dem dunklen Salbei-Band. Jeder Abschnitt hat sein eigenes Layout. Fließtext etwas größer und im dunkleren Textton.
+
+### Inhaltliche Korrekturen
+
+- **Erster Blick:** Kennzeichen und Überschrift sagen, was HxRoom ist (Videoplattform für Coaches) und was es leistet (Buchung und Videocall in einem). Calendly und Zoom stehen nur als sachlicher Vergleich in der Unterzeile und der Vertrauenszeile. Stripe kommt dazu, sobald Klienten über HxRoom bezahlen können. Das gemeinsame Branding wird zur Überschrift der Tour.
+- „Early Access · Launch Q4 2026“ und „In Entstehung“ entfallen, die Beta steht im Kennzeichen.
+- **Titel:** „Videoplattform für Coaches – Buchung & Videocall | HxRoom“. Die Beschreibung nennt die Zoom-Alternative.
+- „Kein Chat“ entfällt. Chat und Dateien im Call gibt es.
+- Die Fußnote „Diese drei Dinge gibt es ab Launch …“ entfällt. Erinnerungsmails und Notizen gibt es.
+- Der gezeichnete Warteraum mit „Gestaltungsentwurf · Anna ist eine Beispiel-Coach“ wird durch echte Screenshots ersetzt.
+- **FAQ:**
+  - „Wann geht HxRoom live?“ wird zu „Kann ich HxRoom schon nutzen?“ (Beta, kostenlos, mit echten Klienten).
+  - „Was wird es kosten?“: kostenlos in der Beta, Preise zum regulären Start, Orientierung ab etwa 19 €/Monat.
+  - „Gibt es schon Kunden / Testimonials?“ wird zu „Wie läuft eine Vorführung ab?“ (20 Minuten, kostenlos, über `demo.hxroom.de`).
+  - Die übrigen Fragen bleiben und werden geprüft.
+
+### Teile
+
+**9a · Aufbau, Gestaltung und Texte**
+- Neue Abschnitte nach der Tabelle. Bestehende Komponenten werden umgebaut oder ersetzt.
+- Ziele der Aktionen über die Build-Konfiguration (`runtimeConfig.public`, wie `apiUrl`), lokal `hxroom.localhost`. So führen die Knöpfe lokal auf `demo.hxroom.localhost` und `app.hxroom.localhost`.
+- Screenshots zunächst als Platzhalter im richtigen Seitenverhältnis.
+- Texte nach den Korrekturen oben. Stefan sieht sie im Browser und gibt sie frei.
+
+**Umgesetzt:**
+- **Neu:** `TrustBar`, `TourSection`, `CoachFeaturesSection`, `LandingCtas` (beide Aktionen, Plausible-Ereignisse `demo_click` und `register_click`), `ScreenFrame` (Browserrahmen, ohne Bild ein Platzhalter), `SectionLabel`, `useLandingLinks()`.
+- **Umgebaut:** Hero, Problem-Band, Für wen, FAQ (Fragen in `utils/faq.ts`, daraus auch das FAQPage-JSON-LD), Abschluss mit aufklappbarem Newsletter, Fußzeile, Navigation.
+- **Entfallen:** `VisionSection`, `MockupPreview`, `public/anna.jpg`.
+- **Ziele der Aktionen:** `runtimeConfig.public.rootDomain`. Der Produktions-Build zeigt auf `hxroom.de`, `nuxt dev` auf `hxroom.localhost`.
+- **Symbole im Bundle** (`icon.clientBundle.scan`). Der Produktions-Build fragt keine fremden Hosts an.
+
+**Lokal geprüft:**
+- Desktop hell und dunkel, Handy hell: kein waagerechter Überlauf, keine Anfragen an Dritte.
+- Die Sprungmarken landen auf ihren Abschnitten, das Newsletter-Formular klappt auf.
+- Der Produktions-Build enthält `https://demo.hxroom.de`, `https://app.hxroom.de/auth/register` und die neue FAQ.
+
+**9b · Screenshots**
+- **Quelle:** die Inhalte von `demo.hxroom.de` (Texte, Foto, Angebot „Produktvorführung“), lokal in einem eigenen Demo-Konto nachgestellt. So lassen sich die Bilder jederzeit neu erzeugen.
+- **Motive:** Buchungsseite, Bestätigungsmail (die gerenderte Vorlage), Warteraum, Gespräch aus Sicht des Coachs mit Notizen, Dashboard.
+- **Format:** WebP in doppelter Auflösung unter `apps/landing/public/screens/`, heller Modus, mit `width`/`height` und `loading="lazy"` außer im Hero.
+
+**Umgesetzt:**
+- **`pnpm db:seed:demo`** (`apps/api/src/db/seed-demo.ts`) liest Profil, Foto, Impressum und Angebot von `demo.hxroom.de` über die öffentliche API und legt lokal das Konto `demo@hxroom.test` mit der Subdomain `demo` an. Klienten und Termine sind die fiktiven aus `seed/demo-data.ts`, dazu ein laufender Termin für Warteraum und Gespräch. Alle Datensätze tragen das Präfix `demo-`, `pnpm db:seed` lässt sie stehen.
+- **`apps/landing/scripts/screenshots.mjs`** nimmt sechs Motive auf: Buchungsseite, Bestätigungsmail (`src/db/render-demo-mail.ts`), Warteraum, Gespräch aus Sicht des Klienten mit Chat (Hero), Gespräch aus Sicht des Coachs mit Notizen (Tour, Station 4), Dashboard (Funktionen). Aufruf aus dem Repo-Wurzelverzeichnis: `PLAYWRIGHT_PATH=…/playwright/index.mjs node apps/landing/scripts/screenshots.mjs`. Voraussetzungen: lokaler Stack, Google Chrome, ffmpeg.
+- **Nur für die Anzeige:**
+  - Start und Ende des laufenden Termins werden in den API-Antworten und im Ereignis-Stream auf 08:30 umgeschrieben, ebenso die Uhrzeit der Chat-Nachricht. Für den Warteraum steht die Uhr des Browsers kurz nach 08:30.
+  - Der Coach sendet `public/stefan.jpg` als Kamerabild, der Klient hat die Kamera aus.
+- **Größe:** alle Bilder 2880 × 1800. Buchungsseite, Mail und Warteraum entstehen in einem schmaleren Fenster, damit die Schrift lesbar bleibt.
+
+**9c · Suchmaschinen und Aufräumen**
+- Titel, Beschreibung und JSON-LD (`FAQPage`, `SoftwareApplication`) passend zu den neuen Texten.
+- ✅ `public/llms.txt` nachziehen (`apps/landing/CLAUDE.md`): Beschreibung, Funktionen und FAQ wie auf der Startseite, Seiten Vorführung und Registrierung. Der Blog steht nicht mehr darin, weil ihn die `robots.txt` sperrt.
+- Die Seite `/old` und die Komponenten, die nur sie verwendet, entfallen. `/old` verschwindet aus der `robots.txt`.
+
+### Abnahme im Browser
+
+- **Desktop (1440 px) und Handy (390 px), hell und dunkel:** Die Aktionen stehen auf dem ersten Bildschirm. Keine Zeile bricht unglücklich um, nichts läuft waagerecht über.
+- **Links:** „Vorführung buchen“ führt auf die Vorführ-Buchungsseite, „Kostenlos ausprobieren“ auf die Registrierung, die Sprungmarken auf ihre Abschnitte. Das Newsletter-Formular meldet weiterhin an.
+- **Keine Anfragen an Dritte** beim Laden der Seite (Symbole und Schriften kommen von der eigenen Domain).
+- **Produktions-Build** (`nuxt generate`): Die vorgerenderte Startseite enthält Texte, Aktionen und JSON-LD.
+
+### Inbetriebnahme
+
+- Erst wenn Schritt 10 in Betrieb ist: Die FAQ sagt den Datenexport auf Knopfdruck zu.
+- `git pull` und `./redeploy.sh`, danach hxroom.de auf Desktop und Handy prüfen.
+- Google Search Console: Startseite neu indexieren lassen.
+
+---
+
+## Schritt 10 · Datenexport auf Knopfdruck
+
+**Stand:** aufgenommen. Der Umfang wird vor der Umsetzung in einem eigenen Plan festgelegt.
+
+**Ziel:** Der Coach lädt seine Klienten, Termine und Notizen jederzeit selbst herunter, ohne beim Betreiber anfragen zu müssen. Das deckt das Recht auf Datenübertragbarkeit ab (`legal.md`, „Kündigung & Datenexport“) und ist der Weg vor einer Kontolöschung.
+
+**Abhängigkeit:** Die FAQ der neuen Landingpage (Schritt 9) sagt den Export zu. Die Landingpage geht deshalb erst mit diesem Schritt in Betrieb.
