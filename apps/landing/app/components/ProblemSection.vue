@@ -5,7 +5,7 @@ const content = {
   headlineEm: 'Dein Tool verkauft',
   // Eigener Block, damit nicht am Bindestrich umbrochen wird.
   headlineEmEnd: 'Firmen-Meeting.',
-  lede: 'Dein Klient bekommt einen Zoom-Link, sieht das Logo einer fremden Firma, legt vielleicht noch ein Konto an – und landet in einem Raum, der aussieht wie ein Quartalsmeeting. Der erste Eindruck ist weg, bevor du Hallo gesagt hast.',
+  lede: 'Der Termin kommt über Calendly, der Link über Zoom, die Erinnerung schreibst du von Hand. Dein Klient sieht dabei das Logo fremder Firmen, legt vielleicht noch ein Konto an – und landet in einem Raum, der aussieht wie ein Quartalsmeeting. Der erste Eindruck ist weg, bevor du Hallo gesagt hast.',
   conclusion: 'Das ist nicht das Gefühl, das du verkaufst.',
 }
 </script>

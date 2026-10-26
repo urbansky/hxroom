@@ -1,12 +1,14 @@
 <script setup lang="ts">
+// Erster Bildschirm: was HxRoom ist (Kennzeichen), was es leistet (Überschrift), wie es
+// sich von Calendly und Zoom unterscheidet (Unterzeile). Die Marken stehen bewusst nur als
+// sachlicher Vergleich in der Unterzeile. Stripe kommt dazu, sobald Klienten über HxRoom
+// bezahlen können.
 const content = {
-  eyebrow: 'Beta · jetzt kostenlos testen',
-  // Je Satz ein Block, damit die Überschrift nur zwischen den Sätzen umbricht
-  // (sonst landen „Dein“ und „Name.“ auf dem Handy in verschiedenen Zeilen).
-  headline: ['Dein Coaching.', 'Dein Raum.'],
-  headlineEm: 'Dein Name.',
-  sub: 'Buchungsseite, Warteraum und Videocall unter deinem Namen – ohne Zoom-Link und ohne Konto für deine Klienten. Server in Deutschland, DSGVO-konform.',
-  note: '20 Minuten mit Stefan – oder gleich selbst loslegen, ohne Kreditkarte.',
+  eyebrow: 'Videoplattform für Coaches · Beta',
+  headline: 'Terminbuchung und Videocall für dein Coaching –',
+  headlineEm: 'in einem.',
+  sub: 'Statt Calendly und Zoom: Deine Klienten buchen auf deiner Seite, bekommen Bestätigung und Erinnerung und kommen per Link direkt in deinen Videocall – ohne Konto, ohne Download. Alles unter deinem Namen, Server in Deutschland.',
+  note: '20 Minuten mit Stefan – oder gleich selbst loslegen, kostenlos in der Beta.',
 }
 </script>
 
@@ -19,11 +21,8 @@ const content = {
           <span class="text-[11px] text-gold-700 dark:text-gold-300 tracking-[0.14em] uppercase">{{ content.eyebrow }}</span>
         </div>
 
-        <h1 class="a2 font-serif text-[clamp(44px,5.6vw,76px)] font-light leading-[1.04] text-(--color-cream) tracking-[-0.02em] mb-6">
-          <template v-for="part in content.headline" :key="part">
-            <span class="whitespace-nowrap">{{ part }}</span>{{ ' ' }}
-          </template>
-          <em class="italic text-gold-700 dark:text-gold-300 whitespace-nowrap">{{ content.headlineEm }}</em>
+        <h1 class="a2 font-serif text-[clamp(40px,4.6vw,64px)] font-light leading-[1.06] text-(--color-cream) tracking-[-0.02em] mb-6 text-balance">
+          {{ content.headline }} <em class="italic text-gold-700 dark:text-gold-300 whitespace-nowrap">{{ content.headlineEm }}</em>
         </h1>
 
         <p class="a3 text-[18px] text-(--ui-text) opacity-85 leading-[1.65] max-w-[520px] mb-9 max-lg:mx-auto max-sm:text-[17px]">
@@ -38,8 +37,11 @@ const content = {
 
       <div class="a5">
         <ScreenFrame
-          alt="Warteraum eines Coachs"
+          src="/screens/call.webp"
+          alt="Videocall aus Sicht des Klienten: der Coach im Bild, daneben der Chat"
           address="demo.hxroom.de/call/…"
+          :width="2880"
+          :height="1800"
           eager
         />
       </div>

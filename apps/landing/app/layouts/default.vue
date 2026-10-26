@@ -23,9 +23,8 @@ const anchors = [
 
     <!-- Nav -->
     <nav class="fixed top-0 left-0 right-0 z-100 flex items-center justify-between gap-6 px-6 lg:px-12 h-17 bg-(--ui-bg)/75 backdrop-blur-xl border-b border-(--ui-border)">
-      <NuxtLink to="/" aria-label="HxRoom – zur Startseite" class="no-underline">
-        <Logo />
-      </NuxtLink>
+      <!-- Logo ist selbst ein Link auf „/“, deshalb nicht noch einmal in einen Link packen. -->
+      <Logo class="no-underline" />
       <div class="flex items-center gap-8">
         <ul class="hidden lg:flex items-center gap-7">
           <li v-for="item in anchors" :key="item.href">

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 const items = [
+  { icon: 'i-lucide-layers-2', label: 'Ersetzt Calendly + Zoom' },
+  { icon: 'i-lucide-user-round-check', label: 'Klienten ohne Konto' },
   { icon: 'i-lucide-server', label: 'Server in Deutschland' },
   { icon: 'i-lucide-file-check-2', label: 'AVV inklusive' },
-  { icon: 'i-lucide-user-round-check', label: 'Klienten ohne Konto' },
-  { icon: 'i-lucide-link-2-off', label: 'Kein Zoom-Link' },
 ]
 </script>
 

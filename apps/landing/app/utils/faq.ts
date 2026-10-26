@@ -7,7 +7,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Was kostet HxRoom?',
-    a: 'In der Beta nichts. Die regulären Preise stehen zum offiziellen Start fest, als grobe Orientierung ab etwa 19 € im Monat. Wer in der Beta dabei ist, bekommt einen vergünstigten Einführungspreis auf Lebenszeit.',
+    a: 'In der Beta nichts. Die regulären Preise stehen zum offiziellen Start fest, als grobe Orientierung ab etwa 19 € im Monat. Wer in der Beta dabei ist, bekommt einen vergünstigten Einführungspreis.',
   },
   {
     q: 'Wie läuft eine Vorführung ab?',
@@ -27,6 +27,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Was passiert mit meinen Daten, wenn ich aufhöre?',
-    a: 'Du kannst dein Konto jederzeit selbst löschen. Nach 30 Tagen Bedenkzeit sind alle Daten weg – Klienten, Termine, Notizen und Dateien. Einen Export deiner Daten bekommst du vorher auf Anfrage.',
+    // Setzt den Datenexport aus phase5-umsetzungsplan.md, Schritt 10, voraus.
+    a: 'Deine Klienten, Termine und Notizen exportierst du jederzeit mit einem Klick. Dein Konto löschst du selbst; nach 30 Tagen Bedenkzeit sind alle Daten weg – Klienten, Termine, Notizen und Dateien.',
   },
 ] as const

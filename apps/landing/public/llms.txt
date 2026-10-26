@@ -1,29 +1,34 @@
 # HxRoom
 
-> HxRoom ist eine White-Label Videocall-Plattform für Coaches – DSGVO-konform, gebaut in Deutschland.
+> HxRoom ist eine Videoplattform für Coaches: Terminbuchung und Videocall in einem – unter dem eigenen Namen, DSGVO-konform, mit Servern in Deutschland.
 
-HxRoom gibt Coaches einen eigenen, gebrandeten Videocall-Raum: eigenes Logo, eigene Farben, eigene Subdomain – kein Zoom-Link, kein fremdes Logo, kein Klienten-Account. Klienten klicken auf einen Link und landen direkt im Warteraum, ohne Download oder Registrierung.
+HxRoom ersetzt die Kombination aus Calendly und Zoom. Klienten buchen auf der Buchungsseite des Coachs, bekommen Bestätigung und Erinnerung per Mail und kommen per Link direkt in den Warteraum und den Videocall – ohne Konto, ohne Download, ohne fremdes Logo. Gedacht ist HxRoom für Einzelgespräche von Solo-Coaches im DACH-Raum, nicht für Webinare oder Gruppen-Workshops.
 
-Die Plattform befindet sich in aktiver Entwicklung. Early Access läuft; öffentlicher Launch ist für Q4 2026 geplant. Server stehen in Deutschland (Hetzner), ein AVV ist Vertragsbestandteil, keine Weitergabe an US-Dienste.
+HxRoom ist in der Beta und läuft mit echten Klienten. Die Nutzung ist in der Beta kostenlos. Server stehen in Deutschland (Hetzner), der AVV ist Vertragsbestandteil, keine Weitergabe an US-Dienste. Entwickelt wird HxRoom von Stefan Urbansky (hxcode.io).
 
-## Kernfunktionen
+## Funktionen
 
-- White-Label Branding: eigenes Logo, eigene Farben, eigene Coach-Subdomain
-- Integriertes Buchungssystem
-- Warteraum – Klienten kommen per Link, ohne Account
-- DSGVO-konform by Design, Server in Deutschland (Hetzner)
-- Preis: ab ca. 19 €/Monat; Early-Access-Coaches erhalten vergünstigten Einführungspreis auf Lebenszeit
+- Buchungsseite unter eigener Subdomain (name.hxroom.de) mit Foto, Texten, Angeboten und Impressum
+- Kalender und Verfügbarkeiten, freie Zeiten werden daraus berechnet
+- Bestätigungsmail mit Kalendereintrag, Erinnerungsmails 24 Stunden und eine Stunde vor dem Termin
+- Warteraum mit Foto und Namen des Coachs, Kamera- und Mikrofontest vorab
+- Videocall im Browser mit Chat und Dateien, Notizen für den Coach während des Gesprächs
+- Klientenliste und Dashboard mit den nächsten Terminen
+- Probe-Sitzung: der Coach erlebt beide Seiten selbst, am Rechner als Coach, auf dem Handy als Klient
+- Datenexport auf Knopfdruck: Klienten, Termine und Notizen
 
 ## Häufige Fragen
 
-- **Wann geht HxRoom live?** Öffentlicher Launch Q4 2026. Early-Access-Coaches erhalten vorher Zugang.
-- **Brauchen Klienten einen Account?** Nein. Link anklicken, direkt im Warteraum landen – kein Download, kein Passwort.
-- **Wo liegen die Daten?** Ausschließlich auf Servern in Deutschland (Hetzner). Kein US-Transfer, kein Drittland.
-- **Was kostet HxRoom?** Ab ca. 19 €/Monat. Endpreise stehen zum Launch fest.
-- **Was passiert bei Kündigung?** Vollständiger Datenexport, danach DSGVO-konforme Löschung.
+- **Kann ich HxRoom schon nutzen?** Ja. HxRoom ist in der Beta und läuft mit echten Klienten. Registrierung kostenlos, oder vorher eine Vorführung buchen.
+- **Was kostet HxRoom?** In der Beta nichts. Die regulären Preise stehen zum offiziellen Start fest, Orientierung ab etwa 19 € im Monat. Beta-Coaches bekommen einen vergünstigten Einführungspreis.
+- **Wie läuft eine Vorführung ab?** 20 Minuten, kostenlos, gebucht über demo.hxroom.de. Man erlebt HxRoom aus Sicht der Klienten – Buchung, Bestätigungsmail, Warteraum, Gespräch – und sieht danach das Backoffice des Coachs.
+- **Kann ich meinen Zoom behalten?** Ja. Viele Coaches nutzen HxRoom zuerst mit einzelnen Klienten und wechseln Schritt für Schritt.
+- **Brauchen Klienten einen Account?** Nein. Link anklicken, direkt im Warteraum landen – kein Download, keine Registrierung, kein Passwort.
+- **Wo liegen die Daten?** Auf Servern in Deutschland (Hetzner). AVV inklusive, Subdienstleister transparent aufgeführt, keine Weitergabe an US-Dienste.
+- **Was passiert mit den Daten beim Aufhören?** Klienten, Termine und Notizen lassen sich jederzeit mit einem Klick exportieren. Das Konto löscht der Coach selbst; nach 30 Tagen Bedenkzeit sind alle Daten gelöscht.
 
 ## Seiten
 
-- [Startseite](https://hxroom.de): Produktbeschreibung, Features und Early-Access-Anmeldung
-- [Blog](https://hxroom.de/blog): Artikel zu Coaching, DSGVO-konformer Praxissoftware und der Entstehung von HxRoom
-- [RSS-Feed](https://hxroom.de/blog/rss.xml): Maschinenlesbare Artikelliste im RSS-Format
+- [Startseite](https://hxroom.de): Was HxRoom ist, Produkt-Tour mit Screenshots, Funktionen, häufige Fragen
+- [Vorführung buchen](https://demo.hxroom.de): 20-minütige Produktvorführung mit Stefan Urbansky, kostenlos
+- [Kostenlos ausprobieren](https://app.hxroom.de/auth/register): Registrierung als Coach

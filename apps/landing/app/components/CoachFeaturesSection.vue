@@ -40,7 +40,14 @@ const content = {
           </li>
         </ul>
 
-        <ScreenFrame alt="Dashboard des Coachs" address="app.hxroom.de" class="lg:sticky lg:top-28" />
+        <ScreenFrame
+          src="/screens/dashboard.webp"
+          alt="Dashboard des Coachs mit den nächsten Terminen und Klienten"
+          address="app.hxroom.de"
+          :width="2880"
+          :height="1800"
+          class="lg:sticky lg:top-28"
+        />
       </div>
     </div>
   </section>

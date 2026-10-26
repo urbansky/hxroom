@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { FAQ_ITEMS } from '~/utils/faq'
 
-const title = 'Zoom-Alternative für Coaches – HxRoom'
-const description = 'Dein gebrandeter Videocall-Raum für Coaches – ohne Zoom-Link, ohne Klienten-Account, ohne fremdes Logo. DSGVO-konform, Server in Deutschland.'
+const title = 'Videoplattform für Coaches – Buchung & Videocall | HxRoom'
+const description = 'Terminbuchung und Videocall für dein Coaching in einem – die DSGVO-konforme Zoom-Alternative. Klienten ohne Konto, Server in Deutschland. Jetzt in der Beta.'
 
 useSeoMeta({
   title,
@@ -34,7 +34,7 @@ useHead({
             url: 'https://hxroom.de',
             founder: { '@type': 'Person', name: 'Stefan Urbansky', url: 'https://hxcode.io' },
             foundingLocation: { '@type': 'Place', addressCountry: 'DE' },
-            description: 'Videocall-Plattform für Coaches – DSGVO-konform, White-Label, Server in Deutschland.',
+            description: 'Videoplattform für Coaches – Terminbuchung und Videocall in einem, DSGVO-konform, Server in Deutschland.',
           },
           {
             '@type': 'SoftwareApplication',
@@ -44,13 +44,13 @@ useHead({
             operatingSystem: 'Web',
             inLanguage: 'de',
             offers: { '@type': 'Offer', price: '19', priceCurrency: 'EUR', priceValidUntil: '2027-12-31' },
-            description: 'Gebrandeter Videocall-Raum für Coaches – ohne Zoom-Link, ohne Klienten-Account. DSGVO-konform, Server in Deutschland.',
+            description: 'Terminbuchung und Videocall für Coaches in einem – Buchungsseite, Warteraum und Gespräch unter dem eigenen Namen. Klienten ohne Konto, DSGVO-konform, Server in Deutschland.',
             featureList: [
-              'White-Label Branding',
-              'Buchungssystem',
-              'Warteraum mit eigenem Logo',
+              'Buchungsseite mit eigenem Namen',
+              'Videocall mit Warteraum',
+              'Bestätigungs- und Erinnerungsmails',
+              'Notizen, Chat und Dateien im Gespräch',
               'Kein Account für Klienten erforderlich',
-              'DSGVO-konform by Design',
               'Server in Deutschland',
             ],
           },

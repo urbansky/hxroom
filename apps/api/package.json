@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "dotenv -e .env -- tsx src/db/seed.ts",
+    "db:seed:demo": "dotenv -e .env -- tsx src/db/seed-demo.ts",
     "admin:create": "dotenv -e .env -- tsx src/db/create-admin.ts",
     "admin:create:prod": "dotenv -e .env.prod -- tsx src/db/create-admin.ts",
     "db:studio": "drizzle-kit studio",
