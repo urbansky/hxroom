@@ -180,6 +180,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 
 - **Impressum und Datenschutzerklärung des Coachs:** HxRoom stellt eine Vorlage für die Datenschutzerklärung bereit (`legal.md` §4.3). Der Coach hinterlegt beides in den Einstellungen, die Buchungsseite verlinkt es.
 - **AGB zwischen HxRoom und Coach sowie der AVV** werden bei der Registrierung abgeschlossen (`legal.md` §5.1 und §6). Die Texte liefert der Betreiber.
+- **Datenexport auf Knopfdruck:** Der Coach lädt Klienten, Termine und Notizen jederzeit selbst herunter. Die Landingpage sagt das zu.
 - **Fehlerüberwachung** mit GlitchTip auf der Betriebs-Instanz
 - **Funktionierendes Backup** nach `technisches-konzept.md` §13: täglicher `pg_dump` mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm bei Fehlschlag, eine einmal durchgespielte Wiederherstellung
 
@@ -209,6 +210,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 - Probe-Sitzung mit sich selbst (QR-Code, ohne Eintrag in der Klientenliste), Onboarding-Checkliste anpassen
 - „Kommt bald“-Menüpunkte für die Beta ausblenden
 - Feedback-Knopf in der Coach-App, Aktivität der Coaches im Betreiber-Backoffice
+- Datenexport auf Knopfdruck für Coachs (Klienten, Termine, Notizen)
 - Impressum und Datenschutzerklärung des Coachs in den Einstellungen, AGB und AVV bei der Registrierung
 - Fehlerüberwachung für API und Oberflächen
 - Backup: täglicher `pg_dump` mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm bei Fehlschlag, Wiederherstellung einmal durchspielen
