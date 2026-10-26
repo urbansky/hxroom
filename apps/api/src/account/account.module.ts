@@ -4,6 +4,7 @@ import { AccountController } from './account.controller';
 import { AccountDeletionService } from './account-deletion.service';
 import { DeletionCronService } from './deletion-cron.service';
 import { DeletionExecutorService } from './deletion-executor.service';
+import { ExportService } from './export/export.service';
 
 // DRIZZLE, AUTH und S3Service kommen aus globalen Modulen, MailModule muss importiert werden.
 // DeletionExecutorService wird exportiert, damit die noch fehlende Betreiber-Löschung
@@ -12,7 +13,7 @@ import { DeletionExecutorService } from './deletion-executor.service';
 @Module({
   imports: [MailModule],
   controllers: [AccountController],
-  providers: [AccountDeletionService, DeletionExecutorService, DeletionCronService],
+  providers: [AccountDeletionService, DeletionExecutorService, DeletionCronService, ExportService],
   exports: [DeletionExecutorService],
 })
 export class AccountModule {}
