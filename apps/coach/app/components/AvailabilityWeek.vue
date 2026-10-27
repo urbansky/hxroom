@@ -62,6 +62,12 @@ const hourMarks = computed(() => {
   return marks
 })
 
+// Auf dem Handy ist eine Spalte gut 30 px breit, "09:00" passt dort nicht hinein. Volle
+// Stunden stehen deshalb als "9", alles andere ohne führende Null ("9:30").
+function compactTime(time: string): string {
+  return time.replace(/^0/, '').replace(/:00$/, '')
+}
+
 function offsetTop(minutes: number): number {
   return (minutes - timeRange.value.start) * PIXELS_PER_MINUTE
 }
@@ -141,25 +147,29 @@ function slotBlocks(weekday: number) {
           v-for="block in slotBlocks(day.value)"
           :key="block.slot.id"
           type="button"
-          class="absolute inset-x-1 flex flex-col rounded-lg border border-sage-200 dark:border-sage-800 bg-sage-100 hover:bg-sage-200 dark:bg-sage-900 dark:hover:bg-sage-800 px-1.5 py-1 text-left overflow-hidden transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+          class="absolute inset-x-1 flex flex-col rounded-lg border border-sage-200 dark:border-sage-800 bg-sage-100 hover:bg-sage-200 dark:bg-sage-900 dark:hover:bg-sage-800 px-1.5 max-sm:px-0 py-1 text-left max-sm:text-center overflow-hidden transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
           :class="block.splitTimes ? 'justify-between' : 'justify-center'"
           :style="{ top: `${block.top}px`, height: `${block.height}px` }"
           @click.stop="$emit('select', block.slot)"
         >
           <!-- Hohe Blöcke tragen Beginn und Ende an ihren Kanten: Dort steht die Uhrzeit
                genau da, wo das Raster sie ohnehin zeigt. Für flache Blöcke ist dafür kein
-               Platz, sie bekommen den Bereich in einer Zeile. -->
+               Platz, sie bekommen den Bereich in einer Zeile. Auf dem Handy ist eine Spalte
+               nur gut 30 px breit: Dort steht nur der Beginn in Kurzform (compactTime). -->
           <!-- Textfarben ebenfalls aus der Palette: text-primary wäre im Dark Mode
                sage-500 auf sage-900 und läge mit 3,4:1 unter der Lesbarkeitsschwelle. -->
+          <span class="sm:hidden block text-[11px] leading-tight tabular-nums text-sage-800 dark:text-sage-200">
+            {{ compactTime(block.slot.startTime) }}
+          </span>
           <template v-if="block.splitTimes">
-            <span class="block text-xs leading-tight tabular-nums text-sage-800 dark:text-sage-200 truncate">
+            <span class="max-sm:hidden block text-xs leading-tight tabular-nums text-sage-800 dark:text-sage-200 truncate">
               {{ block.slot.startTime }}
             </span>
-            <span class="block text-xs leading-tight tabular-nums text-sage-600 dark:text-sage-300 truncate">
+            <span class="max-sm:hidden block text-xs leading-tight tabular-nums text-sage-600 dark:text-sage-300 truncate">
               {{ block.slot.endTime }}
             </span>
           </template>
-          <span v-else class="block text-xs leading-tight tabular-nums text-sage-800 dark:text-sage-200 truncate">
+          <span v-else class="max-sm:hidden block text-xs leading-tight tabular-nums text-sage-800 dark:text-sage-200 truncate">
             {{ block.slot.startTime }}–{{ block.slot.endTime }}
           </span>
         </button>

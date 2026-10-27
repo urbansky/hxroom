@@ -142,7 +142,9 @@ async function deleteClient() {
 
     <template v-else-if="client">
       <!-- Stammdaten -->
-      <div class="flex items-start gap-4 mb-8">
+      <!-- Auf dem Handy rutschen die Knöpfe unter die Stammdaten, sonst bleibt dem Namen
+           keine Breite und er bricht Buchstabe für Buchstabe um. -->
+      <div class="flex flex-wrap items-start gap-4 mb-8">
         <span class="size-14 shrink-0 rounded-full bg-primary/10 text-primary font-medium flex items-center justify-center">
           {{ clientInitials(client.name) }}
         </span>
@@ -154,7 +156,7 @@ async function deleteClient() {
           </div>
           <p class="text-xs text-muted mt-2">Klient seit {{ formatShortDate(client.createdAt) }}</p>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-2 max-sm:w-full max-sm:pl-18">
           <UButton
             label="Spontan-Termin"
             icon="i-lucide-video"

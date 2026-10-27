@@ -137,7 +137,7 @@ async function onClientSaved(_client: ClientResponse) {
 
 <template>
   <div class="p-4 sm:p-6 mx-auto w-full max-w-6xl flex flex-col gap-6">
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 class="font-serif text-3xl text-highlighted">
           Hallo, {{ session.data?.user?.name ?? '…' }}
@@ -148,7 +148,7 @@ async function onClientSaved(_client: ClientResponse) {
       <!-- Der Weg ins spontane Gespräch: von hier aus, ohne erst einen Klienten zu
            suchen. Erst sichtbar, wenn beides vorliegt – ohne Klienten oder Angebote
            führte der Knopf in ein Modal, in dem nichts zu wählen ist. -->
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex flex-wrap items-center gap-2">
         <!-- Probe-Sitzung mit sich selbst (Schritt 6a): braucht weder Klienten noch Angebote. -->
         <UButton
           v-if="!loading"
@@ -172,9 +172,9 @@ async function onClientSaved(_client: ClientResponse) {
 
     <p v-if="loadError" class="text-sm text-error">{{ loadError }}</p>
 
-    <div v-if="loading" class="grid gap-4 lg:grid-cols-3">
+    <div v-if="loading" class="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <div class="lg:col-span-2 flex flex-col gap-4">
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <USkeleton v-for="n in 2" :key="n" class="h-20 rounded-xl" />
         </div>
         <USkeleton class="h-80 rounded-xl" />
@@ -192,12 +192,12 @@ async function onClientSaved(_client: ClientResponse) {
         @action="onOnboardingAction"
       />
 
-      <div class="grid gap-4 lg:grid-cols-3 items-start">
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 items-start">
         <!-- Die Kennzahlen stehen in der linken Spalte, nicht über die volle Breite:
              über zwei Drittel gestreckt füllt "1 Termin" die Kachel nicht, und die
              rechte Spalte liefe der linken in der Höhe noch weiter davon. -->
         <div class="lg:col-span-2 flex flex-col gap-4">
-          <div class="grid gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <StatCard
               icon="i-lucide-calendar-days"
               label="Diese Woche"
@@ -220,7 +220,7 @@ async function onClientSaved(_client: ClientResponse) {
             <template #actions>
               <div class="flex items-center gap-1 shrink-0">
                 <UButton to="/bookings" label="Ganze Agenda" icon="i-lucide-list" color="primary" variant="link" size="sm" class="-my-1" />
-                <UButton to="/bookings?view=week" label="Wochenansicht" icon="i-lucide-calendar-days" color="primary" variant="link" size="sm" class="-my-1" />
+                <UButton to="/bookings?view=week" label="Wochenansicht" icon="i-lucide-calendar-days" color="primary" variant="link" size="sm" class="-my-1 max-sm:hidden" />
               </div>
             </template>
 

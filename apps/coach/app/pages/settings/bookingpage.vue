@@ -292,8 +292,10 @@ const features = [
       :actions="[{ label: 'Zu Rechtliches', to: '/settings/legal', color: 'warning', variant: 'outline', trailingIcon: 'i-lucide-arrow-right' }]"
     />
 
-    <!-- Zweispaltiges Layout: Editor + Vorschau -->
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_900px] gap-12 items-start">
+    <!-- Zweispaltiges Layout ab xl: Editor + Vorschau. Die Vorschau wächst bis 900 px, der
+         Editor behält mindestens 22rem – mit fester Vorschaubreite ragte sie auf 1280-px-Laptops
+         (abzüglich Seitenleiste) rechts aus dem Bild. Darunter steht sie unter dem Editor. -->
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(22rem,1fr)_minmax(0,900px)] gap-12 items-start">
 
       <!-- Editor -->
       <div class="flex flex-col gap-4">
@@ -474,7 +476,7 @@ const features = [
                Inhalt: Links und Buttons sind zu sehen, aber nicht zu benutzen. Am Scrollbereich
                selbst schluckte es auch Mausrad und Wischen. -->
           <div class="bg-default max-h-[calc(100vh-11rem)] overflow-y-auto overscroll-contain" data-preview-scroller>
-            <div inert>
+            <div inert class="@container">
               <!-- Kopfzeile der Buchungsseite, nachgebaut ohne UHeader (der ist für den
                    Seitenkopf der App gedacht, nicht für eine Fläche in der Seite) -->
               <div class="h-16 border-b border-default px-6 lg:px-10 flex items-center justify-between gap-4">
@@ -485,9 +487,11 @@ const features = [
                   </div>
                   <span class="font-serif text-xl text-highlighted tracking-wide truncate">{{ previewProfile.name }}</span>
                 </div>
-                <div class="hidden sm:flex items-center gap-6">
-                  <span v-if="previewShowAbout" class="text-base text-muted tracking-wide">Über mich</span>
-                  <span class="text-base text-muted tracking-wide">Sitzungsarten</span>
+                <!-- Nach der Breite der Vorschau, nicht des Fensters: Wie die echte Seite blendet sie
+                     die Links aus, wenn für Name und Knopf sonst kein Platz bliebe. -->
+                <div class="hidden @xl:flex items-center gap-6">
+                  <span v-if="previewShowAbout" class="text-base text-muted tracking-wide whitespace-nowrap">Über mich</span>
+                  <span class="text-base text-muted tracking-wide whitespace-nowrap">Sitzungsarten</span>
                 </div>
                 <UButton v-if="imprintComplete" color="primary" icon="i-lucide-calendar" size="lg" class="px-5 max-w-56" :ui="{ label: 'truncate' }" :label="previewCtaLabel" />
               </div>
