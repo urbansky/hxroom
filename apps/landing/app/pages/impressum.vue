@@ -22,6 +22,6 @@ useHead({
 
     <LegalOperatorImprint />
 
-    <p class="legal-updated">Stand: 15. Oktober 2026</p>
+    <p class="legal-updated">Stand: 27. Oktober 2026</p>
   </div>
 </template>
