@@ -21,12 +21,13 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 
 **Etappe B – Beta-Coaches (Ziel 01.11.2026)**
 
-5. AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
+5. ✅ AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
 6. ✅ Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
 9. Landingpage inhaltlich und gestalterisch überarbeiten – in Arbeit
 10. ✅ Datenexport auf Knopfdruck für Coachs
+11. Coach-App auf dem Handy bedienbar: Navigation und Darstellungsfehler
 
 **Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf, die überarbeitete Landingpage und der Datenexport, weil die Landingpage ihn zusagt.
 
@@ -408,9 +409,9 @@ Für 3.1b auf dem Server:
 
 ---
 
-## Schritt 5 · AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
+## Schritt 5 · AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum ✅
 
-**Stand:** umgesetzt und lokal abgenommen, Abnahme in Produktion offen.
+**Stand:** ✅ umgesetzt, lokal und in Produktion abgenommen.
 
 **Ziel:** Kein Coach arbeitet mit echten Klienten, ohne AGB und AVV angenommen zu haben. Der Klient sieht im Warteraum, was mit seinem Gespräch geschieht.
 
@@ -476,8 +477,8 @@ Für 3.1b auf dem Server:
 
 ### Inbetriebnahme
 
-- `git pull` und `./redeploy.sh`. Die Migration läuft beim Start der API.
-- Mit dem Demo-Konto anmelden und AGB und AVV im Modal annehmen. Dasselbe gilt für jedes andere bestehende Coach-Konto beim nächsten Anmelden.
+- ✅ `git pull` und `./redeploy.sh`. Die Migration läuft beim Start der API.
+- ✅ Mit dem Demo-Konto anmelden und AGB und AVV im Modal annehmen. Dasselbe gilt für jedes andere bestehende Coach-Konto beim nächsten Anmelden.
 
 ---
 
@@ -806,3 +807,59 @@ Nicht enthalten: Probe-Sitzungen (sie werden nach 24 Stunden ohnehin gelöscht),
 
 - ✅ `git pull` und `./redeploy.sh`, Export mit dem Demo-Konto in der Produktion prüfen.
 - Damit geht auch die neue Landingpage in Betrieb (Schritt 9).
+
+---
+
+## Schritt 11 · Coach-App auf dem Handy
+
+**Stand:** umgesetzt und lokal abgenommen.
+
+**Ziel:** Ein Beta-Coach kann HxRoom auf dem Handy ausprobieren: jede Seite erreichen, nichts ist abgeschnitten oder unlesbar. Der Call des Coachs bleibt eine Sache für den Rechner und ist nicht Teil dieses Schritts.
+
+### Befund bei 390 px Breite
+
+| Seite | Befund |
+|---|---|
+| alle | Keine Navigation. Die Seitenleiste ist ausgeblendet, und nichts öffnet sie, weil die Kopfleiste mit dem Menüknopf (`UDashboardNavbar`) auskommentiert ist. Erreichbar ist nur das Dashboard samt seinen Links. |
+| alle | Der Hinweis auf eine laufende Kontolöschung ist oben abgeschnitten: nur ein Teil des Titels, ohne Text und Knopf. |
+| Klient (`/clients/:id`) | Die Kopfzeile bricht: Name und E-Mail stehen Buchstabe für Buchstabe untereinander, weil die Knöpfe daneben den Platz nehmen. |
+| Dashboard | „Spontan-Termin“ ragt rechts aus dem Bild, die Kennzahl-Kacheln ebenso. |
+| Verfügbarkeit | Der Knopf „hinzufügen“ ragt rechts aus dem Bild. Die Zeiten im Wochenraster sind zu „0.“ und „1…“ verkürzt. |
+| Kalender, Wochenansicht | Sieben Spalten: Die Termine sind schmale Streifen ohne lesbaren Text. Die Agenda ist die Standardansicht und funktioniert. |
+| Sitzungsangebote | Die Zeile „3 aktive Angebote (1 inaktive)“ bricht in drei Zeilen um. |
+| Buchungsseite, Rechtliches, Account, Klientenliste, Agenda | in Ordnung |
+
+### Umsetzung
+
+**Navigation** (`layouts/default.vue`):
+- Unterhalb von `lg` eine schmale Kopfleiste: Menüknopf (`UDashboardSidebarToggle`), daneben der Seitentitel aus `pageTitle`. Auf dem Rechner bleibt sie ausgeblendet, dort ändert sich nichts.
+- Der Menüknopf öffnet die vorhandene Seitenleiste als Slideover von links, mit denselben Einträgen, Feedback und Kontomenü. Beim Seitenwechsel schließt sie sich von selbst.
+
+**Darstellungsfehler:**
+- Löschhinweis: nicht mehr abgeschnitten, Titel, Text und Knopf vollständig.
+- Klient: Knöpfe unter Name und E-Mail statt daneben, unterhalb von `sm`.
+- Dashboard: Knöpfe unter die Begrüßung, Kacheln einspaltig.
+- Verfügbarkeit: Auf dem Handy nur das Plus als Knopf neben den Reitern. Im Wochenraster auf dem Handy nur die Anfangszeit in Kurzform („9“, „9:30“).
+- Wochenansicht des Kalenders: auf dem Handy ausgeblendet, dort gibt es nur die Agenda.
+- Sitzungsangebote: Zähler und Schalter untereinander.
+
+### Abnahme im Browser
+
+Bei 390 px (iPhone) und 768 px (Tablet), mit Martina (laufende Löschung) und Anna:
+- Menüknopf öffnet die Seitenleiste. Jede Seite ist darüber erreichbar, nach dem Antippen schließt sie sich. Feedback und Abmelden funktionieren.
+- Alle Seiten der Tabelle: nichts ragt aus dem Bild, kein Text bricht Buchstabe für Buchstabe.
+- Löschhinweis vollständig lesbar, „Löschung zurücknehmen“ antippbar.
+- Auf dem Rechner (1280 px) sieht alles aus wie vorher.
+
+**Umgesetzt** wie beschrieben: Kopfleiste (`UDashboardNavbar`, nur unter `lg`) in `layouts/default.vue`; Hinweise im Layout mit `shrink-0`, weil der Inhaltsbereich eine Flex-Spalte ist und `UAlert` mit `overflow-hidden` sonst schrumpft; Umbrüche in `clients/[id].vue`, `index.vue`, `bookings/offers.vue` und `bookings/availability.vue`; Kurzform der Uhrzeit (`compactTime`) in `AvailabilityWeek.vue`. Unter `sm` blendet `bookings/index.vue` den Umschalter der Ansicht aus und lenkt `?view=week` auf die Agenda um, das Dashboard zeigt dort keinen Link auf die Wochenansicht.
+
+**Lokal abgenommen** (Chrome per Playwright, Martina mit laufender Löschung):
+- 390 und 768 px: Der Menüknopf öffnet die Seitenleiste, „Klientenliste“ führt auf `/clients` und schließt sie. Feedback öffnet sich aus dem Menü.
+- 390 px: Auf allen Seiten der Tabelle ragt nichts in den Seitenrand. `/bookings?view=week` zeigt die Agenda.
+- Löschhinweis vollständig mit Text und Knopf. Klientenseite mit Name in einer Zeile, Knöpfe darunter.
+- 1280 px: kein Menüknopf, Klientenseite und Dashboard wie vorher.
+
+**Dazu behoben:**
+- **Buchungsseite bei 1280 px:** Die Vorschau hatte ab `lg` feste 900 px und ragte auf Laptops rechts aus dem Bild. Jetzt zwei Spalten erst ab `xl`, der Editor mindestens 22rem, die Vorschau wächst bis 900 px. Die Links im Kopf der Vorschau richten sich nach deren eigener Breite (Container-Query), wie auf der echten Seite.
+- **Reiter „Kalendersync“** in der Verfügbarkeit kündigte nur an und ist in der Beta ausgeblendet (`SHOW_UPCOMING_FEATURES`, wie in Schritt 6c).
+- Geprüft bei 390, 1280, 1440 und 1920 px: kein Überlauf, Name und Knopf in der Vorschau vollständig.
