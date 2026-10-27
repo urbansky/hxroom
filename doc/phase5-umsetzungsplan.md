@@ -26,7 +26,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
 9. Landingpage inhaltlich und gestalterisch überarbeiten – in Arbeit
-10. Datenexport auf Knopfdruck für Coachs – umgesetzt, Inbetriebnahme offen
+10. ✅ Datenexport auf Knopfdruck für Coachs
 
 **Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf, die überarbeitete Landingpage und der Datenexport, weil die Landingpage ihn zusagt.
 
@@ -408,6 +408,79 @@ Für 3.1b auf dem Server:
 
 ---
 
+## Schritt 5 · AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
+
+**Stand:** umgesetzt und lokal abgenommen, Abnahme in Produktion offen.
+
+**Ziel:** Kein Coach arbeitet mit echten Klienten, ohne AGB und AVV angenommen zu haben. Der Klient sieht im Warteraum, was mit seinem Gespräch geschieht.
+
+**Texte:** AGB und AVV liegen als `apps/landing/app/pages/agb.vue` und `avv.vue` vor (hxroom.de/agb, hxroom.de/avv, Stand 27. Oktober 2026), verlinkt in der Fußzeile der Landingpage, `noindex` und in `robots.txt` gesperrt.
+
+### 5a · Zustimmung zu AGB und AVV
+
+**Registrierung** (`pages/auth/register.vue`):
+- Pflicht-Checkbox unter dem Passwort: „Ich nutze HxRoom für meine selbständige berufliche Tätigkeit und stimme den [AGB] und dem [Auftragsverarbeitungsvertrag] zu.“ Die Links öffnen hxroom.de/agb bzw. /avv in einem neuen Tab.
+- Ohne Haken lässt sich das Formular nicht absenden.
+
+**Fassung:** `TERMS_VERSION = '2026-10-27'` in `packages/shared`, entspricht dem Stand-Datum beider Seiten. Ein Kommentar in `agb.vue` und `avv.vue` verweist darauf. Bei Änderungen am Text wandern beide mit.
+
+**API:**
+- Neue Tabelle `terms_acceptances`: `user_id` (Fremdschlüssel auf `user`, `cascade`), `version`, `accepted_at`. Keine IP-Adresse.
+- better-auth `hooks.before` auf `/sign-up/email`: Ohne `acceptTerms: true` im Body antwortet die API mit `400` („Terms must be accepted“). Die Prüfung auf dem Server verhindert eine Registrierung am Formular vorbei.
+- Im vorhandenen `databaseHooks.user.create.after` entsteht die Zeile in `terms_acceptances`, wenn der Aufruf von `/sign-up/email` kommt.
+- `GET /api/v1/account/terms` liefert die angenommene Fassung samt Zeitpunkt oder `null`. `POST /api/v1/account/terms` nimmt die aktuelle Fassung an. In einer übernommenen Sitzung (Impersonation) antwortet der `POST` mit `403`: Der Betreiber stimmt nicht für den Coach zu.
+
+**Konten ohne Zustimmung** (bestehende Konten, vom Betreiber per `admin.createUser` angelegte):
+- Die Coach-App zeigt nach der Anmeldung ein nicht schließbares Modal mit derselben Checkbox und dem Knopf „Annehmen“. Erst danach ist die App bedienbar.
+- Das Modal erscheint nur, wenn noch **gar keine** Fassung angenommen ist. Spätere Änderungen der AGB laufen nach AGB §11 per Mail mit Widerspruchsfrist, nicht über eine erneute Zustimmung.
+- In einer übernommenen Sitzung erscheint statt des Modals ein Hinweis im Kopf.
+
+**Nachweis für den Coach:**
+- Einstellungen → Rechtliches zeigt „AGB und AVV angenommen am … (Fassung vom 27. Oktober 2026)“ mit Links auf beide Texte.
+- Die Bestätigungsmail der Registrierung verlinkt AGB und AVV. Damit kann der Coach die Vertragsbestimmungen bei Vertragsschluss abrufen und speichern (§ 312i Abs. 1 Nr. 4 BGB).
+
+### 5b · Datenschutz-Kasten im Warteraum
+
+**Ort:** `apps/bookingpage/src/components/WaitingRoom.vue`, unter der Geräteeinrichtung, immer sichtbar, kompakt: Titel „Was mit deinem Gespräch passiert“, vier Zeilen mit Symbol, darunter der Link „Datenschutzerklärung von {Coach}“ auf `/datenschutz` der Buchungsseite.
+
+**Aussagen** (nur Tatsachen, die die Technik belegt):
+
+| Thema | Text |
+|---|---|
+| Aufzeichnung | Bild und Ton werden nicht aufgezeichnet. |
+| Übertragung | Bild und Ton laufen verschlüsselt über einen Videoserver in Deutschland. Er leitet sie nur weiter und speichert nichts davon. |
+| Chat und Dateien | Nachrichten und Dateien aus dem Chat werden auf Servern in Deutschland gespeichert, bis {Coach} sie löscht. |
+| KI | Es läuft keine Transkription und keine Auswertung durch KI. |
+
+**Abgeleitet aus dem Zustand:** `CallAccessResponse` bekommt ein Feld `privacy` mit `recording`, `transcription` und `endToEndEncrypted`, heute fest `false`, gesetzt an einer Stelle in der API. Der Warteraum wählt die Texte nach diesen Werten. Mit der Aufnahme (Phase 6) und der Ende-zu-Ende-Verschlüsselung setzt die API die Werte je Termin, und der Kasten zeigt die passenden Texte, statt falsch zu werden. Texte für `true` kommen mit den Funktionen.
+
+### Abnahme im Browser
+
+- **Registrierung ohne Haken:** Das Formular meldet die fehlende Zustimmung. Ein direkter Aufruf von `/api/auth/sign-up/email` ohne `acceptTerms` liefert `400`.
+- **Registrierung mit Haken:** Konto entsteht, `terms_acceptances` enthält die Fassung `2026-10-27`. Die Bestätigungsmail verlinkt AGB und AVV. Nach der Anmeldung erscheint kein Modal.
+- **Seed-Coach ohne Zustimmung:** Nach der Anmeldung erscheint das Modal, die App dahinter ist gesperrt. Nach „Annehmen“ ist es weg, auch nach einem Neuladen.
+- **Betreiber übernimmt einen Coach ohne Zustimmung:** kein Modal, nur der Hinweis. Ein `POST` auf `/account/terms` liefert `403`.
+- **Einstellungen → Rechtliches:** Datum und Fassung stehen dort.
+- **Warteraum:** Der Kasten zeigt die vier Aussagen und den Namen des Coachs. Der Link führt auf die Datenschutzerklärung der Buchungsseite. Auf dem Handy ist er ohne waagrechtes Scrollen lesbar.
+
+**Umgesetzt** wie beschrieben: `packages/shared/src/terms.ts`, Migration `0033` (`terms_acceptances`), `account/terms.service.ts`, `TermsAcceptanceModal.vue` im Layout der Coach-App, Abschnitt „Deine Verträge mit HxRoom“ unter Einstellungen → Rechtliches; `WaitingRoomPrivacy.vue` in der Buchungsseite, `callPrivacy()` in `call/call-access.ts`. Der Kasten steht unter der Terminkachel. Für Werte `true` entfällt die jeweilige Zeile, bis die Funktion ihren Text mitbringt.
+
+**Lokal abgenommen** (Skript gegen die API, Chrome per Playwright):
+- Registrierung ohne `acceptTerms` und mit `acceptTerms: "yes"`: `400 TERMS_NOT_ACCEPTED`. Mit `true`: Konto und Zeile `2026-10-27` in `terms_acceptances`.
+- Formular ohne Haken: „Bitte stimme den AGB und dem AVV zu.“ Mit Haken: Hinweis auf die Bestätigungsmail. Die Links zeigen auf `/agb` und `/avv` der Landingpage.
+- Anna ohne Zustimmung: Modal, „Annehmen“ erst nach dem Haken aktiv, Escape und Klick daneben schließen nicht. Nach dem Annehmen weg, auch nach dem Neuladen. Auf dem Handy ohne waagrechtes Scrollen.
+- Einstellungen → Rechtliches: „Angenommen am 27.10.2026, 07:47 (Fassung vom 27. Oktober 2026)“.
+- Ältere Fassung im `POST`: `400`. Zweiter `POST`: keine zweite Zeile.
+- Betreiber übernimmt Tobias: `impersonated: true`, `POST` liefert `403`.
+- Warteraum (Desktop und Handy): vier Aussagen, Link „Datenschutzerklärung von Anna Bergmann“ auf `/datenschutz`, kein waagrechtes Scrollen. Die vier Icons sind im Produktions-Build gebündelt.
+
+### Inbetriebnahme
+
+- `git pull` und `./redeploy.sh`. Die Migration läuft beim Start der API.
+- Mit dem Demo-Konto anmelden und AGB und AVV im Modal annehmen. Dasselbe gilt für jedes andere bestehende Coach-Konto beim nächsten Anmelden.
+
+---
+
 ## Schritt 6 · Probe-Sitzung, Checkliste, „Kommt bald“ ausblenden ✅
 
 **Stand:** ✅ 6a, 6b und 6c umgesetzt, lokal und in Produktion abgenommen.
@@ -670,9 +743,9 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 ---
 
-## Schritt 10 · Datenexport auf Knopfdruck
+## Schritt 10 · Datenexport auf Knopfdruck ✅
 
-**Stand:** umgesetzt im Branch `data-export` und lokal abgenommen.
+**Stand:** ✅ umgesetzt, lokal und in Produktion abgenommen.
 
 **Ziel:** Der Coach lädt seine Klienten, Termine und Notizen jederzeit selbst herunter, ohne beim Betreiber anfragen zu müssen. Das deckt das Recht auf Datenübertragbarkeit ab (`legal.md`, „Kündigung & Datenexport“) und ist der Weg vor einer Kontolöschung.
 
@@ -731,5 +804,5 @@ Nicht enthalten: Probe-Sitzungen (sie werden nach 24 Stunden ohnehin gelöscht),
 
 ### Inbetriebnahme
 
-- `git pull` und `./redeploy.sh`, Export mit dem Demo-Konto in der Produktion prüfen.
-- Danach geht auch die neue Landingpage in Betrieb (Schritt 9).
+- ✅ `git pull` und `./redeploy.sh`, Export mit dem Demo-Konto in der Produktion prüfen.
+- Damit geht auch die neue Landingpage in Betrieb (Schritt 9).
