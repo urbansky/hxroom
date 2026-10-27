@@ -26,10 +26,11 @@ type TabValue = 'availability' | 'settings' | 'sync'
 // Dort wechselt man die Darstellung derselben Termine, hier den Bereich.
 // "Zeiten" statt "Verfügbarkeit": Die Seitenüberschrift sagt bereits, worum es geht –
 // der Tab muss sie nicht wiederholen.
+// "Kalendersync" kündigt bisher nur an und bleibt in der Beta ausgeblendet (utils/beta.ts).
 const TAB_ITEMS = [
   { label: 'Zeiten', value: 'availability' },
   { label: 'Einstellungen', value: 'settings' },
-  { label: 'Kalendersync', value: 'sync' },
+  ...(SHOW_UPCOMING_FEATURES ? [{ label: 'Kalendersync', value: 'sync' }] : []),
 ]
 const activeTab = ref<TabValue>('availability')
 
@@ -172,22 +173,24 @@ async function deleteDraft() {
         :model-value="activeTab"
         variant="link"
         :content="false"
-        :ui="{ list: 'border-b-0 mb-0' }"
+        :ui="{ list: 'border-b-0 mb-0', trigger: 'max-sm:px-2' }"
         @update:model-value="activeTab = $event as TabValue"
       />
 
       <!-- Nur im Verfügbarkeits-Tab, aber ohne Sprung beim Tabwechsel: Die Höhe der
            Zeile gibt der Umschalter vor. Gefüllt wie "Klient anlegen" in der
-           Klientenliste – die einzige Aktion der Seite trägt die sonst leise Zeile. -->
+           Klientenliste – die einzige Aktion der Seite trägt die sonst leise Zeile.
+           Auf dem Handy nur das Plus: Neben den Reitern ist für die Beschriftung kein Platz. -->
       <UButton
         v-if="activeTab === 'availability'"
         icon="i-lucide-plus"
         size="sm"
         color="primary"
-        class="mb-2"
+        class="mb-2 shrink-0"
+        aria-label="Zeit hinzufügen"
         @click="openCreate()"
       >
-        Zeit hinzufügen
+        <span class="max-sm:hidden">Zeit hinzufügen</span>
       </UButton>
     </div>
 

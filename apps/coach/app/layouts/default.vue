@@ -234,13 +234,12 @@ const pageTitle = computed(() => {
     </UDashboardSidebar>
 
     <UDashboardPanel>
-<!--      <template #header>-->
-<!--        <UDashboardNavbar :title="pageTitle">-->
-<!--          <template #right>-->
-<!--            <UColorModeButton />-->
-<!--          </template>-->
-<!--        </UDashboardNavbar>-->
-<!--      </template>-->
+      <!-- Nur auf Handy und Tablet (phase5-umsetzungsplan.md, Schritt 11): Dort ist die
+           Seitenleiste ausgeblendet, und erst der Menüknopf der Kopfleiste öffnet sie als
+           Slideover. Auf dem Rechner tragen die Seiten ihre Überschrift selbst. -->
+      <template #header>
+        <UDashboardNavbar :title="pageTitle" class="lg:hidden" />
+      </template>
 
       <template #body>
         <UAlert
@@ -248,7 +247,7 @@ const pageTitle = computed(() => {
           icon="i-lucide-alert-triangle"
           color="warning"
           variant="soft"
-          class="mb-4"
+          class="mb-4 shrink-0"
           :title="`Dein Konto wird am ${deletionDateLabel} gelöscht`"
           description="Deine Buchungsseite ist offline. Bis zum Stichtag kannst du die Löschung zurücknehmen."
           :actions="[{ label: 'Löschung zurücknehmen', color: 'warning', variant: 'outline', to: '/settings/account' }]"
@@ -258,7 +257,7 @@ const pageTitle = computed(() => {
           icon="i-lucide-scale"
           color="info"
           variant="soft"
-          class="mb-4"
+          class="mb-4 shrink-0"
           title="Dieser Coach hat AGB und AVV noch nicht angenommen"
           description="Die Frage erscheint beim nächsten eigenen Anmelden des Coachs."
         />

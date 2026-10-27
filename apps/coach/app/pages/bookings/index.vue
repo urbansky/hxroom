@@ -15,6 +15,19 @@ const router = useRouter()
 // Query-Parameter.
 const viewMode = ref<'agenda' | 'week'>(route.query.view === 'week' ? 'week' : 'agenda')
 
+// Auf dem Handy (unter sm) gibt es nur die Agenda: Sieben Spalten sind dort gut 30 px breit,
+// die Termine wären Streifen ohne lesbaren Text (phase5-umsetzungsplan.md, Schritt 11).
+// Den Umschalter blendet das Template aus; hier wird auch ein Link mit ?view=week umgelenkt.
+const phoneQuery = import.meta.client ? window.matchMedia('(max-width: 639.98px)') : null
+function enforceAgendaOnPhone() {
+  if (phoneQuery?.matches) viewMode.value = 'agenda'
+}
+onMounted(() => {
+  enforceAgendaOnPhone()
+  phoneQuery?.addEventListener('change', enforceAgendaOnPhone)
+})
+onBeforeUnmount(() => phoneQuery?.removeEventListener('change', enforceAgendaOnPhone))
+
 type FilterValue = 'upcoming' | 'past' | 'cancelled'
 // Drei Schalter statt eines Auswahlfelds: Der Wechsel zwischen kommenden und vergangenen
 // Terminen ist die häufigste Bewegung auf dieser Seite und soll einen Klick kosten, nicht zwei.
@@ -171,7 +184,7 @@ const emptyStateText = computed(() => {
     <p class="text-muted mb-6">Alle Termine, die Klienten bei dir gebucht haben.</p>
 
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
-      <div class="inline-flex items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
+      <div class="inline-flex max-sm:hidden items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
         <button
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"

@@ -209,7 +209,7 @@ const plannedFeatures = [
     <h1 class="font-serif text-3xl text-highlighted mb-2">Sitzungsangebote</h1>
     <p class="text-muted mb-8">Lege fest, welche Sitzungsformate deine Klienten buchen können – mit Name, Dauer, Preis und einer ausführlichen Beschreibung.</p>
 
-    <div class="flex items-center justify-between gap-4 mb-3">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-3">
       <p class="text-sm text-muted">
         <template v-if="inactiveCount > 0">{{ activeCount }} aktive Angebote ({{ inactiveCount }} inaktive)</template>
         <template v-else>{{ rows.length }} {{ rows.length === 1 ? 'Angebot' : 'Angebote' }}</template>
