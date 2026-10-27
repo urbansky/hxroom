@@ -9,6 +9,12 @@ function buildOrigin(config: ConfigService, slug: string): string {
   return `${https ? 'https' : 'http'}://${slug}.${rootDomain}`;
 }
 
+/** hxroom.de selbst, etwa für AGB und AVV in der Bestätigungsmail der Registrierung. */
+export function buildLandingUrl(config: ConfigService): string {
+  const https = config.get<string>('ROOT_DOMAIN_HTTPS') === 'true';
+  return `${https ? 'https' : 'http'}://${config.getOrThrow<string>('ROOT_DOMAIN')}`;
+}
+
 export function buildBookingPageUrl(config: ConfigService, slug: string): string {
   return buildOrigin(config, slug);
 }

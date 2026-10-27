@@ -30,6 +30,14 @@ export {
   type ListFeedbackQuery,
 } from './feedback.js';
 export {
+  TERMS_VERSION,
+  termsStatusSchema,
+  acceptTermsSchema,
+  formatTermsVersion,
+  type TermsStatus,
+  type AcceptTermsDto,
+} from './terms.js';
+export {
   MONITORING_EXCLUDED_INTEGRATIONS,
   sanitizeMonitoringEvent,
   scrubSensitiveData,
@@ -568,8 +576,17 @@ export const callAccessResponseSchema = z.object({
   // neu ausgestellt. Er begrenzt nur das Zeitfenster zum Verbinden, nicht die
   // Gesprächsdauer (technisches-konzept.md §8).
   livekit: z.object({ url: z.string(), token: z.string().nullable() }).nullable(),
+  // Was mit dem Gespräch geschieht – Grundlage des Datenschutz-Kastens im Warteraum
+  // (phase5-umsetzungsplan.md, 5b). Der Kasten wählt seine Aussagen nach diesen Werten,
+  // damit sie mit Aufnahme und Ende-zu-Ende-Verschlüsselung (Phase 6) nicht falsch werden.
+  privacy: z.object({
+    recording:         z.boolean(),
+    transcription:     z.boolean(),
+    endToEndEncrypted: z.boolean(),
+  }),
 });
 export type CallAccessResponse = z.infer<typeof callAccessResponseSchema>;
+export type CallPrivacy = CallAccessResponse['privacy'];
 
 // Seitenleiste „Klient“ im Call des Coachs. Ein eigener Abruf statt weiterer Felder in
 // CallAccessResponse: Jene Antwort geht auch an den Klienten, und aus seinem Zugangslink

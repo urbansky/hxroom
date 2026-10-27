@@ -30,6 +30,8 @@ const linkClass = 'text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) tra
         <ul class="flex flex-col gap-2.5">
           <li><NuxtLink to="/impressum" :class="linkClass">Impressum</NuxtLink></li>
           <li><NuxtLink to="/datenschutz" :class="linkClass">Datenschutz</NuxtLink></li>
+          <li><NuxtLink to="/agb" :class="linkClass">AGB</NuxtLink></li>
+          <li><NuxtLink to="/avv" :class="linkClass">AVV</NuxtLink></li>
           <li><a href="mailto:kontakt@hxroom.de" :class="linkClass">Kontakt</a></li>
         </ul>
       </nav>

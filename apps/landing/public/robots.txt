@@ -1,6 +1,8 @@
 User-agent: *
 Disallow: /impressum
 Disallow: /datenschutz
+Disallow: /agb
+Disallow: /avv
 Disallow: /old
 Disallow: /blog
 
@@ -8,6 +10,8 @@ User-agent: GPTBot
 Allow: /
 Disallow: /impressum
 Disallow: /datenschutz
+Disallow: /agb
+Disallow: /avv
 Disallow: /old
 Disallow: /blog
 
@@ -15,5 +19,7 @@ User-agent: OAI-SearchBot
 Allow: /
 Disallow: /impressum
 Disallow: /datenschutz
+Disallow: /agb
+Disallow: /avv
 Disallow: /old
 Disallow: /blog
