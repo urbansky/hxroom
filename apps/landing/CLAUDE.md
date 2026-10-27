@@ -3,7 +3,7 @@
 ## SEO & Crawler-Konfiguration
 
 `apps/landing` ist öffentlich indexierbar. Nur Rechtsseiten sind ausgeschlossen:
-- `impressum.vue` und `datenschutz.vue` haben `{ name: 'robots', content: 'noindex, follow' }` – das bleibt so.
+- `impressum.vue`, `datenschutz.vue`, `agb.vue` und `avv.vue` haben `{ name: 'robots', content: 'noindex, follow' }` – das bleibt so.
 - `apps/bookingpage` hat weiterhin noindex (Pre-Launch) – dort nichts ändern.
 
 **robots.txt** (`apps/landing/public/robots.txt`) und **llms.txt** (`apps/landing/public/llms.txt`) müssen bei inhaltlichen Änderungen an der Landing-Page aktuell gehalten werden:
