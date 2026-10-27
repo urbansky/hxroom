@@ -232,6 +232,13 @@
       "when": 1792125990914,
       "tag": "0032_wooden_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793083449428,
+      "tag": "0033_cheerful_joshua_kane",
+      "breakpoints": true
     }
   ]
 }

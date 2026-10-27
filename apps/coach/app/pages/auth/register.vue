@@ -5,6 +5,8 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 definePageMeta({ layout: 'auth' })
 
 const { $authClient } = useNuxtApp()
+const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
+const landingUrl = `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`
 
 const registered = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -14,6 +16,9 @@ const schema = z.object({
   name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
   email: z.string().email('Ungültige E-Mail-Adresse'),
   password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
+  // AGB §1: HxRoom ist nur für Unternehmer. Die API prüft dasselbe noch einmal
+  // (hooks.before in auth.module.ts).
+  acceptTerms: z.boolean().optional().refine(v => v === true, 'Bitte stimme den AGB und dem AVV zu.'),
 })
 
 type Schema = z.infer<typeof schema>
@@ -22,12 +27,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = null
   pending.value = true
   try {
-    const { error } = await $authClient.signUp.email({
+    // `acceptTerms` kennt der better-auth-Client nicht; geprüft wird es von hooks.before in
+    // apps/api/src/auth/auth.module.ts. Als Variable übergeben, damit TypeScript das
+    // zusätzliche Feld durchlässt.
+    const body = {
       name: event.data.name,
       email: event.data.email,
       password: event.data.password,
+      acceptTerms: true,
       callbackURL: `${window.location.origin}/auth/login?verified=true`,
-    })
+    }
+    const { error } = await $authClient.signUp.email(body)
     if (error) {
       errorMessage.value = mapAuthError(error, 'Registrierung fehlgeschlagen.')
     } else {
@@ -79,11 +89,27 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 required: true,
                 autocomplete: 'new-password',
               },
+              {
+                name: 'acceptTerms',
+                type: 'checkbox',
+                required: true,
+              },
             ]"
             :schema="schema"
             :submit="{ label: 'Konto erstellen', loading: pending }"
             @submit="onSubmit"
           >
+            <template #acceptTerms-field="{ state }">
+              <UCheckbox v-model="state.acceptTerms" :ui="{ label: 'font-normal text-muted' }">
+                <template #label>
+                  Ich nutze HxRoom für meine selbständige berufliche Tätigkeit und stimme den
+                  <ULink :to="`${landingUrl}/agb`" target="_blank" class="text-primary underline underline-offset-2">AGB</ULink>
+                  und dem
+                  <ULink :to="`${landingUrl}/avv`" target="_blank" class="text-primary underline underline-offset-2">Auftragsverarbeitungsvertrag</ULink>
+                  zu.
+                </template>
+              </UCheckbox>
+            </template>
             <template #footer>
               <p class="text-center text-sm text-(--ui-text-muted)">
                 Bereits registriert?

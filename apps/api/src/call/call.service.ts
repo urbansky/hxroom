@@ -7,7 +7,7 @@ import { bookingPage, bookings } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { tokenMatches } from '../common/client-token';
 import { callWindowClosesAt, callWindowOpensAt } from '@hxroom/shared';
-import { canAdmit, canEnd, mayJoinRoom, mayReachRoom, resolveCallState } from './call-access';
+import { callPrivacy, canAdmit, canEnd, mayJoinRoom, mayReachRoom, resolveCallState } from './call-access';
 import { CallEventsService } from './call-events.service';
 import { callIdentity, callRoomName, createCallToken, livekitUrl } from './livekit-token';
 import type { CallAccessResponse } from '@hxroom/shared';
@@ -353,6 +353,7 @@ export class CallService {
       admittedAt:   booking.admittedAt?.toISOString() ?? null,
       clientOnline: this.events.isClientOnline(booking.id),
       livekit:      await this.livekitAccess(booking, actor, state, coachName),
+      privacy:      callPrivacy(),
     };
   }
 

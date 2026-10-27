@@ -43,5 +43,6 @@ declare module 'vue' {
     UTextarea: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
     UTooltip: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
     WaitingRoom: typeof import('./src/components/WaitingRoom.vue')['default']
+    WaitingRoomPrivacy: typeof import('./src/components/WaitingRoomPrivacy.vue')['default']
   }
 }

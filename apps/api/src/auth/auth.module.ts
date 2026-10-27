@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { betterAuth, generateId } from 'better-auth';
-import { APIError } from 'better-auth/api';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, organization } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
@@ -16,7 +16,10 @@ import * as schema from '../db/schema';
 import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
 import { ActivityTracker } from './activity-tracker';
-import { isReservedSlug, isValidSlugFormat } from '@hxroom/shared';
+import { buildLandingUrl } from '../bookings/booking-urls';
+import { TERMS_VERSION, isReservedSlug, isValidSlugFormat } from '@hxroom/shared';
+
+const SIGN_UP_PATH = '/sign-up/email';
 
 export const AUTH = Symbol('AUTH');
 export type Auth = ReturnType<typeof betterAuth>;
@@ -72,10 +75,33 @@ export type Auth = ReturnType<typeof betterAuth>;
               adminRoles: [...ADMIN_ROLES],
             }),
           ],
+          hooks: {
+            // Registrieren heißt AGB und AVV annehmen (phase5-umsetzungsplan.md, 5a). Die
+            // Checkbox im Formular allein hielte niemanden auf, der den Endpunkt direkt ruft.
+            before: createAuthMiddleware(async (ctx) => {
+              if (ctx.path !== SIGN_UP_PATH) return;
+              if ((ctx.body as { acceptTerms?: unknown } | undefined)?.acceptTerms !== true) {
+                throw new APIError('BAD_REQUEST', {
+                  message: 'Terms must be accepted',
+                  code: 'TERMS_NOT_ACCEPTED',
+                });
+              }
+            }),
+          },
           databaseHooks: {
             user: {
               create: {
-                after: async (user) => {
+                after: async (user, ctx) => {
+                  // Die Zustimmung hat hooks.before schon geprüft. Wer auf anderem Weg
+                  // entsteht (admin.createUser), stimmt beim ersten Anmelden im Modal zu.
+                  if (ctx?.path === SIGN_UP_PATH) {
+                    await db.insert(schema.termsAcceptances).values({
+                      userId: user.id,
+                      version: TERMS_VERSION,
+                    });
+                  }
+
+
                   // Betreiber gehören zu keiner Organisation: ohne Mitgliedschaft bleibt
                   // activeOrganizationId leer und die Coach-Endpunkte weisen sie ab.
                   // Für Coachs – auch für die vom Betreiber per admin.createUser
@@ -185,7 +211,12 @@ export type Auth = ReturnType<typeof betterAuth>;
                   : 'E-Mail-Adresse bestätigen – HxRoom',
                 htmlContent: isEmailChange
                   ? await renderEmailChangeVerificationEmail({ name: user.name, verifyUrl: markEmailChangeCompleted(url) })
-                  : await renderEmailVerificationEmail({ name: user.name, verifyUrl: url }),
+                  : await renderEmailVerificationEmail({
+                    name: user.name,
+                    verifyUrl: url,
+                    termsUrl: `${buildLandingUrl(config)}/agb`,
+                    dpaUrl: `${buildLandingUrl(config)}/avv`,
+                  }),
               });
             },
           },

@@ -4,9 +4,20 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { requestAccountDeletionSchema, type RequestAccountDeletionDto } from '@hxroom/shared';
+import {
+  acceptTermsSchema,
+  requestAccountDeletionSchema,
+  type RequestAccountDeletionDto,
+} from '@hxroom/shared';
 import { AccountDeletionService } from './account-deletion.service';
 import { ExportService } from './export/export.service';
+import { TermsService } from './terms.service';
+
+/** Hat ein Betreiber diese Sitzung übernommen (better-auth admin plugin)? */
+function isImpersonated(req: Request): boolean {
+  const session = (req as Request & { session?: { session?: { impersonatedBy?: string | null } } }).session;
+  return !!session?.session?.impersonatedBy;
+}
 
 /**
  * Eigenes Konto des Coachs. Passwort ändern und E-Mail-Adresse wechseln laufen direkt über
@@ -23,7 +34,26 @@ export class AccountController {
   constructor(
     private readonly deletionService: AccountDeletionService,
     private readonly exportService: ExportService,
+    private readonly termsService: TermsService,
   ) {}
+
+  /** Zustimmung zu AGB und AVV (phase5-umsetzungsplan.md, 5a). */
+  @Get('terms')
+  termsStatus(@CurrentUser() sessionUser: SessionUser | undefined, @Req() req: Request) {
+    if (!sessionUser) throw new UnauthorizedException('Not authenticated');
+    return this.termsService.status(sessionUser.id, isImpersonated(req));
+  }
+
+  @Post('terms')
+  acceptTerms(
+    @CurrentUser() sessionUser: SessionUser | undefined,
+    // Nur zur Prüfung: Die Coach-App schickt die Fassung, die sie gezeigt hat.
+    @Body(new ZodValidationPipe(acceptTermsSchema)) _dto: unknown,
+    @Req() req: Request,
+  ) {
+    if (!sessionUser) throw new UnauthorizedException('Not authenticated');
+    return this.termsService.accept(sessionUser.id, isImpersonated(req));
+  }
 
   @Get('deletion')
   status(@CurrentOrganization() org: { id: string } | undefined) {

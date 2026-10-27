@@ -277,14 +277,18 @@ describe('Buchungs-Mail-Templates', () => {
 // Markup aus, hat er keinen Ausweg mehr – deshalb wird hier jeweils genau darauf geprüft.
 describe('Account-Mail-Templates', () => {
   describe('Registrierung: E-Mail-Verifizierung', () => {
-    it('rendert Name und Bestätigungslink', async () => {
+    it('rendert Name, Bestätigungslink sowie AGB und AVV', async () => {
       const html = await renderEmailVerificationEmail({
         name: 'Anna Bergmann',
         verifyUrl: 'https://api.hxroom.de/api/auth/verify-email?token=abc',
+        termsUrl: 'https://hxroom.de/agb',
+        dpaUrl: 'https://hxroom.de/avv',
       });
 
       expect(html).toContain('Anna Bergmann');
       expect(html).toContain('https://api.hxroom.de/api/auth/verify-email?token=abc');
+      expect(html).toContain('href="https://hxroom.de/agb"');
+      expect(html).toContain('href="https://hxroom.de/avv"');
     });
   });
 

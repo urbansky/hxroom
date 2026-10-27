@@ -24,6 +24,8 @@ const MESSAGES: Record<string, string> = {
   CREDENTIAL_ACCOUNT_NOT_FOUND:   'Für dieses Konto ist keine Passwort-Anmeldung eingerichtet.',
   SESSION_EXPIRED:                'Deine Sitzung ist abgelaufen. Bitte melde dich neu an.',
   FAILED_TO_UPDATE_USER:          'Die Änderung konnte nicht gespeichert werden.',
+  // Eigener Code aus hooks.before in apps/api/src/auth/auth.module.ts
+  TERMS_NOT_ACCEPTED:             'Bitte stimme den AGB und dem Auftragsverarbeitungsvertrag zu.',
 }
 
 interface AuthErrorLike {

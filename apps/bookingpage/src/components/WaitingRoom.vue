@@ -3,6 +3,7 @@ import { computed, watch } from 'vue';
 import { configureLivekit, prepareCall, useCallRoom } from '@hxroom/livekit';
 import { CallDeviceSetup, namedDevices } from '@hxroom/ui';
 import { deviceNotice } from '../utils/deviceText';
+import WaitingRoomPrivacy from './WaitingRoomPrivacy.vue';
 import { formatCountdown, formatDayTimeRange, formatTime } from '../utils/datetime';
 import { offerColor, type CallAccessResponse } from '@hxroom/shared';
 
@@ -171,6 +172,8 @@ const notice = computed(() => deviceNotice(cameraIssue.value, microphoneIssue.va
         </div>
       </div>
     </div>
+
+    <WaitingRoomPrivacy :privacy="call.privacy" :coach-name="call.coachName" />
 
     <p v-if="canCancel" class="text-xs text-muted">
       Du kannst den Termin nicht wahrnehmen?

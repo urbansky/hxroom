@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 import { Logo } from '@hxroom/ui'
-import type { AccountDeletionStatus } from '@hxroom/shared'
+import type { AccountDeletionStatus, TermsStatus } from '@hxroom/shared'
 
 type NavItem = NavigationMenuItem & { description?: string }
 
@@ -132,6 +132,16 @@ const { data: deletion } = await useFetch<AccountDeletionStatus>('/account/delet
   default: () => ({ scheduledFor: null }),
 })
 
+// AGB und AVV (phase5-umsetzungsplan.md, 5a): Wer noch keiner Fassung zugestimmt hat, holt das
+// hier nach, bevor er weiterarbeitet. In einer vom Betreiber übernommenen Sitzung nur ein
+// Hinweis – zustimmen kann nur der Coach selbst. Ein Fehler beim Laden sperrt niemanden aus.
+const { data: terms, refresh: refreshTerms } = await useFetch<TermsStatus | null>('/account/terms', {
+  $fetch: $api,
+  key: 'terms-status',
+  default: () => null,
+})
+const termsMissing = computed(() => !!terms.value && terms.value.acceptedVersion === null)
+
 const deletionDateLabel = computed(() => {
   const scheduledFor = deletion.value?.scheduledFor
   if (!scheduledFor) return null
@@ -243,6 +253,16 @@ const pageTitle = computed(() => {
           description="Deine Buchungsseite ist offline. Bis zum Stichtag kannst du die Löschung zurücknehmen."
           :actions="[{ label: 'Löschung zurücknehmen', color: 'warning', variant: 'outline', to: '/settings/account' }]"
         />
+        <UAlert
+          v-if="termsMissing && terms?.impersonated"
+          icon="i-lucide-scale"
+          color="info"
+          variant="soft"
+          class="mb-4"
+          title="Dieser Coach hat AGB und AVV noch nicht angenommen"
+          description="Die Frage erscheint beim nächsten eigenen Anmelden des Coachs."
+        />
+        <TermsAcceptanceModal :open="termsMissing && !terms?.impersonated" @accepted="refreshTerms()" />
         <slot />
       </template>
     </UDashboardPanel>

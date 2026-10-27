@@ -3,10 +3,12 @@ import type { FormError } from '@nuxt/ui'
 import {
   LEGAL_FORMS,
   bookingPageLegalSchema,
+  formatTermsVersion,
   isCompanyLegalForm,
   requiresRegister,
   type Imprint,
   type LegalForm,
+  type TermsStatus,
 } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
@@ -256,6 +258,20 @@ const confirmedAtLabel = computed(() =>
     : null,
 )
 
+// Dieselben Daten wie das Zustimmungs-Modal im Layout (gleicher Schlüssel).
+const landingUrl = `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`
+const { data: terms } = await useFetch<TermsStatus | null>('/account/terms', {
+  $fetch: $api,
+  key: 'terms-status',
+  default: () => null,
+})
+const termsAcceptedLabel = computed(() => {
+  const t = terms.value
+  if (!t?.acceptedVersion || !t.acceptedAt) return null
+  const at = new Date(t.acceptedAt).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
+  return `Angenommen am ${at} (Fassung vom ${formatTermsVersion(t.acceptedVersion)})`
+})
+
 const inputUi = { base: 'bg-white dark:bg-neutral-800' }
 
 const features = [
@@ -466,6 +482,18 @@ const features = [
         </div>
       </SettingsSection>
     </UForm>
+
+    <!-- Verträge mit HxRoom (phase5-umsetzungsplan.md, 5a) -->
+    <SettingsSection title="Deine Verträge mit HxRoom" description="AGB und Auftragsverarbeitungsvertrag gelten für deine Nutzung von HxRoom und die Daten deiner Klienten.">
+      <p v-if="termsAcceptedLabel" class="text-sm text-default flex items-center gap-2">
+        <UIcon name="i-lucide-circle-check" class="size-4 text-success shrink-0" />
+        {{ termsAcceptedLabel }}
+      </p>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
+        <ULink :to="`${landingUrl}/agb`" target="_blank" class="text-sm text-primary underline underline-offset-2">AGB</ULink>
+        <ULink :to="`${landingUrl}/avv`" target="_blank" class="text-sm text-primary underline underline-offset-2">Auftragsverarbeitungsvertrag</ULink>
+      </div>
+    </SettingsSection>
 
     <SettingsSection v-if="SHOW_UPCOMING_FEATURES" title="Geplante Features" description="Das kommt als Nächstes.">
       <div class="flex flex-col gap-2">

@@ -414,6 +414,18 @@ export const clientDeletions = pgTable('client_deletions', {
   filesDeleted:    integer('files_deleted').notNull(),
 });
 
+// Zustimmung der Coachs zu AGB und AVV (doc/phase5-umsetzungsplan.md, 5a). Eine Zeile je
+// angenommener Fassung (TERMS_VERSION), ohne IP-Adresse. Hängt mit Cascade am User: Mit dem
+// Konto endet auch der Vertrag.
+export const termsAcceptances = pgTable('terms_acceptances', {
+  id:         text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:     text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  version:    text('version').notNull(),
+  acceptedAt: timestamp('accepted_at').notNull().defaultNow(),
+}, (table) => [
+  unique('terms_acceptances_user_version_unique').on(table.userId, table.version),
+]);
+
 // Rückmeldungen der Coachs über den Feedback-Knopf (doc/phase5-umsetzungsplan.md, 7a).
 // Hängt mit Cascade an Organisation und User: Mit dem Konto verschwindet auch das Feedback.
 export const feedback = pgTable('feedback', {

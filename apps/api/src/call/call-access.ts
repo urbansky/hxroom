@@ -1,5 +1,5 @@
 import { callWindowClosesAt, callWindowOpensAt } from '@hxroom/shared';
-import type { BookingStatus, CallState } from '@hxroom/shared';
+import type { BookingStatus, CallPrivacy, CallState } from '@hxroom/shared';
 
 // Das Zugangsfenster selbst liegt in @hxroom/shared: Der Server entscheidet über den
 // Zugang, das Backoffice des Coachs blendet danach den "Sitzung starten"-Knopf ein (A5).
@@ -111,4 +111,14 @@ export function mayReachRoom(state: CallState): boolean {
 export function mayRemoveChatFile(remover: CallRole, sender: CallRole, state: CallState): boolean {
   if (remover === 'coach') return true;
   return sender === 'client' && state === 'admitted';
+}
+
+/**
+ * Was mit dem Gespräch geschieht, für den Datenschutz-Kasten im Warteraum
+ * (phase5-umsetzungsplan.md, 5b). Heute gibt es weder Aufnahme noch Transkription, und
+ * LiveKit entschlüsselt die Medien zum Weiterleiten (technisches-konzept.md §16, Punkt 08).
+ * Kommen diese Funktionen, entscheidet sich hier je Termin, was der Klient zu lesen bekommt.
+ */
+export function callPrivacy(): CallPrivacy {
+  return { recording: false, transcription: false, endToEndEncrypted: false };
 }
