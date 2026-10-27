@@ -41,23 +41,25 @@
   max-width: 560px;
 }
 
+/* Abschnitte ohne Rahmen, getrennt durch eine dünne Linie */
 .legal-section {
-  margin-bottom: 24px;
+  padding-bottom: 36px;
+}
+.legal-section + .legal-section {
+  padding-top: 36px;
+  border-top: 1px solid var(--ui-border);
 }
 
 .legal-section-label {
-  font-size: 11px;
-  color: var(--color-sage-700);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ui-text-highlighted);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  margin-bottom: 14px;
-  padding-left: 4px;
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
   gap: 10px;
-}
-.dark .legal-section-label {
-  color: var(--color-sage-200);
 }
 /* Abschnittsnummer der Datenschutzerklärung */
 .legal-section-label .num {
@@ -126,14 +128,9 @@
   color: var(--ui-text-muted);
 }
 
-.legal-card {
-  background: var(--ui-bg-elevated);
-  border: 1px solid var(--ui-border);
-  border-radius: 16px;
-  padding: 28px 32px;
-}
+/* Textblock innerhalb eines Abschnitts – bewusst ohne Box */
 .legal-card + .legal-card {
-  margin-top: 16px;
+  margin-top: 28px;
 }
 .legal-card h2 {
   font-family: var(--font-serif);
@@ -310,9 +307,6 @@
 }
 
 @media (max-width: 700px) {
-  .legal-card {
-    padding: 22px 22px;
-  }
   .legal-glance,
   .legal-meta-grid,
   .legal-rights-grid {

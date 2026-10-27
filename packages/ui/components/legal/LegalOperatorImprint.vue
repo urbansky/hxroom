@@ -36,8 +36,12 @@ const { variant = 'full' } = defineProps<{ variant?: 'full' | 'operator' }>()
           <div class="val"><a href="mailto:kontakt@hxroom.de">kontakt@hxroom.de</a></div>
         </div>
         <div class="legal-meta-item">
+          <div class="lbl">Telefon</div>
+          <div class="val"><a href="tel:+491739286781">+49 173 9286781</a></div>
+        </div>
+        <div class="legal-meta-item">
           <div class="lbl">Inhaltlich verantwortlich{{ variant === 'operator' ? ' für HxRoom' : '' }}</div>
-          <div class="val">Dr.-Ing. Stefan Urbansky</div>
+          <div class="val">Dr.-Ing. Stefan Urbansky, Anschrift wie oben</div>
         </div>
       </div>
     </div>

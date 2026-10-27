@@ -82,7 +82,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
 
   <!-- 1. VERANTWORTLICHER -->
   <section class="legal-section">
-    <div class="legal-section-label"><span class="num">1</span> Verantwortlicher</div>
+    <div class="legal-section-label"><span class="num">1</span> Verantwortlicher &amp; Kontakt</div>
     <div class="legal-card">
       <p class="legal-address">
         <strong>Dr.-Ing. Stefan Urbansky</strong><br>
@@ -96,6 +96,26 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
         </div>
       </div>
       <p class="muted mt-4">Für die Daten, die du bei einer Buchung über die Buchungsseite eines Coachs angibst, ist dieser Coach verantwortlich (Abschnitt 8). Ich verarbeite sie in seinem Auftrag nach Art. 28 DSGVO.</p>
+    </div>
+
+    <div class="legal-card">
+      <h3>Wenn du mir schreibst</h3>
+      <p>Schreibst du mir eine E-Mail, speichere ich deine Adresse, deinen Namen und den Inhalt deiner Nachricht, um dein Anliegen zu beantworten. Die Postfächer von HxRoom liegen bei der IONOS SE, Elgendorfer Straße 57, 56410 Montabaur, Deutschland.</p>
+
+      <div class="legal-meta-grid">
+        <div class="legal-meta-item">
+          <div class="lbl">Rechtsgrundlage</div>
+          <div class="val">Art. 6 Abs. 1 lit. f DSGVO; bei Fragen zu einem Vertrag Art. 6 Abs. 1 lit. b DSGVO</div>
+        </div>
+        <div class="legal-meta-item">
+          <div class="lbl">Speicherdauer</div>
+          <div class="val">bis dein Anliegen erledigt ist, länger nur bei gesetzlichen Aufbewahrungspflichten</div>
+        </div>
+        <div class="legal-meta-item">
+          <div class="lbl">Drittlandtransfer</div>
+          <div class="val">nein</div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -153,7 +173,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
 
     <div class="legal-card">
       <h2>Versanddienstleister: Brevo</h2>
-      <p class="muted">Sendinblue SAS (Marke „Brevo"), 106 Boulevard Haussmann, 75008 Paris, Frankreich. Verarbeitung und Speicherung in der EU. Mit Brevo besteht ein Vertrag zur Auftragsverarbeitung.</p>
+      <p class="muted">Brevo (Sendinblue SAS), Paris, Frankreich. Verarbeitung und Speicherung in der EU. Mit Brevo besteht ein Vertrag zur Auftragsverarbeitung.</p>
 
       <h3>Double-Opt-In</h3>
       <p>Nach deiner Eintragung bekommst du eine Bestätigungsmail. Erst nach Klick auf den Link darin trage ich dich in den Verteiler ein.</p>
@@ -173,7 +193,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       </div>
 
       <div class="legal-callout">
-        <strong>Abmeldung jederzeit.</strong> Jede Newsletter-Mail enthält einen Abmeldelink. Alternativ reicht eine kurze Nachricht an <a href="mailto:kontakt@hxroom.de">kontakt@hxroom.de</a>. Nach der Abmeldung lösche ich deine Daten aus dem aktiven Verteiler. Einwilligungsnachweise bewahre ich noch drei Jahre auf (gesetzliche Pflicht), danach werden auch sie gelöscht.
+        <strong>Abmeldung jederzeit.</strong> Jede Newsletter-Mail enthält einen Abmeldelink. Alternativ reicht eine kurze Nachricht an <a href="mailto:kontakt@hxroom.de">kontakt@hxroom.de</a>. Nach der Abmeldung lösche ich deine Daten aus dem aktiven Verteiler. Den Nachweis deiner Einwilligung (Zeitpunkt und IP-Adresse) bewahre ich noch drei Jahre auf, damit ich sie belegen kann, falls sie bestritten wird (Art. 7 Abs. 1 DSGVO, regelmäßige Verjährungsfrist). Danach wird auch er gelöscht.
       </div>
     </div>
   </section>
@@ -188,7 +208,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       <h3>Was Plausible erfasst</h3>
       <ul class="legal-list">
         <li>Aufgerufene Seite und Referrer (ohne Query-Parameter)</li>
-        <li>Standort (Land und Region – nicht genauer)</li>
+        <li>Standort (Land, Region und Stadt – aus der IP-Adresse abgeleitet, die danach verworfen wird)</li>
         <li>Gerätekategorie, Betriebssystem, Browser</li>
         <li>Aggregierte Seitenaufrufe und Sitzungsdauer</li>
       </ul>
@@ -220,7 +240,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       </div>
 
       <div class="legal-callout">
-        <strong>Opt-out möglich.</strong> Da Plausible keine Cookies setzt, gibt es keinen Cookie-Banner. Wer die Messung dennoch unterbinden möchte, kann einen Content-Blocker verwenden, der Anfragen an <em>plausible.io</em> blockiert, oder die „Do Not Track"-Einstellung im Browser aktivieren – Plausible respektiert dieses Signal.
+        <strong>Opt-out möglich.</strong> Da Plausible keine Cookies setzt, gibt es keinen Cookie-Banner. Wer die Messung dennoch unterbinden möchte, kann einen Content-Blocker verwenden, der Anfragen an <em>plausible.io</em> blockiert. Die „Do Not Track"-Einstellung des Browsers wertet Plausible nicht aus.
       </div>
       <p class="muted mt-4">Plausible läuft nur auf hxroom.de. In der App für Coachs und auf den Buchungsseiten findet keine Reichweitenmessung statt.</p>
     </div>
@@ -275,6 +295,9 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
 
       <h3>E-Mails</h3>
       <p>Bestätigung deiner Adresse, Zurücksetzen des Passworts, Benachrichtigungen über Buchungen und Absagen, Hinweise zur Löschung deines Kontos. Versand über Brevo (siehe Abschnitt 3).</p>
+
+      <h3>Rückmeldungen</h3>
+      <p>Schickst du mir über die App eine Rückmeldung, speichere ich deine Nachricht, die gewählte Kategorie, die Seite, auf der du warst (ohne Parameter), und die Browserkennung.</p>
 
       <div class="legal-meta-grid">
         <div class="legal-meta-item">
@@ -334,6 +357,9 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       </ul>
       <p>Dazu speichert HxRoom den gebuchten Termin und das Angebot. Ein Konto brauchst du nicht. Damit der Termin sicher bei dir ankommt, bestätigst du ihn über einen Link in einer E-Mail. Ohne Bestätigung verfällt die Anfrage nach 30 Minuten.</p>
 
+      <h3>Vom Coach eingetragen</h3>
+      <p>Der Coach kann dich auch selbst in HxRoom eintragen, etwa für ein spontanes Gespräch. Er gibt dann deinen Namen, deine E-Mail-Adresse und auf Wunsch deine Telefonnummer ein. Bei einem spontanen Gespräch bekommst du eine E-Mail mit dem Link zum Warteraum.</p>
+
       <h3>E-Mails zum Termin</h3>
       <p>Du bekommst E-Mails zur Bestätigung deines Termins, eine Erinnerung 24 Stunden und eine 1 Stunde vor Beginn sowie eine Nachricht, falls der Termin abgesagt wird. Die Mails enthalten persönliche Links zu Warteraum und Absage. Der Versand läuft über Brevo (Sendinblue SAS, Paris; Verarbeitung in der EU, Vertrag zur Auftragsverarbeitung).</p>
 
@@ -346,7 +372,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       <p>Nachrichten und Dateien, die du im Gespräch teilst, speichert HxRoom, damit der Coach sie nach dem Gespräch nachlesen kann. Jede Datei wird vor dem Speichern auf Viren geprüft. Aus Bildern entfernt HxRoom vorher eingebettete Metadaten wie den Aufnahmeort. Gespeichert werden die Dateien in Hetzner Object Storage in Deutschland.</p>
 
       <h3>Notizen des Coachs</h3>
-      <p>Der Coach kann sich während und nach dem Gespräch Notizen machen. Sie sind nur für ihn sichtbar.</p>
+      <p>Der Coach kann sich während und nach dem Gespräch Notizen machen und eine Anmerkung zu dir hinterlegen. Beides ist nur für ihn sichtbar.</p>
 
       <div class="legal-meta-grid">
         <div class="legal-meta-item">
@@ -438,6 +464,9 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       </div>
 
       <div class="legal-callout">
+        <strong>Widerspruchsrecht nach Art. 21 DSGVO.</strong> Verarbeite ich deine Daten auf Grundlage berechtigter Interessen (Art. 6 Abs. 1 lit. f DSGVO), kannst du dem jederzeit widersprechen, wenn sich dafür Gründe aus deiner besonderen Situation ergeben. Ich verarbeite die Daten dann nicht mehr, es sei denn, ich kann zwingende schutzwürdige Gründe nachweisen, die deine Interessen überwiegen, oder die Verarbeitung dient der Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen.
+      </div>
+      <div class="legal-callout">
         Für alle Anliegen genügt eine formlose Nachricht an <a href="mailto:kontakt@hxroom.de">kontakt@hxroom.de</a>.
       </div>
       <div class="legal-callout">
@@ -452,18 +481,18 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
     <div class="legal-card">
       <p>Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig für mich ist:</p>
       <p class="legal-address">
-        <strong>Sächsischer Datenschutzbeauftragter</strong><br>
-        Devrientstraße 5<br>
+        <strong>Die Sächsische Datenschutz- und Transparenzbeauftragte</strong><br>
+        Maternistraße 17<br>
         01067 Dresden
       </p>
       <div class="legal-meta-grid">
         <div class="legal-meta-item">
           <div class="lbl">E-Mail</div>
-          <div class="val"><a href="mailto:saechsdsb@slt.sachsen.de">saechsdsb@slt.sachsen.de</a></div>
+          <div class="val"><a href="mailto:post@sdtb.sachsen.de">post@sdtb.sachsen.de</a></div>
         </div>
         <div class="legal-meta-item">
           <div class="lbl">Web</div>
-          <div class="val"><a href="https://www.saechsdsb.de" target="_blank" rel="noopener">www.saechsdsb.de</a></div>
+          <div class="val"><a href="https://www.datenschutz.sachsen.de" target="_blank" rel="noopener">www.datenschutz.sachsen.de</a></div>
         </div>
       </div>
     </div>
@@ -493,5 +522,5 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
     </div>
   </section>
 
-  <p class="legal-updated">Stand: 15. Oktober 2026</p>
+  <p class="legal-updated">Stand: 27. Oktober 2026</p>
 </template>

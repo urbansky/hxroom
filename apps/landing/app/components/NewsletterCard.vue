@@ -145,7 +145,7 @@ async function onSubmit() {
       >
 
       <p class="newsletter-consent">
-        Mit Klick auf <strong>„{{ cta ?? 'Early-Access-Platz sichern' }}"</strong> willigst du ein, dass ich dir per E-Mail Neuigkeiten zu HxRoom sende. Versand über Brevo (EU-Server). Abmeldung jederzeit per Klick. Details in der
+        Mit Klick auf <strong>„{{ cta ?? 'Early-Access-Platz sichern' }}"</strong> willigst du ein, dass ich dir per E-Mail Neuigkeiten zu HxRoom sende. Versand über Brevo (EU-Server) inkl. Öffnungs- und Klick-Messung. Abmeldung jederzeit per Klick. Details in der
         <NuxtLink to="/datenschutz">Datenschutzerklärung</NuxtLink>.
       </p>
 
