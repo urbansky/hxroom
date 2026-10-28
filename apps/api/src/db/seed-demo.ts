@@ -216,7 +216,7 @@ async function main(): Promise<void> {
       await tx.insert(schema.clients).values(
         DEMO_CLIENTS.map((c) => ({
           id: `${PREFIX}client-${c.slug}`, organizationId: ORG_ID, name: c.name, email: normalizeEmail(c.email),
-          phone: c.phone, note: c.note, createdAt: now, updatedAt: now,
+          phone: c.phone, note: c.note, goals: c.goals ?? null, createdAt: now, updatedAt: now,
         })),
       );
 

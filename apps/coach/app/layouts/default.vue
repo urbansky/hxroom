@@ -234,7 +234,10 @@ const pageTitle = computed(() => {
       </template>
     </UDashboardSidebar>
 
-    <UDashboardPanel>
+    <!-- Platz für die Scrollleiste immer freihalten: Wo sie eingeblendet wird (Maus, Windows),
+         rückte der Inhalt sonst seitlich, sobald eine Seite oder ein Reiter kürzer wird als
+         das Fenster. -->
+    <UDashboardPanel :ui="{ body: '[scrollbar-gutter:stable]' }">
       <!-- Nur auf Handy und Tablet (phase5-umsetzungsplan.md, Schritt 11): Dort ist die
            Seitenleiste ausgeblendet, und erst der Menüknopf der Kopfleiste öffnet sie als
            Slideover. Auf dem Rechner tragen die Seiten ihre Überschrift selbst. -->

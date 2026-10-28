@@ -185,6 +185,9 @@ export const clients = pgTable('clients', {
   email:          text('email').notNull(),
   phone:          text('phone'),
   note:           text('note'), // interne Anmerkung des Coachs, nie für den Klienten sichtbar
+  // Coaching-Ziele & Themen als Freitext (Funktionsliste 3.05), rechte Spalte der Klientenseite.
+  // Wie note nur für den Coach.
+  goals:          text('goals'),
   createdAt:      timestamp('created_at').notNull().defaultNow(),
   updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
 }, (table) => [

@@ -1,13 +1,13 @@
 import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { and, asc, desc, eq, gte, inArray, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNotNull, lt, or, sql } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { bookings, clientDeletions, clients } from '../db/schema';
+import { bookings, clientDeletions, clients, sessionChatFiles, sessionChatMessages, sessionNotes } from '../db/schema';
 import { S3Service } from '../storage/s3.service';
 import { coachBookingColumns, toCoachBookingResponse } from '../bookings/coach-booking.mapper';
 import { HELD_SESSION_STATUSES } from '../bookings/booking.constants';
 import { isUniqueViolation } from '../common/pg-errors';
 import { normalizeEmail } from './normalize-email';
-import type { ClientDetail, ClientListItem, ClientResponse, CreateClientDto, UpdateClientDto } from '@hxroom/shared';
+import type { ClientDetail, ClientFileEntry, ClientListItem, ClientNoteEntry, ClientResponse, CreateClientDto, RichTextDoc, UpdateClientDto } from '@hxroom/shared';
 
 type ClientRow = typeof clients.$inferSelect;
 
@@ -18,6 +18,7 @@ function toClientResponse(row: ClientRow): ClientResponse {
     email: row.email,
     phone: row.phone,
     note: row.note,
+    goals: row.goals,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -57,6 +58,7 @@ export class ClientsService {
         email:     clients.email,
         phone:     clients.phone,
         note:      clients.note,
+        goals:     clients.goals,
         createdAt: clients.createdAt,
         // .as() ist notwendig, damit die Ausdrücke im SQL überhaupt einen Namen
         // bekommen – ohne Alias kann das ORDER BY unten sie nicht referenzieren.
@@ -88,6 +90,7 @@ export class ClientsService {
       email: row.email,
       phone: row.phone,
       note: row.note,
+      goals: row.goals,
       createdAt: row.createdAt.toISOString(),
       sessionCount: row.sessionCount,
       lastSessionAt: row.lastSessionAt?.toISOString() ?? null,
@@ -122,6 +125,7 @@ export class ClientsService {
           email: normalizeEmail(dto.email),
           phone: dto.phone ?? null,
           note: dto.note ?? null,
+          goals: dto.goals ?? null,
         })
         .returning();
 
@@ -142,6 +146,7 @@ export class ClientsService {
           ...(dto.email !== undefined && { email: normalizeEmail(dto.email) }),
           ...(dto.phone !== undefined && { phone: dto.phone ?? null }),
           ...(dto.note !== undefined && { note: dto.note ?? null }),
+          ...(dto.goals !== undefined && { goals: dto.goals ?? null }),
         })
         .where(eq(clients.id, id))
         .returning();
@@ -211,6 +216,70 @@ export class ClientsService {
     });
 
     return { bookingsDeleted: bookingIds.length, filesDeleted };
+  }
+
+  /**
+   * Notizen-Chronik (Funktionsliste 4.02): die Sitzungsnotizen aller Termine dieses Klienten,
+   * neueste Sitzung zuerst. Zeilen ohne Inhalt fallen weg; ob ein Dokument wirklich Text trägt,
+   * prüft die Oberfläche (leere Absätze speichert der Editor gar nicht erst).
+   */
+  async notes(organizationId: string, id: string): Promise<ClientNoteEntry[]> {
+    await this.findOwn(organizationId, id);
+    const rows = await this.db
+      .select({
+        bookingId: bookings.id,
+        start:     bookings.startTime,
+        end:       bookings.endTime,
+        offerName: bookings.offerName,
+        status:    bookings.status,
+        content:   sessionNotes.content,
+        updatedAt: sessionNotes.updatedAt,
+      })
+      .from(sessionNotes)
+      .innerJoin(bookings, eq(bookings.id, sessionNotes.bookingId))
+      .where(and(
+        eq(bookings.clientId, id),
+        eq(bookings.organizationId, organizationId),
+        isNotNull(sessionNotes.content),
+      ))
+      .orderBy(desc(bookings.startTime));
+
+    return rows.map((row) => ({
+      bookingId: row.bookingId,
+      start:     row.start.toISOString(),
+      end:       row.end.toISOString(),
+      offerName: row.offerName,
+      status:    row.status,
+      content:   row.content as RichTextDoc,
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+  }
+
+  /** Alle im Chat geteilten Dateien dieses Klienten über alle Sitzungen, neueste zuerst. */
+  async files(organizationId: string, id: string): Promise<ClientFileEntry[]> {
+    await this.findOwn(organizationId, id);
+    const rows = await this.db
+      .select({
+        id:           sessionChatFiles.id,
+        bookingId:    sessionChatFiles.bookingId,
+        bookingStart: bookings.startTime,
+        fileName:     sessionChatFiles.fileName,
+        mimeType:     sessionChatFiles.mimeType,
+        sizeBytes:    sessionChatFiles.sizeBytes,
+        sender:       sessionChatMessages.sender,
+        createdAt:    sessionChatFiles.createdAt,
+      })
+      .from(sessionChatFiles)
+      .innerJoin(sessionChatMessages, eq(sessionChatMessages.id, sessionChatFiles.messageId))
+      .innerJoin(bookings, eq(bookings.id, sessionChatFiles.bookingId))
+      .where(and(eq(bookings.clientId, id), eq(bookings.organizationId, organizationId)))
+      .orderBy(desc(sessionChatFiles.createdAt));
+
+    return rows.map((row) => ({
+      ...row,
+      bookingStart: row.bookingStart.toISOString(),
+      createdAt:    row.createdAt.toISOString(),
+    }));
   }
 
   // Ownership über die organizationId: ein fremder Klient ist für diesen Coach schlicht
