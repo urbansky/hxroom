@@ -10,13 +10,13 @@ type SaveStatus = 'saving' | 'saved' | 'error' | null
 // Ein Dokument ohne einen einzigen Buchstaben gilt als keine Notiz. UEditor liefert für ein
 // leeres Feld `{ type: 'doc', content: [{ type: 'paragraph' }] }` – ohne diese Gleichsetzung
 // legte schon das Anklicken des Feldes eine leere Zeile in der Datenbank an.
-function hasText(node: any): boolean {
+export function richTextHasText(node: any): boolean {
   if (node?.type === 'text' && node.text) return true
-  return Array.isArray(node?.content) && node.content.some(hasText)
+  return Array.isArray(node?.content) && node.content.some(richTextHasText)
 }
 
 function serialize(doc: any): string {
-  return hasText(doc) ? JSON.stringify(doc) : 'null'
+  return richTextHasText(doc) ? JSON.stringify(doc) : 'null'
 }
 
 /**

@@ -150,6 +150,20 @@ export function formatElapsed(iso: string, now = new Date()): string | null {
   return rest === 0 ? `${hours} Std.` : `${hours} Std. ${rest} Min.`
 }
 
+/**
+ * Dauer des Gesprächs, vom Einlass bis zum Beenden durch den Coach – für Terminseite und
+ * Abschlusskarte. `null`, solange eines von beiden fehlt (kein Gespräch, oder es läuft noch).
+ */
+export function formatCallDuration(booking: Pick<CoachBookingResponse, 'admittedAt' | 'callEndedAt'>): string | null {
+  if (!booking.admittedAt || !booking.callEndedAt) return null
+  const minutes = Math.round((new Date(booking.callEndedAt).getTime() - new Date(booking.admittedAt).getTime()) / 60_000)
+  if (minutes < 1) return 'unter 1 Min.'
+  if (minutes < 60) return `${minutes} Min.`
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return rest === 0 ? `${hours} Std.` : `${hours} Std. ${rest} Min.`
+}
+
 // formatDuration liegt seit dem Umzug der Call-Oberfläche in @hxroom/shared – die
 // Steuerleiste des Calls ist dort ihr einziger Aufrufer, und sie gilt für beide Seiten.
 

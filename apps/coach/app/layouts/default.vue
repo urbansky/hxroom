@@ -40,7 +40,6 @@ const baseNavItems: NavItem[][] = [
   [
     { type: 'label', label: 'Klienten' },
     { label: 'Klientenliste', icon: 'i-lucide-users', to: '/clients', description: 'Alle Klienten und deren Coaching-Verläufe' },
-    { label: 'Notizen', icon: 'i-lucide-file-text', to: '/notes', description: 'Sitzungsnotizen und KI-Zusammenfassungen' },
   ],
   [
     { type: 'label', label: 'Finanzen' },
@@ -157,7 +156,6 @@ const pageTitle = computed(() => {
     '/bookings/offers': 'Sitzungsangebote',
     '/bookings/availability': 'Verfügbarkeit',
     '/clients': 'Klientenliste',
-    '/notes': 'Notizen',
     '/finance/revenue': 'Umsatz',
     '/finance/invoices': 'Rechnungen',
     '/settings/bookingpage': 'Buchungsseite',
@@ -167,9 +165,12 @@ const pageTitle = computed(() => {
     '/settings/legal': 'Rechtliches',
     '/settings/account': 'Account',
   }
-  // Die Map trifft nur exakte Pfade – dynamische Routen brauchen einen eigenen Zweig.
+  // Die Map trifft nur exakte Pfade – dynamische Routen brauchen einen eigenen Zweig. Sie geht
+  // vor, sonst wären /bookings/offers und /bookings/availability eine Terminseite.
+  if (titles[route.path]) return titles[route.path]
   if (route.path.startsWith('/clients/')) return 'Klient'
-  return titles[route.path] ?? 'HxRoom'
+  if (route.path.startsWith('/bookings/')) return 'Termin'
+  return 'HxRoom'
 })
 </script>
 

@@ -53,6 +53,11 @@ export class CoachBookingsService {
     return rows.map(toCoachBookingResponse);
   }
 
+  /** Ein Termin für die Terminseite (phase5-umsetzungsplan.md, Schritt 8a). */
+  async findOne(organizationId: string, bookingId: string): Promise<CoachBookingResponse> {
+    return toCoachBookingResponse(await this.findOwn(organizationId, bookingId));
+  }
+
   async cancel(organizationId: string, bookingId: string, dto: CancelBookingDto): Promise<CoachBookingResponse> {
     const booking = await this.findOwn(organizationId, bookingId);
 

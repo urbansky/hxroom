@@ -6,7 +6,6 @@
 
 /** Seiten ohne Funktion: nicht im Menü, ein Aufruf leitet aufs Dashboard (middleware/beta.global.ts). */
 export const BETA_HIDDEN_ROUTES: readonly string[] = [
-  '/notes',
   '/finance/revenue',
   '/finance/invoices',
   '/settings/waiting-room',

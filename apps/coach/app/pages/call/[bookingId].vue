@@ -70,13 +70,11 @@ async function confirmNoShow() {
 
 const ending = computed(() => {
   switch (call.value?.state) {
-    case 'ended':
-      return { icon: 'i-lucide-check', title: 'Sitzung beendet', description: 'Der Termin ist als gehalten vermerkt.' }
     case 'missed':
       return {
         icon: 'i-lucide-user-x',
         title: 'Nicht erschienen',
-        description: 'Der Termin zählt nicht als gehaltene Sitzung. Im Termin-Detail lässt sich das zurücknehmen.',
+        description: 'Der Termin zählt nicht als gehaltene Sitzung. Auf der Terminseite lässt sich das zurücknehmen.',
       }
     case 'cancelled':
       return { icon: 'i-lucide-calendar-x', title: 'Termin abgesagt', description: 'Diese Sitzung findet nicht statt.' }
@@ -246,7 +244,7 @@ function initials(call: CallAccessResponse): string {
         <UModal
           v-model:open="noShowOpen"
           title="Als nicht erschienen vermerken?"
-          :description="`Der Termin zählt dann nicht als gehaltene Sitzung. ${call.clientName} bekommt keine Nachricht. Im Termin-Detail kannst du das zurücknehmen.`"
+          :description="`Der Termin zählt dann nicht als gehaltene Sitzung. ${call.clientName} bekommt keine Nachricht. Auf der Terminseite kannst du das zurücknehmen.`"
         >
           <template #body>
             <UAlert
@@ -267,6 +265,11 @@ function initials(call: CallAccessResponse): string {
         </UModal>
       </div>
 
+      <!-- Nach „Sitzung beenden“ die Abschlusskarte (phase5-umsetzungsplan.md, 8b) -->
+      <SessionSummaryCard v-else-if="call && call.state === 'ended'" :booking-id="call.bookingId" />
+
+      <!-- Die übrigen Endzustände führen ebenfalls auf die Terminseite – bei „Nicht erschienen“
+           lässt es sich dort zurücknehmen. -->
       <div v-else-if="call" class="text-center flex flex-col items-center gap-4">
         <div class="size-12 rounded-full bg-elevated flex items-center justify-center">
           <UIcon :name="ending.icon" class="size-6 text-dimmed" />
@@ -275,7 +278,10 @@ function initials(call: CallAccessResponse): string {
           <h1 class="font-serif text-2xl text-highlighted mb-1.5">{{ ending.title }}</h1>
           <p class="text-sm text-muted">{{ ending.description }}</p>
         </div>
-        <UButton to="/bookings" color="neutral" variant="subtle" size="sm" label="Zu den Terminen" />
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <UButton :to="`/bookings/${call.bookingId}`" size="sm" label="Zum Termin" icon="i-lucide-arrow-right" trailing />
+          <UButton to="/bookings" color="neutral" variant="subtle" size="sm" label="Zu den Terminen" />
+        </div>
       </div>
     </main>
   </div>

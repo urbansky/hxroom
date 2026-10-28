@@ -75,3 +75,10 @@ function toChatFile(file: NonNullable<CallChatMessageResponse['file']>, href: st
       : undefined,
   }
 }
+
+/** „14 Nachrichten · 2 Dateien“ – im Slideover, auf der Terminseite und in der Abschlusskarte. */
+export function formatChatSummary(messageCount: number, fileCount: number): string {
+  const parts = [`${messageCount} ${messageCount === 1 ? 'Nachricht' : 'Nachrichten'}`]
+  if (fileCount) parts.push(`${fileCount} ${fileCount === 1 ? 'Datei' : 'Dateien'}`)
+  return parts.join(' · ')
+}
