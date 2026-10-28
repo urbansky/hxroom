@@ -742,6 +742,9 @@ export const createClientSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
   phone: z.string().max(40, 'Telefonnummer ist zu lang').nullish(),
   note:  z.string().max(2000, 'Notiz ist zu lang').nullish(),
+  // Coaching-Ziele & Themen (Funktionsliste 3.05), Freitext in der rechten Spalte der
+  // Klientenseite.
+  goals: z.string().max(4000, 'Text ist zu lang').nullish(),
 });
 export type CreateClientDto = z.infer<typeof createClientSchema>;
 
@@ -754,6 +757,7 @@ export const clientResponseSchema = z.object({
   email:     z.string(),
   phone:     z.string().nullable(),
   note:      z.string().nullable(),
+  goals:     z.string().nullable(),
   createdAt: z.string(),
 });
 export type ClientResponse = z.infer<typeof clientResponseSchema>;
@@ -772,6 +776,31 @@ export const clientDetailSchema = clientResponseSchema.extend({
   bookings: z.array(coachBookingResponseSchema),
 });
 export type ClientDetail = z.infer<typeof clientDetailSchema>;
+
+// Notizen-Chronik der Klientenseite (Funktionsliste 4.02): alle Sitzungsnotizen eines
+// Klienten mit Text, neueste Sitzung zuerst.
+export interface ClientNoteEntry {
+  bookingId: string;
+  start:     string;   // ISO 8601
+  end:       string;
+  offerName: string;
+  status:    BookingStatus;
+  content:   RichTextDoc;
+  updatedAt: string;
+}
+
+// Alle im Chat geteilten Dateien eines Klienten über alle Sitzungen, neueste zuerst. Geöffnet
+// werden sie über die Datei-Route der Sitzung (`/bookings/:bookingId/call/files/:id`).
+export interface ClientFileEntry {
+  id:           string;
+  bookingId:    string;
+  bookingStart: string;
+  fileName:     string;
+  mimeType:     string;
+  sizeBytes:    number;
+  sender:       CallChatSender;
+  createdAt:    string;
+}
 
 // Kontolöschung durch den Coach selbst (Account-Seite). Läuft über eine Frist mit
 // Widerrufsmöglichkeit statt als Sofort-Löschung – siehe doc/legal.md (30 Tage

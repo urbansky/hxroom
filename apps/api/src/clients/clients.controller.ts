@@ -38,6 +38,26 @@ export class ClientsController {
     return this.clientsService.findOne(org.id, id);
   }
 
+  /** Notizen-Chronik der Klientenseite (Funktionsliste 4.02). */
+  @Get(':id/notes')
+  notes(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.clientsService.notes(org.id, id);
+  }
+
+  /** Alle im Chat geteilten Dateien des Klienten. */
+  @Get(':id/files')
+  files(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.clientsService.files(org.id, id);
+  }
+
   @Patch(':id')
   update(
     @CurrentOrganization() org: { id: string } | undefined,
