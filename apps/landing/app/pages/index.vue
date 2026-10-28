@@ -43,7 +43,9 @@ useHead({
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             inLanguage: 'de',
-            offers: { '@type': 'Offer', price: '19', priceCurrency: 'EUR', priceValidUntil: '2027-12-31' },
+            // Wie die FAQ: In der Beta kostet HxRoom nichts. Der reguläre Preis kommt hierher,
+            // sobald er zum offiziellen Start feststeht.
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', description: 'Kostenlos während der Beta' },
             description: 'Terminbuchung und Videocall für Coaches in einem – Buchungsseite, Warteraum und Gespräch unter dem eigenen Namen. Klienten ohne Konto, DSGVO-konform, Server in Deutschland.',
             featureList: [
               'Buchungsseite mit eigenem Namen',
