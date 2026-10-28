@@ -25,9 +25,9 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 6. ✅ Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
 8. Terminseite, breitere Klientenseite, Abschlusskarte
-9. Landingpage inhaltlich und gestalterisch überarbeiten – in Arbeit
+9. ✅ Landingpage inhaltlich und gestalterisch überarbeiten (Rest aus 9c offen)
 10. ✅ Datenexport auf Knopfdruck für Coachs
-11. Coach-App auf dem Handy bedienbar: Navigation und Darstellungsfehler
+11. ✅ Coach-App auf dem Handy bedienbar: Navigation und Darstellungsfehler
 
 **Wenn die Zeit nicht reicht:** Schritt 8, die Backoffice-Aktivität (übergangsweise per SQL) und die überarbeitete Onboarding-Checkliste können nach dem Beta-Start kommen. Vor dem 01.11. unverzichtbar sind Backup, Fehlerüberwachung, Rechtstexte, Buchungsseite, Erinnerungen, Probe-Sitzung, Feedback-Knopf, die überarbeitete Landingpage und der Datenexport, weil die Landingpage ihn zusagt.
 
@@ -653,7 +653,7 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 ## Schritt 9 · Landingpage überarbeiten
 
-**Stand:** 9a und 9b umgesetzt im Branch `landing-relaunch`, Texte zur Freigabe.
+**Stand:** ✅ 9a und 9b in Betrieb und in Produktion abgenommen, 9c umgesetzt. Offen: Startseite in der Search Console neu indexieren.
 
 **Ziel:** Die Landingpage (`apps/landing`, `hxroom.de`) ist die erste Station des Marketings. Sie zeigt das echte Produkt und führt zu zwei Aktionen: **„Vorführung buchen“** (Hauptaktion, `demo.hxroom.de`) und **„Kostenlos ausprobieren“** (Registrierung, `app.hxroom.de/auth/register`). Der Newsletter bleibt als Nebenoption am Ende.
 
@@ -725,9 +725,9 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 - **Größe:** alle Bilder 2880 × 1800. Buchungsseite, Mail und Warteraum entstehen in einem schmaleren Fenster, damit die Schrift lesbar bleibt.
 
 **9c · Suchmaschinen und Aufräumen**
-- Titel, Beschreibung und JSON-LD (`FAQPage`, `SoftwareApplication`) passend zu den neuen Texten.
+- ✅ Titel, Beschreibung und JSON-LD (`FAQPage`, `SoftwareApplication`) passend zu den neuen Texten. Das Angebot in `SoftwareApplication` steht wie in der FAQ auf 0 €, „Kostenlos während der Beta“.
 - ✅ `public/llms.txt` nachziehen (`apps/landing/CLAUDE.md`): Beschreibung, Funktionen und FAQ wie auf der Startseite, Seiten Vorführung und Registrierung. Der Blog steht nicht mehr darin, weil ihn die `robots.txt` sperrt.
-- Die Seite `/old` und die Komponenten, die nur sie verwendet, entfallen. `/old` verschwindet aus der `robots.txt`.
+- ✅ Die Seite `/old` und die Komponenten, die nur sie verwendet, entfallen (`ComparisonSection`, `CtaSection`, `FeaturesSection`, `PricingSection`, `QuoteBand`, `StepsSection`, `TestimonialsSection`, `TrustBand`, dazu die ungenutzte `PromiseSection`). `/old` verschwindet aus der `robots.txt`.
 
 ### Abnahme im Browser
 
@@ -738,8 +738,8 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 ### Inbetriebnahme
 
-- Erst wenn Schritt 10 in Betrieb ist: Die FAQ sagt den Datenexport auf Knopfdruck zu.
-- `git pull` und `./redeploy.sh`, danach hxroom.de auf Desktop und Handy prüfen.
+- ✅ Erst wenn Schritt 10 in Betrieb ist: Die FAQ sagt den Datenexport auf Knopfdruck zu.
+- ✅ `git pull` und `./redeploy.sh`, danach hxroom.de auf Desktop und Handy prüfen.
 - Google Search Console: Startseite neu indexieren lassen.
 
 ---
@@ -810,9 +810,9 @@ Nicht enthalten: Probe-Sitzungen (sie werden nach 24 Stunden ohnehin gelöscht),
 
 ---
 
-## Schritt 11 · Coach-App auf dem Handy
+## Schritt 11 · Coach-App auf dem Handy ✅
 
-**Stand:** umgesetzt und lokal abgenommen.
+**Stand:** ✅ umgesetzt, lokal und in Produktion abgenommen.
 
 **Ziel:** Ein Beta-Coach kann HxRoom auf dem Handy ausprobieren: jede Seite erreichen, nichts ist abgeschnitten oder unlesbar. Der Call des Coachs bleibt eine Sache für den Rechner und ist nicht Teil dieses Schritts.
 
