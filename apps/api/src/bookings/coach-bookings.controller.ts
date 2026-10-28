@@ -24,6 +24,18 @@ export class CoachBookingsController {
     return this.coachBookingsService.list(org.id, query);
   }
 
+  // Terminseite (phase5-umsetzungsplan.md, 8a): Sie muss auch nach dem Neuladen und über den
+  // Link der Abschlusskarte stehen, ohne die Terminliste zu laden. Nur ein Segment – die
+  // Unterpfade (`:id/cancel`, `:id/notes`, `:id/call`, …) bleiben davon unberührt.
+  @Get(':id')
+  findOne(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.findOne(org.id, id);
+  }
+
   // Spontan-Termin: beginnt im Moment des Aufrufs. Steht vor ':id/cancel', damit die
   // feste Route nicht von einem Pfadparameter verdeckt werden kann.
   @Post('ad-hoc')

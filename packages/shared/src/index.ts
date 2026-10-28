@@ -412,6 +412,9 @@ export const coachBookingResponseSchema = z.object({
   // Wann der Coach den Klienten eingelassen hat, null ohne Einlass. Das Termin-Detail
   // braucht es für „Als nicht erschienen vermerken" (B6): Wer eingelassen wurde, war da.
   admittedAt:         z.string().nullable(),
+  // Ende des Gesprächs durch den Coach. Mit admittedAt die Dauer auf Terminseite und
+  // Abschlusskarte (phase5-umsetzungsplan.md, Schritt 8).
+  callEndedAt:        z.string().nullable(),
 });
 export type CoachBookingResponse = z.infer<typeof coachBookingResponseSchema>;
 
