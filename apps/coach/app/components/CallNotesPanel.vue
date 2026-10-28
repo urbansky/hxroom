@@ -48,7 +48,7 @@ const notes = defineModel<any>({ required: true })
       color="info"
       variant="subtle"
       :ui="{ description: 'text-xs' }"
-      description="Diese Notizen gehen nicht an den Klienten – anders als die optionale Zusammenfassung aus der Transkription. Einen Link oder eine Ressource teilst du über den Chat."
+      description="Diese Notizen gehen nicht an den Klienten. Einen Link oder eine Ressource teilst du über den Chat."
     />
   </div>
 </template>
