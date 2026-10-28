@@ -150,6 +150,8 @@ export interface DemoClient {
   email: string;
   phone: string | null;
   note: string | null;
+  /** Coaching-Ziele & Themen (Klientenseite, rechte Spalte). */
+  goals?: string;
   /** Steuert, welche Buchungen booking-plan.ts diesem Klienten zuweist. */
   history: 'both' | 'past-only' | 'future-only' | 'none';
 }
@@ -159,12 +161,14 @@ export const DEMO_CLIENTS: DemoClient[] = [
     slug: '1', name: 'Miriam Kastner', email: 'miriam.kastner@example.com',
     phone: '+49 151 23456789',
     note: 'Arbeitet an der Entscheidung zwischen Teamleitung und Fachkarriere. Braucht eher Struktur als Impulse.',
+    goals: 'Entscheidung Teamleitung oder Fachkarriere bis Jahresende.\nThemen: eigene Stärken, Umgang mit Erwartungen der Geschäftsführung, Gespräch mit der Partnerin vorbereiten.',
     history: 'both',
   },
   {
     slug: '2', name: 'Jonas Feldmann', email: 'jonas.feldmann@example.com',
     phone: '+49 170 9876543',
     note: 'Sehr reflektiert, neigt zum Grübeln. Konkrete Aufgaben zum Abschluss helfen ihm.',
+    goals: 'Weniger Grübeln, mehr Entscheiden. Ziel: zwei offene Projektentscheidungen bis Ende des Quartals treffen.',
     history: 'both',
   },
   {
@@ -176,6 +180,7 @@ export const DEMO_CLIENTS: DemoClient[] = [
     slug: '4', name: 'Deniz Yildirim', email: 'deniz.yildirim@example.com',
     phone: '+49 160 5551234',
     note: 'Wechsel in die Selbstständigkeit geplant, Zeithorizont Frühjahr.',
+    goals: 'Schritt in die Selbstständigkeit im Frühjahr. Themen: Angebot schärfen, finanzielle Absicherung, Ängste vor dem Sprung.',
     history: 'both',
   },
   {
@@ -205,6 +210,32 @@ export const DEMO_CLIENTS: DemoClient[] = [
     history: 'none',
   },
 ];
+
+// --- Sitzungsnotizen ------------------------------------------------------------
+
+/**
+ * Notizen zu den gehaltenen Sitzungen einzelner Klienten, älteste zuerst – für die
+ * Notizen-Chronik der Klientenseite. Je Notiz ein Absatz, danach Stichpunkte. Gibt es mehr
+ * gehaltene Sitzungen als Notizen, bleiben die übrigen ohne.
+ */
+export const DEMO_SESSION_NOTES: Record<string, { intro: string; points: string[] }[]> = {
+  '1': [
+    {
+      intro: 'Erstes Gespräch: Ausgangslage geklärt. Angebot der Teamleitung liegt seit drei Wochen auf dem Tisch.',
+      points: ['Fachlich sehr sicher, Führung reizt sie, macht ihr aber Sorgen', 'Bis zum nächsten Mal: Liste, was sie an ihrer Arbeit heute nicht missen will'],
+    },
+    {
+      intro: 'Liste mitgebracht. Auffällig: fast alles hat mit Gestalten zu tun, kaum etwas mit Fachdetails.',
+      points: ['Werte-Übung gemacht, Top 3: Gestaltung, Verlässlichkeit, Lernen', 'Gespräch mit der Geschäftsführung über Erwartungen vorbereiten'],
+    },
+  ],
+  '2': [
+    {
+      intro: 'Thema: zwei Projektentscheidungen, die seit Wochen offen sind. Viel Abwägen, wenig Kriterien.',
+      points: ['Entscheidungsmatrix eingeführt', 'Aufgabe: für Projekt A bis Freitag entscheiden, Ergebnis notieren'],
+    },
+  ],
+};
 
 // --- Coachs ---------------------------------------------------------------------
 

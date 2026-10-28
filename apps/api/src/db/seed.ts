@@ -27,6 +27,7 @@ import {
   DEMO_CLIENTS,
   DEMO_COACHES,
   DEMO_OFFERS,
+  DEMO_SESSION_NOTES,
   SEED_ID_PREFIX,
   SEED_PASSWORD,
   type DemoCoach,
@@ -267,6 +268,7 @@ async function seedCoach(
         email: normalizeEmail(client.email),
         phone: client.phone,
         note: client.note,
+        goals: client.goals ?? null,
         createdAt: now,
         updatedAt: now,
       })),
@@ -308,6 +310,38 @@ async function seedCoach(
       }),
     );
     summary.bookings = planned.length;
+
+    // 11. Sitzungsnotizen für die Notizen-Chronik der Klientenseite: der Reihe nach an die
+    // gehaltenen, schon begonnenen Sitzungen des Klienten, älteste zuerst.
+    const noteRows = Object.entries(DEMO_SESSION_NOTES).flatMap(([clientSlug, notes]) => {
+      const clientIndex = DEMO_CLIENTS.findIndex((client) => client.slug === clientSlug);
+      const held = planned
+        .map((booking, idx) => ({ booking, idx }))
+        .filter(({ booking }) => booking.clientIndex === clientIndex
+          && (booking.status === 'confirmed' || booking.status === 'completed')
+          && booking.start < now)
+        .sort((a, b) => a.booking.start.getTime() - b.booking.start.getTime());
+      return notes.slice(0, held.length).map((note, i) => ({
+        organizationId,
+        bookingId: `${SEED_ID_PREFIX}booking-${coach.slug}-${held[i]!.idx}`,
+        content: {
+          type: 'doc',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: note.intro }] },
+            {
+              type: 'bulletList',
+              content: note.points.map((point) => ({
+                type: 'listItem',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: point }] }],
+              })),
+            },
+          ],
+        },
+        createdAt: held[i]!.booking.end,
+        updatedAt: held[i]!.booking.end,
+      }));
+    });
+    if (noteRows.length) await tx.insert(schema.sessionNotes).values(noteRows);
   });
 
   return summary;
