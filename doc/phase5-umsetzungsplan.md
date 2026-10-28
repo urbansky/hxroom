@@ -719,6 +719,21 @@ Auch die übrigen Endzustände der Call-Seite verlinken die Terminseite: „Nich
 - Martinas Termin als Anna: „Termin nicht gefunden“, API `404`. Kein Menüpunkt „Notizen“.
 - 390 px: Terminseite untereinander, nichts im Seitenrand. Keine Fehler in der Konsole. API-Tests und Typprüfung grün.
 
+### 8c · Breitere Klientenseite
+
+**Stand:** als klickbarer Entwurf im Branch `feature/client-page`, wartet auf Freigabe.
+
+**Seite** (`pages/clients/[id].vue`):
+- **Kopf** über die volle Breite: Name und Kontakt, darunter drei Kennzahlen in den Karten des Dashboards (`StatCard`): gehaltene Sitzungen mit Datum der letzten, nicht erschienen, Klient seit. Daneben „Spontan-Termin“, „Bearbeiten“ und ein Drei-Punkte-Menü mit „Klient löschen“.
+- **Links, Reiter** (`?tab=`): „Termine“ wie bisher (Klick öffnet das Slideover), „Notizen“ als Chronik aller Sitzungsnotizen mit „Zum Termin“, „Dateien“ mit allen im Chat geteilten Dateien.
+- **Rechts**, bleibt beim Scrollen stehen, zwei gleich gebaute Karten: „Nächster Termin“ mit „Sitzung starten“ im Zugangsfenster und „Termin öffnen“; „Nur für dich“ mit Coaching-Zielen & Themen und interner Notiz (`ClientPrivateCard`), beide als Text mit Stift zum Bearbeiten direkt in der Karte, leer mit „Hinzufügen“.
+- **Handy:** Kompakte Kennzahlen, zwei kleine Karten nebeneinander ohne Symbol; „Klient seit“ steht als Zeile unter dem Kontakt. Die rechte Spalte wird zum Reiter „Profil“, die Reiter stehen ohne Symbole.
+- **Ruhiger Reiterwechsel:** Notizen und Dateien laden beim ersten Öffnen und bleiben danach stehen, der Reiterbereich hat eine Mindesthöhe. Der Inhaltsbereich der Coach-App hält den Platz der Scrollleiste frei (`scrollbar-gutter: stable` im Layout), damit nichts seitlich rückt, wenn eine Seite kürzer wird als das Fenster.
+
+**API:** Spalte `clients.goals` (Migration `0034`, höchstens 4000 Zeichen, über `PATCH /clients/:id`), `GET /clients/:id/notes` und `GET /clients/:id/files` (nur die eigene Organisation). Der Datenexport enthält die Ziele. Der Seed legt Ziele für drei Klienten und Notizen zu den gehaltenen Sitzungen von Miriam Kastner und Jonas Feldmann an.
+
+**Lokal geprüft** (Chrome per Playwright, Anna, Miriam Kastner): Kennzahlen, alle Reiter samt URL, Notizen-Chronik mit zwei Einträgen, eine im Call geteilte Datei im Reiter „Dateien“ mit funktionierendem Link, Ziele speichern und nach dem Neuladen erhalten, Drei-Punkte-Menü. 390 px: vier Reiter ohne Abschneiden, „Profil“ zeigt die rechte Spalte, nichts im Seitenrand. Keine Fehler in der Konsole, API-Tests und Typprüfung grün.
+
 ---
 
 ## Schritt 9 · Landingpage überarbeiten
