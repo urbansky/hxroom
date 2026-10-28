@@ -24,7 +24,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 5. ✅ AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
 6. ✅ Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
-8. Terminseite, breitere Klientenseite, Abschlusskarte
+8. Terminseite und Abschlusskarte (breitere Klientenseite nach dem Beta-Start)
 9. ✅ Landingpage inhaltlich und gestalterisch überarbeiten (Rest aus 9c offen)
 10. ✅ Datenexport auf Knopfdruck für Coachs
 11. ✅ Coach-App auf dem Handy bedienbar: Navigation und Darstellungsfehler
@@ -648,6 +648,76 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 - ✅ `FEEDBACK_EMAIL` in der `.env` des Servers setzen. `docker-compose.yml` reicht die Variable an die API durch.
 - ✅ `git pull` und `./redeploy.sh` (Migrationen `0031` und `0032`)
 - ✅ Ein Feedback aus der Produktion absenden, Mail und Eintrag im Betreiber-Backoffice prüfen.
+
+---
+
+## Schritt 8 · Terminseite und Abschlusskarte
+
+**Stand:** umgesetzt und lokal abgenommen.
+
+**Ziel:** Nach dem Gespräch hat der Coach einen Ort für alles, was zu einer Sitzung gehört: Notizen in einem großen Editor, Chat und Dateien, die Details der Buchung. Das Ende des Calls führt dorthin. Grundlage ist `zeitplan.md`, Phase 5, „Nachbereitung für den Coach“.
+
+**Nicht in diesem Schritt:** die breitere Klientenseite mit Notizen-Chronik, Dateien und Coaching-Zielen. Sie braucht vorher einen klickbaren Entwurf und eine Migration und kommt nach dem Beta-Start.
+
+### 8a · Terminseite `/bookings/[id]`
+
+**Seite** (`pages/bookings/[id].vue`):
+- **Kopf:** Datum und Uhrzeit, Klient (mit Link aufs Klientenprofil), Angebot, Status samt Abzeichen (Spontan-Termin, Probe-Sitzung) und dieselben Aktionen wie im Slideover: Call starten, absagen, Klient zuordnen, nicht erschienen bzw. „Doch erschienen“, Kalenderdatei. Zurück führt auf die Seite, von der der Coach kam.
+- **Links:** die Notizen im großen Editor, mit Autosave und Speicherstand wie im Call (`useSessionNotes`).
+- **Rechts, Reiter:**
+  - **Chat & Dateien:** der Verlauf zum Nachlesen (`CallChatPanel` mit `readonly`, `useSessionChat`), Dateien zum Öffnen. Ohne Gespräch: „Noch kein Chat zu diesem Termin.“
+  - **Details:** Nachricht des Klienten zur Buchung, gebucht am, bestätigt am, Herkunft, bei Absage wer, wann und warum, bei einem Gespräch Beginn, Ende und Dauer.
+  - „Transkript“ kommt in Phase 6 dazu.
+- **Handy:** alles untereinander, Notizen zuerst.
+
+**Slideover** (`BookingDetailSlideover.vue`) bleibt die Kurzansicht in Kalender, Dashboard und Klientenprofil:
+- Termin, Klient, Status, Aktionen und die Notizen wie bisher.
+- Der eingeklappte Chat wird zur Zeile „14 Nachrichten · 2 Dateien“ mit Sprung auf die Seite (Reiter Chat).
+- Neu oben: „Als Seite öffnen“.
+
+**Aktionen an einer Stelle:** Die Aktionen des Slideovers wandern in eine Komponente `BookingActions.vue` (Absage mit Begründung, Zuordnen, nicht erschienen, Kalenderdatei, Call starten), die Slideover und Seite gemeinsam nutzen.
+
+**API:**
+- `GET /api/v1/bookings/:id` (`AuthGuard`, nur die eigene Organisation, sonst `404`) liefert eine `CoachBookingResponse`. Die Seite muss auch nach dem Neuladen und über einen Link aus der Abschlusskarte funktionieren, ohne die Terminliste zu laden.
+- `CoachBookingResponse` bekommt `callEndedAt`. Zusammen mit `admittedAt` ergibt das die Dauer des Gesprächs.
+
+**Menüpunkt „Notizen“ entfällt:** Eintrag in `layouts/default.vue`, `pages/notes.vue` und `/notes` in `utils/beta.ts`. Notizen findet der Coach auf der Terminseite.
+
+### 8b · Abschlusskarte nach dem Call
+
+Nach „Sitzung beenden“ zeigt die Call-Seite statt „Sitzung beendet – Der Termin ist als gehalten vermerkt“ eine Karte (nach `doc/poc/videocall-v2.html`, Bildschirm 4):
+- **Kopf:** „Sitzung abgeschlossen“, darunter „Als gehalten vermerkt“.
+- **Zeilen:** Klient, Datum, Dauer (Einlass bis Ende), Notizen („gespeichert“ oder „keine Notizen“), Chat („3 Nachrichten · 1 Datei“, nur wenn es einen gab).
+- **Aktionen:** „Zur Sitzung“ (Terminseite, Hauptaktion) und „Zu den Terminen“.
+- Die Angaben kommen aus `GET /bookings/:id`, den Notizen und dem Chat, nicht aus dem Zustand der Call-Seite: Die Karte zeigt nur, was gespeichert ist.
+
+Auch die übrigen Endzustände der Call-Seite verlinken die Terminseite: „Nicht erschienen“ (dort lässt es sich zurücknehmen), „Termin abgesagt“, „Raum geschlossen“.
+
+### Abnahme im Browser
+
+- **Slideover → Seite:** „Als Seite öffnen“ führt auf `/bookings/:id`, die Chat-Zeile auf den Reiter Chat. Zurück landet wieder im Kalender.
+- **Terminseite (Anna, Termin mit Notizen und Chat):** Notizen bearbeiten, Speicherstand, nach dem Neuladen erhalten. Chat mit Dateien lesbar, eine Datei öffnet sich. Details mit Nachricht des Klienten und Dauer.
+- **Aktionen auf der Seite:** absagen mit Begründung, Klient zuordnen, nicht erschienen und zurück. Die Seite zeigt danach den neuen Stand.
+- **Fremder Termin:** `/bookings/<Martinas Termin>` als Anna zeigt „Termin nicht gefunden“, die API `404`.
+- **Call beenden:** Abschlusskarte mit Klient, Datum, Dauer, Notizen und Chat. „Zur Sitzung“ führt auf die Terminseite.
+- **Nicht erschienen im Call:** Der Link führt auf die Terminseite, „Doch erschienen“ nimmt es zurück.
+- **Menü:** kein Punkt „Notizen“, `/notes` gibt es nicht mehr.
+- **Handy (390 px):** Terminseite untereinander, nichts ragt hinaus.
+
+**Umgesetzt** wie beschrieben:
+- **API:** `GET /api/v1/bookings/:id` (`CoachBookingsService.findOne`, über `findOwn`, fremd → `404`), `callEndedAt` in `CoachBookingResponse`.
+- **Coach-App:** `pages/bookings/[id].vue`; die Aktionen als Composable `useBookingActions` und Leiste `BookingActionBar.vue`, die Slideover und Seite gemeinsam nutzen, dazu `BookingStatusBadges.vue`; `SessionSummaryCard.vue` auf der Call-Seite; `formatChatSummary` und `formatCallDuration` in den Utils.
+- **Reiter in der URL** (`?tab=chat|details`). Ohne Angabe steht „Chat & Dateien“ vorn, wenn es ein Gespräch gab, sonst „Details“.
+- **„Termin absagen“** nur noch bei offenen und bestätigten Terminen. Vorher bot das Slideover es auch bei einem vorzeitig beendeten, also abgeschlossenen Gespräch an, solange dessen geplantes Ende in der Zukunft lag.
+- **Menüpunkt „Notizen“** samt `pages/notes.vue` entfernt, `/notes` liefert die 404-Seite.
+
+**Lokal abgenommen** (Chrome per Playwright, Anna):
+- Call mit Chat-Nachricht und Notiz, nach einer Minute beendet: Abschlusskarte mit Klient, Datum, Dauer „1 Min.“, Notizen „gespeichert“, Chat „1 Nachricht“. „Zur Sitzung“ führt auf die Terminseite.
+- Terminseite: Notiz im Editor, Chat lesbar, Details mit Nachricht des Klienten, Gespräch „06:06 – 06:07 Uhr · 1 Min.“ und Buchungsdaten. Der Reiter bleibt nach dem Neuladen erhalten.
+- Slideover: „Als Seite öffnen“ und die Chat-Zeile „1 Nachricht“, die auf `?tab=chat` führt. „Zurück“ landet wieder im Kalender.
+- Vergangener Termin: „Nicht erschienen“ vermerkt den Termin, „Doch erschienen“ nimmt es zurück.
+- Martinas Termin als Anna: „Termin nicht gefunden“, API `404`. Kein Menüpunkt „Notizen“.
+- 390 px: Terminseite untereinander, nichts im Seitenrand. Keine Fehler in der Konsole. API-Tests und Typprüfung grün.
 
 ---
 
