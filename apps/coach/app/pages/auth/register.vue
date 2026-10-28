@@ -16,9 +16,6 @@ const schema = z.object({
   name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
   email: z.string().email('Ungültige E-Mail-Adresse'),
   password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
-  // AGB §1: HxRoom ist nur für Unternehmer. Die API prüft dasselbe noch einmal
-  // (hooks.before in auth.module.ts).
-  acceptTerms: z.boolean().optional().refine(v => v === true, 'Bitte stimme den AGB und dem AVV zu.'),
 })
 
 type Schema = z.infer<typeof schema>
@@ -27,6 +24,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = null
   pending.value = true
   try {
+    // Keine Checkbox: AGB und AVV gelten über den Hinweis unter dem Knopf, der Klick auf
+    // „Konto erstellen“ ist die Zustimmung (phase5-umsetzungsplan.md, 5a). Die ausdrückliche
+    // Bestätigung als Unternehmer (§ 14 BGB) folgt erst beim Abo-Abschluss.
     // `acceptTerms` kennt der better-auth-Client nicht; geprüft wird es von hooks.before in
     // apps/api/src/auth/auth.module.ts. Als Variable übergeben, damit TypeScript das
     // zusätzliche Feld durchlässt.
@@ -89,28 +89,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 required: true,
                 autocomplete: 'new-password',
               },
-              {
-                name: 'acceptTerms',
-                type: 'checkbox',
-                required: true,
-              },
             ]"
             :schema="schema"
             :submit="{ label: 'Konto erstellen', loading: pending }"
             @submit="onSubmit"
           >
-            <template #acceptTerms-field="{ state }">
-              <UCheckbox v-model="state.acceptTerms" :ui="{ label: 'font-normal text-muted' }">
-                <template #label>
-                  Ich nutze HxRoom für meine selbständige berufliche Tätigkeit und stimme den
-                  <ULink :to="`${landingUrl}/agb`" target="_blank" class="text-primary underline underline-offset-2">AGB</ULink>
-                  und dem
-                  <ULink :to="`${landingUrl}/avv`" target="_blank" class="text-primary underline underline-offset-2">Auftragsverarbeitungsvertrag</ULink>
-                  zu.
-                </template>
-              </UCheckbox>
-            </template>
             <template #footer>
+              <p class="text-center text-xs text-(--ui-text-muted) mb-4">
+                HxRoom richtet sich an Selbständige. Mit „Konto erstellen“ gelten die
+                <ULink :to="`${landingUrl}/agb`" target="_blank" class="text-primary underline underline-offset-2">AGB</ULink>
+                und der
+                <ULink :to="`${landingUrl}/avv`" target="_blank" class="text-primary underline underline-offset-2">Auftragsverarbeitungsvertrag</ULink>.
+              </p>
               <p class="text-center text-sm text-(--ui-text-muted)">
                 Bereits registriert?
                 <NuxtLink to="/auth/login" class="text-primary font-medium hover:underline">

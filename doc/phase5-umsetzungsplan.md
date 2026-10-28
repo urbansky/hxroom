@@ -420,8 +420,9 @@ Für 3.1b auf dem Server:
 ### 5a · Zustimmung zu AGB und AVV
 
 **Registrierung** (`pages/auth/register.vue`):
-- Pflicht-Checkbox unter dem Passwort: „Ich nutze HxRoom für meine selbständige berufliche Tätigkeit und stimme den [AGB] und dem [Auftragsverarbeitungsvertrag] zu.“ Die Links öffnen hxroom.de/agb bzw. /avv in einem neuen Tab.
-- Ohne Haken lässt sich das Formular nicht absenden.
+- ~~Pflicht-Checkbox unter dem Passwort~~ – geändert am 28.10.2026: keine Checkbox mehr. Unter dem Knopf steht der Hinweis „HxRoom richtet sich an Selbständige. Mit „Konto erstellen“ gelten die [AGB] und der [Auftragsverarbeitungsvertrag].“ Die Links öffnen hxroom.de/agb bzw. /avv in einem neuen Tab. Der Klick auf „Konto erstellen“ ist die Zustimmung; das Formular schickt dabei `acceptTerms: true`.
+- Die ausdrückliche Bestätigung als Unternehmer (§ 14 BGB) wandert zum Abo-Abschluss (technisches-konzept.md §12, Subscription-Flow). Sie zählt dort, wo Verbraucherrecht teuer würde (Widerruf, Button-Lösung, Kündigungsbutton, Bruttopreise). Der AVV bleibt bei der Registrierung, weil der Trial alle Funktionen hat und Coachs darin schon echte Klientendaten verarbeiten.
+- **Offen (Anwalt):** AGB §1 sagt „Mit der Registrierung bestätigst du, dass das auf dich zutrifft.“ Prüfen, ob das zur Aufteilung Hinweis bei Registrierung / Checkbox beim Abo passt, ggf. AGB anpassen (dann neue `TERMS_VERSION`).
 
 **Fassung:** `TERMS_VERSION = '2026-10-27'` in `packages/shared`, entspricht dem Stand-Datum beider Seiten. Ein Kommentar in `agb.vue` und `avv.vue` verweist darauf. Bei Änderungen am Text wandern beide mit.
 
@@ -432,7 +433,7 @@ Für 3.1b auf dem Server:
 - `GET /api/v1/account/terms` liefert die angenommene Fassung samt Zeitpunkt oder `null`. `POST /api/v1/account/terms` nimmt die aktuelle Fassung an. In einer übernommenen Sitzung (Impersonation) antwortet der `POST` mit `403`: Der Betreiber stimmt nicht für den Coach zu.
 
 **Konten ohne Zustimmung** (bestehende Konten, vom Betreiber per `admin.createUser` angelegte):
-- Die Coach-App zeigt nach der Anmeldung ein nicht schließbares Modal mit derselben Checkbox und dem Knopf „Annehmen“. Erst danach ist die App bedienbar.
+- Die Coach-App zeigt nach der Anmeldung ein nicht schließbares Modal mit einer Checkbox „Ich stimme den [AGB] und dem [Auftragsverarbeitungsvertrag] zu.“ und dem Knopf „Annehmen“. Erst danach ist die App bedienbar. Die Beschreibung nennt „HxRoom richtet sich an Selbständige.“; die Unternehmer-Bestätigung selbst folgt wie bei der Registrierung beim Abo-Abschluss.
 - Das Modal erscheint nur, wenn noch **gar keine** Fassung angenommen ist. Spätere Änderungen der AGB laufen nach AGB §11 per Mail mit Widerspruchsfrist, nicht über eine erneute Zustimmung.
 - In einer übernommenen Sitzung erscheint statt des Modals ein Hinweis im Kopf.
 

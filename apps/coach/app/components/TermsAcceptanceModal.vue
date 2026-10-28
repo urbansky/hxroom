@@ -5,6 +5,9 @@ import { TERMS_VERSION } from '@hxroom/shared'
  * Zustimmung zu AGB und AVV für Konten, die sie bei der Registrierung nicht gegeben haben –
  * ältere Konten und vom Betreiber angelegte (phase5-umsetzungsplan.md, 5a). Lässt sich nicht
  * schließen: Ohne Vertrag arbeitet niemand mit echten Klienten. Abmelden bleibt möglich.
+ * Hier bleibt die Checkbox, weil es keinen Knopf „Konto erstellen“ gibt, der die Zustimmung
+ * trägt. Die Bestätigung als Unternehmer (§ 14 BGB) gehört wie bei der Registrierung nicht
+ * hierher, sondern zum Abo-Abschluss.
  */
 const { open } = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ accepted: [] }>()
@@ -39,14 +42,14 @@ async function onAccept() {
     :dismissible="false"
     :close="false"
     title="AGB und Auftragsverarbeitungsvertrag"
-    description="Bevor du mit HxRoom weiterarbeitest, brauchen wir deine Zustimmung zu beiden Verträgen."
+    description="HxRoom richtet sich an Selbständige. Bevor du weiterarbeitest, brauchen wir deine Zustimmung zu beiden Verträgen."
   >
     <template #body>
       <div class="flex flex-col gap-4">
         <UAlert v-if="errorMessage" icon="i-lucide-circle-x" color="error" variant="soft" :description="errorMessage" />
         <UCheckbox v-model="accepted" :ui="{ label: 'font-normal text-muted' }">
           <template #label>
-            Ich nutze HxRoom für meine selbständige berufliche Tätigkeit und stimme den
+            Ich stimme den
             <ULink :to="`${landingUrl}/agb`" target="_blank" class="text-primary underline underline-offset-2">AGB</ULink>
             und dem
             <ULink :to="`${landingUrl}/avv`" target="_blank" class="text-primary underline underline-offset-2">Auftragsverarbeitungsvertrag</ULink>

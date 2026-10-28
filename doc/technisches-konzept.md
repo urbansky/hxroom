@@ -985,7 +985,12 @@ Stripe wird für zwei Zwecke eingesetzt: **Einmalige Zahlungen** (z.B. Klient za
 
 ```
 Coach wählt Plan im Backoffice
-  → POST /api/v1/billing/checkout → erstellt Stripe Checkout Session
+  → Pflicht-Checkbox vor dem Weiterleiten: „Ich schließe das Abo für meine selbständige
+    berufliche Tätigkeit ab.“ (Unternehmer nach § 14 BGB; bei der Registrierung gibt es
+    dafür nur einen Hinweis, siehe phase5-umsetzungsplan.md 5a)
+  → POST /api/v1/billing/checkout → prüft die Bestätigung, speichert sie mit Zeitpunkt,
+    erstellt Stripe Checkout Session (Rechnungsadresse + USt-IdNr. über Stripe:
+    billing_address_collection, tax_id_collection)
   → Coach wird zu Stripe Checkout weitergeleitet (gehostet, kein eigenes Zahlungsformular)
   → Nach Zahlung: Stripe sendet webhook checkout.session.completed
   → Backend aktiviert Plan in organizations.plan + organizations.plan_expires_at
