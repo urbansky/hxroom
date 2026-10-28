@@ -82,3 +82,10 @@ export function formatChatSummary(messageCount: number, fileCount: number): stri
   if (fileCount) parts.push(`${fileCount} ${fileCount === 1 ? 'Datei' : 'Dateien'}`)
   return parts.join(' · ')
 }
+
+/** Dateigröße wie im Chat-Panel (CallChatPanel): B, KB, MB mit Komma. */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`
+}
