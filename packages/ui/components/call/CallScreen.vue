@@ -233,9 +233,19 @@ function resizeByKey(event: KeyboardEvent) {
     <!-- bg-muted liegt auf diesem Kasten und nicht allein auf der Bühne, damit derselbe
          Grund auch hinter der Steuerleiste steht – die ist selbst durchsichtig. -->
     <div class="flex-1 min-h-0 relative flex flex-col bg-muted">
+      <!-- Ab md rückt die Bühne vor der offenen Seitenleiste zur Seite: Sonst läge die Leiste
+           über der rechten Hälfte des Bildes und verdeckte das eigene Bild oben rechts und bei
+           einer Freigabe die Videospalte. Leistenbreite plus deren Abstand zum Rand (right-5);
+           den Abstand zwischen Bild und Leiste gibt der Rand der Bühne selbst. Auf schmalen
+           Fenstern ist die Leiste fast so breit wie das Fenster, dort bliebe vom Bild nichts.
+           Beim Ziehen am Griff ohne Übergang, sonst liefe das Bild der Maus hinterher. -->
       <div
-        class="flex-1 min-h-0 transition-[padding] duration-[250ms] ease-out motion-reduce:transition-none"
-        :style="{ paddingBottom: shareFullscreen ? '0px' : `${controlsHeight}px` }"
+        class="flex-1 min-h-0 md:pr-(--call-sidebar-pad)"
+        :class="resizing ? '' : 'transition-[padding] duration-[250ms] ease-out motion-reduce:transition-none'"
+        :style="{
+          paddingBottom: shareFullscreen ? '0px' : `${controlsHeight}px`,
+          '--call-sidebar-pad': sidebarOpen ? `${sidebarWidth + 20}px` : '0px',
+        }"
       >
         <CallVideoArea
           v-model:fullscreen="shareFullscreen"
