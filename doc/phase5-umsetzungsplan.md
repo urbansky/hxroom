@@ -24,7 +24,7 @@ Phase 5 läuft in zwei Etappen. Für die Vorführungen genügt ein Teil der Punk
 5. ✅ AGB und AVV bei der Registrierung, Datenschutz-Kasten im Warteraum
 6. ✅ Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausblenden
 7. ✅ Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
-8. Terminseite und Abschlusskarte (breitere Klientenseite nach dem Beta-Start)
+8. Terminseite, Abschlusskarte, breitere Klientenseite
 9. ✅ Landingpage inhaltlich und gestalterisch überarbeiten (Rest aus 9c offen)
 10. ✅ Datenexport auf Knopfdruck für Coachs
 11. ✅ Coach-App auf dem Handy bedienbar: Navigation und Darstellungsfehler
@@ -657,7 +657,7 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 
 **Ziel:** Nach dem Gespräch hat der Coach einen Ort für alles, was zu einer Sitzung gehört: Notizen in einem großen Editor, Chat und Dateien, die Details der Buchung. Das Ende des Calls führt dorthin. Grundlage ist `zeitplan.md`, Phase 5, „Nachbereitung für den Coach“.
 
-**Nicht in diesem Schritt:** die breitere Klientenseite mit Notizen-Chronik, Dateien und Coaching-Zielen. Sie braucht vorher einen klickbaren Entwurf und eine Migration und kommt nach dem Beta-Start.
+**Dazu:** die breitere Klientenseite mit Notizen-Chronik, Dateien und Coaching-Zielen (8c).
 
 ### 8a · Terminseite `/bookings/[id]`
 
@@ -721,7 +721,7 @@ Auch die übrigen Endzustände der Call-Seite verlinken die Terminseite: „Nich
 
 ### 8c · Breitere Klientenseite
 
-**Stand:** als klickbarer Entwurf im Branch `feature/client-page`, wartet auf Freigabe.
+**Stand:** umgesetzt und lokal abgenommen, Abnahme in Produktion offen.
 
 **Seite** (`pages/clients/[id].vue`):
 - **Kopf** über die volle Breite: Name und Kontakt, darunter drei Kennzahlen in den Karten des Dashboards (`StatCard`): gehaltene Sitzungen mit Datum der letzten, nicht erschienen, Klient seit. Daneben „Spontan-Termin“, „Bearbeiten“ und ein Drei-Punkte-Menü mit „Klient löschen“.
