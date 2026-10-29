@@ -293,12 +293,12 @@ const plannedFeatures = [
     <div v-else class="rounded-xl border border-dashed border-default p-10 flex flex-col items-center justify-center gap-3 text-center">
       <UIcon name="i-lucide-layers" class="size-6 text-muted" />
       <p class="text-sm text-muted">Noch keine Angebote. Lege dein erstes an – erst dann können Klienten bei dir buchen.</p>
+      <!-- Gefüllt, nicht soft wie bei den Klienten: Ohne Angebot bleibt die Buchungsseite
+           leer, der Knopf ist hier der einzige Weg weiter. -->
       <UButton
         label="Angebot anlegen"
         icon="i-lucide-plus"
         color="primary"
-        variant="soft"
-        size="sm"
         @click="openCreate"
       />
     </div>

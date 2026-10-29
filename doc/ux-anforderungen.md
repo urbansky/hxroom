@@ -25,7 +25,7 @@ Begriffe wie im übrigen `doc/`: **Coach** ist der Kunde des Betreibers, **Klien
 - **Karten:** Inhaltsflächen sind weiße Karten mit Rahmen und abgerundeten Ecken (`bg-white`/`dark:bg-neutral-900`, `border-default`, `rounded-xl`). Kennzahlen stehen in `StatCard`, Einstellungen in `SettingsSection`.
 - **Lesen vor Bearbeiten:** Gespeicherte Texte stehen als Text da und werden über einen Stift bearbeitet. Dauerhaft offene Eingabefelder gibt es nur, wo man vor allem schreibt, etwa bei den Sitzungsnotizen.
 - **Speichern:** Wo automatisch gespeichert wird, zeigt ein Speicherstand das an („Gespeichert“). Wo ausdrücklich gespeichert wird, gibt es „Speichern“ und „Abbrechen“ nebeneinander. Je Art von Inhalt gilt überall derselbe Weg.
-- **Leere Zustände:** Ein Satz, was hier stehen wird, und, wo möglich, die Aktion dazu. Kein leerer Kasten, kein leeres Formularfeld.
+- **Leere Zustände:** Ein Satz, was hier stehen wird, und, wo möglich, die Aktion dazu. Kein leerer Kasten, kein leeres Formularfeld. Ist die Aktion der einzige Weg, die Liste zu füllen, ist ihr Knopf gefüllt (Sitzungsangebote). Füllt sich die Liste auch von selbst, ist er leise (`soft`, Klientenliste).
 - **Fehler:** Deutsch, konkret, mit Ausweg, etwa „Erneut versuchen“. Nie ein technischer Text.
 - **Zurück:** Führt dorthin, woher der Coach kam: Kalender, Dashboard, Klientenprofil. Reiter und Filter stehen in der URL und überstehen Neuladen und Zurück.
 - **Nur, was funktioniert:** Funktionen, die es noch nicht gibt, sind ausgeblendet, nicht als „Kommt bald“ angekündigt. Im Call täuscht nichts eine Wirkung vor.
