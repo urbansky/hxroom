@@ -121,6 +121,11 @@
   --ui-border-inverted: #141814;
 
   --ui-primary: var(--color-sage-700);
+  /* Standard wäre yellow-500 – auf hellem Grund, etwa in Hinweisen mit variant="soft", kaum
+     lesbar (1,7:1). Erst 800 erreicht dort WCAG AA (5,6:1, 700 nur 4,1:1). Dark Mode setzt
+     den hellen Standardton unten ausdrücklich, sonst gewänne diese Regel, weil das Theme nach
+     Nuxt UI geladen wird. */
+  --ui-warning: var(--ui-color-warning-800);
 }
 
 /* Dark mode */
@@ -146,6 +151,7 @@
   --ui-border-inverted: #F5F0E8;
 
   --ui-primary: var(--color-sage-500);
+  --ui-warning: var(--ui-color-warning-400);
 }
 
 /* Primary solid buttons: white text in dark mode */
