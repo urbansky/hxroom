@@ -184,7 +184,6 @@ async function deleteDraft() {
       <UButton
         v-if="activeTab === 'availability'"
         icon="i-lucide-plus"
-        size="sm"
         color="primary"
         class="mb-2 shrink-0"
         aria-label="Zeit hinzufügen"

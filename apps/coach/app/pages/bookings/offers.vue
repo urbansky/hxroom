@@ -44,11 +44,20 @@ function parsePriceCents(priceEuro: string): number | null {
 
 const rows = ref<OfferResponse[]>([])
 
-const activeCount = computed(() => rows.value.filter(r => r.isActive).length)
-const inactiveCount = computed(() => rows.value.length - activeCount.value)
+// Aktive und inaktive Angebote in getrennten Abschnitten, beide in der Reihenfolge von
+// `rows`. Inaktive sind nicht buchbar und stehen deshalb zugeklappt unter den aktiven.
+const activeRows = computed(() => rows.value.filter(r => r.isActive))
+const inactiveRows = computed(() => rows.value.filter(r => !r.isActive))
+
+const activeCountLabel = computed(() => {
+  const n = activeRows.value.length
+  if (n === 0) return 'Kein aktives Angebot – Klienten können gerade nichts buchen.'
+  return n === 1 ? '1 aktives Angebot' : `${n} aktive Angebote`
+})
 
 // Cookie statt ref, damit die Einstellung Reloads und Seitenwechsel übersteht.
 const showDescriptions = useCookie<boolean>('offers-show-descriptions', { default: () => true })
+const showInactive = useCookie<boolean>('offers-show-inactive', { default: () => false })
 
 // Reihenfolge per Drag & Drop. Die Liste wird bereits während des Ziehens
 // live umsortiert (onDragOver), nicht erst beim Drop – die TransitionGroup
@@ -76,6 +85,8 @@ function onDragOver(offer: OfferResponse, event: DragEvent) {
   const fromIndex = rows.value.findIndex(r => r.id === draggedId.value)
   const overIndex = rows.value.findIndex(r => r.id === offer.id)
   if (fromIndex === -1 || overIndex === -1) return
+  // Nur innerhalb des eigenen Abschnitts: Ziehen ändert die Reihenfolge, nicht den Status.
+  if (rows.value[fromIndex]!.isActive !== offer.isActive) return
 
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
   const isBefore = event.clientY < rect.top + rect.height / 2
@@ -209,93 +220,87 @@ const plannedFeatures = [
     <h1 class="font-serif text-3xl text-highlighted mb-2">Sitzungsangebote</h1>
     <p class="text-muted mb-8">Lege fest, welche Sitzungsformate deine Klienten buchen können – mit Name, Dauer, Preis und einer ausführlichen Beschreibung.</p>
 
-    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-3">
-      <p class="text-sm text-muted">
-        <template v-if="inactiveCount > 0">{{ activeCount }} aktive Angebote ({{ inactiveCount }} inaktive)</template>
-        <template v-else>{{ rows.length }} {{ rows.length === 1 ? 'Angebot' : 'Angebote' }}</template>
-      </p>
-      <UButton
-        :label="showDescriptions ? 'Beschreibungen ausblenden' : 'Beschreibungen anzeigen'"
-        :icon="showDescriptions ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        @click="showDescriptions = !showDescriptions"
-      />
-    </div>
+    <template v-if="rows.length">
+      <!-- Wie in der Klientenliste: Hauptaktion rechts, gefüllt. Auf dem Handy stehen
+           Zähler und Hauptaktion in der ersten Zeile, der Beschreibungs-Schalter rutscht
+           per order-last darunter. -->
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4">
+        <p class="text-sm text-muted">{{ activeCountLabel }}</p>
+        <UButton
+          :label="showDescriptions ? 'Beschreibungen ausblenden' : 'Beschreibungen anzeigen'"
+          :icon="showDescriptions ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="-ms-2.5 max-sm:order-last"
+          @click="showDescriptions = !showDescriptions"
+        />
+        <UButton
+          label="Angebot anlegen"
+          icon="i-lucide-plus"
+          color="primary"
+          class="ms-auto shrink-0"
+          @click="openCreate"
+        />
+      </div>
 
-    <div class="flex flex-col gap-3">
-      <p v-if="!rows.length" class="text-sm text-muted">Noch keine Angebote angelegt.</p>
-
-      <TransitionGroup tag="div" name="offer-reorder" class="contents">
-        <div
-          v-for="offer in rows"
+      <TransitionGroup tag="div" name="offer-reorder" class="flex flex-col gap-3">
+        <OfferCard
+          v-for="offer in activeRows"
           :key="offer.id"
-          role="button"
-          tabindex="0"
-          draggable="true"
-          class="group relative flex items-start gap-3 rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
-          :class="[
-            !offer.isActive && 'opacity-50',
-            draggedId === offer.id && 'opacity-30',
-          ]"
-          @click="openEdit(offer)"
-          @keydown.enter="openEdit(offer)"
-          @keydown.space.prevent="openEdit(offer)"
+          :offer="offer"
+          :show-description="showDescriptions"
+          :dragging="draggedId === offer.id"
+          @open="openEdit(offer)"
           @dragstart="onDragStart(offer, $event)"
           @dragover="onDragOver(offer, $event)"
           @drop="onDrop($event)"
           @dragend="onDragEnd"
-        >
-          <!-- Absolut positioniert statt im Fluss: Als Flex-Kind belegte das Icon auch
-               unsichtbar (opacity-0) seinen Platz und riss eine Lücke links neben der
-               Farbpille. Rechts, weil die Kachel dort ohnehin Leerraum hat und die linke
-               Seite jetzt der Farbpille gehört.
-               Nur ein Hinweis, kein Bedienelement: draggable und dragstart liegen auf der
-               ganzen Kachel, gezogen werden kann sie von jeder Stelle aus. -->
-          <UIcon
-            name="i-lucide-grip-vertical"
-            class="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-          />
-
-          <!-- Farbe der Sitzungsart (siehe offerColor in utils/offers.ts). `self-stretch`
-               statt fester Höhe: Die Pille wächst mit dem Inhalt mit, also auch dann, wenn
-               über "Beschreibungen anzeigen" der Beschreibungstext eingeblendet wird.
-               Bewusst innerhalb des Paddings statt als Rand der Karte – ein Rand würde bei
-               dieser Breite mit dem Eckradius kollidieren (innerer Radius wird 0). -->
-          <span
-            class="w-1 rounded-full shrink-0 self-stretch"
-            :style="{ backgroundColor: offerColor(offer.id) }"
-          />
-
-          <div class="min-w-0 flex-1 flex flex-col gap-0.5">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-highlighted truncate">{{ offer.name }}</span>
-              <UBadge v-if="!offer.isActive" label="Inaktiv" color="neutral" variant="subtle" size="sm" />
-            </div>
-            <p class="text-sm text-muted">{{ offer.durationMinutes }} min · {{ formatPrice(offer.priceCents) }}</p>
-
-            <div v-if="showDescriptions" class="mt-2">
-              <div
-                v-if="descriptionPreview(offer.description)"
-                class="text-muted [&_h2]:text-highlighted [&_h3]:text-highlighted"
-                :class="descriptionProseClasses"
-                v-html="renderDescription(offer.description)"
-              />
-              <p v-else class="text-sm text-muted italic">Beschreibung hinzufügen …</p>
-            </div>
-          </div>
-        </div>
+        />
       </TransitionGroup>
 
-      <button
-        type="button"
-        class="rounded-xl border border-dashed border-default p-5 flex items-center justify-center gap-2 text-sm text-muted hover:text-highlighted hover:border-accented transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+      <UCollapsible v-if="inactiveRows.length" v-model:open="showInactive" class="mt-8">
+        <UButton
+          :label="`Inaktiv (${inactiveRows.length})`"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          trailing-icon="i-lucide-chevron-down"
+          class="group -ms-2.5"
+          :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+        />
+
+        <template #content>
+          <p class="text-sm text-muted mt-1 mb-3">Nicht auf deiner Buchungsseite sichtbar. Zum Aktivieren ein Angebot öffnen.</p>
+          <TransitionGroup tag="div" name="offer-reorder" class="flex flex-col gap-3">
+            <OfferCard
+              v-for="offer in inactiveRows"
+              :key="offer.id"
+              :offer="offer"
+              :show-description="showDescriptions"
+              :dragging="draggedId === offer.id"
+              @open="openEdit(offer)"
+              @dragstart="onDragStart(offer, $event)"
+              @dragover="onDragOver(offer, $event)"
+              @drop="onDrop($event)"
+              @dragend="onDragEnd"
+            />
+          </TransitionGroup>
+        </template>
+      </UCollapsible>
+    </template>
+
+    <div v-else class="rounded-xl border border-dashed border-default p-10 flex flex-col items-center justify-center gap-3 text-center">
+      <UIcon name="i-lucide-layers" class="size-6 text-muted" />
+      <p class="text-sm text-muted">Noch keine Angebote. Lege dein erstes an – erst dann können Klienten bei dir buchen.</p>
+      <UButton
+        label="Angebot anlegen"
+        icon="i-lucide-plus"
+        color="primary"
+        variant="soft"
+        size="sm"
         @click="openCreate"
-      >
-        <UIcon name="i-lucide-plus" class="size-4" />
-        Neues Angebot
-      </button>
+      />
     </div>
 
     <SettingsSection title="Geplante Features" description="Das kommt als Nächstes für deine Sitzungsangebote." class="mt-6 hidden">
