@@ -23,6 +23,8 @@ interface BookingPageResponse {
   qualifications:  string[]
   avatarUpdatedAt: string | null
   imprintComplete: boolean
+  reviewedAt:      string | null
+  onboardingCelebratedAt: string | null
 }
 
 // Formular-Shape: UInput/UTextarea erwarten `string | undefined`, kein `null`.
@@ -96,6 +98,11 @@ const avatarUrl = computed(() =>
 // Fetch deklariert, weil onResponse schon während des await läuft.
 const imprintComplete = ref(true)
 
+// Hinweis während der Einrichtung: Die Vorschau wirkt auch ohne Foto, Tagline und Text fertig,
+// weil die Seite dann auf Name und Initiale zurückfällt. Nur beim Laden entschieden, damit der
+// Kasten nicht mitten im Tippen verschwindet und die Seite springt.
+const showPersonalHint = ref(false)
+
 await useFetch<BookingPageResponse>('/booking-page', {
   $fetch: $api,
   onResponse({ response }) {
@@ -104,6 +111,14 @@ await useFetch<BookingPageResponse>('/booking-page', {
     organizationId.value = response._data?.organizationId ?? null
     avatarUpdatedAt.value = response._data?.avatarUpdatedAt ?? null
     imprintComplete.value = response._data?.imprintComplete ?? false
+    const data = response._data as BookingPageResponse | undefined
+    showPersonalHint.value = !!data && !data.onboardingCelebratedAt
+      && !(data.avatarUpdatedAt && data.tagline?.trim() && data.bio?.trim())
+    // Schritt „Buchungsseite prüfen“ der Checkliste: Der Besuch genügt. Scheitert die Meldung,
+    // bleibt der Schritt offen und wird beim nächsten Besuch erneut gemeldet.
+    if (data && !data.reviewedAt) {
+      $api('/booking-page/reviewed', { method: 'POST' }).catch(() => {})
+    }
   },
 })
 
@@ -290,6 +305,18 @@ const features = [
       title="Ohne Impressum können Klienten noch nicht buchen"
       description="Deine Seite ist zu sehen, statt der Buchungs-Buttons steht dort aber ein Hinweis. Trag dein Impressum unter Rechtliches ein."
       :actions="[{ label: 'Zu Rechtliches', to: '/settings/legal', color: 'warning', variant: 'outline', trailingIcon: 'i-lucide-arrow-right' }]"
+    />
+
+    <!-- Kein Pflichtfeld, nur ein Hinweis: Der Schritt der Checkliste ist mit dem Besuch schon
+         erledigt (siehe showPersonalHint). -->
+    <UAlert
+      v-if="showPersonalHint"
+      icon="i-lucide-sparkles"
+      color="primary"
+      variant="soft"
+      title="So sieht deine Buchungsseite gerade aus"
+      description="Mit Foto, Tagline und ein paar Sätzen über dich wirkt sie persönlicher. Alles ist freiwillig – deine Seite funktioniert auch so."
+      :actions="[{ label: 'Zurück zur Einrichtung', to: '/', color: 'primary', variant: 'outline', trailingIcon: 'i-lucide-arrow-right' }]"
     />
 
     <!-- Zweispaltiges Layout ab xl: Editor + Vorschau. Die Vorschau wächst bis 900 px, der

@@ -101,14 +101,16 @@ export interface OnboardingBookingPage {
   testSessionAt: string | null
   /** Erstes Kopieren des Buchungslinks. */
   linkSharedAt: string | null
+  /** Erster Besuch der Einstellungsseite „Buchungsseite“. */
+  reviewedAt: string | null
 }
 
 /**
  * Sechs Schritte bis zur ersten Buchung, auf die Beta ausgerichtet (doc/funktionen/
  * backoffice-coach.md 1.04, phase5-umsetzungsplan.md Schritt 6b). Der Zustand wird bei jedem
- * Laden neu aus den Daten abgeleitet. Nur Probe-Sitzung und geteilter Link haben einen
- * eigenen Merker an der Buchungsseite: Die Probe-Sitzung wird nach 24 Stunden gelöscht, und
- * das Teilen hinterlässt sonst keine Spur.
+ * Laden neu aus den Daten abgeleitet. Probe-Sitzung, geteilter Link und geprüfte
+ * Buchungsseite haben einen eigenen Merker an der Buchungsseite: Die Probe-Sitzung wird nach
+ * 24 Stunden gelöscht, Teilen und Ansehen hinterlassen sonst keine Spur.
  */
 export function onboardingSteps(input: {
   bookingPage: OnboardingBookingPage | null
@@ -116,12 +118,16 @@ export function onboardingSteps(input: {
   slots: AvailabilitySlotResponse[]
   hasBooking: boolean
 }): OnboardingStep[] {
+  const page = input.bookingPage
   return [
+    // Die Felder der Buchungsseite sind freiwillig, die Seite steht auch ohne sie. Der Schritt
+    // verlangt deshalb nur den Besuch der Einstellungsseite. Wer schon Tagline, Text oder Foto
+    // eingetragen hat, behält den Haken auch ohne Merker.
     {
       key: 'bookingpage',
-      label: 'Buchungsseite gestalten',
-      description: 'Profiltext oder Foto ergänzen',
-      done: !!(input.bookingPage?.tagline || input.bookingPage?.bio || input.bookingPage?.avatarUpdatedAt),
+      label: 'Buchungsseite prüfen',
+      description: 'Sieh dir an, wie Klienten dich sehen',
+      done: !!(page?.reviewedAt || page?.tagline || page?.bio || page?.avatarUpdatedAt),
       to: '/settings/bookingpage',
     },
     {

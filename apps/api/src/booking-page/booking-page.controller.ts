@@ -78,6 +78,15 @@ export class BookingPageController {
     return this.bookingPageService.markLinkShared(org.id);
   }
 
+  // Erster Besuch der Einstellungsseite, für die Checkliste. Wie die Merker oben ein eigener
+  // Endpunkt neben dem Autosave.
+  @Post('reviewed')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  markReviewed(@CurrentOrganization() org: { id: string } | undefined) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.bookingPageService.markReviewed(org.id);
+  }
+
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: MAX_AVATAR_FILE_SIZE },

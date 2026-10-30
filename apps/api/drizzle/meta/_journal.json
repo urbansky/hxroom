@@ -246,6 +246,13 @@
       "when": 1793170979431,
       "tag": "0034_known_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793335803127,
+      "tag": "0035_serious_nehzno",
+      "breakpoints": true
     }
   ]
 }

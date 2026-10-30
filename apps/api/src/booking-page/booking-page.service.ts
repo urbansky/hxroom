@@ -32,6 +32,7 @@ export class BookingPageService {
         onboardingCelebratedAt: bookingPage.onboardingCelebratedAt,
         testSessionAt:      bookingPage.testSessionAt,
         linkSharedAt:       bookingPage.linkSharedAt,
+        reviewedAt:         bookingPage.reviewedAt,
         imprintMode:        bookingPage.imprintMode,
         imprint:            bookingPage.imprint,
         imprintUrl:         bookingPage.imprintUrl,
@@ -199,6 +200,23 @@ export class BookingPageService {
         target: bookingPage.organizationId,
         set: { linkSharedAt },
         setWhere: isNull(bookingPage.linkSharedAt),
+      });
+  }
+
+  /**
+   * Merkt sich den ersten Besuch der Einstellungsseite – der Schritt „Buchungsseite prüfen“
+   * der Checkliste. Wie oben nur beim ersten Mal gesetzt.
+   */
+  async markReviewed(organizationId: string) {
+    const reviewedAt = new Date();
+
+    await this.db
+      .insert(bookingPage)
+      .values({ organizationId, reviewedAt })
+      .onConflictDoUpdate({
+        target: bookingPage.organizationId,
+        set: { reviewedAt },
+        setWhere: isNull(bookingPage.reviewedAt),
       });
   }
 

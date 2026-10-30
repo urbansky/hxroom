@@ -523,8 +523,9 @@ Der Coach spielt beide Rollen: am Rechner als Coach, auf dem Handy als Klient. T
 
 ### 6b · Checkliste auf die Beta ausrichten
 
-Schritte: Buchungsseite gestalten · Sitzungsangebot anlegen · Verfügbarkeit festlegen · Impressum hinterlegen · **Probe-Sitzung machen** · **Buchungslink teilen** (statt „Erste Buchung erhalten“).
+Schritte: Buchungsseite prüfen · Sitzungsangebot anlegen · Verfügbarkeit festlegen · Impressum hinterlegen · **Probe-Sitzung machen** · **Buchungslink teilen** (statt „Erste Buchung erhalten“).
 
+- „Buchungsseite prüfen“ ist erledigt, sobald der Coach die Einstellungsseite „Buchungsseite“ einmal geöffnet hat (Merker `booking_page.reviewed_at`, Migration `0035`, gesetzt über `POST /booking-page/reviewed`) oder Tagline, Über-mich-Text oder Foto eingetragen sind. Die Felder sind freiwillig. Solange die Einrichtung nicht abgeschlossen ist und eines davon fehlt, weist ein Kasten oben auf der Einstellungsseite darauf hin.
 - „Buchungslink teilen“ ist erledigt, sobald der Coach den Link einmal kopiert hat (Merker `booking_page.link_shared_at`) oder es eine echte Buchung gibt.
 - Die Erfolgsmeldung am Ende passt sich an.
 

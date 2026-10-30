@@ -185,6 +185,7 @@ async function main(): Promise<void> {
         // Checkliste abgeschlossen, damit das Dashboard wie im Alltag aussieht.
         testSessionAt: now,
         linkSharedAt: now,
+        reviewedAt: now,
         onboardingCelebratedAt: now,
         avatarUpdatedAt: avatarWarning ? null : now,
         createdAt: now,

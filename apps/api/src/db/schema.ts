@@ -134,6 +134,9 @@ export const bookingPage = pgTable('booking_page', {
   // Erstes Kopieren des Buchungslinks – für den Schritt „Buchungslink teilen“ der Checkliste.
   // Ob der Coach ihn wirklich weitergibt, sieht HxRoom nicht; das Kopieren ist das beste Zeichen.
   linkSharedAt:       timestamp('link_shared_at'),
+  // Erster Besuch der Einstellungsseite „Buchungsseite“ – für den Schritt „Buchungsseite
+  // prüfen“ der Checkliste. Die Felder dort sind freiwillig, der Schritt verlangt nur den Blick.
+  reviewedAt:         timestamp('reviewed_at'),
   // Separat von `updatedAt`, da Text-Autosave sonst unnötig den Avatar-Cache invalidiert.
   // NULL = kein Avatar gesetzt (Existenz-Flag), sonst Cache-Busting-Version für die Avatar-URL.
   avatarUpdatedAt: timestamp('avatar_updated_at'),
