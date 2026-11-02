@@ -4,7 +4,8 @@ import { Footnote, Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_
 import { renderEmail } from '../../render';
 
 interface BookingCancelledEmailProps {
-  clientName: string;
+  /** `null` beim Spontan-Termin an eine bloße E-Mail-Adresse – dann „Hallo,“. */
+  clientName: string | null;
   coachName: string;
   appointment: AppointmentInfo;
   /**
@@ -34,7 +35,7 @@ export default function BookingCancelledEmail({ clientName, coachName, appointme
 
   return (
     <MailLayout preview={byClient ? `Deine Absage für ${when} ist eingegangen` : `Dein Termin am ${when} wurde abgesagt`} legalLinks={legalLinks}>
-      <Greeting>Hallo {clientName},</Greeting>
+      <Greeting>{clientName ? `Hallo ${clientName},` : 'Hallo,'}</Greeting>
       <Paragraph>
         {byClient
           ? `deine Absage ist eingegangen – der folgende Termin bei ${coachName} ist storniert. ${coachName} wurde darüber informiert.`

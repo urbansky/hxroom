@@ -3,6 +3,7 @@ import { offerColor } from '@hxroom/shared';
 import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
 import { renderBookingReminderEmail } from './client/booking-reminder';
+import { renderSessionInvitationEmail } from './client/session-invitation';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
 import { renderBookingCancelledByClientEmail } from './coach/booking-cancelled-by-client';
 import { renderEmailVerificationEmail } from './coach/email-verification';
@@ -209,6 +210,37 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).not.toContain('musste leider abgesagt werden');
       // Der Grund geht an den Coach, nicht zurück an den Klienten.
       expect(html).not.toContain('Bin krank.');
+    });
+
+    it('grüßt ohne Namen, wenn nur eine E-Mail-Adresse eingeladen war', async () => {
+      const html = await renderBookingCancelledEmail({ ...props, clientName: null });
+
+      expect(html).toContain('Hallo,');
+      expect(html).not.toContain('Max Mustermann');
+    });
+  });
+
+  describe('Klient: Einladung zum Spontan-Termin', () => {
+    const props = {
+      clientName: 'Max Mustermann',
+      coachName: 'Anna Bergmann',
+      appointment,
+      callUrl: 'https://anna.hxroom.de/call/b-123?token=abc',
+      legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+    }
+
+    it('rendert Anrede, Termin und Link zum Warteraum', async () => {
+      const html = await renderSessionInvitationEmail(props);
+
+      expect(html).toContain('Hallo Max Mustermann,');
+      expect(html).toContain('Coaching-Sitzung');
+      expect(html).toContain('https://anna.hxroom.de/call/b-123?token=abc');
+    });
+
+    it('grüßt ohne Namen, wenn nur eine E-Mail-Adresse eingeladen war', async () => {
+      const html = await renderSessionInvitationEmail({ ...props, clientName: null });
+
+      expect(html).toContain('Hallo,');
     });
   });
 

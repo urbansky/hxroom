@@ -5,7 +5,11 @@ import type { AdHocBookingResponse, ClientListItem, OfferResponse } from '@hxroo
  * Spontan-Termin: eine Sitzung, die jetzt beginnt (backoffice-coach.md 2.04).
  *
  * Zwei Einstiege, eine Komponente: Im Klientenprofil steht der Klient fest, im Dashboard
- * wird er hier gewählt. Deshalb `client` **oder** `clients` – nicht beides.
+ * wird er hier gewählt – oder statt seiner eine E-Mail-Adresse eingeladen (UX-04). Deshalb
+ * `client` **oder** `clients` – nicht beides.
+ *
+ * Bei der E-Mail-Adresse ordnet die API den Termin still einem Klienten zu, dem die Adresse
+ * schon gehört. Der Ergebnis-Schritt nennt dann dessen Namen.
  *
  * Bewusst kein ClientPicker: Der ist ein Slideover, und ein Slideover aus einem Modal
  * heraus legt zwei überlagernde Ebenen übereinander. Für eine Auswahl aus einer bereits
@@ -30,8 +34,20 @@ const open = defineModel<boolean>('open', { required: true })
 const { $api } = useApi()
 const toast = useToast()
 
+type InviteMode = 'client' | 'email'
+const MODE_ITEMS = [
+  { label: 'Klient', value: 'client', icon: 'i-lucide-user' },
+  { label: 'E-Mail-Adresse', value: 'email', icon: 'i-lucide-mail' },
+]
+
+const mode = ref<InviteMode>('client')
 const selectedClientId = ref<string | undefined>(undefined)
+const email = ref('')
+const name = ref('')
+const createClient = ref(false)
 const selectedOfferId = ref<string | null>(null)
+/** Angebotsauswahl aufgeklappt – zu Beginn steht nur eine Zeile mit dem, was gilt. */
+const offerOpen = ref(false)
 const pending = ref(false)
 const errorMessage = ref<string | null>(null)
 /** Gesetzt nach dem Anlegen – ab da zeigt das Modal den Link statt des Formulars. */
@@ -45,6 +61,24 @@ const offerItems = computed(() =>
     .map(offer => ({ label: `${offer.name} · ${offer.durationMinutes} Min.`, value: offer.id })),
 )
 
+// Zusammengeklappt steht dort, was ohne weiteres Zutun gilt: das vorausgewählte Angebot
+// oder der Spontan-Standard der API (AD_HOC_OFFER_NAME, AD_HOC_DURATION_MINUTES).
+const offerSummary = computed(() =>
+  offerItems.value.find(item => item.value === selectedOfferId.value)?.label
+  ?? 'keins',
+)
+
+// Ohne gewähltes Angebot gibt es im Auswahlfeld nichts zu sehen – dann zurück zur Zeile,
+// nach dem Leeren ebenso wie nach dem Schließen der Liste ohne Auswahl.
+function clearOffer() {
+  selectedOfferId.value = null
+  offerOpen.value = false
+}
+
+function onOfferMenuToggle(isOpen: boolean) {
+  if (!isOpen && !selectedOfferId.value) offerOpen.value = false
+}
+
 // Die E-Mail steht als `description` unter dem Namen: Zwei Klienten mit gleichem oder
 // ähnlichem Namen sind sonst nicht auseinanderzuhalten, und die Adresse ist das, was
 // gleich den Zugangslink bekommt.
@@ -56,21 +90,43 @@ const clientItems = computed(() =>
   })),
 )
 
+// Ohne Klienten gibt es nichts zu wählen – dann nur die E-Mail-Adresse, ohne Umschalter.
+const hasClients = computed(() => Boolean(props.clients?.length))
+const byEmail = computed(() => !props.client && (mode.value === 'email' || !hasClients.value))
+
 const clientId = computed(() => props.client?.id ?? selectedClientId.value)
-const clientName = computed(() =>
-  props.client?.name ?? props.clients?.find(c => c.id === selectedClientId.value)?.name ?? '',
+const selectedClientEmail = computed(() => props.clients?.find(c => c.id === selectedClientId.value)?.email)
+// Das Namensfeld gibt es nur mit dem Haken. Ein Name, der vor dem Abwählen getippt wurde,
+// soll danach nicht unsichtbar mitgeschickt werden.
+const trimmedName = computed(() => createClient.value ? name.value.trim() : '')
+const displayName = computed(() => byEmail.value
+  ? trimmedName.value
+  : props.client?.name ?? props.clients?.find(c => c.id === selectedClientId.value)?.name ?? '',
 )
 
-// Nur der Klient ist Pflicht: Ohne Angebot entsteht ein Spontan-Termin mit dem Standard
-// aus der API (60 Minuten) – ein Gespräch, das jetzt stattfindet, passt oft in keines der
-// veröffentlichten Angebote.
-const canSubmit = computed(() => Boolean(clientId.value) && !pending.value)
+// Nur eine grobe Vorprüfung für den Knopf – die eigentliche Prüfung macht die API.
+const emailLooksValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()))
+
+// Pflicht ist nur, wen die Einladung erreicht: Ohne Angebot entsteht ein Spontan-Termin
+// mit dem Standard aus der API (60 Minuten) – ein Gespräch, das jetzt stattfindet, passt
+// oft in keines der veröffentlichten Angebote. Der Name zählt erst, wenn daraus ein
+// Klient werden soll.
+const canSubmit = computed(() => {
+  if (pending.value) return false
+  if (!byEmail.value) return Boolean(clientId.value)
+  return emailLooksValid.value && (!createClient.value || trimmedName.value !== '')
+})
 
 // Beim Öffnen zurücksetzen: Das Modal überlebt den Seitenwechsel nicht, wohl aber den
 // zweiten Klick auf denselben Knopf – dort soll kein alter Link mehr stehen.
 watch(open, (isOpen) => {
   if (!isOpen) return
+  mode.value = 'client'
   selectedClientId.value = undefined
+  email.value = ''
+  name.value = ''
+  createClient.value = false
+  offerOpen.value = false
   selectedOfferId.value = offerItems.value.length === 1 ? offerItems.value[0]!.value : null
   errorMessage.value = null
   created.value = null
@@ -82,11 +138,19 @@ async function start() {
   errorMessage.value = null
 
   try {
+    // Weglassen statt null: Angebot und Name sind im Schema optional, nicht nullable.
+    const invitee = byEmail.value
+      ? {
+          email: email.value.trim(),
+          ...(trimmedName.value ? { name: trimmedName.value } : {}),
+          createClient: createClient.value,
+        }
+      : { clientId: clientId.value }
+
     created.value = await $api<AdHocBookingResponse>('/bookings/ad-hoc', {
       method: 'POST',
       body: {
-        clientId: clientId.value,
-        // Weglassen statt null: Das Feld ist im Schema optional, nicht nullable.
+        ...invitee,
         ...(selectedOfferId.value ? { offerId: selectedOfferId.value } : {}),
       },
     })
@@ -115,8 +179,8 @@ async function copyLink() {
     v-model:open="open"
     title="Spontan-Termin"
     :description="created
-      ? 'Die Sitzung läuft. Der Klient hat den Zugang per E-Mail bekommen.'
-      : 'Die Sitzung beginnt sofort. Der Klient bekommt den Zugangslink per E-Mail.'"
+      ? 'Die Sitzung läuft. Der Zugangslink ist per E-Mail unterwegs.'
+      : 'Die Sitzung beginnt sofort. Der Zugangslink geht per E-Mail hinaus.'"
   >
     <template #body>
       <div v-if="created" class="flex flex-col gap-4">
@@ -139,30 +203,94 @@ async function copyLink() {
         <UFormField v-if="props.client" label="Klient">
           <p class="text-highlighted">{{ props.client.name }}</p>
         </UFormField>
-        <UFormField v-else label="Klient">
-          <USelectMenu
-            v-model="selectedClientId"
-            :items="clientItems"
-            value-key="value"
-            :filter-fields="['label', 'description']"
-            placeholder="Klient wählen"
-            class="w-full"
-            :ui="inputUi"
-          />
-        </UFormField>
 
-        <UFormField label="Angebot" help="Bestimmt Bezeichnung und Dauer. Ohne Angebot: Spontan-Termin über 60 Minuten.">
+        <template v-else>
+          <!-- basis-0: Ohne gemeinsame Ausgangsbreite verteilt `grow` nur den Rest, und
+               der längere Text bekommt den breiteren Reiter. -->
+          <UTabs v-if="hasClients" v-model="mode" :items="MODE_ITEMS" :content="false" size="sm" class="w-full" :ui="{ trigger: 'basis-0' }" />
+
+          <!-- Beide Varianten liegen übereinander in derselben Rasterzelle, die inaktive
+               unsichtbar: So nimmt der Bereich immer die Höhe der größeren ein, und das
+               zentrierte Modal springt beim Umschalten nicht. -->
+          <div class="grid">
+            <div class="[grid-area:1/1] flex flex-col gap-4" :class="{ invisible: !byEmail }">
+              <UFormField label="E-Mail-Adresse" required>
+                <UInput v-model="email" type="email" autocomplete="off" placeholder="name@beispiel.de" class="w-full" :ui="inputUi" />
+              </UFormField>
+
+              <!-- Der Name steht in derselben Zeile wie der Haken und erscheint erst mit
+                   ihm – ein schneller Termin braucht nur die Adresse, und die Zeile hat
+                   mit und ohne Feld dieselbe Höhe. -->
+              <div class="flex items-center gap-3 h-8">
+                <UCheckbox v-model="createClient" label="Als Klient anlegen" class="shrink-0" />
+                <UInput
+                  v-if="createClient"
+                  v-model="name"
+                  autocomplete="off"
+                  autofocus
+                  placeholder="Name (Pflicht)"
+                  aria-label="Name"
+                  required
+                  class="flex-1 min-w-0"
+                  :ui="inputUi"
+                />
+              </div>
+            </div>
+
+            <UFormField
+              v-if="hasClients"
+              label="Klient"
+              :help="selectedClientEmail
+                ? `Die Einladung geht an ${selectedClientEmail}.`
+                : 'Die Einladung geht an die hinterlegte E-Mail-Adresse.'"
+              class="[grid-area:1/1]"
+              :class="{ invisible: byEmail }"
+            >
+              <USelectMenu
+                v-model="selectedClientId"
+                :items="clientItems"
+                value-key="value"
+                :filter-fields="['label', 'description']"
+                placeholder="Klient wählen"
+                class="w-full"
+                :ui="inputUi"
+              />
+            </UFormField>
+          </div>
+        </template>
+
+        <!-- Das Angebot ist optional und deshalb zugeklappt: eine Zeile mit dem, was gilt,
+             und ein Link zum Ändern. Die Auswahl ersetzt die Zeile an derselben Stelle und
+             in derselben Höhe, damit das Modal auch hier nicht springt. -->
+        <div class="flex items-center gap-3 h-8">
           <USelectMenu
+            v-if="offerOpen"
             v-model="selectedOfferId"
             :items="offerItems"
             value-key="value"
-            placeholder="Angebot wählen (optional)"
+            placeholder="Angebot wählen"
+            default-open
             clear
-            class="w-full"
+            class="flex-1 min-w-0"
             :ui="inputUi"
-            @clear="selectedOfferId = null"
+            @clear="clearOffer"
+            @update:open="onOfferMenuToggle"
           />
-        </UFormField>
+          <template v-else>
+            <p class="flex-1 min-w-0 truncate text-sm">
+              <span class="text-muted">Angebot:</span> {{ offerSummary }}
+            </p>
+            <UButton
+              v-if="offerItems.length"
+              :label="selectedOfferId ? 'Ändern' : 'Angebot wählen'"
+              color="neutral"
+              variant="link"
+              size="sm"
+              class="shrink-0"
+              @click="offerOpen = true"
+            />
+          </template>
+        </div>
       </div>
     </template>
 
@@ -178,7 +306,7 @@ async function copyLink() {
             icon="i-lucide-video"
             :loading="pending"
             :disabled="!canSubmit"
-            :label="clientName ? `Sitzung mit ${clientName} starten` : 'Sitzung starten'"
+            :label="displayName ? `Sitzung mit ${displayName} starten` : 'Sitzung starten'"
             @click="start"
           />
         </template>

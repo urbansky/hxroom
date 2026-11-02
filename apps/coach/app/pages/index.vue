@@ -146,20 +146,12 @@ async function onClientSaved(_client: ClientResponse) {
       </div>
 
       <!-- Der Weg ins spontane Gespräch: von hier aus, ohne erst einen Klienten zu
-           suchen. Erst sichtbar, wenn beides vorliegt – ohne Klienten oder Angebote
-           führte der Knopf in ein Modal, in dem nichts zu wählen ist. -->
+           suchen. Braucht weder Klienten noch Angebote – eingeladen wird zur Not per
+           E-Mail-Adresse, und ohne Angebot gilt der Spontan-Standard. Die Probe-Sitzung
+           mit sich selbst gibt es nur noch als Schritt der Checkliste. -->
       <div class="flex flex-wrap items-center gap-2">
-        <!-- Probe-Sitzung mit sich selbst (Schritt 6a): braucht weder Klienten noch Angebote. -->
         <UButton
           v-if="!loading"
-          label="Probe-Sitzung"
-          icon="i-lucide-flask-conical"
-          color="neutral"
-          variant="subtle"
-          @click="testSessionOpen = true"
-        />
-        <UButton
-          v-if="!loading && clients.length && offers.length"
           label="Spontan-Termin"
           icon="i-lucide-video"
           @click="adHocOpen = true"

@@ -34,6 +34,15 @@ export function toAppointmentInfo(booking: BookingAppointment): AppointmentInfo 
   };
 }
 
+/**
+ * Name für die Anrede in Klienten-Mails, `null` ohne Namen. Ein Spontan-Termin an eine
+ * E-Mail-Adresse ohne Namen trägt als client_name die Adresse selbst (Pflichtfeld) – ein
+ * „Hallo anna@example.com,“ soll daraus nicht werden.
+ */
+export function greetingName(booking: { clientName: string; clientEmail: string }): string | null {
+  return booking.clientName === booking.clientEmail ? null : booking.clientName;
+}
+
 /** "Montag, 3. August" – Kurzform für Betreffzeilen, die schon den Klientennamen tragen. */
 export function formatDayLabel(booking: BookingTimes): string {
   return dayDateFormatter.format(booking.startTime);

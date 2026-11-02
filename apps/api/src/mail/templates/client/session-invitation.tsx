@@ -4,7 +4,8 @@ import { Footnote, Greeting, Paragraph, PrimaryButton } from '../_components/blo
 import { renderEmail } from '../../render';
 
 interface SessionInvitationEmailProps {
-  clientName: string;
+  /** `null`, wenn der Coach nur eine E-Mail-Adresse eingeladen hat – dann „Hallo,“. */
+  clientName: string | null;
   coachName: string;
   appointment: AppointmentInfo;
   /** Zugang zum Warteraum – anders als sonst bereits offen, der Termin beginnt jetzt. */
@@ -23,7 +24,7 @@ interface SessionInvitationEmailProps {
 export default function SessionInvitationEmail({ clientName, coachName, appointment, callUrl, legalLinks }: SessionInvitationEmailProps) {
   return (
     <MailLayout preview={`${coachName} möchte jetzt mit dir sprechen`} legalLinks={legalLinks}>
-      <Greeting>Hallo {clientName},</Greeting>
+      <Greeting>{clientName ? `Hallo ${clientName},` : 'Hallo,'}</Greeting>
       <Paragraph>{coachName} hat gerade eine Sitzung für dich geöffnet – der Raum ist ab sofort bereit.</Paragraph>
       <AppointmentBlock
         appointment={appointment}

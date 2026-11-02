@@ -11,7 +11,8 @@ import { isUniqueViolation } from '../common/pg-errors';
 import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, TEST_SESSION_DURATION_MINUTES, TEST_SESSION_NAME, canMarkNoShow } from './booking.constants';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderSessionInvitationEmail } from '../mail/templates/client/session-invitation';
-import { toAppointmentInfo } from './booking-formatting';
+import { greetingName, toAppointmentInfo } from './booking-formatting';
+import { normalizeEmail } from '../clients/normalize-email';
 import { buildBookingPageUrl, buildCallUrl, buildLegalLinks } from './booking-urls';
 import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
 import { CallEventsService } from '../call/call-events.service';
@@ -197,8 +198,13 @@ export class CoachBookingsService {
    * Buchungsweg gegen einen berechneten Verfügbarkeits-Slot und endet in 'pending', bis
    * der Klient bestätigt. Beides ergibt hier keinen Sinn – ein spontaner Termin liegt
    * naturgemäß außerhalb der freigegebenen Zeiten, und auf eine Bestätigungsmail zu
-   * warten hieße, das Gespräch nicht zu führen. Der Coach ist authentifiziert und der
-   * Klient ihm bereits bekannt; die Buchung entsteht deshalb direkt als 'confirmed'.
+   * warten hieße, das Gespräch nicht zu führen. Der Coach ist authentifiziert und lädt
+   * selbst ein; die Buchung entsteht deshalb direkt als 'confirmed'.
+   *
+   * Eingeladen wird ein bestehender Klient oder eine E-Mail-Adresse (UX-04). Gehört die
+   * Adresse schon einem Klienten, hängt der Termin ohne Rückfrage an ihm – dieselbe Regel
+   * wie bei der Bestätigung auf der Buchungsseite. Sonst entsteht nur auf Wunsch ein
+   * Klient; ohne ihn bleibt `clientId` leer, und der Coach kann später zuordnen.
    *
    * Keine Kollisionsprüfung gegen andere Termine: Wer spontan startet, weiß, was er
    * gerade tut – der Kalender ist Vorschlag, nicht Vorschrift.
@@ -216,16 +222,8 @@ export class CoachBookingsService {
       throw new ConflictException('Organization has no booking page yet');
     }
 
-    // Mandantentrennung wie in assignClient(): Klient und Angebot müssen dieser
+    // Mandantentrennung wie in assignClient(): Angebot (und unten der Klient) müssen dieser
     // Organisation gehören, sonst ließe sich mit einer fremden Id ein Termin erzeugen.
-    const [client] = await this.db
-      .select({ id: clients.id, name: clients.name, email: clients.email, phone: clients.phone })
-      .from(clients)
-      .where(and(eq(clients.id, dto.clientId), eq(clients.organizationId, organizationId)))
-      .limit(1);
-
-    if (!client) throw new NotFoundException('Client not found');
-
     let offer: { id: string; name: string; durationMinutes: number } | undefined;
     if (dto.offerId) {
       [offer] = await this.db
@@ -248,27 +246,77 @@ export class CoachBookingsService {
 
     let booking: CoachBookingRow;
     try {
-      [booking] = await this.db
-        .insert(bookings)
-        .values({
-          organizationId,
-          clientId:        client.id,
-          offerId:         offer?.id ?? null,
-          // Snapshots wie im öffentlichen Buchungsweg: Was hier steht, gilt für diesen
-          // Termin, auch wenn Angebot oder Klient sich später ändern.
-          offerName,
-          durationMinutes,
-          startTime,
-          endTime,
-          clientName:      client.name,
-          clientEmail:     client.email,
-          clientPhone:     client.phone,
-          status:          'confirmed',
-          origin:          'ad_hoc',
-          confirmedAt:     startTime,
-          clientAccessToken,
-        })
-        .returning(coachBookingColumns);
+      // Klient und Termin in einer Transaktion: Scheitert der Termin (Doppelklick, siehe
+      // unten), bleibt kein frisch angelegter Klient ohne Termin zurück.
+      booking = await this.db.transaction(async (tx) => {
+        const clientColumns = { id: clients.id, name: clients.name, email: clients.email, phone: clients.phone };
+        let client: { id: string; name: string; email: string; phone: string | null } | undefined;
+        // Ohne Klient: Am Termin steht der eingegebene Name, sonst die Adresse selbst –
+        // client_name ist Pflicht, und die Oberfläche braucht etwas zum Anzeigen.
+        let attendee: { name: string; email: string; phone: string | null };
+
+        if ('clientId' in dto) {
+          [client] = await tx
+            .select(clientColumns)
+            .from(clients)
+            .where(and(eq(clients.id, dto.clientId), eq(clients.organizationId, organizationId)))
+            .limit(1);
+
+          if (!client) throw new NotFoundException('Client not found');
+          attendee = client;
+        } else {
+          const email = normalizeEmail(dto.email);
+          const name = dto.name || null;
+
+          [client] = await tx
+            .select(clientColumns)
+            .from(clients)
+            .where(and(eq(clients.organizationId, organizationId), eq(clients.email, email)))
+            .limit(1);
+
+          if (!client && dto.createClient && name) {
+            // onConflictDoNothing statt Fehler: Legt eine zweite Anfrage dieselbe Adresse
+            // gleichzeitig an, gewinnt deren Klient – sonst landete der Wettlauf bei der
+            // Meldung "A session already starts at this time" weiter unten.
+            [client] = await tx
+              .insert(clients)
+              .values({ organizationId, name, email })
+              .onConflictDoNothing()
+              .returning(clientColumns);
+
+            client ??= (await tx
+              .select(clientColumns)
+              .from(clients)
+              .where(and(eq(clients.organizationId, organizationId), eq(clients.email, email)))
+              .limit(1))[0];
+          }
+
+          attendee = client ?? { name: name ?? email, email, phone: null };
+        }
+
+        const [row] = await tx
+          .insert(bookings)
+          .values({
+            organizationId,
+            clientId:        client?.id ?? null,
+            offerId:         offer?.id ?? null,
+            // Snapshots wie im öffentlichen Buchungsweg: Was hier steht, gilt für diesen
+            // Termin, auch wenn Angebot oder Klient sich später ändern.
+            offerName,
+            durationMinutes,
+            startTime,
+            endTime,
+            clientName:      attendee.name,
+            clientEmail:     attendee.email,
+            clientPhone:     attendee.phone,
+            status:          'confirmed',
+            origin:          'ad_hoc',
+            confirmedAt:     startTime,
+            clientAccessToken,
+          })
+          .returning(coachBookingColumns);
+        return row;
+      });
     } catch (err) {
       // bookings_org_start_active_unique greift, wenn zwei Anlagen in dieselbe Sekunde
       // fallen – etwa bei einem Doppelklick. Die Startzeit dafür zu verschieben hieße,
@@ -287,12 +335,14 @@ export class CoachBookingsService {
       const coach = await this.organizationService.findOwnerContact(organizationId);
       const coachDisplayName = coach?.name ?? org.name;
 
+      const clientName = greetingName(booking);
+
       await this.mailService.send({
-        to: { email: booking.clientEmail, name: booking.clientName },
+        to: { email: booking.clientEmail, name: clientName ?? undefined },
         subject: `${coachDisplayName} möchte jetzt mit dir sprechen – HxRoom`,
         replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
         htmlContent: await renderSessionInvitationEmail({
-          clientName: booking.clientName,
+          clientName,
           coachName: coachDisplayName,
           appointment: toAppointmentInfo(booking),
           callUrl,
@@ -397,12 +447,15 @@ export class CoachBookingsService {
     const coach = await this.organizationService.findOwnerContact(organizationId);
     const coachDisplayName = coach?.name ?? org.name;
 
+    // Ein Spontan-Termin an eine bloße E-Mail-Adresse hat keinen Namen für die Anrede.
+    const clientName = greetingName(booking);
+
     await this.mailService.send({
-      to: { email: booking.clientEmail, name: booking.clientName },
+      to: { email: booking.clientEmail, name: clientName ?? undefined },
       subject: 'Dein Termin wurde abgesagt – HxRoom',
       replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
       htmlContent: await renderBookingCancelledEmail({
-        clientName: booking.clientName,
+        clientName,
         coachName: coachDisplayName,
         appointment: toAppointmentInfo(booking),
         cancelledBy: 'coach',

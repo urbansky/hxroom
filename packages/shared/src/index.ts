@@ -466,10 +466,28 @@ export type AssignBookingClientDto = z.infer<typeof assignBookingClientSchema>;
 // Angebote, und niemand soll erst ein Pseudo-Angebot anlegen müssen, um telefonieren zu
 // können. Ohne Angebot gilt der Spontan-Standard aus booking.constants.ts (Bezeichnung
 // und Dauer); mit Angebot kommen beide wie gehabt von dort.
-export const createAdHocBookingSchema = z.object({
-  clientId: z.string().min(1, 'Klient ist erforderlich'),
-  offerId:  z.string().min(1, 'Angebot ist erforderlich').optional(),
-});
+//
+// Zwei Formen: ein bestehender Klient (`clientId`) oder eine E-Mail-Adresse (UX-04). Bei
+// der E-Mail-Adresse ist der Name freiwillig – Pflicht nur, wenn daraus ein Klient
+// entstehen soll, denn ein Klient ohne Namen stünde leer in der Klientenliste. `strict`,
+// damit eine Mischung beider Formen abgelehnt wird, statt still als die erste zu gelten.
+const adHocOfferIdField = z.string().min(1, 'Angebot ist erforderlich').optional();
+
+export const createAdHocBookingSchema = z.union([
+  z.object({
+    clientId: z.string().min(1, 'Klient ist erforderlich'),
+    offerId:  adHocOfferIdField,
+  }).strict(),
+  z.object({
+    email:        z.string().trim().email('Ungültige E-Mail-Adresse'),
+    name:         z.string().trim().max(160).optional(),
+    createClient: z.boolean(),
+    offerId:      adHocOfferIdField,
+  }).strict().refine((dto) => !dto.createClient || Boolean(dto.name), {
+    message: 'Name ist erforderlich',
+    path: ['name'],
+  }),
+]);
 export type CreateAdHocBookingDto = z.infer<typeof createAdHocBookingSchema>;
 
 // Die einzige Antwort, die den Zugangslink des Klienten mitführt – und damit den
