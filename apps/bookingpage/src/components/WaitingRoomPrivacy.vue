@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { CallPrivacy } from '@hxroom/shared';
 
 // Datenschutz-Kasten im Warteraum (phase5-umsetzungsplan.md, 5b; zeitplan.md, Phase 5).
@@ -8,12 +8,17 @@ import type { CallPrivacy } from '@hxroom/shared';
 // Fall `true` gibt es noch keinen Text, weil es die Funktion noch nicht gibt: Die Zeile
 // entfällt dann, statt etwas Falsches zu behaupten. Der Text kommt mit der Funktion.
 //
+// Zugeklappt, damit der Warteraum ohne Scrollen auskommt; die Überschriften der Fakten
+// stehen trotzdem schon in der Kopfzeile.
+//
 // Die Icon-Namen stehen bewusst als Literale hier: Nur so bündelt der Build sie
 // (clientBundle.scan in packages/ui/vite.ts).
 const { privacy, coachName } = defineProps<{
   privacy: CallPrivacy;
   coachName: string;
 }>();
+
+const open = ref(false);
 
 interface Fact {
   icon: string;
@@ -52,23 +57,44 @@ const facts = computed<Fact[]>(() => {
   }
   return list;
 });
+
+const summary = computed(() => facts.value.map((fact) => fact.title).join(' · '));
 </script>
 
 <template>
-  <section class="w-full rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 text-left">
-    <h2 class="text-sm font-medium text-highlighted mb-3">Was mit deinem Gespräch passiert</h2>
-    <ul class="flex flex-col gap-3">
-      <li v-for="fact in facts" :key="fact.title" class="flex items-start gap-3">
-        <UIcon :name="fact.icon" class="size-4 text-primary shrink-0 mt-0.5" />
-        <div class="min-w-0">
-          <div class="text-sm font-medium text-highlighted">{{ fact.title }}</div>
-          <p class="text-sm text-muted leading-relaxed">{{ fact.text }}</p>
-        </div>
-      </li>
-    </ul>
-    <!-- Neuer Tab, damit der Warteraum offen bleibt. -->
-    <a href="/datenschutz" target="_blank" class="inline-block mt-3 text-xs text-primary underline underline-offset-2">
-      Datenschutzerklärung von {{ coachName }}
-    </a>
-  </section>
+  <UCollapsible
+    v-model:open="open"
+    as="section"
+    class="w-full rounded-xl border border-default bg-white dark:bg-neutral-900 text-left"
+  >
+    <button type="button" class="w-full flex items-center gap-3 p-4 text-left cursor-pointer">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-sm font-medium text-highlighted">Was mit deinem Gespräch passiert</h2>
+        <p v-if="!open" class="mt-0.5 text-xs text-muted truncate">{{ summary }}</p>
+      </div>
+      <UIcon
+        name="i-lucide-chevron-down"
+        class="size-4 text-muted shrink-0 transition-transform duration-200"
+        :class="{ 'rotate-180': open }"
+      />
+    </button>
+
+    <template #content>
+      <div class="px-4 pb-4">
+        <ul class="flex flex-col gap-3">
+          <li v-for="fact in facts" :key="fact.title" class="flex items-start gap-3">
+            <UIcon :name="fact.icon" class="size-4 text-primary shrink-0 mt-0.5" />
+            <div class="min-w-0">
+              <div class="text-sm font-medium text-highlighted">{{ fact.title }}</div>
+              <p class="text-sm text-muted leading-relaxed">{{ fact.text }}</p>
+            </div>
+          </li>
+        </ul>
+        <!-- Neuer Tab, damit der Warteraum offen bleibt. -->
+        <a href="/datenschutz" target="_blank" class="inline-block mt-3 text-xs text-primary underline underline-offset-2">
+          Datenschutzerklärung von {{ coachName }}
+        </a>
+      </div>
+    </template>
+  </UCollapsible>
 </template>
