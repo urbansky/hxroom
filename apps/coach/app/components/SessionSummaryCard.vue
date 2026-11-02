@@ -75,8 +75,8 @@ const duration = computed(() => (booking.value ? formatCallDuration(booking.valu
     <p v-else-if="loadError" class="text-sm text-muted">Die Angaben zur Sitzung konnten nicht geladen werden.</p>
 
     <div class="flex flex-wrap items-center justify-center gap-2">
-      <UButton :to="`/bookings/${bookingId}`" label="Zur Sitzung" icon="i-lucide-arrow-right" trailing />
-      <UButton to="/bookings" label="Zu den Terminen" color="neutral" variant="subtle" />
+      <UButton :to="`/bookings/${bookingId}`" label="Zu den Sitzungsdetails" icon="i-lucide-arrow-right" trailing />
+      <UButton to="/" label="Zum Dashboard" color="neutral" variant="subtle" />
     </div>
   </div>
 </template>

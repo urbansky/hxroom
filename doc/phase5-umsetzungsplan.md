@@ -690,7 +690,7 @@ Die Coach-Liste des Betreiber-Backoffice (`/coaches`) bekommt neue Spalten. Vorh
 Nach „Sitzung beenden“ zeigt die Call-Seite statt „Sitzung beendet – Der Termin ist als gehalten vermerkt“ eine Karte (nach `doc/poc/videocall-v2.html`, Bildschirm 4):
 - **Kopf:** „Sitzung abgeschlossen“, darunter „Als gehalten vermerkt“.
 - **Zeilen:** Klient, Datum, Dauer (Einlass bis Ende), Notizen („gespeichert“ oder „keine Notizen“), Chat („3 Nachrichten · 1 Datei“, nur wenn es einen gab).
-- **Aktionen:** „Zur Sitzung“ (Terminseite, Hauptaktion) und „Zu den Terminen“.
+- **Aktionen:** „Zu den Sitzungsdetails“ (Terminseite, Hauptaktion) und „Zum Dashboard“.
 - Die Angaben kommen aus `GET /bookings/:id`, den Notizen und dem Chat, nicht aus dem Zustand der Call-Seite: Die Karte zeigt nur, was gespeichert ist.
 
 Auch die übrigen Endzustände der Call-Seite verlinken die Terminseite: „Nicht erschienen“ (dort lässt es sich zurücknehmen), „Termin abgesagt“, „Raum geschlossen“.
@@ -701,7 +701,7 @@ Auch die übrigen Endzustände der Call-Seite verlinken die Terminseite: „Nich
 - **Terminseite (Anna, Termin mit Notizen und Chat):** Notizen bearbeiten, Speicherstand, nach dem Neuladen erhalten. Chat mit Dateien lesbar, eine Datei öffnet sich. Details mit Nachricht des Klienten und Dauer.
 - **Aktionen auf der Seite:** absagen mit Begründung, Klient zuordnen, nicht erschienen und zurück. Die Seite zeigt danach den neuen Stand.
 - **Fremder Termin:** `/bookings/<Martinas Termin>` als Anna zeigt „Termin nicht gefunden“, die API `404`.
-- **Call beenden:** Abschlusskarte mit Klient, Datum, Dauer, Notizen und Chat. „Zur Sitzung“ führt auf die Terminseite.
+- **Call beenden:** Abschlusskarte mit Klient, Datum, Dauer, Notizen und Chat. „Zu den Sitzungsdetails“ führt auf die Terminseite.
 - **Nicht erschienen im Call:** Der Link führt auf die Terminseite, „Doch erschienen“ nimmt es zurück.
 - **Menü:** kein Punkt „Notizen“, `/notes` gibt es nicht mehr.
 - **Handy (390 px):** Terminseite untereinander, nichts ragt hinaus.
