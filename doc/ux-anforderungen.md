@@ -74,12 +74,13 @@ Begriffe wie im übrigen `doc/`: **Coach** ist der Kunde des Betreibers, **Klien
 
 **Kriterien:**
 - **Bekannter Klient:** Vom Dashboard, aus der Klientenliste und von der Klientenseite aus höchstens zwei Klicks bis zum Zugangslink, also Klient wählen und starten. Das Angebot ist vorausgewählt.
-- **Unbekannte Person:** Name genügt, die E-Mail-Adresse ist freiwillig. Kein Klientendatensatz vorab nötig. Nach dem Gespräch kann der Coach die Person als Klient übernehmen oder es lassen.
-- **Zugangslink:** Steht sofort zum Kopieren bereit, mit QR-Code für das Handy. Mit E-Mail-Adresse geht er zusätzlich per Mail hinaus.
+- **Unbekannte Person:** Die E-Mail-Adresse genügt. Kein Klientendatensatz vorab nötig. Der Coach entscheidet beim Anlegen, ob daraus ein Klient wird. Nur dann fragt der Dialog nach dem Namen, als Pflichtfeld. Andernfalls kann er die Person später über „Klient zuordnen“ übernehmen.
+- **Bekannte Adresse:** Gehört die E-Mail-Adresse schon einem Klienten, wird der Termin ihm ohne Rückfrage zugeordnet. Doppelte Klienten entstehen nicht.
+- **Zugangslink:** Geht per Mail an die Adresse und steht zusätzlich sofort zum Kopieren bereit, mit QR-Code für das Handy.
 - **Einlass:** Der Coach landet direkt auf der Call-Seite und sieht, wann die Person im Warteraum ankommt.
 - **Ohne Umwege:** Kein Pflichtfeld, das für ein spontanes Gespräch keine Bedeutung hat.
 
-**Heute:** Der Spontan-Termin geht vom Dashboard (Klient und Angebot wählen) und von der Klientenseite (Angebot wählen) aus und liefert den Zugangslink zum Kopieren. Er verlangt einen bestehenden Klienten (`createAdHocBookingSchema`, `clientId` Pflicht). Mit einer unbekannten Person ist er nicht möglich, ohne sie vorher als Klient anzulegen. Die Probe-Sitzung (der Coach mit sich selbst) ist davon unabhängig.
+**Heute:** Der Spontan-Termin geht vom Dashboard und von der Klientenseite aus und liefert den Zugangslink zum Kopieren. Auf dem Dashboard wählt der Coach zwischen „Klient“ und „E-Mail-Adresse“. Mit E-Mail-Adresse zeigt der Dialog nur die Adresse und den Haken „Als Klient anlegen“, das Namensfeld erscheint erst mit dem Haken. Beim Umschalten behält das Modal seine Höhe. Eine Adresse, die schon einem Klienten gehört, wird ihm zugeordnet. Die Einladung geht in beiden Fällen per Mail hinaus. Die Probe-Sitzung gibt es nur noch als Schritt der Onboarding-Checkliste. Offen: QR-Code, Einstieg aus der Klientenliste, Angebot vorausgewählt (heute nur bei genau einem aktiven Angebot), direkter Sprung auf die Call-Seite.
 
 ---
 

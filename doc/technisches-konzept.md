@@ -781,11 +781,17 @@ export const coachProfiles = pgTable('coach_profiles', {
 //   damit z.B. "Anna@Firma.de" und "anna@firma.de" denselben Client treffen. Der
 //   Unique-Constraint allein reicht dafür nicht (case-sensitive). Gemeinsame Funktion
 //   normalizeEmail() für beide Entstehungswege.
-// - Zwei Entstehungswege: automatisch bei Bestätigung einer Buchung (NICHT schon bei
-//   Buchungseingang – vermeidet "Geister-Klienten" durch nie bestätigte Buchungen), und
-//   manuell durch den Coach für Bestandsklienten aus anderen Systemen. Manuell angelegte
-//   Klienten haben zunächst keine Buchung; die "keine Geister-Klienten"-Regel gilt nur
-//   für den automatischen Weg.
+// - Drei Entstehungswege: automatisch bei Bestätigung einer Buchung (NICHT schon bei
+//   Buchungseingang – vermeidet "Geister-Klienten" durch nie bestätigte Buchungen),
+//   manuell durch den Coach für Bestandsklienten aus anderen Systemen, und beim
+//   Spontan-Termin an eine E-Mail-Adresse, wenn der Coach "Als Klient anlegen" wählt.
+//   Manuell angelegte Klienten haben zunächst keine Buchung; die "keine
+//   Geister-Klienten"-Regel gilt nur für den automatischen Weg.
+// - Spontan-Termin an eine E-Mail-Adresse (POST /bookings/ad-hoc mit email statt
+//   clientId): Gehört die Adresse schon einem Client, hängt der Termin ohne Rückfrage an
+//   ihm. Sonst bleibt bookings.clientId leer, außer der Coach lässt einen Client anlegen
+//   (dann ist der Name Pflicht). Ohne Namen steht die Adresse als client_name am Termin;
+//   Klienten-Mails grüßen dann ohne Namen (greetingName()).
 // - Automatisches Matching ist die Grundlage, nicht die einzige Quelle der Wahrheit:
 //   der Coach kann jede Buchung manuell einem bestehenden Client zuordnen/umhängen
 //   (bookings.clientId ist jederzeit im Backoffice änderbar), unabhängig vom
@@ -1224,7 +1230,7 @@ nimmt der Test denselben Weg wie später der Browser und ein falsches `node_ip` 
 - DSGVO-Löschfunktion: Cascade-Delete **Organization** → alle verknüpften Daten via Drizzle `onDelete: 'cascade'`. Der Einstiegspunkt ist bewusst die Organisation, nicht der User: sämtliche Fachdaten (`clients`, `offers`, `bookings`, `booking_page`, `availability_*`) hängen an `organizationId`, und `organization` hat keinen Fremdschlüssel auf `user`. Ein Löschen des User-Datensatzes allein (z. B. via `admin.removeUser`) entfernt nur `member`/`session`/`account` und hinterlässt die Organisation samt aller Klienten- und Buchungsdaten verwaist.
 - **Datenexport** (Art. 20 DSGVO, `GET /api/v1/account/export`, Einstellungen → Account): eine ZIP-Datei mit `klienten.csv`, `termine.csv` (UTF-8 mit BOM, Semikolon, Schutz vor Formeln in Excel), Notizen und Chat-Verläufen je Termin als Markdown und allem zusammen in `daten.json`, dazu Angebote, Verfügbarkeiten und die Texte der Buchungsseite. Ohne Probe-Sitzungen, Zugangstoken und die Dateien aus dem Chat. Gebaut im Request mit `fflate`, ohne Ablage im Speicher; höchstens ein Export alle 30 Sekunden pro Organisation. Das Log nennt nur Organisations-ID, Zahl der Termine und Größe.
 - **Feedback der Coachs** (`feedback`): Text, Pfad der Seite ohne Query-String und User-Agent. Hängt mit Cascade an Organisation und User und verschwindet mit dem Konto. Bei einem Fehler beim Mailversand loggt die API nur die Feedback-ID.
-- **Probe-Sitzungen** (Herkunft `test`, `POST /api/v1/bookings/test-session`): Der Coach spricht mit sich selbst, ohne Klient und ohne Mail. Sie zählen in keiner Kennzahl, und `TestSessionCleanupService` löscht sie 24 Stunden nach dem Ende samt Notizen, Chat und Dateien.
+- **Probe-Sitzungen** (Herkunft `test`, `POST /api/v1/bookings/test-session`): Der Coach spricht mit sich selbst, ohne Klient und ohne Mail. Erreichbar nur über den Schritt der Onboarding-Checkliste; danach testet der Coach mit einem Spontan-Termin an die eigene Adresse. Sie zählen in keiner Kennzahl, und `TestSessionCleanupService` löscht sie 24 Stunden nach dem Ende samt Notizen, Chat und Dateien.
 - **Klienten löschen** (Art. 17 DSGVO, `DELETE /api/v1/clients/:id`): Der Coach löscht einen Klienten samt Terminen, Notizen, Chat und geteilten Dateien. Termine hängen nur lose am Klienten (`client_id` mit `set null`), und unbestätigte Anfragen haben noch keine `client_id` – deshalb zählen auch Termine derselben Organisation mit derselben E-Mail-Adresse dazu. Die Objekte im Speicher (`{org}/sessions/{booking}/`) fallen nach dem Commit. Anstehende Termine sperren die Löschung mit `409`. Protokoll in `client_deletions`, nur IDs und Anzahlen, ohne Fremdschlüssel.
 - Audioaufnahme / Transkription: aktive Klienten-Einwilligung pro Sitzung, dokumentiert mit Timestamp, IP und Version
 - Audio-Recordings werden nach erfolgreicher Transkription automatisch aus S3 gelöscht
