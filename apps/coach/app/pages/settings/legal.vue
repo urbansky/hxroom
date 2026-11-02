@@ -87,8 +87,9 @@ function toFields(imprint: Imprint | null): ImprintFields {
   }
 }
 
+// Voreinstellung ist der Link: Die meisten Coachs haben schon ein Impressum auf ihrer Website.
 const state = reactive<LegalFormState>({
-  imprintMode: 'form',
+  imprintMode: 'link',
   imprint: toFields(null),
   imprintUrl: '',
   privacyUrl: '',
@@ -103,7 +104,7 @@ const moreOpen = ref(false)
 const linksOpen = ref(false)
 
 function applyResponse(data: LegalResponse) {
-  state.imprintMode = data.imprintMode ?? 'form'
+  state.imprintMode = data.imprintMode ?? 'link'
   state.imprint = toFields(data.imprint)
   state.imprintUrl = data.imprintUrl ?? ''
   state.privacyUrl = data.privacyUrl ?? ''
@@ -126,6 +127,24 @@ const bookingPageOrigin = computed(() =>
     : null,
 )
 const imprintPreviewUrl = computed(() => bookingPageOrigin.value && `${bookingPageOrigin.value}/impressum`)
+
+// Im Link-Modus öffnet der Knopf den eingetragenen Link selbst, auch vor dem Speichern – die
+// Seite /impressum zeigt dann nur diesen Link und darunter HxRoom als Betreiber.
+const imprintLinkUrl = computed(() => {
+  const url = state.imprintUrl.trim()
+  if (!/^https?:\/\//i.test(url)) return null
+  try {
+    new URL(url)
+    return url
+  } catch {
+    return null
+  }
+})
+const imprintAction = computed(() =>
+  state.imprintMode === 'link'
+    ? (imprintLinkUrl.value ? { to: imprintLinkUrl.value, label: 'Link öffnen' } : null)
+    : (imprintPreviewUrl.value ? { to: imprintPreviewUrl.value, label: 'Vorschau ansehen' } : null),
+)
 const privacyPreviewUrl = computed(() => bookingPageOrigin.value && `${bookingPageOrigin.value}/datenschutz`)
 
 const saving = ref(false)
@@ -318,15 +337,16 @@ const features = [
         title="Impressum"
         description="Auf deiner Buchungsseite trittst du als Anbieter auf. Darunter steht HxRoom als technischer Betreiber."
       >
-        <template v-if="imprintPreviewUrl" #actions>
+        <template v-if="imprintAction" #actions>
           <UButton
             variant="link"
             color="primary"
             size="xs"
             trailing-icon="i-lucide-external-link"
-            :to="imprintPreviewUrl"
+            :to="imprintAction.to"
             target="_blank"
-            label="Vorschau ansehen"
+            rel="noopener noreferrer"
+            :label="imprintAction.label"
           />
         </template>
 
