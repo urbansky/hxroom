@@ -51,6 +51,33 @@ async function openAdHoc() {
   adHocOpen.value = true
 }
 
+// Termin anlegen (doc/konzept-manuelle-termine.md): vorbelegt mit dem Angebot des letzten
+// Termins dieses Klienten – die Historie kommt neueste zuerst.
+const manualOpen = ref(false)
+const manualPreset = computed(() => ({
+  offerId: client.value?.bookings.find(booking => booking.offerId && booking.status !== 'cancelled')?.offerId ?? null,
+}))
+
+async function openManual() {
+  if (!offers.value.length) {
+    try {
+      offers.value = await $api<OfferResponse[]>('/offers')
+    } catch {
+      offers.value = []
+    }
+  }
+  manualOpen.value = true
+}
+
+// Still nachladen statt loadClient(): Das Skelett ließe die Seite hinter dem Modal flackern.
+async function refreshClient() {
+  try {
+    client.value = await $api<ClientDetail>(`/clients/${clientId.value}`)
+  } catch {
+    // Die neuen Termine erscheinen spätestens beim nächsten Laden der Seite.
+  }
+}
+
 // Minütlich nachgeführt: „Sitzung starten“ am nächsten Termin soll von selbst erscheinen.
 const now = ref(new Date())
 let nowTimer: ReturnType<typeof setInterval> | undefined
@@ -204,8 +231,9 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
               Klient seit {{ formatShortDate(client.createdAt) }} · {{ formatClientSince(client.createdAt, now) }}
             </p>
           </div>
-          <div class="flex items-center gap-2 max-sm:w-full">
+          <div class="flex flex-wrap items-center gap-2 max-sm:w-full">
             <UButton label="Spontan-Termin" icon="i-lucide-video" size="sm" @click="openAdHoc" />
+            <UButton label="Termin anlegen" icon="i-lucide-calendar-plus" color="neutral" variant="subtle" size="sm" @click="openManual" />
             <UButton label="Bearbeiten" icon="i-lucide-pencil" color="neutral" variant="subtle" size="sm" @click="isFormOpen = true" />
             <UDropdownMenu :items="moreItems" :content="{ align: 'end' }">
               <UButton icon="i-lucide-ellipsis" color="neutral" variant="ghost" size="sm" aria-label="Weitere Aktionen" />
@@ -254,6 +282,14 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
         v-model:open="adHocOpen"
         :client="{ id: client.id, name: client.name }"
         :offers="offers"
+      />
+
+      <ManualBookingModal
+        v-model:open="manualOpen"
+        :client="{ id: client.id, name: client.name }"
+        :offers="offers"
+        :preset="manualPreset"
+        @created="refreshClient"
       />
 
       <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 lg:gap-8 items-start">
@@ -308,7 +344,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                         <UBadge v-if="booking.status === 'pending'" :label="STATUS_LABELS.pending" color="warning" variant="subtle" size="sm" />
                       </div>
                       <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
-                        <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}</span>
+                        <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}<template v-if="booking.series"> · Termin {{ booking.series.position }} von {{ booking.series.count }}</template></span>
                         <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                       </div>
                     </div>
@@ -349,7 +385,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                         <UBadge v-if="booking.status === 'no_show'" :label="STATUS_LABELS.no_show" icon="i-lucide-user-x" color="warning" variant="subtle" size="sm" />
                       </div>
                       <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
-                        <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}</span>
+                        <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}<template v-if="booking.series"> · Termin {{ booking.series.position }} von {{ booking.series.count }}</template></span>
                         <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                       </div>
                     </div>

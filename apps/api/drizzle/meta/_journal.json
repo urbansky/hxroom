@@ -253,6 +253,13 @@
       "when": 1793335803127,
       "tag": "0035_serious_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793690719594,
+      "tag": "0036_calm_solo",
+      "breakpoints": true
     }
   ]
 }

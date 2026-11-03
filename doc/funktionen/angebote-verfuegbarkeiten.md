@@ -123,4 +123,3 @@ So bleibt die Buchungsseite für Bestandscoaches ohne manuellen Eingriff funktio
 | 4 | Braucht das kostenlose Erstgespräch eine Begrenzung „einmal pro Klient"? | Nicht Teil dieses Konzepts, aber real genannter Bedarf – ggf. eigenes Ticket |
 | 5 | Reicht die Teilmengen-Auswahl bestehender Slots (Stufe 2) in der Praxis, oder brauchen einzelne Coaches doch ein komplett unabhängiges Zeitraster pro Angebot? | Erst nach Nutzerfeedback zu Stufe 2 entscheiden |
 | 6 | TTL für die Bestätigungspflicht bei sehr kurzfristigen Buchungen (Termin in wenigen Minuten) – Zeitfenster kappen oder Bestätigung direkt im Buchungsprozess verlangen? | Siehe `idee-klienten-matching.md`, zu entscheiden vor Umsetzung |
-| 7 | Gilt die Bestätigungspflicht auch für vom Coach manuell angelegte/eingeladene Termine? | Für Konsistenz spricht Ja, für persönlich abgesprochene Termine ggf. unnötige Reibung – siehe `idee-klienten-matching.md` |

@@ -46,7 +46,7 @@ Normalisierte E-Mail-Adresse (lowercase, getrimmt) als Matching-Schlüssel, ein 
 
 **Offene Frage:** Bei sehr kurzfristigen Buchungen (Termin in 15 Minuten) ist ein fixes 30-Minuten-Zeitfenster zu lang. Zu klären: TTL an die Vorlaufzeit bis zum Termin koppeln, oder Bestätigung bei knappem Vorlauf direkt im Buchungsprozess selbst verlangen (kein Pending-Zustand nötig).
 
-**Weitere offene Frage:** Gilt die Bestätigungspflicht auch für vom Coach manuell angelegte/eingeladene Termine (bestehende Funktion "Termin manuell anlegen / einladen")? Spricht für Konsistenz, könnte aber unnötige Reibung bei ohnehin persönlich abgesprochenen Terminen erzeugen.
+**Ausnahme:** Vom Coach angelegte Termine (Spontan-Termin und manuell angelegter Termin, Funktion 2.04) brauchen keine Bestätigung und entstehen direkt als `confirmed`. Der Coach hat sie persönlich abgesprochen und gibt die Adresse selbst ein – siehe `konzept-manuelle-termine.md`.
 
 ### 3. Manuelle Zuordnung durch den Coach
 

@@ -36,6 +36,7 @@ async function loadBooking() {
 await loadBooking()
 
 const isPickerOpen = ref(false)
+const followUpOpen = ref(false)
 const actions = useBookingActions(booking, {
   onUpdated: updated => (booking.value = updated),
   // Nach der Absage bleibt der Coach hier und sieht den Termin als abgesagt.
@@ -76,6 +77,13 @@ const relativeStart = computed(() => (booking.value && !isCancelled.value ? form
 // Verlauf: was mit dem Termin bisher geschehen ist, in zeitlicher Folge. Ein offener
 // Schritt (Bestätigung steht aus) ist hohl gezeichnet. „Nicht erschienen“ fehlt hier
 // bewusst – das steht samt „Doch erschienen“ im Kopf.
+const CREATED_LABELS: Record<CoachBookingResponse['origin'], string> = {
+  booking_page: 'Gebucht über die Buchungsseite',
+  ad_hoc: 'Als Spontan-Termin angelegt',
+  test: 'Probe-Sitzung angelegt',
+  manual: 'Von dir angelegt',
+}
+
 interface HistoryEntry {
   key: string
   label: string
@@ -89,11 +97,11 @@ const historyEntries = computed<HistoryEntry[]>(() => {
   if (!b) return []
   const entries: HistoryEntry[] = [{
     key: 'created',
-    label: isTestSession(b) ? 'Probe-Sitzung angelegt' : isAdHoc(b) ? 'Als Spontan-Termin angelegt' : 'Gebucht über die Buchungsseite',
+    label: CREATED_LABELS[b.origin],
     time: formatDateTime(b.createdAt),
     tone: 'done',
   }]
-  // Spontan-Termin und Probe-Sitzung waren nie offen, eine Bestätigung gibt es dort nicht.
+  // Vom Coach angelegte Termine waren nie offen, eine Bestätigung gibt es dort nicht.
   if (b.origin === 'booking_page') {
     if (b.confirmedAt) {
       entries.push({ key: 'confirmed', label: 'Bestätigt', time: formatDateTime(b.confirmedAt), tone: 'done' })
@@ -179,13 +187,21 @@ const historyEntries = computed<HistoryEntry[]>(() => {
                 {{ booking.offerName }}
               </span>&nbsp;·
               <span class="whitespace-nowrap">{{ formatBookingDuration(booking) }}</span>
+              <template v-if="booking.series">&nbsp;·
+                <span class="whitespace-nowrap">Termin {{ booking.series.position }} von {{ booking.series.count }}</span>
+              </template>
               <div class="inline-flex items-center gap-2 align-middle ml-1">
                 <BookingStatusBadges :booking="booking" hide-hint />
                 <span v-if="relativeStart" class="text-sm text-primary whitespace-nowrap">{{ relativeStart }}</span>
               </div>
             </div>
           </div>
-          <BookingHeaderActions :booking="booking" :actions="actions" @assign="isPickerOpen = true" />
+          <BookingHeaderActions
+            :booking="booking"
+            :actions="actions"
+            @assign="isPickerOpen = true"
+            @follow-up="followUpOpen = true"
+          />
         </div>
 
         <UAlert
@@ -333,5 +349,7 @@ const historyEntries = computed<HistoryEntry[]>(() => {
       :current-client-id="booking?.clientId ?? null"
       @select="actions.assignClient"
     />
+
+    <FollowUpBookingModal v-if="booking" v-model:open="followUpOpen" :booking="booking" />
   </div>
 </template>

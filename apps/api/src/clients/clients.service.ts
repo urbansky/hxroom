@@ -3,7 +3,8 @@ import { and, asc, desc, eq, gte, inArray, isNotNull, lt, or, sql } from 'drizzl
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { bookings, clientDeletions, clients, sessionChatFiles, sessionChatMessages, sessionNotes } from '../db/schema';
 import { S3Service } from '../storage/s3.service';
-import { coachBookingColumns, toCoachBookingResponse } from '../bookings/coach-booking.mapper';
+import { coachBookingColumns } from '../bookings/coach-booking.mapper';
+import { withSeries } from '../bookings/booking-series';
 import { HELD_SESSION_STATUSES } from '../bookings/booking.constants';
 import { isUniqueViolation } from '../common/pg-errors';
 import { normalizeEmail } from './normalize-email';
@@ -108,7 +109,7 @@ export class ClientsService {
       .where(and(eq(bookings.clientId, id), eq(bookings.organizationId, organizationId)))
       .orderBy(desc(bookings.startTime));
 
-    return { ...toClientResponse(client), bookings: history.map(toCoachBookingResponse) };
+    return { ...toClientResponse(client), bookings: await withSeries(this.db, organizationId, history) };
   }
 
   /**

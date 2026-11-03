@@ -1,6 +1,6 @@
 import { Column, Row, Text } from 'react-email';
 import { offerColor } from '@hxroom/shared';
-import type { ComponentPropsWithoutRef, CSSProperties } from 'react';
+import type { ComponentPropsWithoutRef, CSSProperties, ReactNode } from 'react';
 import { colors } from './styles';
 
 /** Alles, was eine Terminzeile in einer Mail anzeigt – gebaut aus toAppointmentInfo(). */
@@ -23,6 +23,8 @@ interface AppointmentBlockProps {
   meta: string;
   /** Abgesagter Termin: durchgestrichen und gedämpft, wie in der Agenda der Coach-App. */
   cancelled?: boolean;
+  /** Unter der Meta-Zeile, etwa die Links je Termin in einer Mail mit mehreren Terminen. */
+  footer?: ReactNode;
 }
 
 const dayHeadingStyle: CSSProperties = { margin: '0 0 6px', fontSize: 14, lineHeight: 1.4, color: colors.muted };
@@ -44,7 +46,7 @@ type CellProps = ComponentPropsWithoutRef<'td'> & { bgcolor?: string };
 // Zero-Width-Space verhindert, dass Outlook die inhaltslose Zelle einklappt. Den Radius
 // lässt Word weg – bei 4px Breite ist der Unterschied vernachlässigbar, VML wäre dafür
 // unverhältnismäßig.
-export function AppointmentBlock({ appointment, title, meta, cancelled = false }: AppointmentBlockProps) {
+export function AppointmentBlock({ appointment, title, meta, cancelled = false, footer }: AppointmentBlockProps) {
   const barColor = appointment.offerId ? offerColor(appointment.offerId) : colors.barFallback;
   const emphasis: CSSProperties = cancelled
     ? { color: colors.muted, textDecoration: 'line-through' }
@@ -68,6 +70,7 @@ export function AppointmentBlock({ appointment, title, meta, cancelled = false }
             <Text style={{ ...timeStyle, ...emphasis }}>{appointment.timeRangeLabel}</Text>
             <Text style={{ ...titleStyle, ...emphasis }}>{title}</Text>
             <Text style={metaStyle}>{meta}</Text>
+            {footer}
           </Column>
         </Row>
       </Column>

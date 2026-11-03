@@ -393,7 +393,7 @@ Serverseitig kommt zum bestehenden `AuthGuard` ein `AdminGuard`, der zusätzlich
 
 **Klientenseite.** `/clients/:id` zeigt Kopf mit Kennzahlen (aus der Terminliste des Profils, `clientStats`), links die Reiter Termine, Notizen und Dateien (`?tab=`), rechts die Karten „Nächster Termin“ und „Nur für dich“ (Coaching-Ziele und interne Notiz, direkt in der Karte bearbeitbar); auf dem Handy wird die rechte Spalte zum Reiter „Profil“. Die Ziele liegen in `clients.goals` (Freitext, über `PATCH /api/v1/clients/:id`), die Notizen-Chronik kommt aus `GET /api/v1/clients/:id/notes` (Sitzungsnotizen aller Termine des Klienten), die Dateien aus `GET /api/v1/clients/:id/files` (alle `session_chat_files` seiner Termine, geöffnet über die Datei-Route der Sitzung).
 
-**Terminseite und Abschlusskarte.** `/bookings/:id` in der Coach-App zeigt einen Termin ausführlich: Kopf mit Datum, Kurzangaben und Status in einer Zeile, rechts daneben „Sitzung starten“ (sobald startbar) und das Drei-Punkte-Menü mit Kalendereintrag, Klientenzuordnung, „Nicht erschienen“ und der Absage (Modal). Darunter links die Notizen, rechts „Details“ mit Nachricht, Kontakt und Verlauf (gebucht, bestätigt, Gespräch, abgesagt); nach dem Einlass kommt der Reiter „Chat & Dateien“ hinzu (`?tab=`). Sie lädt über `GET /api/v1/bookings/:id` (nur die eigene Organisation, sonst `404`), unabhängig von der Terminliste. Das Termin-Slideover bleibt im Kalender die Kurzansicht mit „Als Seite öffnen“; von der Klientenseite führen die Terminkacheln direkt auf die Terminseite, „Zurück“ dort wieder auf die Klientenseite. Slideover und Terminseite nutzen dieselben Aktionen (`useBookingActions`); das Slideover zeigt sie als Leiste im Fuß (`BookingActionBar`), die Terminseite im Kopf (`BookingHeaderActions`). Nach „Sitzung beenden“ zeigt die Call-Seite die Abschlusskarte (`SessionSummaryCard`) mit Dauer aus `admittedAt` und `callEndedAt`, Notizen und Chat, gelesen aus der API, dazu „Zu den Sitzungsdetails“ auf die Terminseite und „Zum Dashboard“.
+**Terminseite und Abschlusskarte.** `/bookings/:id` in der Coach-App zeigt einen Termin ausführlich: Kopf mit Datum, Kurzangaben und Status in einer Zeile, rechts daneben „Sitzung starten“ (sobald startbar) und das Drei-Punkte-Menü mit Folgetermin, Kalendereintrag, Klientenzuordnung, „Nicht erschienen“ und der Absage (Modal). Darunter links die Notizen, rechts „Details“ mit Nachricht, Kontakt und Verlauf (gebucht, bestätigt, Gespräch, abgesagt); nach dem Einlass kommt der Reiter „Chat & Dateien“ hinzu (`?tab=`). Sie lädt über `GET /api/v1/bookings/:id` (nur die eigene Organisation, sonst `404`), unabhängig von der Terminliste. Das Termin-Slideover bleibt im Kalender die Kurzansicht mit „Als Seite öffnen“; von der Klientenseite führen die Terminkacheln direkt auf die Terminseite, „Zurück“ dort wieder auf die Klientenseite. Slideover und Terminseite nutzen dieselben Aktionen (`useBookingActions`); das Slideover zeigt sie als Leiste im Fuß (`BookingActionBar`), die Terminseite im Kopf (`BookingHeaderActions`). Nach „Sitzung beenden“ zeigt die Call-Seite die Abschlusskarte (`SessionSummaryCard`) mit Dauer aus `admittedAt` und `callEndedAt`, Notizen und Chat, gelesen aus der API, dazu „Zu den Sitzungsdetails“ auf die Terminseite und „Zum Dashboard“.
 
 **Tatsächliche Dauer.** Die Dauer einer gehaltenen Sitzung ist die Spanne von `admittedAt` bis `callEndedAt`, ohne eigene Spalte. Endet die Sitzung, weil der Coach gegangen und nach der Nachfrist nicht zurückgekommen ist, gilt `coachLeftAt` als Ende, nicht der Zeitpunkt des Laufs. Agenda, Sitzungskacheln der Klientenseite, Termin-Slideover und Terminseite zeigen bei gehaltenen Sitzungen die tatsächliche Dauer statt der geplanten (`formatBookingDuration`).
 
@@ -815,13 +815,15 @@ export const clients = pgTable('clients', {
   uniqueEmailPerOrg: unique().on(table.organizationId, table.email),
 }));
 
-// BESTÄTIGUNGSPFLICHT (siehe idee-klienten-matching.md): Jede Buchung – ob online
-// gebucht oder vom Coach manuell angelegt – startet als 'pending' und wird erst durch
-// Klick auf den signierten Link in der Bestätigungsmail zu 'confirmed'. Das schützt vor
-// Tippfehlern in der E-Mail-Adresse (nur eine erreichbare Inbox kann den Link klicken)
-// und verhindert, dass falsch getippte Adressen unbemerkt einen neuen Client anlegen.
+// BESTÄTIGUNGSPFLICHT (siehe idee-klienten-matching.md): Jede Buchung über die
+// Buchungsseite startet als 'pending' und wird erst durch Klick auf den signierten Link
+// in der Bestätigungsmail zu 'confirmed'. Das schützt vor Tippfehlern in der
+// E-Mail-Adresse (nur eine erreichbare Inbox kann den Link klicken) und verhindert, dass
+// falsch getippte Adressen unbemerkt einen neuen Client anlegen.
 // Ohne Bestätigung innerhalb der TTL wird die Buchung automatisch 'cancelled' und der
 // Slot freigegeben (siehe §12, Job expire-unconfirmed-booking).
+// Vom Coach angelegte Termine (Spontan-Termin, manueller Termin) entstehen direkt als
+// 'confirmed' (konzept-manuelle-termine.md).
 export const bookings = pgTable('bookings', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: text('organization_id').notNull(), // für org-weite Kalenderansicht im Studio-Plan
@@ -970,11 +972,22 @@ Claude Code kann die komplette BullMQ-Modul-Struktur inkl. Worker, Job-Definitio
 
 Der Klient bekommt 24 Stunden und 1 Stunde vor dem Termin eine Erinnerung mit dem Link in den Warteraum (`BookingReminderService`, Vorlage `mail/templates/client/booking-reminder.tsx`). Die 1-h-Erinnerung fällt mit der Öffnung des Warteraums zusammen (`CALL_OPENS_MINUTES_BEFORE_START`). An den Coach geht keine Erinnerung, die Texte sind fest.
 
-- **Wer:** nur bestätigte Termine, keine Spontan-Termine (deren Einladung geht sofort raus) und keine Probe-Sitzungen.
+- **Wer:** nur bestätigte Termine, keine Spontan-Termine (deren Einladung geht sofort raus) und keine Probe-Sitzungen. Manuell angelegte Termine bekommen Erinnerungen wie Buchungen; als bestätigt gilt der Zeitpunkt des Anlegens.
 - **Kurzfristig gebucht:** Eine Erinnerung entfällt, wenn die Buchung erst nach ihrem Fälligkeitszeitpunkt bestätigt wurde. Die Bestätigung trägt den Link dann schon.
 - **Nachholen:** Nach einem Ausfall der API wird nur nachgeholt, was noch hilft, die 24-h-Erinnerung bis 2 Stunden vor Beginn, die 1-h-Erinnerung bis 5 Minuten vor Beginn. „Heute“ oder „morgen“ im Text richtet sich nach dem Kalendertag in Europe/Berlin.
 - **Ablauf:** ein Lauf alle 5 Minuten über `@nestjs/schedule`. Er beansprucht die fälligen Erinnerungen in einem `UPDATE … RETURNING` (Spalten `reminder_24h_sent_at`, `reminder_1h_sent_at`) und verschickt erst dann. Scheitert der Versand, gibt er den Vermerk frei, und der nächste Lauf versucht es erneut. Die Regel steht lesbar und getestet in `bookings/booking-reminders.ts`.
 - **Lokal testen:** Der Mailversand geht auch lokal an Brevo. Brevo lässt API-Aufrufe nur von freigegebenen IP-Adressen zu (Einstellungen → Sicherheit → Autorisierte IPs), die Adresse des eigenen Rechners muss dort eingetragen sein.
+
+### Manuell angelegte Termine
+
+Fachlich beschrieben in `konzept-manuelle-termine.md`. Der Coach legt einen oder bis zu 25 Termine zu gewählten Zeitpunkten an (`POST /api/v1/bookings/manual`, `CoachBookingsService.createManual`).
+
+- **Status und Herkunft:** sofort `confirmed`, `confirmedAt` = Zeitpunkt des Anlegens, Herkunft `manual`. Ohne Angebot gibt der Coach die Dauer an, die Bezeichnung ist dann „Sitzung“ (`MANUAL_OFFER_NAME`).
+- **Wer:** bestehender Klient oder E-Mail-Adresse, dieselbe Regel wie beim Spontan-Termin (`resolveInvitee` im Dienst, `useBookingInvitee` und `BookingInviteeFields` in der Coach-App).
+- **Serie:** Mehrere Startzeiten bekommen eine gemeinsame `bookings.series_id`. Jeder Termin hat eigenen Token, eigene Erinnerungen und eigene Absage. `withSeries()` (`bookings/booking-series.ts`) liefert in allen Coach-Antworten `series: { position, count }`, gezählt über die nicht abgesagten Termine der Serie. Angelegt wird alles oder nichts; eine Startzeit, an der schon ein Termin beginnt, ergibt `409`, Vergangenheit und doppelte Zeiten `400`.
+- **Hinweise vorab:** `POST /api/v1/bookings/manual/check` liefert je Startzeit Überschneidungen mit anderen Terminen samt Puffer und ob sie außerhalb der Verfügbarkeit liegt (`isWithinAvailability` in `availability/slot-calculation.ts`). Beides hindert nicht am Anlegen.
+- **Mail:** eine Mail pro Vorgang (`mail/templates/client/appointment-scheduled.tsx`), bei mehreren Terminen mit Links „Zum Warteraum“ und „Absagen“ je Termin. Im Anhang eine Kalenderdatei mit einem `VEVENT` je Termin (`buildBookingsIcs`).
+- **Coach-App:** `ManualBookingModal` auf der Klientenseite („Termin anlegen“) und im Kalender (Knopf im Kopf, Klick auf eine freie Stelle der Wochenansicht); `FollowUpBookingModal` als Folgetermin im ⋯-Menü der Terminseite und auf der Abschlusskarte, vorbelegt mit Klient, Angebot und derselben Uhrzeit eine Woche später.
 
 ### Stripe – Subscription & Billing
 

@@ -60,6 +60,29 @@ function overlapsAny(range: DateRange, excludeRanges: DateRange[]): boolean {
   return excludeRanges.some((r) => range.start < r.end && range.end > r.start);
 }
 
+/**
+ * Liegt der Zeitraum vollständig in einem freigegebenen Zeitfenster seines Wochentags?
+ * Für den Hinweis beim manuellen Anlegen (doc/konzept-manuelle-termine.md §2) – dort ist
+ * die Verfügbarkeit kein Hindernis, und Raster, Vorlauf und Puffer spielen keine Rolle.
+ */
+export function isWithinAvailability(range: DateRange, rules: WeeklyAvailabilityRule[], timeZone: string): boolean {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })
+      .formatToParts(range.start)
+      .map((part) => [part.type, part.value]),
+  );
+  const dateStr = `${parts.year}-${parts.month}-${parts.day}`;
+  const weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(parts.weekday);
+
+  return rules
+    .filter((rule) => rule.weekday === weekday)
+    .some((rule) => {
+      const windowStart = fromZonedTime(`${dateStr}T${rule.startTime}:00`, timeZone);
+      const windowEnd = fromZonedTime(`${dateStr}T${rule.endTime}:00`, timeZone);
+      return range.start >= windowStart && range.end <= windowEnd;
+    });
+}
+
 export function computeAvailableSlots(params: ComputeAvailableSlotsParams): DateRange[] {
   const { rules, settings, durationMinutes, now, timeZone, excludeRanges = [] } = params;
   const daysAhead = params.daysAhead ?? AVAILABLE_SLOTS_WINDOW_DAYS;

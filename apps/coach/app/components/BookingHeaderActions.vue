@@ -12,7 +12,7 @@ const props = defineProps<{
   actions: BookingActions
 }>()
 
-const emit = defineEmits<{ assign: [] }>()
+const emit = defineEmits<{ assign: [], followUp: [] }>()
 
 const confirmingCancel = computed({
   get: () => props.actions.confirmingCancel.value,
@@ -24,13 +24,21 @@ const cancelReason = computed({
 })
 
 const menuItems = computed<DropdownMenuItem[][]>(() => {
-  const common: DropdownMenuItem[] = [
-    {
-      label: 'Kalendereintrag',
+  const common: DropdownMenuItem[] = []
+  // Folgetermin (doc/konzept-manuelle-termine.md §2) – nur mit Klient: Er bekommt die
+  // Einladung, und eine Probe-Sitzung hat keinen.
+  if (props.booking.clientId && !isTestSession(props.booking)) {
+    common.push({
+      label: 'Folgetermin anlegen',
       icon: 'i-lucide-calendar-plus',
-      onSelect: () => props.actions.downloadIcs(),
-    },
-  ]
+      onSelect: () => emit('followUp'),
+    })
+  }
+  common.push({
+    label: 'Kalendereintrag',
+    icon: 'i-lucide-calendar-arrow-down',
+    onSelect: () => props.actions.downloadIcs(),
+  })
   // Probe-Sitzung: Der Coach ist selbst der Klient, eine Zuordnung ergäbe keinen Sinn.
   if (!isTestSession(props.booking)) {
     common.push({

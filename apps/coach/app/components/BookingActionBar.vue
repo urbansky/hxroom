@@ -62,7 +62,7 @@ const cancelReason = computed({
       />
       <UButton
         label="Kalendereintrag"
-        icon="i-lucide-calendar-plus"
+        icon="i-lucide-calendar-arrow-down"
         color="neutral"
         variant="subtle"
         :loading="actions.downloading.value"

@@ -4,6 +4,7 @@ import { renderBookingCancelledEmail } from './client/booking-cancelled';
 import { renderBookingConfirmedEmail } from './client/booking-confirmed';
 import { renderBookingReminderEmail } from './client/booking-reminder';
 import { renderSessionInvitationEmail } from './client/session-invitation';
+import { renderAppointmentScheduledEmail } from './client/appointment-scheduled';
 import { renderBookingNotificationEmail } from './coach/booking-notification';
 import { renderBookingCancelledByClientEmail } from './coach/booking-cancelled-by-client';
 import { renderEmailVerificationEmail } from './coach/email-verification';
@@ -132,6 +133,59 @@ describe('Buchungs-Mail-Templates', () => {
       const html = await renderBookingConfirmedEmail({ ...props, legalLinks: null });
 
       expect(html).not.toContain('/impressum');
+    });
+  });
+
+  describe('Klient: vom Coach angelegte Termine', () => {
+    const scheduled = (id: string, dayLabel: string) => ({
+      appointment: { ...appointment, dayLabel },
+      callUrl: `https://anna.hxroom.de/call/${id}?token=abc`,
+      cancelUrl: `https://anna.hxroom.de/cancel/${id}?token=abc`,
+      roomAlreadyOpen: false,
+    });
+    const props = {
+      clientName: 'Max Mustermann',
+      coachName: 'Anna Bergmann',
+      appointments: [scheduled('b-1', 'Dienstag, 17. November')],
+      callOpensMinutesBefore: 60,
+      legalLinks: { imprintUrl: 'https://anna.hxroom.de/impressum' },
+    };
+
+    it('ein Termin: teilt ihn mit, ohne um Bestätigung zu bitten', async () => {
+      const html = await renderAppointmentScheduledEmail(props);
+
+      expect(html).toContain('hat einen Termin für dich eingetragen');
+      expect(html).toContain('Dienstag, 17. November');
+      expect(html).toContain('https://anna.hxroom.de/call/b-1?token=abc');
+      expect(html).toContain('Termin absagen');
+      expect(html).toContain('öffnet 60 Minuten vor Beginn');
+      expect(html).not.toContain('bestätige');
+      expect(html).not.toContain('undefined');
+    });
+
+    it('ein Termin in Kürze: meldet den offenen Raum', async () => {
+      const html = await renderAppointmentScheduledEmail({ ...props, appointments: [{ ...scheduled('b-1', 'Heute'), roomAlreadyOpen: true }] });
+
+      expect(html).toContain('Der Raum ist bereits geöffnet');
+    });
+
+    it('mehrere Termine: eine Liste mit Links je Termin', async () => {
+      const html = await renderAppointmentScheduledEmail({
+        ...props,
+        appointments: [scheduled('b-1', 'Dienstag, 17. November'), scheduled('b-2', 'Dienstag, 24. November')],
+      });
+
+      expect(html).toContain('hat 2 Termine für dich eingetragen');
+      expect(html).toContain('Dienstag, 24. November');
+      expect(html).toContain('https://anna.hxroom.de/call/b-2?token=abc');
+      expect(html).toContain('https://anna.hxroom.de/cancel/b-2?token=abc');
+      expect(html).toContain('Vor jedem Termin bekommst du eine Erinnerung');
+    });
+
+    it('ohne Namen: neutrale Anrede', async () => {
+      const html = await renderAppointmentScheduledEmail({ ...props, clientName: null });
+
+      expect(html).toContain('Hallo,');
     });
   });
 

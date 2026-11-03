@@ -46,6 +46,7 @@ const ORIGIN_LABELS: Record<BookingOrigin, string> = {
   booking_page: 'Buchungsseite',
   ad_hoc: 'Spontan-Termin',
   test: 'Probe-Sitzung',
+  manual: 'Vom Coach angelegt',
 };
 
 const CANCELLED_BY_LABELS: Record<CancelledBy, string> = {

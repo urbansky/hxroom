@@ -22,6 +22,10 @@ export function isExpiredPending(createdAt: Date, now: Date, ttlMinutes = CONFIR
 export const AD_HOC_OFFER_NAME = 'Spontan-Termin';
 export const AD_HOC_DURATION_MINUTES = 60;
 
+// Manuell angelegter Termin ohne Angebot (doc/konzept-manuelle-termine.md): Die Dauer gibt
+// der Coach an, die Bezeichnung bleibt neutral.
+export const MANUAL_OFFER_NAME = 'Sitzung';
+
 // Probe-Sitzung des Coachs mit sich selbst (phase5-umsetzungsplan.md, Schritt 6a). Kurz,
 // weil sie nur zum Ausprobieren dient; gelöscht wird sie TEST_SESSION_RETENTION_HOURS nach
 // ihrem Ende (TestSessionCleanupService).

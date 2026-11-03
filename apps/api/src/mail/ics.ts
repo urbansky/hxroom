@@ -1,5 +1,5 @@
 // Minimaler iCalendar-Generator (RFC 5545) für Termin-Anhänge in Buchungsmails.
-// Bewusst ohne npm-Dependency: ein einzelnes VEVENT braucht keine Bibliothek, und
+// Bewusst ohne npm-Dependency: ein paar VEVENTs brauchen keine Bibliothek, und
 // die Kalender-Clients der Klienten sind der einzige Konsument.
 
 export interface BookingIcsInput {
@@ -61,8 +61,15 @@ function foldLine(line: string): string {
 }
 
 export function buildBookingIcs(input: BookingIcsInput): string {
-  const stamp = toIcsUtc(input.now ?? new Date());
+  return buildBookingsIcs([input]);
+}
 
+/**
+ * Mehrere Termine in einer Datei – für die Mail zu einer Terminserie
+ * (doc/konzept-manuelle-termine.md §5). Jeder Termin ist ein eigenes VEVENT mit eigener
+ * UID und eigenem Link; Apple, Google und Outlook importieren alle auf einmal.
+ */
+export function buildBookingsIcs(inputs: BookingIcsInput[]): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -71,6 +78,17 @@ export function buildBookingIcs(input: BookingIcsInput): string {
     // PUBLISH statt REQUEST: HxRoom verarbeitet keine Zu-/Absagen per Mail, deshalb
     // sollen Kalender-Clients auch keine Antwort-Buttons anbieten.
     'METHOD:PUBLISH',
+    ...inputs.flatMap(eventLines),
+    'END:VCALENDAR',
+  ];
+
+  return lines.map(foldLine).join('\r\n') + '\r\n';
+}
+
+function eventLines(input: BookingIcsInput): string[] {
+  const stamp = toIcsUtc(input.now ?? new Date());
+
+  const lines = [
     'BEGIN:VEVENT',
     `UID:${escapeText(input.uid)}`,
     `DTSTAMP:${stamp}`,
@@ -95,7 +113,6 @@ export function buildBookingIcs(input: BookingIcsInput): string {
     lines.push(`ATTENDEE;CN=${escapeText(input.attendee.name)};ROLE=REQ-PARTICIPANT:mailto:${input.attendee.email}`);
   }
 
-  lines.push('END:VEVENT', 'END:VCALENDAR');
-
-  return lines.map(foldLine).join('\r\n') + '\r\n';
+  lines.push('END:VEVENT');
+  return lines;
 }

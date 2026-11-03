@@ -9,7 +9,11 @@ const props = defineProps<{
   weekStart: Date
 }>()
 
-defineEmits<{ select: [booking: CoachBookingResponse] }>()
+const emit = defineEmits<{
+  select: [booking: CoachBookingResponse]
+  /** Klick auf eine freie Stelle: Termin anlegen, auf die Viertelstunde abgerundet. */
+  create: [start: Date]
+}>()
 
 const PIXELS_PER_MINUTE = 1.3
 /** Reicht für Zeitspanne + Klientenname (2 Zeilen à 15px + py-1) auch bei 15-Minuten-Terminen. */
@@ -101,6 +105,19 @@ const hourMarks = computed(() => {
 
 function offsetTop(minutes: number): number {
   return (minutes - timeRange.value.start) * PIXELS_PER_MINUTE
+}
+
+// Termin anlegen per Klick in den Kalender (doc/konzept-manuelle-termine.md §2). Ein Klick
+// auf einen Termin öffnet weiter dessen Detail; Vergangenes bleibt ohne Wirkung.
+function onColumnClick(event: MouseEvent, date: Date) {
+  if ((event.target as HTMLElement).closest('button')) return
+  const column = event.currentTarget as HTMLElement
+  const y = event.clientY - column.getBoundingClientRect().top
+  const minutes = Math.floor((timeRange.value.start + y / PIXELS_PER_MINUTE) / 15) * 15
+  const start = new Date(date)
+  start.setHours(0, minutes, 0, 0)
+  if (start.getTime() < Date.now()) return
+  emit('create', start)
 }
 
 function availabilityBlocks(weekday: number) {
@@ -299,8 +316,9 @@ function bookingBlocks(weekday: number) {
         v-for="day in days"
         :key="day.value"
         class="relative border-l border-default"
-        :class="day.isPast ? 'bg-elevated/40' : ''"
+        :class="day.isPast ? 'bg-elevated/40' : 'cursor-pointer'"
         :style="{ height: `${gridHeight}px` }"
+        @click="onColumnClick($event, day.date)"
       >
         <!-- Stundenlinien – ohne Spalten-Gap ergeben sie eine durchgehende Linie über die Woche. -->
         <div
@@ -372,7 +390,7 @@ function bookingBlocks(weekday: number) {
     </div>
 
     <p class="text-xs text-muted mt-4">
-      Der helle Hintergrund zeigt deine Verfügbarkeit, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet.
+      Der helle Hintergrund zeigt deine Verfügbarkeit, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet. Ein Klick auf eine freie Stelle legt dort einen Termin an.
     </p>
   </div>
 </template>

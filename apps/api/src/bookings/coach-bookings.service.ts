@@ -1,22 +1,26 @@
-import { ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes } from 'crypto';
-import { and, asc, desc, eq, gte, inArray, lte, type SQL } from 'drizzle-orm';
+import { randomBytes, randomUUID } from 'crypto';
+import { and, asc, desc, eq, gt, gte, inArray, lt, lte, ne, type SQL } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
-import { bookings, clients, offers } from '../db/schema';
+import { availabilitySettings, availabilitySlots, bookings, clients, offers } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
 import { MailService } from '../mail/mail.service';
-import { buildBookingIcs } from '../mail/ics';
+import { buildBookingIcs, buildBookingsIcs } from '../mail/ics';
 import { isUniqueViolation } from '../common/pg-errors';
-import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, TEST_SESSION_DURATION_MINUTES, TEST_SESSION_NAME, canMarkNoShow } from './booking.constants';
+import { AD_HOC_DURATION_MINUTES, AD_HOC_OFFER_NAME, MANUAL_OFFER_NAME, TEST_SESSION_DURATION_MINUTES, TEST_SESSION_NAME, canMarkNoShow } from './booking.constants';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
 import { renderSessionInvitationEmail } from '../mail/templates/client/session-invitation';
+import { renderAppointmentScheduledEmail } from '../mail/templates/client/appointment-scheduled';
 import { greetingName, toAppointmentInfo } from './booking-formatting';
 import { normalizeEmail } from '../clients/normalize-email';
-import { buildBookingPageUrl, buildCallUrl, buildLegalLinks } from './booking-urls';
+import { buildBookingPageUrl, buildCallUrl, buildCancelUrl, buildLegalLinks } from './booking-urls';
 import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
+import { withSeries } from './booking-series';
+import { isWithinAvailability } from '../availability/slot-calculation';
 import { CallEventsService } from '../call/call-events.service';
-import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CoachBookingResponse, CreateAdHocBookingDto, ListCoachBookingsQuery } from '@hxroom/shared';
+import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
+import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CheckManualBookingDto, CoachBookingResponse, CreateAdHocBookingDto, CreateManualBookingDto, ListCoachBookingsQuery, ManualBookingCheckResponse, ManualBookingResponse } from '@hxroom/shared';
 
 /**
  * Coach-seitiger Zugriff auf die eigenen Buchungen (Kalender im Backoffice).
@@ -51,12 +55,12 @@ export class CoachBookingsService {
       .orderBy(query.order === 'desc' ? desc(bookings.startTime) : asc(bookings.startTime))
       .limit(query.limit);
 
-    return rows.map(toCoachBookingResponse);
+    return withSeries(this.db, organizationId, rows);
   }
 
   /** Ein Termin für die Terminseite (phase5-umsetzungsplan.md, Schritt 8a). */
   async findOne(organizationId: string, bookingId: string): Promise<CoachBookingResponse> {
-    return toCoachBookingResponse(await this.findOwn(organizationId, bookingId));
+    return this.respond(organizationId, await this.findOwn(organizationId, bookingId));
   }
 
   async cancel(organizationId: string, bookingId: string, dto: CancelBookingDto): Promise<CoachBookingResponse> {
@@ -130,7 +134,7 @@ export class CoachBookingsService {
 
     // Sitzt der Klient doch im Warteraum, verlässt er ihn mit dem passenden Hinweis.
     this.callEvents.notifyChanged(bookingId);
-    return toCoachBookingResponse(row);
+    return this.respond(organizationId, row);
   }
 
   /** „Doch erschienen": Der Vermerk war ein Versehen. Der Termin zählt wieder als gehalten. */
@@ -147,7 +151,7 @@ export class CoachBookingsService {
       .returning(coachBookingColumns);
 
     this.callEvents.notifyChanged(bookingId);
-    return toCoachBookingResponse(updated);
+    return this.respond(organizationId, updated);
   }
 
   /**
@@ -188,7 +192,7 @@ export class CoachBookingsService {
       .where(eq(bookings.id, bookingId))
       .returning(coachBookingColumns);
 
-    return toCoachBookingResponse(updated);
+    return this.respond(organizationId, updated);
   }
 
   /**
@@ -222,19 +226,7 @@ export class CoachBookingsService {
       throw new ConflictException('Organization has no booking page yet');
     }
 
-    // Mandantentrennung wie in assignClient(): Angebot (und unten der Klient) müssen dieser
-    // Organisation gehören, sonst ließe sich mit einer fremden Id ein Termin erzeugen.
-    let offer: { id: string; name: string; durationMinutes: number } | undefined;
-    if (dto.offerId) {
-      [offer] = await this.db
-        .select({ id: offers.id, name: offers.name, durationMinutes: offers.durationMinutes })
-        .from(offers)
-        .where(and(eq(offers.id, dto.offerId), eq(offers.organizationId, organizationId)))
-        .limit(1);
-
-      if (!offer) throw new NotFoundException('Offer not found');
-    }
-
+    const offer = await this.findOwnOffer(organizationId, dto.offerId);
     const offerName = offer?.name ?? AD_HOC_OFFER_NAME;
     const durationMinutes = offer?.durationMinutes ?? AD_HOC_DURATION_MINUTES;
 
@@ -249,50 +241,7 @@ export class CoachBookingsService {
       // Klient und Termin in einer Transaktion: Scheitert der Termin (Doppelklick, siehe
       // unten), bleibt kein frisch angelegter Klient ohne Termin zurück.
       booking = await this.db.transaction(async (tx) => {
-        const clientColumns = { id: clients.id, name: clients.name, email: clients.email, phone: clients.phone };
-        let client: { id: string; name: string; email: string; phone: string | null } | undefined;
-        // Ohne Klient: Am Termin steht der eingegebene Name, sonst die Adresse selbst –
-        // client_name ist Pflicht, und die Oberfläche braucht etwas zum Anzeigen.
-        let attendee: { name: string; email: string; phone: string | null };
-
-        if ('clientId' in dto) {
-          [client] = await tx
-            .select(clientColumns)
-            .from(clients)
-            .where(and(eq(clients.id, dto.clientId), eq(clients.organizationId, organizationId)))
-            .limit(1);
-
-          if (!client) throw new NotFoundException('Client not found');
-          attendee = client;
-        } else {
-          const email = normalizeEmail(dto.email);
-          const name = dto.name || null;
-
-          [client] = await tx
-            .select(clientColumns)
-            .from(clients)
-            .where(and(eq(clients.organizationId, organizationId), eq(clients.email, email)))
-            .limit(1);
-
-          if (!client && dto.createClient && name) {
-            // onConflictDoNothing statt Fehler: Legt eine zweite Anfrage dieselbe Adresse
-            // gleichzeitig an, gewinnt deren Klient – sonst landete der Wettlauf bei der
-            // Meldung "A session already starts at this time" weiter unten.
-            [client] = await tx
-              .insert(clients)
-              .values({ organizationId, name, email })
-              .onConflictDoNothing()
-              .returning(clientColumns);
-
-            client ??= (await tx
-              .select(clientColumns)
-              .from(clients)
-              .where(and(eq(clients.organizationId, organizationId), eq(clients.email, email)))
-              .limit(1))[0];
-          }
-
-          attendee = client ?? { name: name ?? email, email, phone: null };
-        }
+        const { client, attendee } = await this.resolveInvitee(tx, organizationId, dto);
 
         const [row] = await tx
           .insert(bookings)
@@ -354,6 +303,150 @@ export class CoachBookingsService {
     }
 
     return { ...toCoachBookingResponse(booking), callUrl };
+  }
+
+  /**
+   * Manuell angelegte Termine (doc/konzept-manuelle-termine.md): ein oder mehrere Termine
+   * zu gewählten Zeitpunkten, abgesprochen mit dem Klienten und deshalb sofort 'confirmed'.
+   *
+   * Mehrere Startzeiten ergeben eine Serie mit gemeinsamer series_id. Jeder Termin ist
+   * trotzdem vollständig für sich: eigener Token, eigene Erinnerungen, eigene Absage.
+   * Angelegt wird alles oder nichts – ein halb angelegter Rhythmus wäre schwerer zu
+   * überblicken als ein Fehler, nach dem der Coach eine Zeile anpasst.
+   *
+   * Überschneidungen und Verfügbarkeit prüft checkManual() vorher als Hinweis; hier hindert
+   * nur dieselbe Startzeit wie ein bestehender Termin (bookings_org_start_active_unique).
+   */
+  async createManual(organizationId: string, dto: CreateManualBookingDto): Promise<ManualBookingResponse> {
+    const org = await this.organizationService.findById(organizationId);
+    if (!org.slug) {
+      // Wie beim Spontan-Termin: ohne Klienten-Subdomain kein Warteraum und kein Absagelink.
+      throw new ConflictException('Organization has no booking page yet');
+    }
+
+    const now = new Date();
+    const starts = dto.starts.map((start) => new Date(start)).sort((a, b) => a.getTime() - b.getTime());
+    if (starts.some((start) => start <= now)) {
+      throw new BadRequestException('Start time must be in the future');
+    }
+    if (new Set(starts.map((start) => start.getTime())).size !== starts.length) {
+      throw new BadRequestException('Start times must be distinct');
+    }
+
+    const offer = await this.findOwnOffer(organizationId, dto.offerId);
+    const offerName = offer?.name ?? MANUAL_OFFER_NAME;
+    // Das Schema verlangt Angebot oder Dauer; das Angebot hat Vorrang.
+    const durationMinutes = offer?.durationMinutes ?? dto.durationMinutes!;
+    const seriesId = starts.length > 1 ? randomUUID() : null;
+
+    let created: { row: CoachBookingRow; token: string }[];
+    try {
+      created = await this.db.transaction(async (tx) => {
+        const { client, attendee } = await this.resolveInvitee(tx, organizationId, dto);
+
+        // Selbst erzeugt statt aus der Rückgabe gelesen: coachBookingColumns führt den
+        // Token bewusst nicht, und er wird gleich für Links und Mail gebraucht.
+        const values = starts.map((startTime) => ({
+          organizationId,
+          clientId:        client?.id ?? null,
+          offerId:         offer?.id ?? null,
+          offerName,
+          durationMinutes,
+          startTime,
+          endTime:         new Date(startTime.getTime() + durationMinutes * 60_000),
+          clientName:      attendee.name,
+          clientEmail:     attendee.email,
+          clientPhone:     attendee.phone,
+          status:          'confirmed' as const,
+          origin:          'manual' as const,
+          seriesId,
+          // Bestätigt im Moment des Anlegens: Daran misst die Erinnerungsregel, ob eine
+          // Erinnerung noch Sinn ergibt (booking-reminders.ts).
+          confirmedAt:     now,
+          clientAccessToken: randomBytes(32).toString('hex'),
+        }));
+
+        const rows = await tx.insert(bookings).values(values).returning(coachBookingColumns);
+        // Die Rückgabe folgt der Reihenfolge der Werte; die Startzeit ordnet sie trotzdem
+        // eindeutig zu, denn innerhalb des Vorgangs ist sie verschieden.
+        return values.map((value) => ({
+          row: rows.find((row) => row.startTime.getTime() === value.startTime.getTime())!,
+          token: value.clientAccessToken,
+        }));
+      });
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        throw new ConflictException('A session already starts at one of these times');
+      }
+      throw err;
+    }
+
+    // Nach dem Commit und in try/catch wie überall sonst: Die Termine stehen, und der
+    // Coach hat die Links in der Antwort – ein Mail-Fehler darf den Aufruf nicht kippen.
+    try {
+      await this.sendAppointmentScheduledMail(org.slug, organizationId, created);
+    } catch (err) {
+      this.logger.error(`Failed to send appointment mail for booking ${created[0].row.id}`, err instanceof Error ? err.stack : err);
+    }
+
+    const responses = await withSeries(this.db, organizationId, created.map(({ row }) => row));
+    return responses.map((response, index) => ({
+      ...response,
+      callUrl: buildCallUrl(this.config, org.slug!, response.id, created[index].token),
+    }));
+  }
+
+  /**
+   * Hinweise vor dem manuellen Anlegen (doc/konzept-manuelle-termine.md §2): je Startzeit
+   * die anderen Termine des Coachs, die den Zeitraum samt Puffer berühren, und ob er
+   * außerhalb der freigegebenen Zeiten liegt. Beides hindert nicht am Anlegen.
+   */
+  async checkManual(organizationId: string, dto: CheckManualBookingDto): Promise<ManualBookingCheckResponse> {
+    const offer = await this.findOwnOffer(organizationId, dto.offerId);
+    const durationMinutes = offer?.durationMinutes ?? dto.durationMinutes!;
+
+    const [settings] = await this.db
+      .select({ bufferMinutes: availabilitySettings.bufferMinutes })
+      .from(availabilitySettings)
+      .where(eq(availabilitySettings.organizationId, organizationId))
+      .limit(1);
+    const bufferMs = (settings?.bufferMinutes ?? 0) * 60_000;
+
+    const rules = await this.db
+      .select({ weekday: availabilitySlots.weekday, startTime: availabilitySlots.startTime, endTime: availabilitySlots.endTime })
+      .from(availabilitySlots)
+      .where(eq(availabilitySlots.organizationId, organizationId));
+
+    const ranges = dto.starts.map((start) => {
+      const startTime = new Date(start);
+      return { start, startTime, endTime: new Date(startTime.getTime() + durationMinutes * 60_000) };
+    });
+    const earliest = new Date(Math.min(...ranges.map((r) => r.startTime.getTime())) - bufferMs);
+    const latest = new Date(Math.max(...ranges.map((r) => r.endTime.getTime())) + bufferMs);
+
+    // Eine Abfrage für alle Zeilen: die Termine im Gesamtzeitraum, zugeordnet wird unten.
+    const others = await this.db
+      .select({ clientName: bookings.clientName, startTime: bookings.startTime, endTime: bookings.endTime })
+      .from(bookings)
+      .where(and(
+        eq(bookings.organizationId, organizationId),
+        ne(bookings.status, 'cancelled'),
+        lt(bookings.startTime, latest),
+        gt(bookings.endTime, earliest),
+      ))
+      .orderBy(asc(bookings.startTime));
+
+    return ranges.map(({ start, startTime, endTime }) => {
+      const from = startTime.getTime() - bufferMs;
+      const to = endTime.getTime() + bufferMs;
+      return {
+        start,
+        conflicts: others
+          .filter((other) => other.startTime.getTime() < to && other.endTime.getTime() > from)
+          .map((other) => ({ clientName: other.clientName, start: other.startTime.toISOString(), end: other.endTime.toISOString() })),
+        outsideAvailability: !isWithinAvailability({ start: startTime, end: endTime }, rules, 'Europe/Berlin'),
+      };
+    });
   }
 
   /**
@@ -423,6 +516,133 @@ export class CoachBookingsService {
 
   // Ownership-Prüfung über die organizationId: eine fremde Buchung ist für diesen Coach
   // schlicht nicht vorhanden – 404 statt 403, damit die Existenz nicht durchsickert.
+  /** Coach-Antwort für eine einzelne Zeile, samt Stelle in der Serie. */
+  private async respond(organizationId: string, row: CoachBookingRow): Promise<CoachBookingResponse> {
+    const [response] = await withSeries(this.db, organizationId, [row]);
+    return response;
+  }
+
+  // Mandantentrennung wie in assignClient(): Das Angebot muss dieser Organisation gehören,
+  // sonst ließe sich mit einer fremden Id ein Termin erzeugen.
+  private async findOwnOffer(organizationId: string, offerId: string | undefined) {
+    if (!offerId) return undefined;
+
+    const [offer] = await this.db
+      .select({ id: offers.id, name: offers.name, durationMinutes: offers.durationMinutes })
+      .from(offers)
+      .where(and(eq(offers.id, offerId), eq(offers.organizationId, organizationId)))
+      .limit(1);
+
+    if (!offer) throw new NotFoundException('Offer not found');
+    return offer;
+  }
+
+  /**
+   * Wer eingeladen wird – Spontan-Termin und manueller Termin teilen sich die Regel (UX-04):
+   * ein bestehender Klient, oder eine E-Mail-Adresse. Gehört die Adresse schon einem
+   * Klienten, hängt der Termin ohne Rückfrage an ihm. Sonst entsteht nur auf Wunsch ein
+   * Klient; ohne ihn bleibt `client` leer, und der Coach kann später zuordnen.
+   *
+   * Läuft in der Transaktion des Termins: Scheitert der Termin, bleibt kein frisch
+   * angelegter Klient ohne Termin zurück.
+   */
+  private async resolveInvitee(
+    tx: Parameters<Parameters<DrizzleDb['transaction']>[0]>[0],
+    organizationId: string,
+    dto: { clientId: string } | { email: string; name?: string; createClient: boolean },
+  ) {
+    const clientColumns = { id: clients.id, name: clients.name, email: clients.email, phone: clients.phone };
+    let client: { id: string; name: string; email: string; phone: string | null } | undefined;
+
+    if ('clientId' in dto) {
+      [client] = await tx
+        .select(clientColumns)
+        .from(clients)
+        .where(and(eq(clients.id, dto.clientId), eq(clients.organizationId, organizationId)))
+        .limit(1);
+
+      if (!client) throw new NotFoundException('Client not found');
+      return { client, attendee: client };
+    }
+
+    const email = normalizeEmail(dto.email);
+    const name = dto.name || null;
+
+    [client] = await tx
+      .select(clientColumns)
+      .from(clients)
+      .where(and(eq(clients.organizationId, organizationId), eq(clients.email, email)))
+      .limit(1);
+
+    if (!client && dto.createClient && name) {
+      // onConflictDoNothing statt Fehler: Legt eine zweite Anfrage dieselbe Adresse
+      // gleichzeitig an, gewinnt deren Klient – sonst landete der Wettlauf bei der
+      // Meldung "A session already starts at this time" des Aufrufers.
+      [client] = await tx
+        .insert(clients)
+        .values({ organizationId, name, email })
+        .onConflictDoNothing()
+        .returning(clientColumns);
+
+      client ??= (await tx
+        .select(clientColumns)
+        .from(clients)
+        .where(and(eq(clients.organizationId, organizationId), eq(clients.email, email)))
+        .limit(1))[0];
+    }
+
+    // Ohne Klient: Am Termin steht der eingegebene Name, sonst die Adresse selbst –
+    // client_name ist Pflicht, und die Oberfläche braucht etwas zum Anzeigen.
+    return { client, attendee: client ?? { name: name ?? email, email, phone: null } };
+  }
+
+  // Eine Mail für den ganzen Vorgang, mit einem Kalendereintrag je Termin
+  // (doc/konzept-manuelle-termine.md §4).
+  private async sendAppointmentScheduledMail(slug: string, organizationId: string, created: { row: CoachBookingRow; token: string }[]): Promise<void> {
+    const org = await this.organizationService.findById(organizationId);
+    const coach = await this.organizationService.findOwnerContact(organizationId);
+    const coachDisplayName = coach?.name ?? org.name;
+    const [first] = created;
+    const now = Date.now();
+
+    const appointments = created.map(({ row, token }) => ({
+      row,
+      callUrl: buildCallUrl(this.config, slug, row.id, token),
+      cancelUrl: buildCancelUrl(this.config, slug, row.id, token),
+    }));
+
+    const ics = buildBookingsIcs(appointments.map(({ row, callUrl }) => ({
+      uid: row.id,
+      start: row.startTime,
+      end: row.endTime,
+      summary: `${row.offerName} mit ${coachDisplayName}`,
+      organizer: coach ? { name: coach.name, email: coach.email } : undefined,
+      attendee: { name: row.clientName, email: row.clientEmail },
+      url: callUrl,
+    })));
+
+    await this.mailService.send({
+      to: { email: first.row.clientEmail, name: greetingName(first.row) ?? undefined },
+      subject: created.length === 1
+        ? `Dein Termin bei ${coachDisplayName} – HxRoom`
+        : `Deine Termine bei ${coachDisplayName} – HxRoom`,
+      replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
+      htmlContent: await renderAppointmentScheduledEmail({
+        clientName: greetingName(first.row),
+        coachName: coachDisplayName,
+        appointments: appointments.map(({ row, callUrl, cancelUrl }) => ({
+          appointment: toAppointmentInfo(row),
+          callUrl,
+          cancelUrl,
+          roomAlreadyOpen: row.startTime.getTime() - now <= CALL_OPENS_MINUTES_BEFORE_START * 60_000,
+        })),
+        callOpensMinutesBefore: CALL_OPENS_MINUTES_BEFORE_START,
+        legalLinks: buildLegalLinks(this.config, slug),
+      }),
+      attachment: [{ name: created.length === 1 ? 'termin.ics' : 'termine.ics', content: Buffer.from(ics, 'utf8').toString('base64') }],
+    });
+  }
+
   private async findOwn(organizationId: string, bookingId: string): Promise<CoachBookingRow> {
     const [booking] = await this.db
       .select(coachBookingColumns)

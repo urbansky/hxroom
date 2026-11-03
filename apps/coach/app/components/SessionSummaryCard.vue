@@ -35,6 +35,7 @@ const chat = useSessionChat(() => bookingId)
 const { messages: chatMessages, fileCount: chatFileCount } = chat
 
 const duration = computed(() => (booking.value ? formatCallDuration(booking.value) : null))
+const followUpOpen = ref(false)
 </script>
 
 <template>
@@ -76,7 +77,19 @@ const duration = computed(() => (booking.value ? formatCallDuration(booking.valu
 
     <div class="flex flex-wrap items-center justify-center gap-2">
       <UButton :to="`/bookings/${bookingId}`" label="Zu den Sitzungsdetails" icon="i-lucide-arrow-right" trailing />
+      <!-- Der Moment, in dem der nächste Termin vereinbart wird, ist das Ende der Sitzung
+           (doc/konzept-manuelle-termine.md §2). -->
+      <UButton
+        v-if="booking?.clientId"
+        label="Folgetermin anlegen"
+        icon="i-lucide-calendar-plus"
+        color="neutral"
+        variant="subtle"
+        @click="followUpOpen = true"
+      />
       <UButton to="/" label="Zum Dashboard" color="neutral" variant="subtle" />
     </div>
+
+    <FollowUpBookingModal v-if="booking" v-model:open="followUpOpen" :booking="booking" />
   </div>
 </template>

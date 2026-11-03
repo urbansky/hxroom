@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildBookingIcs } from './ics';
+import { buildBookingIcs, buildBookingsIcs } from './ics';
 
 const BASE = {
   uid: 'booking-123',
@@ -166,5 +166,27 @@ describe('buildBookingIcs', () => {
 
   it('lässt DESCRIPTION weg, wenn nicht gesetzt', () => {
     expect(buildBookingIcs(BASE)).not.toContain('DESCRIPTION');
+  });
+});
+
+describe('buildBookingsIcs', () => {
+  it('legt mehrere Termine als eigene VEVENTs in einen Kalender, jeden mit eigener UID und eigenem Link', () => {
+    const second = {
+      ...BASE,
+      uid: 'booking-456',
+      start: new Date('2026-08-17T07:30:00.000Z'),
+      end: new Date('2026-08-17T08:30:00.000Z'),
+      url: 'https://anna.hxroom.de/call/b-2?token=def',
+    };
+    const lines = unfold(buildBookingsIcs([{ ...BASE, url: 'https://anna.hxroom.de/call/b-1?token=abc' }, second]));
+
+    expect(lines.filter((l) => l === 'BEGIN:VCALENDAR')).toHaveLength(1);
+    expect(lines.filter((l) => l === 'BEGIN:VEVENT')).toHaveLength(2);
+    expect(lines.filter((l) => l.startsWith('UID:'))).toEqual(['UID:booking-123', 'UID:booking-456']);
+    expect(lines.filter((l) => l.startsWith('URL:'))).toEqual([
+      'URL:https://anna.hxroom.de/call/b-1?token=abc',
+      'URL:https://anna.hxroom.de/call/b-2?token=def',
+    ]);
+    expect(lines.at(-1)).toBe('END:VCALENDAR');
   });
 });

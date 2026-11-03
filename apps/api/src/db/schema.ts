@@ -222,6 +222,10 @@ export const bookings = pgTable('bookings', {
   // 'confirmed' und liegt, anders als eine Buchung, außerhalb jeder Verfügbarkeit.
   // Der Default trägt den Altbestand; rückwirkend lässt sich die Herkunft nicht ermitteln.
   origin:             text('origin').$type<BookingOrigin>().notNull().default('booking_page'),
+  // Verbindet manuell angelegte Termine, die in einem Vorgang entstanden sind
+  // (doc/konzept-manuelle-termine.md §5). Jeder Termin bleibt für sich vollständig – die
+  // Serie trägt nur die Anzeige „Termin 2 von 5“. null für jeden einzeln angelegten Termin.
+  seriesId:           text('series_id'),
   clientAccessToken:  text('client_access_token').notNull(),
   clientTokenUsedAt:  timestamp('client_token_used_at'),
   confirmedAt:        timestamp('confirmed_at'),

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilitySlotResponse, CoachBookingResponse } from '@hxroom/shared'
+import type { AvailabilitySlotResponse, ClientListItem, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -168,6 +168,37 @@ function applyCancelled(updated: CoachBookingResponse) {
   }
 }
 
+// Termin anlegen (doc/konzept-manuelle-termine.md): aus dem Kopf oder per Klick auf eine
+// freie Stelle der Wochenansicht. Klienten und Angebote erst beim Öffnen.
+const manualOpen = ref(false)
+const manualClients = ref<ClientListItem[]>([])
+const manualOffers = ref<OfferResponse[]>([])
+const manualPreset = ref<{ start: Date } | null>(null)
+
+async function openManual(start: Date | null = null) {
+  manualPreset.value = start ? { start } : null
+  try {
+    [manualClients.value, manualOffers.value] = await Promise.all([
+      $api<ClientListItem[]>('/clients'),
+      $api<OfferResponse[]>('/offers'),
+    ])
+  } catch {
+    // Ohne Liste bleibt die Einladung per E-Mail-Adresse.
+  }
+  manualOpen.value = true
+}
+
+// Still nachladen statt loadBookings(): Das Skelett ließe den Kalender hinter dem Modal flackern.
+async function refreshBookings() {
+  try {
+    bookings.value = await $api<CoachBookingResponse[]>('/bookings', {
+      query: viewMode.value === 'week' ? queryForWeek() : queryForFilter(),
+    })
+  } catch {
+    // Die neuen Termine erscheinen spätestens beim nächsten Wechsel der Ansicht.
+  }
+}
+
 const emptyStateText = computed(() => {
   if (filter.value === 'past') return 'Noch keine vergangenen Termine.'
   if (filter.value === 'cancelled') return 'Keine abgesagten Termine.'
@@ -180,8 +211,13 @@ const emptyStateText = computed(() => {
     class="p-4 sm:p-6 mx-auto w-full transition-[max-width] duration-200"
     :class="viewMode === 'week' ? 'max-w-[100rem]' : 'max-w-3xl'"
   >
-    <h1 class="font-serif text-3xl text-highlighted mb-2">Kalender</h1>
-    <p class="text-muted mb-6">Alle Termine, die Klienten bei dir gebucht haben.</p>
+    <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-6">
+      <div>
+        <h1 class="font-serif text-3xl text-highlighted mb-2">Kalender</h1>
+        <p class="text-muted">Alle Termine – von Klienten gebucht oder von dir angelegt.</p>
+      </div>
+      <UButton label="Termin anlegen" icon="i-lucide-calendar-plus" size="sm" @click="openManual()" />
+    </div>
 
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
       <div class="inline-flex max-sm:hidden items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
@@ -236,6 +272,7 @@ const emptyStateText = computed(() => {
         :bookings="bookings"
         :availability="availability"
         @select="openDetail"
+        @create="openManual"
       />
     </template>
 
@@ -269,6 +306,14 @@ const emptyStateText = computed(() => {
       :booking="selectedBooking"
       @cancelled="applyCancelled"
       @updated="applyUpdated"
+    />
+
+    <ManualBookingModal
+      v-model:open="manualOpen"
+      :clients="manualClients"
+      :offers="manualOffers"
+      :preset="manualPreset"
+      @created="refreshBookings"
     />
   </div>
 </template>

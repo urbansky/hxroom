@@ -17,6 +17,7 @@ export const coachBookingColumns = {
   durationMinutes:    bookings.durationMinutes,
   status:             bookings.status,
   origin:             bookings.origin,
+  seriesId:           bookings.seriesId,
   clientId:           bookings.clientId,
   clientName:         bookings.clientName,
   clientEmail:        bookings.clientEmail,
@@ -40,6 +41,7 @@ export interface CoachBookingRow {
   durationMinutes: number;
   status: CoachBookingResponse['status'];
   origin: BookingOrigin;
+  seriesId: string | null;
   clientId: string | null;
   clientName: string;
   clientEmail: string;
@@ -54,7 +56,9 @@ export interface CoachBookingRow {
   callEndedAt: Date | null;
 }
 
-export function toCoachBookingResponse(row: CoachBookingRow): CoachBookingResponse {
+// Die Stelle in der Serie kennt die Zeile allein nicht; sie kommt aus withSeries()
+// (booking-series.ts), das die übrigen Termine der Serie nachlädt.
+export function toCoachBookingResponse(row: CoachBookingRow, series: CoachBookingResponse['series'] = null): CoachBookingResponse {
   return {
     id:                 row.id,
     start:              row.startTime.toISOString(),
@@ -76,5 +80,6 @@ export function toCoachBookingResponse(row: CoachBookingRow): CoachBookingRespon
     cancellationReason: row.cancellationReason,
     admittedAt:         row.admittedAt?.toISOString() ?? null,
     callEndedAt:        row.callEndedAt?.toISOString() ?? null,
+    series,
   };
 }

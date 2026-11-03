@@ -63,7 +63,8 @@ export type CancelledBy = z.infer<typeof CancelledBy>;
 // Coachs mit sich selbst (zählt in keiner Kennzahl, wird nach 24 Stunden gelöscht). Als Enum
 // statt als Flag, weil der zweite Teil von Funktion 2.04 (Termin zu einem gewählten
 // Zeitpunkt anlegen) hier später als 'manual' dazukommt.
-export const BookingOrigin = z.enum(['booking_page', 'ad_hoc', 'test']);
+// 'manual': vom Coach zu einem gewählten Zeitpunkt angelegt (doc/konzept-manuelle-termine.md)
+export const BookingOrigin = z.enum(['booking_page', 'ad_hoc', 'test', 'manual']);
 export type BookingOrigin = z.infer<typeof BookingOrigin>;
 
 // Plan types
@@ -415,6 +416,9 @@ export const coachBookingResponseSchema = z.object({
   // Ende des Gesprächs durch den Coach. Mit admittedAt die Dauer auf Terminseite und
   // Abschlusskarte (phase5-umsetzungsplan.md, Schritt 8).
   callEndedAt:        z.string().nullable(),
+  // Stelle in einer Terminserie („Termin 2 von 5“), gezählt über die nicht abgesagten
+  // Termine der Serie in zeitlicher Folge. null ohne Serie und bei abgesagten Terminen.
+  series:             z.object({ position: z.number(), count: z.number() }).nullable(),
 });
 export type CoachBookingResponse = z.infer<typeof coachBookingResponseSchema>;
 
@@ -494,11 +498,65 @@ export type CreateAdHocBookingDto = z.infer<typeof createAdHocBookingSchema>;
 // clientAccessToken, der sonst nirgends die API verlässt. Sie geht an den
 // authentifizierten Eigentümer der Buchung, der den Link ohnehin weitergeben soll: Eine
 // Mail ist für ein Gespräch in fünf Minuten oft zu langsam, der Coach braucht ihn für
-// WhatsApp, SMS oder das laufende Telefonat. Nur hier, nie in GET /bookings.
+// WhatsApp, SMS oder das laufende Telefonat. Nur hier und beim manuellen Anlegen
+// (manualBookingResponseSchema), nie in GET /bookings.
 export const adHocBookingResponseSchema = coachBookingResponseSchema.extend({
   callUrl: z.string(),
 });
 export type AdHocBookingResponse = z.infer<typeof adHocBookingResponseSchema>;
+
+// Manuell angelegte Termine (doc/konzept-manuelle-termine.md): ein oder mehrere Termine zu
+// gewählten Zeitpunkten, sofort bestätigt. Mehrere Startzeiten ergeben eine Serie.
+//
+// Wer eingeladen wird, folgt denselben zwei Formen wie beim Spontan-Termin. Ohne Angebot
+// gibt der Coach die Dauer an; mit Angebot kommt sie von dort.
+export const MANUAL_BOOKING_MAX_COUNT = 25;
+
+const manualBookingTiming = {
+  offerId:         z.string().min(1, 'Angebot ist erforderlich').optional(),
+  durationMinutes: z.number().int().min(15, 'Dauer ist zu kurz').max(240, 'Dauer ist zu lang').optional(),
+  starts:          z.array(z.string().datetime({ message: 'Ungültiger Zeitpunkt' }))
+    .min(1, 'Mindestens ein Termin ist erforderlich')
+    .max(MANUAL_BOOKING_MAX_COUNT, `Höchstens ${MANUAL_BOOKING_MAX_COUNT} Termine`),
+};
+
+// Angebot oder Dauer – ohne beides gäbe es kein Ende und damit kein Zugangsfenster.
+const hasOfferOrDuration = (dto: { offerId?: string; durationMinutes?: number }) =>
+  Boolean(dto.offerId) || dto.durationMinutes !== undefined;
+const offerOrDurationIssue = { message: 'Angebot oder Dauer ist erforderlich', path: ['durationMinutes'] };
+
+export const createManualBookingSchema = z.union([
+  z.object({
+    clientId: z.string().min(1, 'Klient ist erforderlich'),
+    ...manualBookingTiming,
+  }).strict().refine(hasOfferOrDuration, offerOrDurationIssue),
+  z.object({
+    email:        z.string().trim().email('Ungültige E-Mail-Adresse'),
+    name:         z.string().trim().max(160).optional(),
+    createClient: z.boolean(),
+    ...manualBookingTiming,
+  }).strict()
+    .refine(hasOfferOrDuration, offerOrDurationIssue)
+    .refine((dto) => !dto.createClient || Boolean(dto.name), { message: 'Name ist erforderlich', path: ['name'] }),
+]);
+export type CreateManualBookingDto = z.infer<typeof createManualBookingSchema>;
+
+export const manualBookingResponseSchema = z.array(adHocBookingResponseSchema);
+export type ManualBookingResponse = z.infer<typeof manualBookingResponseSchema>;
+
+// Prüfung vor dem Anlegen: Der Dialog fragt bei jeder Änderung der Terminliste, welche
+// Zeiten sich mit anderen Terminen überschneiden oder außerhalb der Verfügbarkeit liegen.
+// Beides hindert nicht am Anlegen, es sind Hinweise.
+export const checkManualBookingSchema = z.object(manualBookingTiming).strict().refine(hasOfferOrDuration, offerOrDurationIssue);
+export type CheckManualBookingDto = z.infer<typeof checkManualBookingSchema>;
+
+export const manualBookingCheckResponseSchema = z.array(z.object({
+  start:               z.string(),
+  // Andere Termine des Coachs, die den Zeitraum einschließlich Puffer berühren
+  conflicts:           z.array(z.object({ clientName: z.string(), start: z.string(), end: z.string() })),
+  outsideAvailability: z.boolean(),
+}));
+export type ManualBookingCheckResponse = z.infer<typeof manualBookingCheckResponseSchema>;
 
 // Zugangsfenster für den Videocall (doc/videocall-umsetzungsplan.md A1).
 //

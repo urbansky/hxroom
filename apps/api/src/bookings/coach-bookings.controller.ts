@@ -4,7 +4,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CurrentOrganization } from '../auth/current-organization.decorator';
 import { CurrentUser, type SessionUser } from '../auth/current-user.decorator';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { assignBookingClientSchema, cancelBookingSchema, createAdHocBookingSchema, listCoachBookingsQuerySchema, type AssignBookingClientDto, type CancelBookingDto, type CreateAdHocBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
+import { assignBookingClientSchema, cancelBookingSchema, checkManualBookingSchema, createAdHocBookingSchema, createManualBookingSchema, listCoachBookingsQuerySchema, type AssignBookingClientDto, type CancelBookingDto, type CheckManualBookingDto, type CreateAdHocBookingDto, type CreateManualBookingDto, type ListCoachBookingsQuery } from '@hxroom/shared';
 import { CoachBookingsService } from './coach-bookings.service';
 
 // Kalender-Ansicht im Coach-Backoffice. Teilt sich den Pfad 'bookings' mit dem
@@ -45,6 +45,27 @@ export class CoachBookingsController {
   ) {
     if (!org) throw new UnauthorizedException('No active organization');
     return this.coachBookingsService.createAdHoc(org.id, dto);
+  }
+
+  // Manuell angelegte Termine, einzeln oder als Serie (doc/konzept-manuelle-termine.md).
+  @Post('manual')
+  createManual(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Body(new ZodValidationPipe(createManualBookingSchema)) dto: CreateManualBookingDto,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.createManual(org.id, dto);
+  }
+
+  // Hinweise vor dem Anlegen; legt nichts an, deshalb 200 statt 201.
+  @Post('manual/check')
+  @HttpCode(HttpStatus.OK)
+  checkManual(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Body(new ZodValidationPipe(checkManualBookingSchema)) dto: CheckManualBookingDto,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.checkManual(org.id, dto);
   }
 
   // Probe-Sitzung des Coachs mit sich selbst (Schritt 6a). Ebenfalls vor ':id/cancel'.
