@@ -122,28 +122,6 @@ const showAside = computed(() => isDesktop.value || activeTab.value === 'profile
 const visitedTabs = reactive(new Set<TabValue>())
 watch(activeTab, tab => visitedTabs.add(tab), { immediate: true })
 
-// Termin-Detail wie im Kalender (pages/bookings/index.vue): dasselbe Slideover mit
-// Absage, Klientenzuordnung, Kalendereintrag und den Sitzungsnotizen.
-const selectedBooking = ref<CoachBookingResponse | null>(null)
-const isDetailOpen = ref(false)
-
-function openDetail(booking: CoachBookingResponse) {
-  selectedBooking.value = booking
-  isDetailOpen.value = true
-}
-
-// Absage oder neue Klientenzuordnung: Zeile ersetzen. Gehört der Termin danach zu einem
-// anderen Klienten, verschwindet er aus diesem Profil – das Slideover bleibt offen, damit
-// der Coach das Ergebnis seiner Änderung sieht.
-function applyBookingChange(updated: CoachBookingResponse) {
-  if (!client.value) return
-  const bookings = updated.clientId === client.value.id
-    ? client.value.bookings.map(b => (b.id === updated.id ? updated : b))
-    : client.value.bookings.filter(b => b.id !== updated.id)
-  client.value = { ...client.value, bookings }
-  if (selectedBooking.value?.id === updated.id) selectedBooking.value = updated
-}
-
 const isFormOpen = ref(false)
 
 function onSaved(saved: ClientResponse) {
@@ -293,18 +271,19 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                  gleiche Rahmen-/Hintergrundlogik je Status, gleiche dreizeilige Hierarchie.
                  Statt der Uhrzeit allein steht hier das Datum mit davor, weil es auf dieser
                  Seite keine Tagesgruppierung gibt. Der Klientenname entfällt – wir sind
-                 bereits in seinem Profil. Ein Klick öffnet wie dort das Termin-Detail. -->
+                 bereits in seinem Profil. Ein Klick führt direkt auf die Terminseite statt
+                 ins Slideover: Wer aus der Akte kommt, will den Termin ausführlich sehen, und
+                 „Zurück“ dort führt wieder hierher. -->
             <template v-else>
               <div v-if="upcoming.length">
                 <p class="text-xs font-medium uppercase tracking-wide text-muted mb-2">Anstehend</p>
                 <div class="flex flex-col gap-2">
-                  <button
+                  <NuxtLink
                     v-for="booking in upcoming"
                     :key="booking.id"
-                    type="button"
+                    :to="`/bookings/${booking.id}`"
                     class="w-full text-left flex items-start gap-3 rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 hover:border-accented transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
                     :class="booking.status === 'pending' && 'booking-pending'"
-                    @click="openDetail(booking)"
                   >
                     <!-- Ohne Angebot neutral grau, damit der Text bündig steht (wie BookingAgenda). -->
                     <span
@@ -333,22 +312,21 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                         <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                       </div>
                     </div>
-                  </button>
+                  </NuxtLink>
                 </div>
               </div>
 
               <div v-if="past.length">
                 <p class="text-xs font-medium uppercase tracking-wide text-muted mb-2">Vergangen</p>
                 <div class="flex flex-col gap-2">
-                  <button
+                  <NuxtLink
                     v-for="booking in past"
                     :key="booking.id"
-                    type="button"
+                    :to="`/bookings/${booking.id}`"
                     class="w-full text-left flex items-start gap-3 rounded-xl border p-4 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
                     :class="booking.status === 'cancelled'
                       ? 'border-default border-dashed bg-transparent opacity-60'
                       : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
-                    @click="openDetail(booking)"
                   >
                     <!-- Ohne Angebot neutral grau, damit der Text bündig steht (wie BookingAgenda). -->
                     <span
@@ -375,7 +353,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                         <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                       </div>
                     </div>
-                  </button>
+                  </NuxtLink>
                 </div>
               </div>
             </template>
@@ -403,7 +381,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
               </div>
               <div class="flex flex-wrap gap-2">
                 <UButton v-if="canStartNext" :to="`/call/${nextBooking.id}`" label="Sitzung starten" icon="i-lucide-video" size="sm" />
-                <UButton label="Termin öffnen" color="neutral" variant="subtle" size="sm" @click="openDetail(nextBooking)" />
+                <UButton :to="`/bookings/${nextBooking.id}`" label="Termin öffnen" color="neutral" variant="subtle" size="sm" />
               </div>
             </template>
             <p v-else class="text-sm text-muted">Kein Termin geplant.</p>
@@ -446,13 +424,6 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
           </div>
         </template>
       </UModal>
-
-      <BookingDetailSlideover
-        v-model:open="isDetailOpen"
-        :booking="selectedBooking"
-        @cancelled="applyBookingChange"
-        @updated="applyBookingChange"
-      />
 
       <ClientFormSlideover
         v-model:open="isFormOpen"
