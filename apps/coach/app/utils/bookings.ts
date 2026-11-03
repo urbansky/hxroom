@@ -164,6 +164,14 @@ export function formatCallDuration(booking: Pick<CoachBookingResponse, 'admitted
   return rest === 0 ? `${hours} Std.` : `${hours} Std. ${rest} Min.`
 }
 
+/**
+ * Dauer für die Terminzeile („47 Min. · Coaching-Sitzung“): bei einer gehaltenen Sitzung
+ * die tatsächliche, sonst die geplante. Den Plan zeigt das Zeitfenster daneben ohnehin.
+ */
+export function formatBookingDuration(booking: Pick<CoachBookingResponse, 'admittedAt' | 'callEndedAt' | 'durationMinutes'>): string {
+  return formatCallDuration(booking) ?? `${booking.durationMinutes} Min.`
+}
+
 // formatDuration liegt seit dem Umzug der Call-Oberfläche in @hxroom/shared – die
 // Steuerleiste des Calls ist dort ihr einziger Aufrufer, und sie gilt für beide Seiten.
 

@@ -328,7 +328,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                         <UBadge v-if="booking.status === 'pending'" :label="STATUS_LABELS.pending" color="warning" variant="subtle" size="sm" />
                       </div>
                       <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
-                        <span class="truncate">{{ booking.durationMinutes }} Min. · {{ booking.offerName }}</span>
+                        <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}</span>
                         <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                       </div>
                     </div>
@@ -369,7 +369,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                         <UBadge v-if="booking.status === 'no_show'" :label="STATUS_LABELS.no_show" icon="i-lucide-user-x" color="warning" variant="subtle" size="sm" />
                       </div>
                       <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
-                        <span class="truncate">{{ booking.durationMinutes }} Min. · {{ booking.offerName }}</span>
+                        <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}</span>
                         <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
                       </div>
                     </div>

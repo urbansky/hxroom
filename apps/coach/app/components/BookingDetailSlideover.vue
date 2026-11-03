@@ -64,7 +64,7 @@ const cancelledByLabel = computed(() => props.booking?.cancelledBy ? CANCELLED_B
               {{ formatDayHeading(booking.start) }}, {{ formatTimeRange(booking) }}
             </p>
             <p class="text-sm text-muted mt-0.5">
-              {{ booking.durationMinutes }} Min. · {{ booking.offerName }}
+              {{ formatBookingDuration(booking) }} · {{ booking.offerName }}
             </p>
           </div>
           <UButton

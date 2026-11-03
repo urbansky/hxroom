@@ -141,7 +141,7 @@ function rowClass(booking: CoachBookingResponse): string {
             </div>
 
             <div class="mt-0.5 flex items-center gap-2 text-sm text-muted min-w-0">
-              <span class="truncate">{{ booking.durationMinutes }} Min. · {{ booking.offerName }}</span>
+              <span class="truncate">{{ formatBookingDuration(booking) }} · {{ booking.offerName }}</span>
               <UIcon v-if="booking.clientNote" name="i-lucide-message-square-text" class="size-4 shrink-0" />
             </div>
           </div>

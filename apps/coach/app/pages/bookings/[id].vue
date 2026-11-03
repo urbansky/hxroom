@@ -117,7 +117,7 @@ const originLabel = computed(() => {
                 class="text-primary font-medium hover:underline"
               >{{ booking.clientName }}</NuxtLink>
               <span v-else class="text-highlighted font-medium">{{ booking.clientName }}</span>
-              · {{ booking.durationMinutes }} Min. · {{ booking.offerName }}
+              · {{ formatBookingDuration(booking) }} · {{ booking.offerName }}
             </p>
           </div>
           <UButton

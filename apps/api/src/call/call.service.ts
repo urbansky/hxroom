@@ -199,9 +199,11 @@ export class CallService {
         && row.status === 'confirmed';
       if (!stillAbandoned) return false;
 
+      // Ende ist der Moment, in dem der Coach gegangen ist, nicht dieser Lauf: Sonst zählten
+      // Nachfrist und Abstand der Läufe zur tatsächlichen Dauer der Sitzung.
       await tx
         .update(bookings)
-        .set({ callEndedAt: new Date(), status: 'completed', coachLeftAt: null })
+        .set({ callEndedAt: row.coachLeftAt, status: 'completed', coachLeftAt: null })
         .where(eq(bookings.id, bookingId));
       return true;
     });
