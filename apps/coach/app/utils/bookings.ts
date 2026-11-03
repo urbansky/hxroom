@@ -192,6 +192,21 @@ export function isAdHoc(booking: Pick<CoachBookingResponse, 'origin'>): boolean 
 
 export const AD_HOC_LABEL = 'Spontan'
 
+// Notizen bleiben in jedem Zustand beschreibbar (session-notes.service.ts). Nach einer
+// Absage gibt es nichts mehr vorzubereiten – der Platzhalter sagt, wofür das Feld dann da ist.
+export function notesPlaceholder(booking: Pick<CoachBookingResponse, 'status'>): string {
+  return booking.status === 'cancelled'
+    ? 'Termin abgesagt – Platz für einen Nachtrag, nur für dich.'
+    : 'Vorbereitung, Beobachtungen, nächste Schritte – nur für dich.'
+}
+
+// Das Abzeichen „Spontan“ nur, wenn ein Angebot gewählt wurde. Ohne Angebot heißt der
+// Snapshot bereits „Spontan-Termin“ und steht in derselben Zeile – das Abzeichen wäre
+// eine Dopplung.
+export function showAdHocBadge(booking: Pick<CoachBookingResponse, 'origin' | 'offerId'>): boolean {
+  return isAdHoc(booking) && !!booking.offerId
+}
+
 // Probe-Sitzung des Coachs mit sich selbst (Schritt 6a): erscheint in Kalender und Agenda,
 // damit er zurück in den Call findet, zählt aber in keiner Kennzahl.
 export function isTestSession(booking: Pick<CoachBookingResponse, 'origin'>): boolean {

@@ -134,7 +134,7 @@ function rowClass(booking: CoachBookingResponse): string {
               <span class="font-medium truncate" :class="booking.status === 'cancelled' ? 'text-muted' : 'text-highlighted'">
                 {{ booking.clientName }}
               </span>
-              <UBadge v-if="isAdHoc(booking)" :label="AD_HOC_LABEL" color="info" variant="subtle" size="sm" class="shrink-0" />
+              <UBadge v-if="showAdHocBadge(booking)" :label="AD_HOC_LABEL" color="info" variant="subtle" size="sm" class="shrink-0" />
               <UBadge v-if="isTestSession(booking)" :label="TEST_SESSION_LABEL" icon="i-lucide-flask-conical" color="neutral" variant="subtle" size="sm" class="shrink-0" />
               <UBadge v-if="booking.status === 'pending'" :label="STATUS_LABELS.pending" color="warning" variant="subtle" size="sm" class="shrink-0" />
               <UBadge v-else-if="booking.status === 'cancelled'" :label="STATUS_LABELS.cancelled" color="neutral" variant="subtle" size="sm" class="shrink-0" />

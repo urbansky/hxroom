@@ -167,9 +167,9 @@ const cancelledByLabel = computed(() => props.booking?.cancelledBy ? CANCELLED_B
           </div>
           <RichTextEditor
             v-if="notesReady"
-            :key="booking.id"
+            :key="`${booking.id}-${isCancelled}`"
             v-model="notesContent"
-            placeholder="Vorbereitung, Beobachtungen, nächste Schritte – nur für dich."
+            :placeholder="notesPlaceholder(booking)"
           />
           <UAlert
             v-else-if="notesLoadError"

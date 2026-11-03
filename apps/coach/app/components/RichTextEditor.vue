@@ -10,9 +10,12 @@ withDefaults(defineProps<{
   placeholder?: string
   /** Füllt die Höhe des Elternelements und scrollt im Inneren – für die Seitenleiste im Call. */
   fill?: boolean
+  /** Als Inhaltskarte einer Seite (UX-01): Kartenform und -fläche, wächst ab 18rem mit. */
+  card?: boolean
 }>(), {
   placeholder: undefined,
   fill: false,
+  card: false,
 })
 
 // Bindet an UEditor (Tiptap) und wird serverseitig gegen richTextDocSchema validiert – hier
@@ -40,8 +43,11 @@ const toolbarItems: any[] = [
 
 <template>
   <div
-    class="rounded-lg border border-default overflow-hidden bg-white dark:bg-neutral-800"
-    :class="fill && 'flex flex-col min-h-0'"
+    class="border border-default overflow-hidden"
+    :class="[
+      card ? 'rounded-xl bg-white dark:bg-neutral-900' : 'rounded-lg bg-white dark:bg-neutral-800',
+      fill && 'flex flex-col min-h-0',
+    ]"
   >
     <UEditor
       v-model="content"
@@ -52,7 +58,7 @@ const toolbarItems: any[] = [
       :placeholder="placeholder"
       :ui="fill
         ? { root: 'flex-1 min-h-0 flex flex-col', content: 'overflow-y-auto', base: `min-h-full py-3 px-3 ${descriptionProseClasses}` }
-        : { base: `min-h-32 py-3 sm:px-4 ${descriptionProseClasses}` }"
+        : { base: `${card ? 'min-h-72 px-4' : 'min-h-32 sm:px-4'} py-3 ${descriptionProseClasses}` }"
     >
       <template #default="{ editor }">
         <UEditorToolbar :editor="editor" :items="toolbarItems" class="border-b border-default px-2 py-1.5 shrink-0" />

@@ -52,13 +52,14 @@ const { messages: chatMessages, fileCount: chatFileCount, loading: chatLoading, 
 const chatSummary = computed(() => formatChatSummary(chatMessages.value.length, chatFileCount.value))
 
 // Der Reiter steht in der URL, damit die Chat-Zeile des Slideovers direkt dorthin springt.
+// Reiter gibt es erst nach dem Einlass: Vorher hätte „Chat & Dateien“ nichts zu zeigen.
 type TabValue = 'chat' | 'details'
 const TAB_ITEMS = [
-  { label: 'Chat & Dateien', value: 'chat', icon: 'i-lucide-message-square' },
   { label: 'Details', value: 'details', icon: 'i-lucide-info' },
+  { label: 'Chat & Dateien', value: 'chat', icon: 'i-lucide-message-square' },
 ]
 const activeTab = computed<TabValue>({
-  get: () => (route.query.tab === 'details' ? 'details' : route.query.tab === 'chat' ? 'chat' : (booking.value?.admittedAt ? 'chat' : 'details')),
+  get: () => (route.query.tab === 'chat' && booking.value?.admittedAt ? 'chat' : 'details'),
   set: tab => router.replace({ query: { ...route.query, tab } }),
 })
 
@@ -69,13 +70,59 @@ function goBack() {
   else router.push('/bookings')
 }
 
-const cancelledByLabel = computed(() => booking.value?.cancelledBy ? CANCELLED_BY_LABELS[booking.value.cancelledBy] : null)
-const callDuration = computed(() => (booking.value ? formatCallDuration(booking.value) : null))
-const originLabel = computed(() => {
-  if (!booking.value) return null
-  if (isTestSession(booking.value)) return 'Probe-Sitzung'
-  if (isAdHoc(booking.value)) return 'Spontan-Termin'
-  return 'Buchungsseite'
+// Nur für Bevorstehendes; was begonnen hat, steht mit Uhrzeit im Titel.
+const relativeStart = computed(() => (booking.value && !isCancelled.value ? formatRelativeToStart(booking.value.start) : null))
+
+// Verlauf: was mit dem Termin bisher geschehen ist, in zeitlicher Folge. Ein offener
+// Schritt (Bestätigung steht aus) ist hohl gezeichnet. „Nicht erschienen“ fehlt hier
+// bewusst – das steht samt „Doch erschienen“ im Kopf.
+interface HistoryEntry {
+  key: string
+  label: string
+  time?: string
+  detail?: string | null
+  quote?: string | null
+  tone: 'done' | 'open' | 'cancelled'
+}
+const historyEntries = computed<HistoryEntry[]>(() => {
+  const b = booking.value
+  if (!b) return []
+  const entries: HistoryEntry[] = [{
+    key: 'created',
+    label: isTestSession(b) ? 'Probe-Sitzung angelegt' : isAdHoc(b) ? 'Als Spontan-Termin angelegt' : 'Gebucht über die Buchungsseite',
+    time: formatDateTime(b.createdAt),
+    tone: 'done',
+  }]
+  // Spontan-Termin und Probe-Sitzung waren nie offen, eine Bestätigung gibt es dort nicht.
+  if (b.origin === 'booking_page') {
+    if (b.confirmedAt) {
+      entries.push({ key: 'confirmed', label: 'Bestätigt', time: formatDateTime(b.confirmedAt), tone: 'done' })
+    } else if (b.status === 'pending') {
+      entries.push({ key: 'confirmed', label: 'Bestätigung steht aus', detail: 'Der Klient hat den Bestätigungslink noch nicht angeklickt.', tone: 'open' })
+    }
+  }
+  if (b.admittedAt) {
+    entries.push({
+      key: 'call',
+      label: 'Gespräch',
+      time: b.callEndedAt
+        ? `${formatTime(b.admittedAt)} – ${formatTime(b.callEndedAt)} Uhr`
+        : `seit ${formatTime(b.admittedAt)} Uhr, noch nicht beendet`,
+      detail: formatCallDuration(b),
+      tone: 'done',
+    })
+  }
+  if (b.cancelledAt) {
+    const by = b.cancelledBy ? CANCELLED_BY_LABELS[b.cancelledBy] : null
+    entries.push({
+      key: 'cancelled',
+      label: by ? `Abgesagt, ${by}` : 'Abgesagt',
+      time: formatDateTime(b.cancelledAt),
+      quote: b.cancellationReason,
+      tone: 'cancelled',
+    })
+  }
+  return entries
 })
 </script>
 
@@ -103,35 +150,43 @@ const originLabel = computed(() => {
     </div>
 
     <template v-else-if="booking">
-      <!-- Kopf: wann, mit wem, was – und was sich damit tun lässt -->
+      <!-- Kopf: wann, mit wem, was – rechts die Aktionen wie auf der Klientenseite (UX-01).
+           Auf dem Handy rutschen die Knöpfe unter den Titel. -->
       <header class="flex flex-col gap-4">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div class="min-w-0">
-            <h1 class="font-serif text-3xl text-highlighted" :class="isCancelled && 'line-through'">
-              {{ formatDayHeading(booking.start) }}, {{ formatTimeRange(booking) }}
+        <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+          <div class="min-w-0 flex-1">
+            <!-- Auf dem Handy steht die Uhrzeit in einer eigenen Zeile, statt mitten im
+                 Zeitraum umzubrechen. -->
+            <h1 class="font-serif text-2xl sm:text-3xl text-highlighted" :class="isCancelled && 'line-through'">
+              {{ formatDayHeading(booking.start) }}<span class="max-sm:block whitespace-nowrap"><span class="max-sm:hidden"> · </span>{{ formatTimeRange(booking) }}</span>
             </h1>
-            <p class="mt-1 text-muted">
+            <!-- Kurzangaben als fließender Text: Das geschützte Leerzeichen hält jeden Punkt am
+                 Ende der Zeile, sodass keine Zeile mit „·“ beginnt. Die Angebotsfarbe als
+                 Punkt, wie die Linie der Terminkacheln; ohne Angebot entfällt sie. -->
+            <div class="mt-2 text-muted leading-7">
               <NuxtLink
                 v-if="booking.clientId"
                 :to="`/clients/${booking.clientId}`"
                 class="text-primary font-medium hover:underline"
               >{{ booking.clientName }}</NuxtLink>
-              <span v-else class="text-highlighted font-medium">{{ booking.clientName }}</span>
-              · {{ formatBookingDuration(booking) }} · {{ booking.offerName }}
-            </p>
+              <span v-else class="text-highlighted font-medium">{{ booking.clientName }}</span>&nbsp;·
+              <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span
+                  v-if="booking.offerId"
+                  class="size-2 rounded-full shrink-0"
+                  :style="{ backgroundColor: offerColor(booking.offerId) }"
+                />
+                {{ booking.offerName }}
+              </span>&nbsp;·
+              <span class="whitespace-nowrap">{{ formatBookingDuration(booking) }}</span>
+              <div class="inline-flex items-center gap-2 align-middle ml-1">
+                <BookingStatusBadges :booking="booking" hide-hint />
+                <span v-if="relativeStart" class="text-sm text-primary whitespace-nowrap">{{ relativeStart }}</span>
+              </div>
+            </div>
           </div>
-          <UButton
-            v-if="!isTestSession(booking)"
-            :label="booking.clientId ? 'Anderem Klienten zuordnen' : 'Klient zuordnen'"
-            icon="i-lucide-link"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="isPickerOpen = true"
-          />
+          <BookingHeaderActions :booking="booking" :actions="actions" @assign="isPickerOpen = true" />
         </div>
-
-        <BookingStatusBadges :booking="booking" />
 
         <UAlert
           v-if="booking.status === 'no_show'"
@@ -143,29 +198,30 @@ const originLabel = computed(() => {
           :actions="[{ label: 'Doch erschienen', icon: 'i-lucide-undo-2', color: 'warning', variant: 'outline', loading: markingNoShow, onClick: () => actions.setNoShow(false) }]"
         />
 
-        <BookingActionBar :booking="booking" :actions="actions" />
-        <p v-if="actionError" class="text-sm text-error">{{ actionError }}</p>
+        <p v-if="actionError && !actions.confirmingCancel.value" class="text-sm text-error">{{ actionError }}</p>
       </header>
 
-      <!-- Notizen links, Chat und Details rechts; auf dem Handy untereinander, Notizen zuerst -->
+      <!-- Notizen links, Details und Chat rechts; auf dem Handy untereinander, Notizen zuerst -->
       <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-start">
-        <section class="flex flex-col gap-2 min-w-0">
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="text-xs uppercase tracking-wide text-muted">Notizen</h2>
-            <div class="flex items-center gap-2">
-              <SaveStatusHint :status="notesStatus" />
-              <UBadge icon="i-lucide-lock" color="secondary" variant="subtle" size="sm" label="privat" />
-            </div>
+        <!-- Beide Spalten gleich gebaut (UX-02): eine Kopfzeile in Höhe der Reiter, darunter
+             eine Karte. Dass die Notizen privat sind, sagt das Schloss im Kopf. -->
+        <section class="flex flex-col gap-3 min-w-0">
+          <div class="flex items-center justify-between gap-2 h-10 border-b border-default">
+            <h2 class="flex items-center gap-1.5 text-sm font-medium text-highlighted">
+              <UIcon name="i-lucide-lock" class="size-4 text-muted" />
+              Notizen
+            </h2>
+            <SaveStatusHint :status="notesStatus" />
           </div>
-          <div v-if="notesReady" class="h-[28rem] lg:h-[36rem]">
-            <RichTextEditor
-              :key="booking.id"
-              v-model="notesContent"
-              fill
-              class="h-full"
-              placeholder="Vorbereitung, Beobachtungen, nächste Schritte – nur für dich."
-            />
-          </div>
+          <!-- Tiptap übernimmt den Platzhalter nur beim Anlegen; der Absagezustand im key
+               baut den Editor nach einer Absage neu auf, damit der passende dasteht. -->
+          <RichTextEditor
+            v-if="notesReady"
+            :key="`${booking.id}-${isCancelled}`"
+            v-model="notesContent"
+            card
+            :placeholder="notesPlaceholder(booking)"
+          />
           <UAlert
             v-else-if="notesLoadError"
             icon="i-lucide-alert-circle"
@@ -174,18 +230,31 @@ const originLabel = computed(() => {
             description="Die Notizen konnten nicht geladen werden."
             :actions="[{ label: 'Erneut versuchen', color: 'error', variant: 'outline', onClick: () => notes.reload() }]"
           />
-          <USkeleton v-else class="h-[28rem] lg:h-[36rem] rounded-lg" />
+          <USkeleton v-else class="h-80 rounded-xl" />
         </section>
 
         <section class="flex flex-col gap-3 min-w-0">
-          <UTabs v-model="activeTab" :items="TAB_ITEMS" :content="false" variant="link" size="sm" />
+          <UTabs
+            v-if="booking.admittedAt"
+            v-model="activeTab"
+            :items="TAB_ITEMS"
+            :content="false"
+            variant="link"
+            size="sm"
+            :ui="{ list: 'h-10' }"
+          />
+          <div v-else class="flex items-center h-10 border-b border-default">
+            <h2 class="flex items-center gap-1.5 text-sm font-medium text-highlighted">
+              <UIcon name="i-lucide-info" class="size-4 text-muted" />
+              Details
+            </h2>
+          </div>
 
           <!-- Chat & Dateien: der Verlauf zum Nachlesen. Entfernen darf der Coach eine Datei
                auch nach der Sitzung, etwa auf einen Löschwunsch des Klienten hin. -->
-          <div v-if="activeTab === 'chat'">
-            <p v-if="!booking.admittedAt" class="text-sm text-muted">Zu diesem Termin gab es noch kein Gespräch.</p>
+          <div v-if="activeTab === 'chat'" class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4">
             <UAlert
-              v-else-if="chatLoadError"
+              v-if="chatLoadError"
               icon="i-lucide-alert-circle"
               color="error"
               variant="subtle"
@@ -195,8 +264,8 @@ const originLabel = computed(() => {
             <USkeleton v-else-if="chatLoading && !chatMessages.length" class="h-[28rem] lg:h-[32rem] rounded-lg" />
             <p v-else-if="!chatMessages.length" class="text-sm text-muted">Im Gespräch wurde nichts geschrieben.</p>
             <template v-else>
-              <p class="text-xs text-muted mb-2">{{ chatSummary }}</p>
-              <div class="h-[28rem] lg:h-[32rem] rounded-lg border border-default bg-elevated/40 p-3">
+              <p class="text-xs text-muted mb-3">{{ chatSummary }}</p>
+              <div class="h-[28rem] lg:h-[32rem] rounded-lg bg-elevated/40 p-3">
                 <CallChatPanel :messages="chatMessages" :peer-name="booking.clientName" readonly @remove="chat.remove" />
               </div>
               <p v-if="chatRemoveError" class="mt-2 text-sm text-error">Die Datei konnte nicht entfernt werden.</p>
@@ -204,7 +273,7 @@ const originLabel = computed(() => {
           </div>
 
           <!-- Details: was zur Buchung gehört, aber nicht in den Kopf -->
-          <dl v-else class="flex flex-col gap-4 text-sm">
+          <dl v-else class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 flex flex-col gap-5 text-sm">
             <div v-if="booking.clientNote">
               <dt class="text-xs uppercase tracking-wide text-muted mb-1">Nachricht des Klienten</dt>
               <dd class="text-highlighted whitespace-pre-line border-l-2 border-primary/40 pl-3">{{ booking.clientNote }}</dd>
@@ -216,28 +285,42 @@ const originLabel = computed(() => {
                 <ULink v-if="booking.clientPhone" :to="`tel:${booking.clientPhone}`" class="text-primary">{{ booking.clientPhone }}</ULink>
               </dd>
             </div>
-            <div v-if="booking.admittedAt">
-              <dt class="text-xs uppercase tracking-wide text-muted mb-1">Gespräch</dt>
-              <dd class="text-highlighted">
-                {{ formatTime(booking.admittedAt) }}<template v-if="booking.callEndedAt"> – {{ formatTime(booking.callEndedAt) }} Uhr</template><template v-else> Uhr, noch nicht beendet</template>
-                <span v-if="callDuration" class="text-muted"> · {{ callDuration }}</span>
-              </dd>
-            </div>
-            <div v-if="booking.cancelledAt">
-              <dt class="text-xs uppercase tracking-wide text-muted mb-1">Absage</dt>
-              <dd class="text-highlighted">
-                {{ formatDateTime(booking.cancelledAt) }}<template v-if="cancelledByLabel">, {{ cancelledByLabel }}</template>
-                <p v-if="booking.cancellationReason" class="whitespace-pre-line border-l-2 border-primary/40 pl-3 mt-2">
-                  {{ booking.cancellationReason }}
-                </p>
-              </dd>
-            </div>
             <div>
-              <dt class="text-xs uppercase tracking-wide text-muted mb-1">Buchung</dt>
-              <dd class="text-muted flex flex-col gap-0.5">
-                <span>Über: {{ originLabel }}</span>
-                <span>Gebucht am {{ formatDateTime(booking.createdAt) }}</span>
-                <span v-if="booking.confirmedAt">Bestätigt am {{ formatDateTime(booking.confirmedAt) }}</span>
+              <dt class="text-xs uppercase tracking-wide text-muted mb-2">Verlauf</dt>
+              <dd>
+                <ol class="flex flex-col">
+                  <li
+                    v-for="(entry, index) in historyEntries"
+                    :key="entry.key"
+                    class="relative flex gap-3"
+                    :class="index < historyEntries.length - 1 && 'pb-4'"
+                  >
+                    <!-- Verbindungslinie zum nächsten Punkt, mittig unter dem Punkt -->
+                    <span
+                      v-if="index < historyEntries.length - 1"
+                      class="absolute left-[4.5px] top-4 bottom-0 w-px bg-accented"
+                      aria-hidden="true"
+                    />
+                    <span
+                      class="mt-1.5 size-2.5 rounded-full shrink-0"
+                      :class="{
+                        'bg-primary': entry.tone === 'done',
+                        'border-2 border-accented bg-default': entry.tone === 'open',
+                        'bg-error/70': entry.tone === 'cancelled',
+                      }"
+                      aria-hidden="true"
+                    />
+                    <div class="min-w-0">
+                      <p class="text-highlighted">{{ entry.label }}</p>
+                      <p v-if="entry.time || entry.detail" class="text-xs text-muted">
+                        {{ [entry.time, entry.detail].filter(Boolean).join(' · ') }}
+                      </p>
+                      <p v-if="entry.quote" class="text-highlighted whitespace-pre-line border-l-2 border-primary/40 pl-3 mt-2">
+                        {{ entry.quote }}
+                      </p>
+                    </div>
+                  </li>
+                </ol>
               </dd>
             </div>
           </dl>

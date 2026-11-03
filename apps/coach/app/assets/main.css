@@ -15,6 +15,12 @@
   background-color: #faf8f4;
 }
 
+/* Im dunklen Modus der Grund des Themes; der feste helle Ton oben ließ die Seitenleiste
+   sonst hell stehen, mit hellem Text darauf. */
+.dark .coach-sidebar {
+  background-color: var(--ui-bg);
+}
+
 /* Gruppenüberschriften. Das Abzeichen eines Menüpunkts („Beta“) trägt intern ebenfalls
    data-slot="label" und ist deshalb ausgenommen. */
 .coach-sidebar .sidebar-nav [data-slot="label"]:not([data-slot="linkTrailingBadge"] *) {
