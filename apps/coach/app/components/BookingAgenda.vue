@@ -107,12 +107,13 @@ function rowClass(booking: CoachBookingResponse): string {
                Angebotsseite dient damit als Legende. `self-stretch`: die Pille nimmt die
                Höhe des Inhalts an. Bei abgesagten Terminen verblasst sie über das
                opacity-60 der Kachel mit, ein Sonderfall ist dafür nicht nötig.
-               Ohne offerId (manuell angelegter Termin) bleibt die Spalte leer, statt eine
-               Farbe zu erfinden, die zu keinem Angebot gehört. -->
+               Ohne offerId (Spontan-Termin ohne Angebot) neutral grau statt einer
+               erfundenen Angebotsfarbe – die Linie bleibt, damit der Text aller Kacheln
+               bündig steht. -->
           <span
-            v-if="booking.offerId"
             class="w-1 rounded-full shrink-0 self-stretch"
-            :style="{ backgroundColor: offerColor(booking.offerId) }"
+            :class="!booking.offerId && 'bg-accented'"
+            :style="booking.offerId ? { backgroundColor: offerColor(booking.offerId) } : undefined"
           />
 
           <div class="flex-1 min-w-0">

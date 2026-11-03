@@ -306,10 +306,11 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                     :class="booking.status === 'pending' && 'booking-pending'"
                     @click="openDetail(booking)"
                   >
+                    <!-- Ohne Angebot neutral grau, damit der Text bündig steht (wie BookingAgenda). -->
                     <span
-                      v-if="booking.offerId"
                       class="w-1 rounded-full shrink-0 self-stretch"
-                      :style="{ backgroundColor: offerColor(booking.offerId) }"
+                      :class="!booking.offerId && 'bg-accented'"
+                      :style="booking.offerId ? { backgroundColor: offerColor(booking.offerId) } : undefined"
                     />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-baseline justify-between gap-3">
@@ -349,10 +350,11 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                       : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
                     @click="openDetail(booking)"
                   >
+                    <!-- Ohne Angebot neutral grau, damit der Text bündig steht (wie BookingAgenda). -->
                     <span
-                      v-if="booking.offerId"
                       class="w-1 rounded-full shrink-0 self-stretch"
-                      :style="{ backgroundColor: offerColor(booking.offerId) }"
+                      :class="!booking.offerId && 'bg-accented'"
+                      :style="booking.offerId ? { backgroundColor: offerColor(booking.offerId) } : undefined"
                     />
                     <div class="flex-1 min-w-0">
                       <div class="flex items-baseline justify-between gap-3">

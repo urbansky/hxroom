@@ -335,12 +335,12 @@ function bookingBlocks(weekday: number) {
           @click="$emit('select', block.booking)"
         >
           <!-- Sitzungsfarbe, identisch zur Terminkachel (offerColor in utils/offers.ts).
-               Ohne offerId bleibt die Spalte leer, statt eine Farbe zu erfinden, die zu
-               keinem Angebot gehört. -->
+               Ohne offerId neutral grau statt einer erfundenen Angebotsfarbe – die Linie
+               bleibt, damit der Text aller Blöcke bündig steht. -->
           <span
-            v-if="block.booking.offerId"
             class="w-1 rounded-full shrink-0"
-            :style="{ backgroundColor: offerColor(block.booking.offerId) }"
+            :class="!block.booking.offerId && 'bg-accented'"
+            :style="block.booking.offerId ? { backgroundColor: offerColor(block.booking.offerId) } : undefined"
           />
 
           <span class="flex-1 min-w-0">
