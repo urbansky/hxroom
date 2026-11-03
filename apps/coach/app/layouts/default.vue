@@ -78,12 +78,37 @@ const navItems = computed<NavItem[][]>(() =>
   )),
 )
 
+// Darstellung: Hell, Dunkel oder wie das System. „System“ ist die Voreinstellung
+// (nuxt.config.ts) und muss deshalb auch wieder wählbar sein. Die Wahl merkt sich
+// @nuxtjs/color-mode im Browser.
+const colorMode = useColorMode()
+const COLOR_MODE_OPTIONS = [
+  { value: 'light', label: 'Hell', icon: 'i-lucide-sun' },
+  { value: 'dark', label: 'Dunkel', icon: 'i-lucide-moon' },
+  { value: 'system', label: 'Wie das System', icon: 'i-lucide-monitor' },
+] as const
+
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: 'Account',
       icon: 'i-lucide-user-round',
       to: '/settings/account',
+    },
+    {
+      label: 'Darstellung',
+      icon: 'i-lucide-sun-moon',
+      children: COLOR_MODE_OPTIONS.map(option => ({
+        label: option.label,
+        icon: option.icon,
+        type: 'checkbox' as const,
+        checked: colorMode.preference === option.value,
+        // Menü offen lassen, damit der Wechsel sichtbar wird.
+        onSelect: (event: Event) => {
+          event.preventDefault()
+          colorMode.preference = option.value
+        },
+      })),
     },
   ],
   [
