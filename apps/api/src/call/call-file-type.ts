@@ -1,7 +1,7 @@
 import { CALL_FILE_TYPES } from '@hxroom/shared';
 
 /**
- * Was für eine Datei ist das wirklich (doc/videocall-umsetzungsplan.md B7)?
+ * Was für eine Datei ist das wirklich (doc/technisches-konzept.md §8, „Chat und Dateien“)?
  *
  * Der `mimetype` aus dem Upload kommt vom Browser und damit vom Absender – auf der
  * Klientenseite von jemandem ohne Konto. Geprüft werden deshalb Endung **und** Signatur, und

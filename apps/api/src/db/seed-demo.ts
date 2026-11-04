@@ -1,6 +1,6 @@
 /**
  * Lokales Abbild von demo.hxroom.de für die Screenshots der Landingpage:
- * `pnpm db:seed:demo` (phase5-umsetzungsplan.md, Schritt 9b).
+ * `pnpm db:seed:demo` (technisches-konzept.md §15, „Screenshots der Landingpage“).
  *
  * Liest die öffentlichen Inhalte der Vorführ-Buchungsseite (Profil, Foto, Impressum,
  * Angebot) über die API der Produktion und legt damit lokal ein Coach-Konto mit der

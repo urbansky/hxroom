@@ -243,7 +243,7 @@ Wichtig für unsere AGB-Klauseln (Pflichten des Coaches):
 - [ ] AVV-Muster der DSK herunterladen und durchgehen
 - [ ] Anwalt-Briefing vorbereiten: dieses Dokument + `technisches-konzept.md` Abschnitte 1–3
 - [ ] eRecht24 / Dr. Schwenke-Konto evaluieren als Generator-Quelle
-- [ ] Coach-Impressum und gemeinsame Datenschutzerklärung umsetzen (`phase5-umsetzungsplan.md`, Schritt 3.1)
+- [x] Coach-Impressum und gemeinsame Datenschutzerklärung umsetzen (`technisches-konzept.md` §6)
 - [ ] Klausel in HxRoom-AGB bzw. AVV: Der Coach übernimmt den Klienten-Abschnitt der gemeinsamen Datenschutzerklärung für die Verarbeitung in HxRoom (siehe 4.3)
 - [ ] Rechtsgrundlagen der gemeinsamen Datenschutzerklärung (Abschnitte 7 bis 9, v. a. Erinnerungsmails und Notizen) anwaltlich bestätigen lassen
 - [ ] Im Onboarding-Flow Trial-Conversion-Logik rechtssicher beschreiben

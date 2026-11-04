@@ -28,7 +28,7 @@ type CallActor = { role: 'coach'; userId: string } | { role: 'client' };
 const HEARTBEAT_INTERVAL_MS = 25_000;
 
 /**
- * Zustand und Zugang des Videocalls (doc/videocall-umsetzungsplan.md A1).
+ * Zustand und Zugang des Videocalls (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
  *
  * Hier liegt die einzige Mandantengrenze des Calls: Der Raumname entsteht deterministisch
  * aus der Booking-ID und ist damit ratbar (doc/technisches-konzept.md §8) – die Trennung
@@ -332,7 +332,7 @@ export class CallService {
     return booking;
   }
 
-  // Eine Antwortform für beide Rollen (doc/videocall-umsetzungsplan.md A1). Der
+  // Eine Antwortform für beide Rollen (doc/technisches-konzept.md §8). Der
   // clientAccessToken darf sie nie enthalten – er geht ausschließlich per E-Mail hinaus.
   private async toResponse(booking: BookingRow, actor: CallActor): Promise<CallAccessResponse> {
     const org = await this.organizationService.findById(booking.organizationId);

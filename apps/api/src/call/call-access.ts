@@ -115,7 +115,7 @@ export function mayRemoveChatFile(remover: CallRole, sender: CallRole, state: Ca
 
 /**
  * Was mit dem Gespräch geschieht, für den Datenschutz-Kasten im Warteraum
- * (phase5-umsetzungsplan.md, 5b). Heute gibt es weder Aufnahme noch Transkription, und
+ * (technisches-konzept.md §6). Heute gibt es weder Aufnahme noch Transkription, und
  * LiveKit entschlüsselt die Medien zum Weiterleiten (technisches-konzept.md §16, Punkt 08).
  * Kommen diese Funktionen, entscheidet sich hier je Termin, was der Klient zu lesen bekommt.
  */

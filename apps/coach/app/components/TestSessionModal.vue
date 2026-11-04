@@ -3,7 +3,7 @@ import type { AdHocBookingResponse } from '@hxroom/shared'
 import { renderSVG } from 'uqr'
 
 /**
- * Probe-Sitzung mit sich selbst (phase5-umsetzungsplan.md, Schritt 6a): Der Coach öffnet den
+ * Probe-Sitzung mit sich selbst (technisches-konzept.md §5, „Probe-Sitzung“): Der Coach öffnet den
  * Warteraum per QR-Code auf dem Handy und lässt sich am Rechner selbst ein. Aufgebaut wie
  * AdHocSessionModal, nur ohne Klient und ohne Mail.
  *

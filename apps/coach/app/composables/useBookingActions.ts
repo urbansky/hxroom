@@ -2,8 +2,8 @@ import { isWithinCallWindow, type CoachBookingResponse } from '@hxroom/shared'
 
 /**
  * Was der Coach mit einem Termin tun kann – absagen, Klient zuordnen, nicht erschienen,
- * Kalenderdatei, Sitzung starten. Slideover und Terminseite (phase5-umsetzungsplan.md,
- * Schritt 8a) teilen sich diese Logik, damit Regeln und Fehlertexte nicht auseinanderlaufen.
+ * Kalenderdatei, Sitzung starten. Slideover und Terminseite (technisches-konzept.md §5,
+ * „Terminseite“) teilen sich diese Logik, damit Regeln und Fehlertexte nicht auseinanderlaufen.
  *
  * Der geänderte Termin geht über `onUpdated` an die Aufrufer zurück; wer ihn anzeigt,
  * entscheidet selbst, wie er ihn übernimmt.
@@ -90,7 +90,7 @@ export function useBookingActions(
     }
   }
 
-  // Manuelle Zuordnung zum Klientenstamm (Baustein 3 aus doc/idee-klienten-matching.md).
+  // Manuelle Zuordnung zum Klientenstamm (doc/technisches-konzept.md §11).
   // Die Kontaktdaten der Buchung bleiben dabei unverändert – sie halten fest, was der
   // Klient beim Buchen eingegeben hat.
   async function assignClient(clientId: string | null) {

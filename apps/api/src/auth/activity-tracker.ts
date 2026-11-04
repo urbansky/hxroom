@@ -8,7 +8,7 @@ export const ACTIVITY_WRITE_INTERVAL_MS = 60 * 60 * 1000;
 
 /**
  * Hält fest, wann ein Coach zuletzt mit der API gearbeitet hat ("Zuletzt aktiv" in der
- * Coach-Liste des Betreiber-Backoffice, phase5-umsetzungsplan.md 7b).
+ * Coach-Liste des Betreiber-Backoffice, technisches-konzept.md §7, „Aktivität der Coachs“).
  *
  * Nicht über die session-Tabelle: Zeilen verschwinden beim Abmelden und Ablaufen, und eine
  * Sitzung hält Tage – der letzte Login sagt über die Nutzung wenig.

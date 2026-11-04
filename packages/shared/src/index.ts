@@ -338,7 +338,7 @@ export const availableSlotResponseSchema = z.object({
 export type AvailableSlotResponse = z.infer<typeof availableSlotResponseSchema>;
 
 // Buchungserstellung durch den Klienten. offerId kommt aus dem URL-Pfad, nicht aus
-// dem Body. Buchung entsteht als 'pending' – siehe doc/idee-klienten-matching.md.
+// dem Body. Buchung entsteht als 'pending' – siehe doc/technisches-konzept.md §11.
 export const createBookingSchema = z.object({
   start:       z.string().datetime({ message: 'Ungültiger Zeitpunkt' }),
   clientName:  z.string().min(1, 'Name ist erforderlich').max(160),
@@ -415,7 +415,7 @@ export const coachBookingResponseSchema = z.object({
   // braucht es für „Als nicht erschienen vermerken" (B6): Wer eingelassen wurde, war da.
   admittedAt:         z.string().nullable(),
   // Ende des Gesprächs durch den Coach. Mit admittedAt die Dauer auf Terminseite und
-  // Abschlusskarte (phase5-umsetzungsplan.md, Schritt 8).
+  // Abschlusskarte (technisches-konzept.md §5, „Abschlusskarte“).
   callEndedAt:        z.string().nullable(),
   // Stelle in einer Terminserie („Termin 2 von 5“), gezählt über die nicht abgesagten
   // Termine der Serie in zeitlicher Folge. null ohne Serie und bei abgesagten Terminen.
@@ -454,7 +454,7 @@ export const cancelBookingSchema = z.object({
 });
 export type CancelBookingDto = z.infer<typeof cancelBookingSchema>;
 
-// Zuordnung einer Buchung zu einem Klienten (Baustein 3 aus doc/idee-klienten-matching.md):
+// Zuordnung einer Buchung zu einem Klienten (doc/technisches-konzept.md §11):
 // der Coach korrigiert das automatische E-Mail-Matching oder verknüpft manuell.
 // null löst die Zuordnung, ohne die Buchung selbst zu verändern.
 export const assignBookingClientSchema = z.object({
@@ -559,7 +559,7 @@ export const manualBookingCheckResponseSchema = z.array(z.object({
 }));
 export type ManualBookingCheckResponse = z.infer<typeof manualBookingCheckResponseSchema>;
 
-// Zugangsfenster für den Videocall (doc/videocall-umsetzungsplan.md A1).
+// Zugangsfenster für den Videocall (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
 //
 // Vorher: Wer zehn Minuten zu früh dran ist, soll den Warteraum sehen und nicht eine
 // Fehlerseite. Eine Stunde deckt auch den Klienten ab, der den Link schon mittags
@@ -590,7 +590,7 @@ export function isWithinCallWindow(startTime: Date, endTime: Date, now: Date): b
   return now >= callWindowOpensAt(startTime) && now <= callWindowClosesAt(endTime);
 }
 
-// Videocall: Zustand einer Sitzung (doc/videocall-umsetzungsplan.md A1).
+// Videocall: Zustand einer Sitzung (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
 //
 // Der Warteraum ist kein eigener LiveKit-Raum, sondern dieser Zustand. Ein falscher
 // oder fehlender Token ist bewusst kein Zustand, sondern ein 401 – und eine fremde
@@ -657,7 +657,7 @@ export const callAccessResponseSchema = z.object({
   // Gesprächsdauer (technisches-konzept.md §8).
   livekit: z.object({ url: z.string(), token: z.string().nullable() }).nullable(),
   // Was mit dem Gespräch geschieht – Grundlage des Datenschutz-Kastens im Warteraum
-  // (phase5-umsetzungsplan.md, 5b). Der Kasten wählt seine Aussagen nach diesen Werten,
+  // (technisches-konzept.md §6). Der Kasten wählt seine Aussagen nach diesen Werten,
   // damit sie mit Aufnahme und Ende-zu-Ende-Verschlüsselung (Phase 6) nicht falsch werden.
   privacy: z.object({
     recording:         z.boolean(),
@@ -706,7 +706,7 @@ export const enterWaitingRoomSchema = z.object({
 });
 export type EnterWaitingRoomDto = z.infer<typeof enterWaitingRoomSchema>;
 
-// Chat im Call (doc/videocall-umsetzungsplan.md B7). Gespeichert wird der Verlauf, gesendet
+// Chat im Call (doc/technisches-konzept.md §8). Gespeichert wird der Verlauf, gesendet
 // wird über die API – nicht über den LiveKit-Datenkanal, damit keine Nachricht ankommt, die
 // nirgends liegt, und damit ein Abbruch nachgeholt werden kann.
 export const CallChatSender = z.enum(['coach', 'client']);
@@ -722,7 +722,7 @@ export const CALL_FILE_MAX_BYTES = 25 * 1024 * 1024;
 export const CALL_FILES_PER_BOOKING_LIMIT = 20;
 
 /**
- * Was geteilt werden darf (doc/videocall-umsetzungsplan.md B7): Dokumente und Bilder, mit
+ * Was geteilt werden darf (doc/technisches-konzept.md §8): Dokumente und Bilder, mit
  * denen ein Coach arbeitet. Formate mit Makros (`.docm` und Verwandte) sind nicht dabei.
  *
  * Endung und Typ gehören zusammen; der Server prüft zusätzlich die Dateisignatur, denn den
@@ -925,7 +925,7 @@ export const coachListItemSchema = z.object({
   subdomain:        z.string().nullable(), // organization.slug, laut Schema nullable
   clientCount:      z.number(),
   sessionCount:     z.number(),            // stattgefundene Sitzungen (bestätigt/abgeschlossen, in der Vergangenheit)
-  // Aktivität der Beta-Coachs (phase5-umsetzungsplan.md, 7b)
+  // Aktivität der Beta-Coachs (technisches-konzept.md §7, „Aktivität der Coachs“)
   lastActiveAt:     z.string().nullable(), // ISO 8601, user.last_active_at; null = nie aktiv
   offerCount:       z.number(),            // aktive Sitzungsangebote
   bookingCount:     z.number(),            // über die Buchungsseite eingegangene Termine, jeder Status

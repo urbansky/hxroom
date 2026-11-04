@@ -5,7 +5,7 @@ import { termsAcceptances } from '../db/schema';
 import { TERMS_VERSION, type TermsStatus } from '@hxroom/shared';
 
 /**
- * Zustimmung zu AGB und AVV (phase5-umsetzungsplan.md, 5a). Bei der Registrierung schreibt
+ * Zustimmung zu AGB und AVV (technisches-konzept.md §7). Bei der Registrierung schreibt
  * sie der better-auth-Hook in auth.module.ts; hier stimmen Konten zu, die ohne Registrierung
  * entstanden sind oder älter sind als die Checkbox.
  */

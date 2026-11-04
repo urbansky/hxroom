@@ -107,7 +107,7 @@ export interface OnboardingBookingPage {
 
 /**
  * Sechs Schritte bis zur ersten Buchung, auf die Beta ausgerichtet (doc/funktionen/
- * backoffice-coach.md 1.04, phase5-umsetzungsplan.md Schritt 6b). Der Zustand wird bei jedem
+ * backoffice-coach.md 1.04, technisches-konzept.md §5). Der Zustand wird bei jedem
  * Laden neu aus den Daten abgeleitet. Probe-Sitzung, geteilter Link und geprüfte
  * Buchungsseite haben einen eigenen Merker an der Buchungsseite: Die Probe-Sitzung wird nach
  * 24 Stunden gelöscht, Teilen und Ansehen hinterlassen sonst keine Spur.

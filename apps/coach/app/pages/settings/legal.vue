@@ -503,7 +503,7 @@ const features = [
       </SettingsSection>
     </UForm>
 
-    <!-- Verträge mit HxRoom (phase5-umsetzungsplan.md, 5a) -->
+    <!-- Verträge mit HxRoom (technisches-konzept.md §7, „AGB und AVV“) -->
     <SettingsSection title="Deine Verträge mit HxRoom" description="AGB und Auftragsverarbeitungsvertrag gelten für deine Nutzung von HxRoom und die Daten deiner Klienten.">
       <p v-if="termsAcceptedLabel" class="text-sm text-default flex items-center gap-2">
         <UIcon name="i-lucide-circle-check" class="size-4 text-success shrink-0" />

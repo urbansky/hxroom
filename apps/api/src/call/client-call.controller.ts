@@ -17,7 +17,7 @@ import { CallService } from './call.service';
 import { CallChatService } from './call-chat.service';
 
 /**
- * Warteraum des Klienten (doc/videocall-umsetzungsplan.md A1). Bewusst ohne AuthGuard:
+ * Warteraum des Klienten (doc/technisches-konzept.md §8). Bewusst ohne AuthGuard:
  * der Klient hat kein Konto, sein einziger Ausweis ist der clientAccessToken aus dem
  * Mail-Link – wie beim Bestätigungs- und Absage-Flow.
  *
@@ -50,7 +50,7 @@ export class ClientCallController {
 
   /**
    * Ereignisstrom: meldet dem wartenden Klienten, dass der Coach ihn eingelassen oder die
-   * Sitzung beendet hat (doc/videocall-umsetzungsplan.md A2).
+   * Sitzung beendet hat (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
    *
    * Auch hier steht der Token in der Query – `EventSource` kann weder einen Body noch
    * eigene Header senden. Solange dieser Strom offen ist, gilt der Klient als anwesend.

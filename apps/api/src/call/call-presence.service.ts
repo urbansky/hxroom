@@ -13,7 +13,7 @@ import { callRoomName, roleFromIdentity } from './livekit-token';
 const SWEEP_INTERVAL_MS = 30_000;
 
 /**
- * Autoritatives Sitzungsende (doc/videocall-umsetzungsplan.md B6).
+ * Autoritatives Sitzungsende (doc/technisches-konzept.md §8, „Sitzungsende und Webhooks“).
  *
  * Bisher endete eine Sitzung nur über „Sitzung beenden". Schloss der Coach einfach den Tab,
  * blieb sie offen – der Klient saß allein im Raum, und der Termin galt nie als gehalten.

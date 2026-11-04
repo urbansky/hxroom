@@ -107,7 +107,7 @@ function toResponse(row: MessageRow, file?: FileRow | null): CallChatMessageResp
 }
 
 /**
- * Chat einer Sitzung (doc/videocall-umsetzungsplan.md B7).
+ * Chat einer Sitzung (doc/technisches-konzept.md §8, „Chat und Dateien“).
  *
  * Der Weg einer Nachricht führt über die API und nicht über den LiveKit-Datenkanal: Läge das
  * Speichern beim Browser des Senders, gäbe es Nachrichten, die ankommen, aber nirgends

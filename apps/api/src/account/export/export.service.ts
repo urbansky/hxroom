@@ -20,7 +20,7 @@ import { toCsv } from './csv';
 import { richTextToMarkdown } from './rich-text-markdown';
 
 /**
- * Datenexport des Coachs (phase5-umsetzungsplan.md, Schritt 10): eine ZIP-Datei mit
+ * Datenexport des Coachs (technisches-konzept.md §17, „Datenexport“): eine ZIP-Datei mit
  * Klienten und Terminen als CSV, Notizen und Chat-Verläufen als Markdown und allem
  * zusammen als JSON.
  *

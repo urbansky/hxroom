@@ -3,7 +3,7 @@ import { TERMS_VERSION } from '@hxroom/shared'
 
 /**
  * Zustimmung zu AGB und AVV für Konten, die sie bei der Registrierung nicht gegeben haben –
- * ältere Konten und vom Betreiber angelegte (phase5-umsetzungsplan.md, 5a). Lässt sich nicht
+ * ältere Konten und vom Betreiber angelegte (technisches-konzept.md §7). Lässt sich nicht
  * schließen: Ohne Vertrag arbeitet niemand mit echten Klienten. Abmelden bleibt möglich.
  * Hier bleibt die Checkbox, weil es keinen Knopf „Konto erstellen“ gibt, der die Zustimmung
  * trägt. Die Bestätigung als Unternehmer (§ 14 BGB) gehört wie bei der Registrierung nicht

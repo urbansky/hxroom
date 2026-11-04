@@ -3,7 +3,7 @@ import type { CoachBookingResponse } from '@hxroom/shared'
 
 // Kurzansicht eines Termins unter Termine, auf dem Dashboard und im Klientenprofil. Alles Ausführliche –
 // Notizen im großen Editor, Chat und Dateien, Details – steht auf der Terminseite
-// /bookings/:id (phase5-umsetzungsplan.md, Schritt 8a).
+// /bookings/:id (technisches-konzept.md §5, „Terminseite“).
 const props = defineProps<{ booking: CoachBookingResponse | null }>()
 const emit = defineEmits<{
   cancelled: [booking: CoachBookingResponse]

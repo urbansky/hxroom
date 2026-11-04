@@ -1,4 +1,4 @@
-// Was in der Beta ausgeblendet ist (phase5-umsetzungsplan.md, Schritt 6c): Seiten, die nur
+// Was in der Beta ausgeblendet ist (technisches-konzept.md §5, „Beta-Ausblendung“): Seiten, die nur
 // ankündigen, und die Kacheln „Geplante Features“. Beta-Coaches sollen sehen, was geht,
 // nicht was kommt – Wünsche kommen über den Feedback-Knopf.
 //

@@ -52,7 +52,7 @@ export class S3Service {
 
   /**
    * Signierter Link auf ein Objekt, gültig für kurze Zeit
-   * (doc/s3-verzeichnisschema.md, doc/videocall-umsetzungsplan.md B7).
+   * (doc/s3-verzeichnisschema.md, doc/technisches-konzept.md §8, „Chat und Dateien“).
    *
    * Die Antwort steht in der Signatur, nicht beim Speicher: Dateiname, der hier übergebene
    * geprüfte Typ, ob der Browser anzeigt (`inline`) oder herunterlädt (`attachment`), und

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Feedback-Knopf der Coach-App (doc/phase5-umsetzungsplan.md, Schritt 7a).
+// Feedback-Knopf der Coach-App (doc/technisches-konzept.md §5, „Feedback“).
 
 export const FEEDBACK_CATEGORIES = ['problem', 'idea', 'other'] as const;
 export const FeedbackCategory = z.enum(FEEDBACK_CATEGORIES);

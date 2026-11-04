@@ -58,7 +58,7 @@ export class CoachBookingsService {
     return withSeries(this.db, organizationId, rows);
   }
 
-  /** Ein Termin für die Terminseite (phase5-umsetzungsplan.md, Schritt 8a). */
+  /** Ein Termin für die Terminseite (technisches-konzept.md §5, „Terminseite“). */
   async findOne(organizationId: string, bookingId: string): Promise<CoachBookingResponse> {
     return this.respond(organizationId, await this.findOwn(organizationId, bookingId));
   }
@@ -155,8 +155,8 @@ export class CoachBookingsService {
   }
 
   /**
-   * Ordnet eine Buchung manuell einem Klienten zu (Baustein 3 aus
-   * doc/idee-klienten-matching.md). Korrigiert ein falsches automatisches
+   * Ordnet eine Buchung manuell einem Klienten zu (doc/technisches-konzept.md §11,
+   * „Klienten-Matching“). Korrigiert ein falsches automatisches
    * E-Mail-Matching und verknüpft manuell angelegte Termine – der Coach hat das
    * letzte Wort über die Zuordnung. `null` löst die Verknüpfung wieder.
    *
@@ -450,7 +450,7 @@ export class CoachBookingsService {
   }
 
   /**
-   * Probe-Sitzung des Coachs mit sich selbst (phase5-umsetzungsplan.md, Schritt 6a): ein
+   * Probe-Sitzung des Coachs mit sich selbst (technisches-konzept.md §5, „Probe-Sitzung“): ein
    * Spontan-Termin ohne Klient und ohne Mail. Name und E-Mail des Coachs stehen nur am Termin,
    * in der Klientenliste entsteht kein Eintrag. Den Link zum Warteraum öffnet der Coach per
    * QR-Code auf dem Handy und lässt sich am Rechner selbst ein.

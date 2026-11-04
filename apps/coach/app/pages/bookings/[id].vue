@@ -4,7 +4,7 @@ import { CallChatPanel } from '@hxroom/ui'
 
 definePageMeta({ middleware: 'auth' })
 
-// Terminseite (phase5-umsetzungsplan.md, Schritt 8a): alles zu einer Sitzung an einem Ort.
+// Terminseite (technisches-konzept.md §5, „Terminseite“): alles zu einer Sitzung an einem Ort.
 // Das Slideover bleibt die Kurzansicht; hierher führen „Als Seite öffnen“, die Chat-Zeile
 // des Slideovers und die Abschlusskarte nach dem Call.
 

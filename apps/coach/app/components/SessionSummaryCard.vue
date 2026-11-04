@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CoachBookingResponse, SessionNoteResponse } from '@hxroom/shared'
 
-// Abschlusskarte nach „Sitzung beenden“ (phase5-umsetzungsplan.md, Schritt 8b; Vorbild
+// Abschlusskarte nach „Sitzung beenden“ (technisches-konzept.md §5, „Abschlusskarte“; Vorbild
 // doc/poc/videocall-v2.html, Bildschirm 4). Die Angaben kommen aus dem, was gespeichert ist –
 // Termin, Notiz, Chat –, nicht aus dem Zustand der Call-Seite: Die Karte zeigt nur, was
 // tatsächlich beim Server liegt. Die Notizen sind beim Beenden schon gespeichert worden

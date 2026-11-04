@@ -29,7 +29,7 @@ export function notifyCallChatChanged(): void {
 }
 
 /**
- * Chat einer Sitzung – Verlauf, Senden und Nachholen (doc/videocall-umsetzungsplan.md B7).
+ * Chat einer Sitzung – Verlauf, Senden und Nachholen (doc/technisches-konzept.md §8).
  * Gegenstück zu useCallChat in der Klienten-App; dort ist der Ausweis der Token, hier die
  * Session.
  *

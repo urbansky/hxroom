@@ -3,8 +3,8 @@ import { timingSafeEqual } from 'crypto';
 /**
  * Konstantzeit-Vergleich für den clientAccessToken.
  *
- * Er ist der einzige Zugangsschutz des Klienten – für Bestätigung, Absage und ab A1 auch
- * für den Warteraum (doc/videocall-umsetzungsplan.md). Ein früh abbrechender Vergleich
+ * Er ist der einzige Zugangsschutz des Klienten – für Bestätigung, Absage und den
+ * Warteraum (doc/technisches-konzept.md §7). Ein früh abbrechender Vergleich
  * wäre hier angreifbar. timingSafeEqual verlangt gleiche Länge, deshalb der vorgeschaltete
  * Längenvergleich.
  *

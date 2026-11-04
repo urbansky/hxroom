@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Produkt-Tour aus Sicht des Klienten (phase5-umsetzungsplan.md, Schritt 9). Die Bilder
-// kommen mit 9b, bis dahin zeigt ScreenFrame Platzhalter im richtigen Seitenverhältnis.
+// Produkt-Tour aus Sicht des Klienten. Die Bilder erzeugt scripts/screenshots.mjs
+// (doc/technisches-konzept.md §15); fehlt eines, zeigt ScreenFrame einen Platzhalter.
 const content = {
   label: 'So funktioniert’s',
   // Je Satz ein Block, damit nur zwischen den Sätzen umbrochen wird.

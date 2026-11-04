@@ -92,7 +92,7 @@ export type Auth = ReturnType<typeof betterAuth>;
               }
               if (ctx.path !== SIGN_UP_PATH) return;
 
-              // Registrieren heißt AGB und AVV annehmen (phase5-umsetzungsplan.md, 5a). Das
+              // Registrieren heißt AGB und AVV annehmen (technisches-konzept.md §7). Das
               // Formular schickt `acceptTerms: true` mit dem Klick auf „Konto erstellen“, unter
               // dem der Hinweis auf AGB und AVV steht. Die Prüfung hier hält Aufrufe am Formular
               // vorbei auf.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Browserrahmen um einen Screenshot. Ohne `src` zeigt er einen Platzhalter im selben
-// Seitenverhältnis, bis die echten Bilder da sind (phase5-umsetzungsplan.md, 9b).
+// Seitenverhältnis, bis die echten Bilder da sind (technisches-konzept.md §15).
 withDefaults(defineProps<{
   src?: string
   alt: string

@@ -165,7 +165,7 @@ export const offers = pgTable('offers', {
   updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
 
-// Klienten-Matching über mehrere Buchungen hinweg (siehe doc/idee-klienten-matching.md).
+// Klienten-Matching über mehrere Buchungen hinweg (siehe doc/technisches-konzept.md §11).
 // Ein Datensatz pro (Organisation, E-Mail). `email` wird vom Service normalisiert
 // (lowercase, getrimmt) vor jedem Insert/Lookup, der Unique-Constraint allein ist
 // case-sensitive und reicht dafür nicht aus.
@@ -198,7 +198,7 @@ export const clients = pgTable('clients', {
 ]);
 
 // Buchungen durchlaufen einen Bestätigungsschritt per E-Mail-Link (siehe
-// doc/idee-klienten-matching.md): Status startet als 'pending', wird erst durch
+// doc/technisches-konzept.md §11): Status startet als 'pending', wird erst durch
 // Bestätigung mit korrektem clientAccessToken zu 'confirmed' – dabei wird auch
 // erst der Klient gematcht/angelegt (clientId gesetzt). offerName/durationMinutes
 // sind Snapshots zum Buchungszeitpunkt, unabhängig von späteren Angebotsänderungen.
@@ -229,7 +229,7 @@ export const bookings = pgTable('bookings', {
   clientAccessToken:  text('client_access_token').notNull(),
   clientTokenUsedAt:  timestamp('client_token_used_at'),
   confirmedAt:        timestamp('confirmed_at'),
-  // Videocall (doc/videocall-umsetzungsplan.md A1). Der Warteraum ist kein eigener
+  // Videocall (doc/technisches-konzept.md §8). Der Warteraum ist kein eigener
   // LiveKit-Raum, sondern ein Zustand dieser Buchung – und er muss die Datenbank
   // erreichen: läge "eingelassen" nur im Speicher, würde ein Reload des Coach-Browsers
   // den bereits eingelassenen Klienten zurück in den Warteraum werfen.
@@ -279,7 +279,7 @@ export const sessionNotes = pgTable('session_notes', {
   updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
 
-// Chat einer Sitzung (doc/project.md §5a, doc/videocall-umsetzungsplan.md B7). Rückfallebene
+// Chat einer Sitzung (doc/project.md §5a, doc/technisches-konzept.md §8). Rückfallebene
 // bei Tonausfall und Weg für einen Link oder ein Dokument – kein Plauderkanal. Der Verlauf
 // wird gespeichert und ist rechtlich wie die Notizen zu behandeln.
 //
@@ -424,7 +424,7 @@ export const clientDeletions = pgTable('client_deletions', {
   filesDeleted:    integer('files_deleted').notNull(),
 });
 
-// Zustimmung der Coachs zu AGB und AVV (doc/phase5-umsetzungsplan.md, 5a). Eine Zeile je
+// Zustimmung der Coachs zu AGB und AVV (doc/technisches-konzept.md §7). Eine Zeile je
 // angenommener Fassung (TERMS_VERSION), ohne IP-Adresse. Hängt mit Cascade am User: Mit dem
 // Konto endet auch der Vertrag.
 export const termsAcceptances = pgTable('terms_acceptances', {
@@ -436,7 +436,7 @@ export const termsAcceptances = pgTable('terms_acceptances', {
   unique('terms_acceptances_user_version_unique').on(table.userId, table.version),
 ]);
 
-// Rückmeldungen der Coachs über den Feedback-Knopf (doc/phase5-umsetzungsplan.md, 7a).
+// Rückmeldungen der Coachs über den Feedback-Knopf (doc/technisches-konzept.md §5, „Feedback“).
 // Hängt mit Cascade an Organisation und User: Mit dem Konto verschwindet auch das Feedback.
 export const feedback = pgTable('feedback', {
   id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),

@@ -10,7 +10,7 @@ import {
 } from '@hxroom/shared'
 
 /**
- * Feedback-Knopf der Beta (phase5-umsetzungsplan.md, Schritt 7a). Die aktuelle Seite geht
+ * Feedback-Knopf der Beta (technisches-konzept.md §5, „Feedback“). Die aktuelle Seite geht
  * ohne Query-String mit, damit der Betreiber weiß, wovon die Rede ist.
  */
 const open = defineModel<boolean>('open', { required: true })

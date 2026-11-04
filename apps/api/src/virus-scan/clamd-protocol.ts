@@ -1,6 +1,6 @@
 /**
- * Das Nötigste des clamd-Protokolls, als reine Funktionen (doc/videocall-umsetzungsplan.md,
- * Nachtrag „Virenscan geteilter Dateien").
+ * Das Nötigste des clamd-Protokolls, als reine Funktionen (doc/technisches-konzept.md §17,
+ * „Virenscan geteilter Dateien“).
  *
  * Kein npm-Paket dafür: Das Protokoll ist ein paar Zeilen, und eine zusätzliche
  * Laufzeit-Abhängigkeit ist genau das, was im Produktions-Image schon einmal gefehlt hat.

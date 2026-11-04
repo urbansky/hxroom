@@ -10,7 +10,7 @@ const route = useRoute()
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 const { $api } = useApi()
 
-// Beta: Rückmeldung von jeder Seite aus (phase5-umsetzungsplan.md, 7a). Ein eigenes Menü am
+// Beta: Rückmeldung von jeder Seite aus (technisches-konzept.md §5). Ein eigenes Menü am
 // unteren Rand, damit der Punkt wie ein Menüeintrag aussieht und nicht zum Konto gehört.
 const feedbackOpen = ref(false)
 const feedbackNavItems: NavigationMenuItem[] = [
@@ -156,7 +156,7 @@ const { data: deletion } = await useFetch<AccountDeletionStatus>('/account/delet
   default: () => ({ scheduledFor: null }),
 })
 
-// AGB und AVV (phase5-umsetzungsplan.md, 5a): Wer noch keiner Fassung zugestimmt hat, holt das
+// AGB und AVV (technisches-konzept.md §7): Wer noch keiner Fassung zugestimmt hat, holt das
 // hier nach, bevor er weiterarbeitet. In einer vom Betreiber übernommenen Sitzung nur ein
 // Hinweis – zustimmen kann nur der Coach selbst. Ein Fehler beim Laden sperrt niemanden aus.
 const { data: terms, refresh: refreshTerms } = await useFetch<TermsStatus | null>('/account/terms', {
@@ -263,7 +263,7 @@ const pageTitle = computed(() => {
          rückte der Inhalt sonst seitlich, sobald eine Seite oder ein Reiter kürzer wird als
          das Fenster. -->
     <UDashboardPanel :ui="{ body: '[scrollbar-gutter:stable]' }">
-      <!-- Nur auf Handy und Tablet (phase5-umsetzungsplan.md, Schritt 11): Dort ist die
+      <!-- Nur auf Handy und Tablet (technisches-konzept.md §5, „Navigation“): Dort ist die
            Seitenleiste ausgeblendet, und erst der Menüknopf der Kopfleiste öffnet sie als
            Slideover. Auf dem Rechner tragen die Seiten ihre Überschrift selbst. -->
       <template #header>

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Observable, Subject, filter, map } from 'rxjs';
 
 /**
- * Ereigniskanal und Präsenzregistry des Videocalls (doc/videocall-umsetzungsplan.md A2).
+ * Ereigniskanal und Präsenzregistry des Videocalls (doc/technisches-konzept.md §8).
  *
  * Der Bus transportiert bewusst **nur die bookingId**, nicht den fertigen Zustand: Wer
  * etwas ändert, muss dann keine Antwort bauen können. Das ist die Voraussetzung dafür,

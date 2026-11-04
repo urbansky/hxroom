@@ -2,7 +2,7 @@ import type { ConfigService } from '@nestjs/config';
 import { AccessToken } from 'livekit-server-sdk';
 import type { CallRole } from './call-access';
 
-// Ausgabe der LiveKit-Access-Tokens (doc/videocall-umsetzungsplan.md B2, §8).
+// Ausgabe der LiveKit-Access-Tokens (doc/technisches-konzept.md §8, „Token-Generierung“).
 //
 // Reine Funktionen mit dem ConfigService als Parameter, wie booking-urls.ts: Der Aufbau
 // eines Tokens ist keine Zuständigkeit, die eine eigene Klasse rechtfertigt, und so bleibt

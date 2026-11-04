@@ -16,7 +16,7 @@ const router = useRouter()
 const viewMode = ref<'agenda' | 'week'>(route.query.view === 'week' ? 'week' : 'agenda')
 
 // Auf dem Handy (unter sm) gibt es nur die Agenda: Sieben Spalten sind dort gut 30 px breit,
-// die Termine wären Streifen ohne lesbaren Text (phase5-umsetzungsplan.md, Schritt 11).
+// die Termine wären Streifen ohne lesbaren Text (technisches-konzept.md §5, „Navigation“).
 // Den Umschalter blendet das Template aus; hier wird auch ein Link mit ?view=week umgelenkt.
 const phoneQuery = import.meta.client ? window.matchMedia('(max-width: 639.98px)') : null
 function enforceAgendaOnPhone() {

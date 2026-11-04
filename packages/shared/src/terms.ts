@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// AGB und AVV zwischen HxRoom und den Coachs (doc/phase5-umsetzungsplan.md, Schritt 5a).
+// AGB und AVV zwischen HxRoom und den Coachs (doc/technisches-konzept.md §7, „AGB und AVV“).
 // Geteilt zwischen API (Zustimmung speichern) und Coach-App (Registrierung, Modal,
 // Einstellungen → Rechtliches).
 

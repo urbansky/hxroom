@@ -1,5 +1,5 @@
 /**
- * Erzeugt die Screenshots der Landingpage (phase5-umsetzungsplan.md, Schritt 9b) nach
+ * Erzeugt die Screenshots der Landingpage (technisches-konzept.md §15) nach
  * apps/landing/public/screens/*.webp.
  *
  * Voraussetzungen:

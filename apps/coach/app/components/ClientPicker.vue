@@ -2,7 +2,7 @@
 import type { ClientListItem } from '@hxroom/shared'
 
 // Suche im eigenen Klientenstamm für die manuelle Zuordnung einer Buchung
-// (Baustein 3 aus doc/idee-klienten-matching.md). Bewusst ohne technische Details:
+// (doc/technisches-konzept.md §11). Bewusst ohne technische Details:
 // der Coach sieht Namen und E-Mail, keine IDs.
 const props = defineProps<{ currentClientId: string | null }>()
 const emit = defineEmits<{ select: [clientId: string | null] }>()

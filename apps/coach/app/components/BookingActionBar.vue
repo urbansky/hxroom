@@ -3,7 +3,7 @@ import type { CoachBookingResponse } from '@hxroom/shared'
 import type { BookingActions } from '~/composables/useBookingActions'
 
 // Die Knöpfe eines Termins samt Absage-Formular – im Fuß des Slideovers und im Kopf der
-// Terminseite (phase5-umsetzungsplan.md, Schritt 8a). Die Logik liegt in useBookingActions;
+// Terminseite (technisches-konzept.md §5, „Terminseite“). Die Logik liegt in useBookingActions;
 // die Leiste zeigt nur, was davon gerade möglich ist.
 const props = defineProps<{
   booking: CoachBookingResponse

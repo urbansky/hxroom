@@ -259,7 +259,7 @@ export function planBookings(now: Date): PlannedBooking[] {
   if (pendingSlot) {
     add({
       // Ohne Klient: der entsteht erst beim Bestätigen (BookingsService.confirm),
-      // siehe doc/idee-klienten-matching.md – keine "Geister-Klienten".
+      // siehe doc/technisches-konzept.md §11, „Klienten-Matching“ – keine "Geister-Klienten".
       clientIndex: null,
       offer: erstgespraech,
       start: pendingSlot.start,
@@ -286,7 +286,7 @@ export function planBookings(now: Date): PlannedBooking[] {
   }
 
   // Bestätigt, aber ohne Klientenzuordnung – dafür ist "Klient zuordnen" im
-  // BookingDetailSlideover gedacht (Baustein 3 aus doc/idee-klienten-matching.md).
+  // BookingDetailSlideover gedacht (doc/technisches-konzept.md §11).
   const unassigned = futureGrid.find(freeFor(erstgespraech));
   if (unassigned) {
     add({

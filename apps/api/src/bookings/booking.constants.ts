@@ -1,7 +1,7 @@
 import type { BookingStatus } from '@hxroom/shared';
 
 // Zeitfenster, in dem eine 'pending'-Buchung bestätigt werden muss, bevor sie verfällt
-// (siehe doc/idee-klienten-matching.md). Wird an drei Stellen gebraucht und muss dort
+// (siehe doc/technisches-konzept.md §11). Wird an drei Stellen gebraucht und muss dort
 // zwingend derselbe Wert sein: beim Lazy-Check in BookingsService.confirm, im
 // Verfall-Cron (BookingExpiryService) und im Hinweistext der Bestätigungsmail.
 //
@@ -26,7 +26,7 @@ export const AD_HOC_DURATION_MINUTES = 60;
 // der Coach an, die Bezeichnung bleibt neutral.
 export const MANUAL_OFFER_NAME = 'Sitzung';
 
-// Probe-Sitzung des Coachs mit sich selbst (phase5-umsetzungsplan.md, Schritt 6a). Kurz,
+// Probe-Sitzung des Coachs mit sich selbst (technisches-konzept.md §5, „Probe-Sitzung“). Kurz,
 // weil sie nur zum Ausprobieren dient; gelöscht wird sie TEST_SESSION_RETENTION_HOURS nach
 // ihrem Ende (TestSessionCleanupService).
 export const TEST_SESSION_NAME = 'Probe-Sitzung';

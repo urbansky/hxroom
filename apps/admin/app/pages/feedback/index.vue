@@ -2,7 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import { FEEDBACK_CATEGORIES, FEEDBACK_CATEGORY_LABELS, type FeedbackCategory, type FeedbackItem } from '@hxroom/shared'
 
-// Rückmeldungen über den Feedback-Knopf der Coach-App (phase5-umsetzungsplan.md, 7a).
+// Rückmeldungen über den Feedback-Knopf der Coach-App (technisches-konzept.md §5, „Feedback“).
 // Jede Einsendung geht zusätzlich per Mail an FEEDBACK_EMAIL. Hier geht keine verloren.
 
 const { $api } = useApi()

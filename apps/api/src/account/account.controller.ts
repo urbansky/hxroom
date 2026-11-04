@@ -37,7 +37,7 @@ export class AccountController {
     private readonly termsService: TermsService,
   ) {}
 
-  /** Zustimmung zu AGB und AVV (phase5-umsetzungsplan.md, 5a). */
+  /** Zustimmung zu AGB und AVV (technisches-konzept.md §7, „AGB und AVV“). */
   @Get('terms')
   termsStatus(@CurrentUser() sessionUser: SessionUser | undefined, @Req() req: Request) {
     if (!sessionUser) throw new UnauthorizedException('Not authenticated');
@@ -81,7 +81,7 @@ export class AccountController {
     return this.deletionService.revoke(org.id);
   }
 
-  /** Datenexport als ZIP-Datei (phase5-umsetzungsplan.md, Schritt 10). */
+  /** Datenexport als ZIP-Datei (technisches-konzept.md §17, „Datenexport“). */
   @Get('export')
   async export(
     @CurrentOrganization() org: { id: string } | undefined,

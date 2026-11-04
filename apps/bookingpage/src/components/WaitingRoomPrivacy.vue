@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import type { CallPrivacy } from '@hxroom/shared';
 
-// Datenschutz-Kasten im Warteraum (phase5-umsetzungsplan.md, 5b; zeitplan.md, Phase 5).
+// Datenschutz-Kasten im Warteraum (technisches-konzept.md §6; zeitplan.md, Phase 5).
 // Zwei Regeln: nur Tatsachen, die die Technik belegt – keine Wertungen wie "DSGVO-konform" –,
 // und jede Aussage hängt an einem Wert aus `privacy`, den die API je Termin setzt. Für den
 // Fall `true` gibt es noch keinen Text, weil es die Funktion noch nicht gibt: Die Zeile

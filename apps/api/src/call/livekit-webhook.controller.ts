@@ -4,7 +4,7 @@ import { WebhookReceiver } from 'livekit-server-sdk';
 import { CallPresenceService } from './call-presence.service';
 
 /**
- * Webhooks von LiveKit (doc/videocall-umsetzungsplan.md B6).
+ * Webhooks von LiveKit (doc/technisches-konzept.md §8, „Sitzungsende und Webhooks“).
  *
  * Ohne AuthGuard – der Aufrufer ist der Medienserver, kein Mensch. Sein Ausweis ist die
  * Signatur: LiveKit schickt im Authorization-Header ein mit dem API-Schlüssel signiertes JWT,

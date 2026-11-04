@@ -457,7 +457,7 @@ async function revokeDeletion() {
       description="Konto mit einem zweiten Faktor absichern."
     />
 
-    <!-- Daten exportieren (phase5-umsetzungsplan.md, Schritt 10) -->
+    <!-- Daten exportieren (technisches-konzept.md §17, „Datenexport“) -->
     <SettingsSection
       id="export"
       title="Daten exportieren"

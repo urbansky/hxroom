@@ -1,6 +1,6 @@
 # Betriebs-Instanz (status.hxcode.io, errors.hxcode.io): überwacht HxRoom und weitere Apps.
 # Beszel für den Server, GlitchTip für Fehler in den Anwendungen.
-# Siehe doc/phase5-umsetzungsplan.md (Schritt 1) und doc/technisches-konzept.md.
+# Siehe doc/technisches-konzept.md §17 („Fehlerüberwachung“).
 #
 # Geheime Werte stehen in .env neben dieser Datei (Vorlage: .env.example).
 

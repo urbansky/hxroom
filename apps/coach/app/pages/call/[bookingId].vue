@@ -265,7 +265,7 @@ function initials(call: CallAccessResponse): string {
         </UModal>
       </div>
 
-      <!-- Nach „Sitzung beenden“ die Abschlusskarte (phase5-umsetzungsplan.md, 8b) -->
+      <!-- Nach „Sitzung beenden“ die Abschlusskarte (technisches-konzept.md §5) -->
       <SessionSummaryCard v-else-if="call && call.state === 'ended'" :booking-id="call.bookingId" />
 
       <!-- Die übrigen Endzustände führen ebenfalls auf die Terminseite – bei „Nicht erschienen“

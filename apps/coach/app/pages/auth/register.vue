@@ -26,7 +26,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   pending.value = true
   try {
     // Keine Checkbox: AGB und AVV gelten über den Hinweis unter dem Knopf, der Klick auf
-    // „Konto erstellen“ ist die Zustimmung (phase5-umsetzungsplan.md, 5a). Die ausdrückliche
+    // „Konto erstellen“ ist die Zustimmung (technisches-konzept.md §7). Die ausdrückliche
     // Bestätigung als Unternehmer (§ 14 BGB) folgt erst beim Abo-Abschluss.
     // `acceptTerms` kennt der better-auth-Client nicht; geprüft wird es von hooks.before in
     // apps/api/src/auth/auth.module.ts. Als Variable übergeben, damit TypeScript das

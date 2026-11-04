@@ -98,8 +98,8 @@ services:
     restart: unless-stopped
     logging: *logging
 
-  # ClamAV – Virenscan der im Call geteilten Dateien (doc/videocall-umsetzungsplan.md,
-  # Nachtrag „Virenscan geteilter Dateien"). Die API spricht clamd auf 3310 im Docker-Netz an,
+  # ClamAV – Virenscan der im Call geteilten Dateien (doc/technisches-konzept.md §17,
+  # „Virenscan geteilter Dateien“). Die API spricht clamd auf 3310 im Docker-Netz an,
   # nach außen ist nichts offen. freshclam im Container hält die Signaturen aktuell; das
   # Volume erspart den Download (einige hundert MB) bei jedem Neustart.
   #
