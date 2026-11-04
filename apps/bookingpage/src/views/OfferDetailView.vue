@@ -29,7 +29,7 @@ const avatarUrl = computed(() => coachProfile?.value ? getAvatarUrl(coachProfile
 const coachName = computed(() => coachProfile?.value?.name ?? 'Coach');
 // Derselbe Button-Text wie auf der Startseite der Buchungsseite.
 const ctaLabel = computed(() => bookingPageCtaLabel(coachProfile?.value?.ctaButton));
-// Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/legal.md §3.2).
+// Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/recht/legal.md §3.2).
 const bookable = computed(() => coachProfile?.value?.bookable ?? false);
 
 const offer = computed(() => offers.value.find((o) => o.id === props.id) ?? null);
@@ -336,7 +336,7 @@ async function submitBooking() {
             </div>
           </template>
 
-          <!-- Ohne vollständiges Impressum keine Buchung (doc/legal.md §3.2): Das Angebot
+          <!-- Ohne vollständiges Impressum keine Buchung (doc/recht/legal.md §3.2): Das Angebot
                bleibt lesbar, nur der Kalender weicht einem Hinweis. -->
           <div v-else-if="!bookable" class="flex items-start gap-3 rounded-lg border border-default bg-muted p-4">
             <UIcon name="i-lucide-calendar-clock" class="size-5 text-primary shrink-0 mt-0.5" />

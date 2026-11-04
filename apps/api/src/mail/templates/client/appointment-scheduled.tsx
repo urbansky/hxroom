@@ -23,7 +23,7 @@ interface AppointmentScheduledEmailProps {
   legalLinks: MailLegalLinks;
 }
 
-// Vom Coach angelegte Termine (doc/konzept-manuelle-termine.md §4): Der Termin ist
+// Vom Coach angelegte Termine (doc/produkt/funktionen/manuelle-termine.md §4): Der Termin ist
 // abgesprochen und steht fest – die Mail teilt ihn mit, statt um eine Bestätigung zu bitten.
 // Sie trägt alles, was der Klient bis zum Termin braucht: den Link zum Warteraum, den
 // Kalendereintrag und die Absage.

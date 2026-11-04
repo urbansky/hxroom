@@ -1,5 +1,5 @@
 /**
- * Das Nötigste des clamd-Protokolls, als reine Funktionen (doc/technisches-konzept.md §17,
+ * Das Nötigste des clamd-Protokolls, als reine Funktionen (doc/technik/technisches-konzept.md §17,
  * „Virenscan geteilter Dateien“).
  *
  * Kein npm-Paket dafür: Das Protokoll ist ein paar Zeilen, und eine zusätzliche

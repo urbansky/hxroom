@@ -101,7 +101,7 @@ export class AdminCoachesService {
   constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
 
   /**
-   * Coach-Liste des Betreibers (Funktion 01, doc/funktionen/backoffice-betreiber.md).
+   * Coach-Liste des Betreibers (Funktion 01, doc/produkt/funktionen/backoffice-betreiber.md).
    *
    * Nicht über das better-auth admin-Plugin: `listUsers` kennt nur die user-Tabelle,
    * hier werden aber Subdomain und die Kennzahlen aus clients/bookings mitgeliefert.

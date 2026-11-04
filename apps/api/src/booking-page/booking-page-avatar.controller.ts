@@ -6,7 +6,7 @@ import { BookingPageService } from './booking-page.service';
 // (Buchungsseite, Social-Previews). Presigned URLs sind hier ungeeignet, weil sie
 // ablaufen – ein Crawler oder ein anonymer Besucher hat keine frische URL. Lokal
 // kommt hinzu, dass RustFS nur an 127.0.0.1 gebunden ist.
-// Siehe doc/s3-verzeichnisschema.md.
+// Siehe doc/technik/s3-verzeichnisschema.md.
 @Controller('booking-page/avatar')
 export class BookingPageAvatarController {
   constructor(private readonly bookingPageService: BookingPageService) {}

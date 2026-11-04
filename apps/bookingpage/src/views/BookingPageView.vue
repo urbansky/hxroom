@@ -16,7 +16,7 @@ const { offers } = inject(OFFERS_KEY) as UseOffersReturn;
 const profile = computed(() => coachProfile?.value ? toBookingPageProfile(coachProfile.value) : null);
 const ctaLabel = computed(() => bookingPageCtaLabel(profile.value?.ctaButton));
 const showAbout = computed(() => hasBookingPageAbout(profile.value));
-// Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/legal.md §3.2).
+// Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/recht/legal.md §3.2).
 const bookable = computed(() => coachProfile?.value?.bookable ?? false);
 
 // Ziel der beiden Haupt-CTAs: das erste Angebot der Liste (Reihenfolge pflegt der Coach).

@@ -1,5 +1,5 @@
 # Backup-Dienst: nächtlicher pg_dump und Off-Site-Kopie der Dateien.
-# Ablauf und Wiederherstellung: doc/technisches-konzept.md §13.
+# Ablauf und Wiederherstellung: doc/technik/technisches-konzept.md §13.
 #
 # postgresql17-client passend zum Server (postgres:17-alpine): pg_dump verweigert den Dump
 # eines neueren Servers. supercronic statt crond, weil crond die Umgebungsvariablen des

@@ -52,7 +52,7 @@ export interface SignedFileUrl {
   cacheControl: string;
 }
 
-/** Wie lange ein Download-Link gilt (doc/s3-verzeichnisschema.md). */
+/** Wie lange ein Download-Link gilt (doc/technik/s3-verzeichnisschema.md). */
 const DOWNLOAD_URL_TTL_SECONDS = 15 * 60;
 
 /**
@@ -107,7 +107,7 @@ function toResponse(row: MessageRow, file?: FileRow | null): CallChatMessageResp
 }
 
 /**
- * Chat einer Sitzung (doc/technisches-konzept.md §8, „Chat und Dateien“).
+ * Chat einer Sitzung (doc/technik/technisches-konzept.md §8, „Chat und Dateien“).
  *
  * Der Weg einer Nachricht führt über die API und nicht über den LiveKit-Datenkanal: Läge das
  * Speichern beim Browser des Senders, gäbe es Nachrichten, die ankommen, aber nirgends

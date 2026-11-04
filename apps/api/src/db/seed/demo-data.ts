@@ -2,7 +2,7 @@
  * Fachliche Inhalte der Testdaten. Bewusst getrennt von der Mechanik in ../seed.ts:
  * hier wird nur beschrieben *was* angelegt wird, nicht *wie*.
  *
- * Die Angebotstexte folgen doc/example-data/beispiel-sitzungsangebote.md, gekürzt auf
+ * Die Angebotstexte folgen doc/beispieldaten/beispiel-sitzungsangebote.md, gekürzt auf
  * das, was im Editor mit den dort verfügbaren Werkzeugen reproduzierbar ist.
  */
 import type { Imprint, RichTextDoc } from '@hxroom/shared';

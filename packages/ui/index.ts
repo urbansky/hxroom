@@ -8,7 +8,7 @@ export { default as BookingPageAbout } from './components/booking-page/BookingPa
 export { default as BookingPageOfferItem } from './components/booking-page/BookingPageOfferItem.vue';
 
 // Rechtsseiten: Impressum des Betreibers für hxroom.de und als Block im Impressum jeder
-// Buchungsseite (doc/legal.md §3). Stile in theme/legal.css.
+// Buchungsseite (doc/recht/legal.md §3). Stile in theme/legal.css.
 export { default as LegalOperatorImprint } from './components/legal/LegalOperatorImprint.vue';
 export { default as LegalPrivacyPolicy } from './components/legal/LegalPrivacyPolicy.vue';
 

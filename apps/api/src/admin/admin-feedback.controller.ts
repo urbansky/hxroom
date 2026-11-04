@@ -4,7 +4,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { listFeedbackQuerySchema, type ListFeedbackQuery } from '@hxroom/shared';
 import { AdminFeedbackService } from './admin-feedback.service';
 
-/** Feedback der Coachs im Betreiber-Backoffice (doc/technisches-konzept.md §5, „Feedback“). */
+/** Feedback der Coachs im Betreiber-Backoffice (doc/technik/technisches-konzept.md §5, „Feedback“). */
 @Controller('admin/feedback')
 @UseGuards(AdminGuard)
 export class AdminFeedbackController {

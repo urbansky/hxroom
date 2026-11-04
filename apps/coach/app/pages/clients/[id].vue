@@ -51,7 +51,7 @@ async function openAdHoc() {
   adHocOpen.value = true
 }
 
-// Termin anlegen (doc/konzept-manuelle-termine.md): vorbelegt mit dem Angebot des letzten
+// Termin anlegen (doc/produkt/funktionen/manuelle-termine.md): vorbelegt mit dem Angebot des letzten
 // Termins dieses Klienten – die Historie kommt neueste zuerst.
 const manualOpen = ref(false)
 const manualPreset = computed(() => ({
@@ -157,7 +157,7 @@ function onSaved(saved: ClientResponse) {
   client.value = { ...client.value, ...saved }
 }
 
-// Löschen auf Anfrage (doc/funktionen/backoffice-coach.md 7.04, Art. 17 DSGVO). Anstehende
+// Löschen auf Anfrage (doc/produkt/funktionen/backoffice-coach.md 7.04, Art. 17 DSGVO). Anstehende
 // Termine sperren die Löschung – die API prüft das ebenso; hier wird es vorab erklärt.
 const deleteOpen = ref(false)
 const deleting = ref(false)

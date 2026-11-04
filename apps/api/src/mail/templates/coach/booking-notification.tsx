@@ -16,9 +16,9 @@ interface BookingNotificationEmailProps {
 }
 
 // Benachrichtigung an den Coach, sobald ein Klient seine Buchung bestätigt hat
-// (doc/funktionen/backoffice-coach.md 7.06). Enthält bewusst die vollständigen
+// (doc/produkt/funktionen/backoffice-coach.md 7.06). Enthält bewusst die vollständigen
 // Kontaktdaten: für die Klientendaten ist der Coach der Verantwortliche im Sinne der
-// DSGVO (doc/legal.md §1/§2), HxRoom nur Auftragsverarbeiter.
+// DSGVO (doc/recht/legal.md §1/§2), HxRoom nur Auftragsverarbeiter.
 //
 // Der Termin-Block ist wie im Dashboard aufgebaut: Klientenname als Titel, Angebot in der
 // Meta-Zeile – dieselbe Zeile, die der Coach in seiner Agenda sieht.

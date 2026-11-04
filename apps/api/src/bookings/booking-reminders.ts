@@ -4,7 +4,7 @@ import type { BookingOrigin, BookingStatus } from '@hxroom/shared';
  * Erinnerungsmails an den Klienten: 24 Stunden und 1 Stunde vor dem Termin.
  *
  * Die 1-h-Erinnerung fällt mit der Öffnung des Warteraums zusammen (CALL_OPENS_MINUTES_BEFORE_START).
- * An den Coach geht keine Erinnerung, und die Texte sind fest (doc/technisches-konzept.md §12).
+ * An den Coach geht keine Erinnerung, und die Texte sind fest (doc/technik/technisches-konzept.md §12).
  */
 export type ReminderKind = '24h' | '1h';
 

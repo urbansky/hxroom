@@ -22,7 +22,7 @@ export interface CoachProfile {
   privacyUrl: string | null;
   termsUrl: string | null;
   /**
-   * Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/legal.md §3.2) –
+   * Ohne vollständiges Impressum nimmt die Seite keine Buchungen an (doc/recht/legal.md §3.2) –
    * statt der Buchungs-Buttons steht dann ein Hinweis. Die API lehnt Buchungen ebenso ab.
    */
   bookable: boolean;
@@ -31,7 +31,7 @@ export interface CoachProfile {
 export const COACH_KEY = Symbol('coach');
 
 // Öffentlicher Proxy-Read-Endpoint (kein Presigned-URL-Mechanismus), siehe
-// doc/s3-verzeichnisschema.md. `null`, solange der Coach kein Profilbild hochgeladen hat.
+// doc/technik/s3-verzeichnisschema.md. `null`, solange der Coach kein Profilbild hochgeladen hat.
 export function getAvatarUrl(coach: CoachProfile): string | null {
   if (!coach.avatarUpdatedAt) return null;
   return `${apiUrl}/api/v1/booking-page/avatar/${coach.id}?v=${new Date(coach.avatarUpdatedAt).getTime()}`;

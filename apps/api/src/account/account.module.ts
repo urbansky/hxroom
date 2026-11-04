@@ -9,7 +9,7 @@ import { TermsService } from './terms.service';
 
 // DRIZZLE, AUTH und S3Service kommen aus globalen Modulen, MailModule muss importiert werden.
 // DeletionExecutorService wird exportiert, damit die noch fehlende Betreiber-Löschung
-// (doc/funktionen/backoffice-betreiber.md 1.06) denselben Ablauf nutzen kann statt ihn zu
+// (doc/produkt/funktionen/backoffice-betreiber.md 1.06) denselben Ablauf nutzen kann statt ihn zu
 // kopieren.
 @Module({
   imports: [MailModule],

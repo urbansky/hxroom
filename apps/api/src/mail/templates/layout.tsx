@@ -4,7 +4,7 @@ import { colors, fonts } from './_components/styles';
 
 /**
  * Impressum und Datenschutzerklärung der Buchungsseite, unter jeder Mail an Klienten: Diese
- * Mails gehen im Namen des Coachs hinaus (doc/legal.md §3.2). Aufgebaut in booking-urls.ts.
+ * Mails gehen im Namen des Coachs hinaus (doc/recht/legal.md §3.2). Aufgebaut in booking-urls.ts.
  */
 export interface MailLegalLinks {
   imprintUrl: string;

@@ -15,7 +15,7 @@ const config = {
 } as unknown as ConfigService;
 
 // Der Payload interessiert uns, nicht die Signatur: Ob LiveKit den Token akzeptiert, sagt
-// ohnehin nur der echte Server (siehe Abnahme in doc/technisches-konzept.md §8).
+// ohnehin nur der echte Server (siehe Abnahme in doc/technik/technisches-konzept.md §8).
 function payload(jwt: string): Record<string, any> {
   return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString('utf8'));
 }

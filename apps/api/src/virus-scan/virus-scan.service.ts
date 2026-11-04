@@ -18,7 +18,7 @@ export type ScanResult =
   | { status: 'skipped'; reason: 'disabled' | 'unavailable' };
 
 /**
- * Virenscan über clamd (doc/technisches-konzept.md §17, „Virenscan geteilter Dateien“).
+ * Virenscan über clamd (doc/technik/technisches-konzept.md §17, „Virenscan geteilter Dateien“).
  *
  * Ohne `CLAMAV_HOST` wird nicht geprüft – so läuft die Entwicklung ohne den gut 1 GB großen
  * Scanner. Ist er eingerichtet, aber nicht erreichbar, geht die Datei trotzdem durch und das

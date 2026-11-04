@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Einrichtungs-Checkliste (doc/funktionen/backoffice-coach.md, Funktion 1.04) und die
+ * Einrichtungs-Checkliste (doc/produkt/funktionen/backoffice-coach.md, Funktion 1.04) und die
  * Erfolgsmeldung, die an ihre Stelle tritt, sobald alle Schritte erledigt sind.
  *
  * Die Liste selbst hat bewusst keinen Schließen-Knopf: ein weggeklickter Schritt wäre

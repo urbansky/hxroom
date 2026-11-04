@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Die gemeinsame Datenschutzerklärung von HxRoom (doc/legal.md §4): ein Text für alle
+// Die gemeinsame Datenschutzerklärung von HxRoom (doc/recht/legal.md §4): ein Text für alle
 // Seiten – hxroom.de, die App für Coachs und die Buchungsseiten –, gegliedert nach
 // Personengruppen. Auf einer Buchungsseite setzt die einbindende Seite den Coach als
 // Verantwortlichen für Abschnitt 8 ein (`controller`), auf hxroom.de bleibt er allgemein.

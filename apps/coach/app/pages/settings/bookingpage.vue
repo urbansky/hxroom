@@ -93,7 +93,7 @@ const avatarUrl = computed(() =>
     : null,
 )
 
-// Für Hinweis und Vorschau: Ohne Impressum ist die Buchungsseite nicht buchbar (doc/legal.md
+// Für Hinweis und Vorschau: Ohne Impressum ist die Buchungsseite nicht buchbar (doc/recht/legal.md
 // §3.2). Gepflegt wird es unter Einstellungen → Rechtliches, hier nur der Status. Vor dem
 // Fetch deklariert, weil onResponse schon während des await läuft.
 const imprintComplete = ref(true)

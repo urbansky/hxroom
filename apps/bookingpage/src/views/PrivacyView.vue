@@ -7,7 +7,7 @@ import { apiUrl, orgSlug } from '../utils/api';
 import SiteHeader from '../components/SiteHeader.vue';
 import SiteFooter from '../components/SiteFooter.vue';
 
-// Datenschutzerklärung der Buchungsseite (doc/legal.md §4): der gemeinsame Text von HxRoom,
+// Datenschutzerklärung der Buchungsseite (doc/recht/legal.md §4): der gemeinsame Text von HxRoom,
 // mit dem Coach als Verantwortlichem für Abschnitt 8. Name und Anschrift stammen aus seinem
 // Impressum; hat er nur auf sein eigenes verlinkt, steht hier der Name und der Verweis aufs
 // Impressum dieser Seite.

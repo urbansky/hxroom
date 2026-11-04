@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CoachBookingResponse, ManualBookingResponse, OfferResponse } from '@hxroom/shared'
 
-// Folgetermin (doc/konzept-manuelle-termine.md §2): der häufigste Fall des manuellen
+// Folgetermin (doc/produkt/funktionen/manuelle-termine.md §2): der häufigste Fall des manuellen
 // Anlegens. Vereinbart wird er am Ende einer Sitzung – deshalb steht er auf der Terminseite
 // und auf der Abschlusskarte, vorbelegt mit Klient, Angebot und derselben Uhrzeit eine
 // Woche später.

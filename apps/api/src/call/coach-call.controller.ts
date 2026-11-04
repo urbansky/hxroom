@@ -17,7 +17,7 @@ import { CallChatService } from './call-chat.service';
 import { CallClientContextService } from './call-client-context.service';
 
 /**
- * Call-Screen des Coachs (doc/technisches-konzept.md §8). Zugriff über die
+ * Call-Screen des Coachs (doc/technik/technisches-konzept.md §8). Zugriff über die
  * better-auth Session; welche Buchung er sehen darf, entscheidet allein seine
  * activeOrganizationId.
  *
@@ -60,7 +60,7 @@ export class CoachCallController {
 
   /**
    * Ereignisstrom: die „Klient wartet"-Benachrichtigung des Call-Screens
-   * (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
+   * (doc/technik/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
    *
    * `EventSource` kann keine Header setzen, schickt aber Cookies mit – der AuthGuard liest
    * die Session ohnehin aus den Request-Headern, und CORS steht in main.ts auf

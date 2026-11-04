@@ -27,7 +27,7 @@ interface BookingCancelledEmailProps {
 
 // Geht raus, wenn der Coach einen Termin im Backoffice absagt, wenn der Klient ihn über
 // den Link aus der Bestätigungsmail selbst absagt (beides
-// doc/funktionen/backoffice-coach.md 2.06) oder wenn das Coach-Konto gelöscht wird und
+// doc/produkt/funktionen/backoffice-coach.md 2.06) oder wenn das Coach-Konto gelöscht wird und
 // noch Termine offen sind (DeletionExecutorService).
 export default function BookingCancelledEmail({ clientName, coachName, appointment, cancelledBy, reason, bookingPageUrl, legalLinks }: BookingCancelledEmailProps) {
   const byClient = cancelledBy === 'client';

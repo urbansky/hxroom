@@ -5,7 +5,7 @@ import { BookingsService } from './bookings.service';
 
 /**
  * Selbstabsage des Klienten über den Link aus der Bestätigungsmail
- * (doc/funktionen/backoffice-coach.md 2.06). Bewusst ohne AuthGuard: der Klient hat kein
+ * (doc/produkt/funktionen/backoffice-coach.md 2.06). Bewusst ohne AuthGuard: der Klient hat kein
  * Konto, sein einziger Ausweis ist der clientAccessToken – wie beim Bestätigungs-Flow.
  *
  * Eigener Pfad statt /bookings/:id/cancel, weil dort der authentifizierte Endpunkt des

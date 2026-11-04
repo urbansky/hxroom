@@ -16,7 +16,7 @@ interface BookingCancelledByClientEmailProps {
 }
 
 // Benachrichtigung an den Coach, wenn ein Klient seinen Termin über den Link aus der
-// Bestätigungsmail selbst absagt (doc/funktionen/backoffice-coach.md 2.06). Der Slot ist
+// Bestätigungsmail selbst absagt (doc/produkt/funktionen/backoffice-coach.md 2.06). Der Slot ist
 // zu diesem Zeitpunkt bereits wieder frei – diese Mail ist der einzige aktive Hinweis
 // darauf, dass eine Lücke im Kalender entstanden ist.
 export default function BookingCancelledByClientEmail({

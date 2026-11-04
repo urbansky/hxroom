@@ -47,7 +47,7 @@ export class CoachBookingsController {
     return this.coachBookingsService.createAdHoc(org.id, dto);
   }
 
-  // Manuell angelegte Termine, einzeln oder als Serie (doc/konzept-manuelle-termine.md).
+  // Manuell angelegte Termine, einzeln oder als Serie (doc/produkt/funktionen/manuelle-termine.md).
   @Post('manual')
   createManual(
     @CurrentOrganization() org: { id: string } | undefined,

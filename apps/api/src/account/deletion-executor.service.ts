@@ -33,11 +33,11 @@ interface Owner {
  * Coach löschen, Protokoll schreiben.
  *
  * Eigener Service statt Logik im Cron, weil derselbe Ablauf auch für die noch fehlende
- * Löschung durch den Betreiber gebraucht wird (doc/funktionen/backoffice-betreiber.md 1.06);
+ * Löschung durch den Betreiber gebraucht wird (doc/produkt/funktionen/backoffice-betreiber.md 1.06);
  * `coach_deletions.requestedBy` ist dafür schon vorgesehen.
  *
  * Einstiegspunkt ist immer die Organisation, nicht der Coach – siehe
- * doc/technisches-konzept.md §17: sämtliche Fachdaten hängen an `organizationId`, und
+ * doc/technik/technisches-konzept.md §17: sämtliche Fachdaten hängen an `organizationId`, und
  * `organization` hat keinen Fremdschlüssel auf `user`.
  */
 @Injectable()

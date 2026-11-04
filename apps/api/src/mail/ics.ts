@@ -66,7 +66,7 @@ export function buildBookingIcs(input: BookingIcsInput): string {
 
 /**
  * Mehrere Termine in einer Datei – für die Mail zu einer Terminserie
- * (doc/konzept-manuelle-termine.md §5). Jeder Termin ist ein eigenes VEVENT mit eigener
+ * (doc/produkt/funktionen/manuelle-termine.md §5). Jeder Termin ist ein eigenes VEVENT mit eigener
  * UID und eigenem Link; Apple, Google und Outlook importieren alle auf einmal.
  */
 export function buildBookingsIcs(inputs: BookingIcsInput[]): string {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Impressum des Coachs für seine Buchungsseite (doc/legal.md §3.2). Geteilt zwischen API
+// Impressum des Coachs für seine Buchungsseite (doc/recht/legal.md §3.2). Geteilt zwischen API
 // (Prüfung beim Speichern, Buchungssperre), Coach-App (Formular unter Einstellungen →
 // Rechtliches) und Buchungsseite (Seite /impressum).
 

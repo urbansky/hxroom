@@ -2,7 +2,7 @@
 
 `selfie_segmenter.tflite` – MediaPipe Selfie Segmenter (float16), das Modell, das
 `@livekit/track-processors` sonst zur Laufzeit von Google lädt. Hier abgelegt, damit der
-Browser des Klienten keinen Drittanbieter anspricht (`doc/technisches-konzept.md` §17);
+Browser des Klienten keinen Drittanbieter anspricht (`doc/technik/technisches-konzept.md` §17);
 ausgeliefert über `mediapipeAssets()` in `packages/livekit/vite.ts`.
 
 - Quelle: `https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite` (Stand 2026-09-28, Datei vom 2023-05-07)

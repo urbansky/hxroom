@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Produkt-Tour aus Sicht des Klienten. Die Bilder erzeugt scripts/screenshots.mjs
-// (doc/technisches-konzept.md §15); fehlt eines, zeigt ScreenFrame einen Platzhalter.
+// (doc/technik/technisches-konzept.md §15); fehlt eines, zeigt ScreenFrame einen Platzhalter.
 const content = {
   label: 'So funktioniert’s',
   // Je Satz ein Block, damit nur zwischen den Sätzen umbrochen wird.

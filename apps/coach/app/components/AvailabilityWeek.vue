@@ -7,7 +7,7 @@ import type { AvailabilitySlotResponse } from '@hxroom/shared'
  * keine Termine an einem bestimmten Tag. Deshalb tragen die Spaltenköpfe nur den
  * Wochentag und es gibt keine Wochennavigation – jede Woche sieht gleich aus,
  * solange es keine Ausnahmen für einzelne Tage gibt
- * (siehe doc/funktionen/angebote-verfuegbarkeiten.md).
+ * (siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md).
  */
 const props = defineProps<{ slots: AvailabilitySlotResponse[] }>()
 

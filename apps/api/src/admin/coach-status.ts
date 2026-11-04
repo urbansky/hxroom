@@ -12,7 +12,7 @@ export interface CoachStatusSource {
 /**
  * Kontostatus eines Coachs, abgeleitet aus den Spalten des better-auth admin-Plugins.
  *
- * Bewusst *nur* Kontostatus, nicht Plan-Status: doc/funktionen/backoffice-betreiber.md
+ * Bewusst *nur* Kontostatus, nicht Plan-Status: doc/produkt/funktionen/backoffice-betreiber.md
  * listet unter Funktion 01 „Trial / aktiv / gesperrt" in einer Spalte und vermischt damit
  * zwei Achsen. 'trial' ist eine Plan-Aussage und aus dem aktuellen Schema nicht ableitbar –
  * es gibt weder Subscription-Tabelle noch Trial-Feld. Kommt das Billing-Modell dazu, wird

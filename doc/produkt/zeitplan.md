@@ -64,7 +64,7 @@ better-auth Integration im NestJS Backend, Registrierung und Login, Subdomain-Ro
 ### Phase 3 – Buchungssystem
 **Zeitraum:** Woche 8–12 · **Aufwand:** 50 Stunden · **Status:** ✅ abgeschlossen
 
-> Anders als geplant: Die Erinnerungen 24 h / 1 h laufen ohne BullMQ, über Spalten an der Buchung und einen Lauf alle 5 Minuten (`technisches-konzept.md` §12). Die Terminübersicht heißt „Termine“ und zeigt Agenda und Woche. Termine legt der Coach auch selbst an, einzeln oder als Serie (`konzept-manuelle-termine.md`).
+> Anders als geplant: Die Erinnerungen 24 h / 1 h laufen ohne BullMQ, über Spalten an der Buchung und einen Lauf alle 5 Minuten (`technisches-konzept.md` §12). Die Terminübersicht heißt „Termine“ und zeigt Agenda und Woche. Termine legt der Coach auch selbst an, einzeln oder als Serie (`funktionen/manuelle-termine.md`).
 
 *Verfügbarkeiten · Buchungsseite · Erinnerungen · E-Mail*
 

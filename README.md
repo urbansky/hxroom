@@ -62,11 +62,11 @@ Caddy läuft im Dev-Container und routet `*.hxroom.localhost` auf die lokalen Po
 
 `*.localhost`-Domains funktionieren auf macOS ohne `/etc/hosts`-Eintrag. Die Dev-Server müssen auf `0.0.0.0` lauschen (bereits in `nuxt.config.ts` konfiguriert).
 
-`admin-api` ist derselbe API-Container wie `api`, nur unter zweitem Hostnamen. Session-Cookies hängen am Host: ohne diese Trennung würde ein Betreiber-Login die Coach-Session desselben Browsers überschreiben. Details in [`doc/technisches-konzept.md`](doc/technisches-konzept.md) §6.
+`admin-api` ist derselbe API-Container wie `api`, nur unter zweitem Hostnamen. Session-Cookies hängen am Host: ohne diese Trennung würde ein Betreiber-Login die Coach-Session desselben Browsers überschreiben. Details in [`doc/technik/technisches-konzept.md`](doc/technik/technisches-konzept.md) §6.
 
 ### Objekt-Storage (RustFS)
 
-RustFS ist der S3-kompatible Object Store für die lokale Entwicklung (siehe `doc/s3-verzeichnisschema.md`). Der Bucket `hxroom-files` wird beim Hochfahren automatisch angelegt.
+RustFS ist der S3-kompatible Object Store für die lokale Entwicklung (siehe `doc/technik/s3-verzeichnisschema.md`). Der Bucket `hxroom-files` wird beim Hochfahren automatisch angelegt.
 
 - **Web-UI:** http://127.0.0.1:9001
 - **Zugangsdaten:** `hxroom_dev` / `hxroom_dev_secret` (aus `infra/docker-compose.dev.yml`)
@@ -134,7 +134,7 @@ Ein Betreiber-Account ist ein regulärer better-auth-User mit der plattformweite
 `admin` und **ohne Organisation** – dadurch weisen ihn alle Coach-Endpunkte ab, er kommt
 nur an die Admin-Endpunkte. Die Rolle lässt sich über die normale Registrierung nicht
 setzen (`user.role` ist im admin-Plugin `input: false`), deshalb gibt es dieses Skript.
-Hintergrund in [`doc/technisches-konzept.md`](doc/technisches-konzept.md) §7,
+Hintergrund in [`doc/technik/technisches-konzept.md`](doc/technik/technisches-konzept.md) §7,
 Abschnitt „Betreiber-Zugang".
 
 **Lokal:**

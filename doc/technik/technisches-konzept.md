@@ -1,7 +1,7 @@
 # HxRoom – Technisches Konzept
 *Version 0.6*
 
-Beschreibt, wie HxRoom gebaut ist und warum. Was wann umgesetzt wird, steht in `zeitplan.md`; die fachlichen Funktionen in `funktionen/`.
+Beschreibt, wie HxRoom gebaut ist und warum. Was wann umgesetzt wird, steht in `produkt/zeitplan.md`; die fachlichen Funktionen in `produkt/funktionen/`.
 
 ---
 
@@ -107,7 +107,7 @@ Es gibt zwei Compose-Dateien in `infra/`:
 Die Apps (api, coach, bookingpage, admin, landing) laufen lokal per `pnpm dev`. Docker übernimmt nur die Infrastruktur:
 
 - **PostgreSQL** (Port 5433 auf dem Host, 5432 im Container)
-- **RustFS** als S3-kompatibler Object Store (siehe `doc/s3-verzeichnisschema.md`), Console auf Port 9001, S3-API auf Port 9000
+- **RustFS** als S3-kompatibler Object Store (siehe `doc/technik/s3-verzeichnisschema.md`), Console auf Port 9001, S3-API auf Port 9000
 - **Caddy** als Reverse Proxy: routet `*.hxroom.localhost` auf die lokalen pnpm-Dev-Server
 - **LiveKit** (Signaling 7880, Medien 7881/tcp und 7882/udp), erreichbar als `livekit.hxroom.localhost`
 - **ClamAV** nur auf Wunsch (Profil `clamav`, Port 3310): `docker compose -f infra/docker-compose.dev.yml --profile clamav up -d clamav` und `CLAMAV_HOST=localhost` in `apps/api/.env`. Ohne `CLAMAV_HOST` prüft die API nicht – lokal der Normalfall.
@@ -172,7 +172,7 @@ Bild bleibt trotzdem schwarz – ein Fehlerbild, das man leicht im Frontend such
 
 ## 5. Funktionen der Coach-App
 
-Was die Coach-App fachlich leistet, steht in `funktionen/backoffice-coach.md`, die Anforderungen an die Bedienung in `ux-anforderungen.md`. Hier steht, wie die Bereiche technisch arbeiten. Manuell angelegte Termine beschreibt §12, Impressum und Datenschutz §6, den Call §8.
+Was die Coach-App fachlich leistet, steht in `produkt/funktionen/backoffice-coach.md`, die Anforderungen an die Bedienung in `produkt/ux-anforderungen.md`. Hier steht, wie die Bereiche technisch arbeiten. Manuell angelegte Termine beschreibt §12, Impressum und Datenschutz §6, den Call §8.
 
 **Navigation.** Seitenleiste aus `layouts/default.vue`. Ein Menüpunkt bleibt auf seinen Unterseiten markiert, es gewinnt der längste passende Pfad. Unterhalb von `lg` gibt es stattdessen eine Kopfleiste mit Menüknopf und Seitentitel; der Knopf öffnet die Seitenleiste als Slideover. Die Wochenansicht unter Termine ist auf dem Handy ausgeblendet. Im Benutzermenü wählt der Coach die Darstellung: hell, dunkel oder wie das System (`useColorMode`).
 
@@ -541,7 +541,7 @@ Das Schema steht in `apps/api/src/db/schema.ts`, handgeschrieben, Migrationen ü
 
 **Notizen und Chat** liegen in eigenen Tabellen statt in Spalten an `bookings`, damit der sensibelste Inhalt in keiner Buchungsabfrage mitläuft. `session_notes` hat eine Zeile je Termin mit Tiptap-JSON; die Felder für das Transkript kommen mit Phase 6.
 
-**Angebote und Verfügbarkeit.** Verfügbarkeit gilt je Organisation für alle Angebote (`availability_slots`, `availability_settings`). Die fachliche Beschreibung samt späterer Ausbaustufen steht in `funktionen/angebote-verfuegbarkeiten.md`.
+**Angebote und Verfügbarkeit.** Verfügbarkeit gilt je Organisation für alle Angebote (`availability_slots`, `availability_settings`). Die fachliche Beschreibung samt späterer Ausbaustufen steht in `produkt/funktionen/angebote-verfuegbarkeiten.md`.
 
 ### 11.1 Validierungs- und DTO-Konvention
 
@@ -583,7 +583,7 @@ Der Klient bekommt 24 Stunden und 1 Stunde vor dem Termin eine Erinnerung mit de
 
 ### Manuell angelegte Termine
 
-Fachlich beschrieben in `konzept-manuelle-termine.md`. Der Coach legt einen oder bis zu 25 Termine zu gewählten Zeitpunkten an (`POST /api/v1/bookings/manual`, `CoachBookingsService.createManual`).
+Fachlich beschrieben in `produkt/funktionen/manuelle-termine.md`. Der Coach legt einen oder bis zu 25 Termine zu gewählten Zeitpunkten an (`POST /api/v1/bookings/manual`, `CoachBookingsService.createManual`).
 
 - **Status und Herkunft:** sofort `confirmed`, `confirmedAt` = Zeitpunkt des Anlegens, Herkunft `manual`. Ohne Angebot gibt der Coach die Dauer an, die Bezeichnung ist dann „Sitzung“ (`MANUAL_OFFER_NAME`).
 - **Wer:** bestehender Klient oder E-Mail-Adresse, dieselbe Regel wie beim Spontan-Termin (`resolveInvitee` im Dienst, `useBookingInvitee` und `BookingInviteeFields` in der Coach-App).

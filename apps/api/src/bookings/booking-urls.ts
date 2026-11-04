@@ -36,7 +36,7 @@ export function buildCancelUrl(config: ConfigService, slug: string, bookingId: s
   return `${buildOrigin(config, slug)}/cancel/${bookingId}?token=${token}`;
 }
 
-// Warteraum und Videocall des Klienten (doc/technisches-konzept.md §8, „Warteraum-Flow“). Derselbe
+// Warteraum und Videocall des Klienten (doc/technik/technisches-konzept.md §8, „Warteraum-Flow“). Derselbe
 // Token wie beim Bestätigen und Absagen – der Klient hat kein Konto. Die Adresse steht in
 // der Bestätigung und in beiden Erinnerungen (BookingReminderService).
 export function buildCallUrl(config: ConfigService, slug: string, bookingId: string, token: string): string {

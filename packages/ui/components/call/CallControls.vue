@@ -7,7 +7,7 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 import { firstName, formatDuration } from '@hxroom/shared'
 import type { CallConnection, CallDevice, CallPanelDef } from './types'
 
-// Steuerleiste am unteren Rand (doc/poc/videocall-v2.html, Screen 3).
+// Steuerleiste am unteren Rand (doc/prototypen/videocall-v2.html, Screen 3).
 //
 // Sie trägt alles, was nicht ins Bild gehört: links wer einlädt, wie es um die Verbindung
 // steht und wie lange die Sitzung läuft, mittig die Schalter. Eine eigene Kopfzeile gibt es

@@ -23,7 +23,7 @@ import type { AccountDeletionStatus } from '@hxroom/shared';
  *
  * Bewusst ein eigener Weg statt better-auths `user.deleteUser`: das würde sofort löschen und
  * die Organisation verwaist zurücklassen (Begründung in auth.module.ts und
- * doc/technisches-konzept.md §17). Die eigentliche Löschung macht später der
+ * doc/technik/technisches-konzept.md §17). Die eigentliche Löschung macht später der
  * DeletionExecutorService.
  */
 @Injectable()

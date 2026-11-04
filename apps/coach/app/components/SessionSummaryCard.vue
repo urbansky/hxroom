@@ -2,7 +2,7 @@
 import type { CoachBookingResponse, SessionNoteResponse } from '@hxroom/shared'
 
 // Abschlusskarte nach „Sitzung beenden“ (technisches-konzept.md §5, „Abschlusskarte“; Vorbild
-// doc/poc/videocall-v2.html, Bildschirm 4). Die Angaben kommen aus dem, was gespeichert ist –
+// doc/prototypen/videocall-v2.html, Bildschirm 4). Die Angaben kommen aus dem, was gespeichert ist –
 // Termin, Notiz, Chat –, nicht aus dem Zustand der Call-Seite: Die Karte zeigt nur, was
 // tatsächlich beim Server liegt. Die Notizen sind beim Beenden schon gespeichert worden
 // (confirmEnd in components/CallScreen.vue).
@@ -78,7 +78,7 @@ const followUpOpen = ref(false)
     <div class="flex flex-wrap items-center justify-center gap-2">
       <UButton :to="`/bookings/${bookingId}`" label="Zu den Sitzungsdetails" icon="i-lucide-arrow-right" trailing />
       <!-- Der Moment, in dem der nächste Termin vereinbart wird, ist das Ende der Sitzung
-           (doc/konzept-manuelle-termine.md §2). -->
+           (doc/produkt/funktionen/manuelle-termine.md §2). -->
       <UButton
         v-if="booking?.clientId"
         label="Folgetermin anlegen"

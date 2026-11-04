@@ -10,7 +10,7 @@ Es gibt **keine Registrierung**. Betreiber-Accounts entstehen ausschließlich ü
 pnpm --filter @hxroom/api admin:create --email betreiber@example.com --name "Vorname Nachname"
 ```
 
-Angemeldet wird sich mit der plattformweiten Rolle `admin` (better-auth admin-Plugin). Ein Coach-Account wird beim Login abgewiesen und wieder abgemeldet – Details in [`doc/technisches-konzept.md`](../../doc/technisches-konzept.md) §7, Abschnitt „Betreiber-Zugang".
+Angemeldet wird sich mit der plattformweiten Rolle `admin` (better-auth admin-Plugin). Ein Coach-Account wird beim Login abgewiesen und wieder abgemeldet – Details in [`doc/technik/technisches-konzept.md`](../../doc/technik/technisches-konzept.md) §7, Abschnitt „Betreiber-Zugang".
 
 ## Entwicklung
 
@@ -20,7 +20,7 @@ pnpm --filter @hxroom/admin dev
 
 Der Dev-Server lauscht auf Port **5175**; der Dev-Caddy routet `admin.hxroom.localhost` fest dorthin. Die API-Adressen kommen aus `.env` (`NUXT_PUBLIC_API_URL`, `NUXT_PUBLIC_AUTH_URL`) – Vorlage in `.env.example`.
 
-**Die App spricht `admin-api.hxroom.localhost` an, nicht `api.hxroom.localhost`** – denselben API-Container, nur unter zweitem Hostnamen. Session-Cookies hängen am Host; über den gemeinsamen API-Host würde ein Betreiber-Login die Coach-Session desselben Browsers überschreiben. Serverseitig muss dieser Host in `ADMIN_AUTH_URL` (`apps/api/.env`) stehen, sonst weist better-auth ihn ab. Hintergrund: [`doc/technisches-konzept.md`](../../doc/technisches-konzept.md) §6 und §7.
+**Die App spricht `admin-api.hxroom.localhost` an, nicht `api.hxroom.localhost`** – denselben API-Container, nur unter zweitem Hostnamen. Session-Cookies hängen am Host; über den gemeinsamen API-Host würde ein Betreiber-Login die Coach-Session desselben Browsers überschreiben. Serverseitig muss dieser Host in `ADMIN_AUTH_URL` (`apps/api/.env`) stehen, sonst weist better-auth ihn ab. Hintergrund: [`doc/technik/technisches-konzept.md`](../../doc/technik/technisches-konzept.md) §6 und §7.
 
 Der Login funktioniert nur über `admin.hxroom.localhost`, nicht über `localhost:5175`: nur die Caddy-Domain steht in `CORS_ORIGINS` der API.
 

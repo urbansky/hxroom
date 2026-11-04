@@ -57,7 +57,7 @@ function chatFile(
 }
 
 /**
- * Chat einer Sitzung auf der Klientenseite (doc/technisches-konzept.md §8) – das
+ * Chat einer Sitzung auf der Klientenseite (doc/technik/technisches-konzept.md §8) – das
  * Gegenstück zu useCallChat in der Coach-App. Unterschied ist allein der Ausweis: Hier ist es
  * der Token aus dem Mail-Link, dort die Session.
  *

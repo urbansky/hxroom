@@ -57,7 +57,7 @@ Coaches verkaufen Vertrauen. Vertrauen beginnt beim ersten Eindruck.
 ### Tonalität & Ansprache
 Marketing-Kommunikation erfolgt durchgängig informell mit **„Du" und Vornamen** – auf Landingpages, in Newslettern, Ads, Social-Posts und Kalt-Akquise. Ausnahmen sind Rechtstexte (Impressum, AGB, Datenschutz) und B2B-Erstkontakte mit Verbänden/Institutionen.
 
-→ Vollständige Tonalitäts-Leitplanken: [marketing.md → Abschnitt 0](marketing.md#0-tonalität--ansprache)
+→ Vollständige Tonalitäts-Leitplanken: [marketing.md → Abschnitt 0](../marketing/marketing.md#0-tonalität--ansprache)
 
 ---
 
@@ -218,7 +218,7 @@ Alles andere kommt nach den ersten zahlenden Kunden.
 
 Die vollständige Marketing-Strategie umfasst zwei sofort startbare Kanäle – **Kalt-E-Mail** (CTA auf persönliche HxRoom-Coaching-Seite mit 15-min Live-Demo) und **LinkedIn-Direktansprache** – sowie weitere Aktionen wie Facebook-Gruppen, Beta-Testimonials, Podcast-Gastauftritte, SEO-Content, ein Affiliate-Programm und Kooperationen mit Coach-Ausbildungsinstituten.
 
-→ Details, Templates & Zeitplan: [marketing.md](marketing.md)
+→ Details, Templates & Zeitplan: [marketing.md](../marketing/marketing.md)
 
 ---
 
@@ -339,4 +339,4 @@ Recherchiert und bewertet im Rahmen der Markenstrategie. Kriterien: Verfügbarke
 
 **Einordnung:** Zeeg.me ist der relevanteste Wettbewerber im DACH-Raum, da es DSGVO-Hosting und eine eigene Coaching-Zielgruppen-Seite hat – konkurriert aber primär auf der Buchungs-/Terminebene, nicht auf dem eigentlichen Gesprächsraum. HxRoom bleibt differenziert durch den kompletten, gebrandeten Empfangsraum (Warteraum → Call → Notizen) ohne Klienten-Account.
 
-→ Vollständiger visueller Wettbewerbsvergleich: [pitchdeck.html – Slide 5](pitchdeck.html)
+→ Vollständiger visueller Wettbewerbsvergleich: [pitchdeck.html – Slide 5](../marketing/pitchdeck.html)

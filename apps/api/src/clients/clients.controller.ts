@@ -6,7 +6,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { createClientSchema, updateClientSchema, type CreateClientDto, type UpdateClientDto } from '@hxroom/shared';
 import { ClientsService } from './clients.service';
 
-// Klientenverwaltung im Coach-Backoffice (doc/funktionen/backoffice-coach.md, Abschnitt 3).
+// Klientenverwaltung im Coach-Backoffice (doc/produkt/funktionen/backoffice-coach.md, Abschnitt 3).
 // Das Löschen (Abschnitt 7, Funktion 04) nimmt Termine, Notizen, Chat und Dateien mit und
 // hinterlässt ein Löschprotokoll ohne personenbezogene Daten (client_deletions).
 @Controller('clients')

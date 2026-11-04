@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Gerüst für die noch leeren Bereiche: Überschrift plus die geplanten Funktionen aus
-// doc/funktionen/backoffice-betreiber.md. Ersetzt sich Seite für Seite, sobald das
+// doc/produkt/funktionen/backoffice-betreiber.md. Ersetzt sich Seite für Seite, sobald das
 // Admin-Modul der API die Daten liefert.
 defineProps<{
   title: string

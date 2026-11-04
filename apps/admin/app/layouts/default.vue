@@ -6,7 +6,7 @@ type NavItem = NavigationMenuItem & { description?: string }
 
 const { session, signOut } = useAuth()
 
-// Gliederung nach doc/funktionen/backoffice-betreiber.md, vorerst nur die MVP-Bereiche.
+// Gliederung nach doc/produkt/funktionen/backoffice-betreiber.md, vorerst nur die MVP-Bereiche.
 // Labels deutsch, Routen englisch (CLAUDE.md).
 const navItems: NavItem[][] = [
   [

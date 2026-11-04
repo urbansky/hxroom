@@ -2,7 +2,7 @@
 import { MANUAL_BOOKING_MAX_COUNT, type ClientListItem, type ManualBookingCheckResponse, type ManualBookingResponse, type OfferResponse } from '@hxroom/shared'
 
 /**
- * Termin manuell anlegen (doc/konzept-manuelle-termine.md): ein Termin zu einem gewählten
+ * Termin manuell anlegen (doc/produkt/funktionen/manuelle-termine.md): ein Termin zu einem gewählten
  * Zeitpunkt, oder mehrere in festem Rhythmus. Abgesprochen mit dem Klienten und deshalb
  * sofort bestätigt; der Klient bekommt eine Mail mit allen Terminen.
  *

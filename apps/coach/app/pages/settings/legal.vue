@@ -13,7 +13,7 @@ import {
 
 definePageMeta({ middleware: 'auth' })
 
-// Impressum und Links der Buchungsseite (doc/legal.md §3.2). Ausdrückliches Speichern statt
+// Impressum und Links der Buchungsseite (doc/recht/legal.md §3.2). Ausdrückliches Speichern statt
 // Autosave: Die Bestätigung „korrekt und vollständig“ gilt immer für genau den gespeicherten
 // Stand. Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an.
 //

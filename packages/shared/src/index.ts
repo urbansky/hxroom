@@ -64,7 +64,7 @@ export type CancelledBy = z.infer<typeof CancelledBy>;
 // Coachs mit sich selbst (zählt in keiner Kennzahl, wird nach 24 Stunden gelöscht). Als Enum
 // statt als Flag, weil der zweite Teil von Funktion 2.04 (Termin zu einem gewählten
 // Zeitpunkt anlegen) hier später als 'manual' dazukommt.
-// 'manual': vom Coach zu einem gewählten Zeitpunkt angelegt (doc/konzept-manuelle-termine.md)
+// 'manual': vom Coach zu einem gewählten Zeitpunkt angelegt (doc/produkt/funktionen/manuelle-termine.md)
 export const BookingOrigin = z.enum(['booking_page', 'ad_hoc', 'test', 'manual']);
 export type BookingOrigin = z.infer<typeof BookingOrigin>;
 
@@ -314,7 +314,7 @@ export const availabilitySlotResponseSchema = z.object({
 export type AvailabilitySlotResponse = z.infer<typeof availabilitySlotResponseSchema>;
 
 // Coach-weite Zeitslot-Einstellungen (Pufferzeit, Buchungsvorlaufzeit) – global pro
-// Coach, nicht pro Angebot (siehe doc/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
+// Coach, nicht pro Angebot (siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
 export const availabilitySettingsSchema = z.object({
   bufferMinutes:      z.number().int().min(0, 'Pufferzeit darf nicht negativ sein').max(120, 'Pufferzeit darf maximal 120 Minuten betragen').optional(),
   minLeadTimeHours:   z.number().int().min(0, 'Buchungsvorlaufzeit darf nicht negativ sein').max(168, 'Buchungsvorlaufzeit darf maximal 168 Stunden betragen').optional(),
@@ -338,7 +338,7 @@ export const availableSlotResponseSchema = z.object({
 export type AvailableSlotResponse = z.infer<typeof availableSlotResponseSchema>;
 
 // Buchungserstellung durch den Klienten. offerId kommt aus dem URL-Pfad, nicht aus
-// dem Body. Buchung entsteht als 'pending' – siehe doc/technisches-konzept.md §11.
+// dem Body. Buchung entsteht als 'pending' – siehe doc/technik/technisches-konzept.md §11.
 export const createBookingSchema = z.object({
   start:       z.string().datetime({ message: 'Ungültiger Zeitpunkt' }),
   clientName:  z.string().min(1, 'Name ist erforderlich').max(160),
@@ -454,7 +454,7 @@ export const cancelBookingSchema = z.object({
 });
 export type CancelBookingDto = z.infer<typeof cancelBookingSchema>;
 
-// Zuordnung einer Buchung zu einem Klienten (doc/technisches-konzept.md §11):
+// Zuordnung einer Buchung zu einem Klienten (doc/technik/technisches-konzept.md §11):
 // der Coach korrigiert das automatische E-Mail-Matching oder verknüpft manuell.
 // null löst die Zuordnung, ohne die Buchung selbst zu verändern.
 export const assignBookingClientSchema = z.object({
@@ -506,7 +506,7 @@ export const adHocBookingResponseSchema = coachBookingResponseSchema.extend({
 });
 export type AdHocBookingResponse = z.infer<typeof adHocBookingResponseSchema>;
 
-// Manuell angelegte Termine (doc/konzept-manuelle-termine.md): ein oder mehrere Termine zu
+// Manuell angelegte Termine (doc/produkt/funktionen/manuelle-termine.md): ein oder mehrere Termine zu
 // gewählten Zeitpunkten, sofort bestätigt. Mehrere Startzeiten ergeben eine Serie.
 //
 // Wer eingeladen wird, folgt denselben zwei Formen wie beim Spontan-Termin. Ohne Angebot
@@ -559,13 +559,13 @@ export const manualBookingCheckResponseSchema = z.array(z.object({
 }));
 export type ManualBookingCheckResponse = z.infer<typeof manualBookingCheckResponseSchema>;
 
-// Zugangsfenster für den Videocall (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
+// Zugangsfenster für den Videocall (doc/technik/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
 //
 // Vorher: Wer zehn Minuten zu früh dran ist, soll den Warteraum sehen und nicht eine
 // Fehlerseite. Eine Stunde deckt auch den Klienten ab, der den Link schon mittags
 // öffnet, um die Technik zu prüfen.
 //
-// Nachher: gemessen ab dem geplanten *Ende*, nicht ab dem Beginn. doc/technisches-konzept.md §7
+// Nachher: gemessen ab dem geplanten *Ende*, nicht ab dem Beginn. doc/technik/technisches-konzept.md §7
 // nannte "2 Stunden nach geplantem Sitzungsbeginn" – bei einer 90-Minuten-Sitzung fiele der
 // Zugang damit eine halbe Stunde vor Schluss weg.
 //
@@ -590,7 +590,7 @@ export function isWithinCallWindow(startTime: Date, endTime: Date, now: Date): b
   return now >= callWindowOpensAt(startTime) && now <= callWindowClosesAt(endTime);
 }
 
-// Videocall: Zustand einer Sitzung (doc/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
+// Videocall: Zustand einer Sitzung (doc/technik/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
 //
 // Der Warteraum ist kein eigener LiveKit-Raum, sondern dieser Zustand. Ein falscher
 // oder fehlender Token ist bewusst kein Zustand, sondern ein 401 – und eine fremde
@@ -706,7 +706,7 @@ export const enterWaitingRoomSchema = z.object({
 });
 export type EnterWaitingRoomDto = z.infer<typeof enterWaitingRoomSchema>;
 
-// Chat im Call (doc/technisches-konzept.md §8). Gespeichert wird der Verlauf, gesendet
+// Chat im Call (doc/technik/technisches-konzept.md §8). Gespeichert wird der Verlauf, gesendet
 // wird über die API – nicht über den LiveKit-Datenkanal, damit keine Nachricht ankommt, die
 // nirgends liegt, und damit ein Abbruch nachgeholt werden kann.
 export const CallChatSender = z.enum(['coach', 'client']);
@@ -722,7 +722,7 @@ export const CALL_FILE_MAX_BYTES = 25 * 1024 * 1024;
 export const CALL_FILES_PER_BOOKING_LIMIT = 20;
 
 /**
- * Was geteilt werden darf (doc/technisches-konzept.md §8): Dokumente und Bilder, mit
+ * Was geteilt werden darf (doc/technik/technisches-konzept.md §8): Dokumente und Bilder, mit
  * denen ein Coach arbeitet. Formate mit Makros (`.docm` und Verwandte) sind nicht dabei.
  *
  * Endung und Typ gehören zusammen; der Server prüft zusätzlich die Dateisignatur, denn den
@@ -811,7 +811,7 @@ export const callChatMessagesResponseSchema = z.object({
 });
 export type CallChatMessagesResponse = z.infer<typeof callChatMessagesResponseSchema>;
 
-// Klientenverwaltung (CRM, siehe doc/funktionen/backoffice-coach.md Abschnitt 3).
+// Klientenverwaltung (CRM, siehe doc/produkt/funktionen/backoffice-coach.md Abschnitt 3).
 // Die E-Mail ist Pflicht, weil sie der Matching-Schlüssel für spätere Online-Buchungen
 // ist – ein Klient ohne Adresse wäre für den automatischen Weg unauffindbar.
 export const createClientSchema = z.object({
@@ -880,8 +880,8 @@ export interface ClientFileEntry {
 }
 
 // Kontolöschung durch den Coach selbst (Account-Seite). Läuft über eine Frist mit
-// Widerrufsmöglichkeit statt als Sofort-Löschung – siehe doc/legal.md (30 Tage
-// Aufbewahrung) und doc/technisches-konzept.md §17.
+// Widerrufsmöglichkeit statt als Sofort-Löschung – siehe doc/recht/legal.md (30 Tage
+// Aufbewahrung) und doc/technik/technisches-konzept.md §17.
 //
 // Das Passwort ist Pflicht: die Löschung ist die einzige irreversible Aktion im
 // Backoffice, eine offene Session allein soll sie nicht auslösen können.
@@ -898,7 +898,7 @@ export const accountDeletionStatusSchema = z.object({
 });
 export type AccountDeletionStatus = z.infer<typeof accountDeletionStatusSchema>;
 
-// Betreiber-Backoffice: Coach-Verwaltung (doc/funktionen/backoffice-betreiber.md, Abschnitt 1).
+// Betreiber-Backoffice: Coach-Verwaltung (doc/produkt/funktionen/backoffice-betreiber.md, Abschnitt 1).
 // Bewusst eigene API-Endpunkte statt der better-auth admin-Plugin-Funktionen: die Liste
 // verbindet user, member, organization und Kennzahlen aus clients/bookings – eine Projektion,
 // die das Plugin nicht kennt. Das Plugin bleibt für die Schreibwege zuständig (Coach anlegen,

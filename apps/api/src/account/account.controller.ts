@@ -23,7 +23,7 @@ function isImpersonated(req: Request): boolean {
  * Eigenes Konto des Coachs. Passwort ändern und E-Mail-Adresse wechseln laufen direkt über
  * better-auth (siehe auth.module.ts) und brauchen hier nichts – nur die Löschung ist ein
  * eigener Weg, weil sie über die Organisation gehen und ein Protokoll schreiben muss
- * (doc/technisches-konzept.md §17).
+ * (doc/technik/technisches-konzept.md §17).
  *
  * `deletion` ist Singular, weil es genau ein Löschvorgang pro Konto ist und kein
  * Sammelobjekt; die Plural-Konvention aus CLAUDE.md gilt für Sammlungen wie /bookings.

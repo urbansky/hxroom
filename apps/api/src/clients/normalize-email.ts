@@ -1,6 +1,6 @@
 /**
  * Normalisiert eine E-Mail-Adresse für das Klienten-Matching (Baustein 1 aus
- * doc/technisches-konzept.md §11, „Klienten-Matching“): lowercase und getrimmt.
+ * doc/technik/technisches-konzept.md §11, „Klienten-Matching“): lowercase und getrimmt.
  *
  * Muss vor jedem Lookup und jedem Insert auf `clients.email` laufen. Der
  * Unique-Constraint (organizationId, email) ist case-sensitive und würde

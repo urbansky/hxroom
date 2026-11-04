@@ -13,7 +13,7 @@ import { CONFIRMATION_TTL_MINUTES } from './booking.constants';
  * und der Lazy-Check in BookingsService.confirm greift nur, wenn der Klient den Link
  * doch noch anklickt – was bei einer verfallenen Buchung gerade nicht passiert.
  *
- * doc/technisches-konzept.md sieht dafür einen BullMQ-Job mit Delay vor. Solange kein
+ * doc/technik/technisches-konzept.md sieht dafür einen BullMQ-Job mit Delay vor. Solange kein
  * Redis im Betrieb ist, erledigt ein periodischer Lauf dasselbe: die Genauigkeit von
  * ±5 Minuten ist bei einer TTL von 30 Minuten unkritisch.
  */

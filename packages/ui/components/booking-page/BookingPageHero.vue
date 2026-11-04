@@ -10,7 +10,7 @@ const { profile, ctaTo, bookable = true } = defineProps<{
   /** Ziel der Buchungs-Buttons, auf der Buchungsseite das erste Angebot. */
   ctaTo: string
   /**
-   * false ohne vollständiges Impressum (doc/legal.md §3.2): Statt des Buchungs-Buttons steht
+   * false ohne vollständiges Impressum (doc/recht/legal.md §3.2): Statt des Buchungs-Buttons steht
    * ein Hinweis, die Seite selbst bleibt sichtbar.
    */
   bookable?: boolean

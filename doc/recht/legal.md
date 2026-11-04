@@ -250,4 +250,4 @@ Wichtig für unsere AGB-Klauseln (Pflichten des Coaches):
 
 ---
 
-*Verweise: [`project.md`](project.md) · [`technisches-konzept.md`](technisches-konzept.md) · [`funktionen/backoffice-coach.md`](funktionen/backoffice-coach.md) · [`newsletter-brevo.md`](newsletter-brevo.md)*
+*Verweise: [`project.md`](../produkt/project.md) · [`technisches-konzept.md`](../technik/technisches-konzept.md) · [`funktionen/backoffice-coach.md`](../produkt/funktionen/backoffice-coach.md) · [`newsletter-brevo.md`](../technik/newsletter-brevo.md)*

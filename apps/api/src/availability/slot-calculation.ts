@@ -62,7 +62,7 @@ function overlapsAny(range: DateRange, excludeRanges: DateRange[]): boolean {
 
 /**
  * Liegt der Zeitraum vollständig in einem freigegebenen Zeitfenster seines Wochentags?
- * Für den Hinweis beim manuellen Anlegen (doc/konzept-manuelle-termine.md §2) – dort ist
+ * Für den Hinweis beim manuellen Anlegen (doc/produkt/funktionen/manuelle-termine.md §2) – dort ist
  * die Verfügbarkeit kein Hindernis, und Raster, Vorlauf und Puffer spielen keine Rolle.
  */
 export function isWithinAvailability(range: DateRange, rules: WeeklyAvailabilityRule[], timeZone: string): boolean {

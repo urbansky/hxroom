@@ -15,7 +15,7 @@ function toResponse(row: SessionNoteRow | undefined): SessionNoteResponse {
 
 /**
  * Sitzungsnotizen des Coachs, eine pro Buchung. Dieselben Endpunkte bedienen den Call und
- * das Termin-Detail (doc/technisches-konzept.md §8: „beide Oberflächen greifen auf dieselbe
+ * das Termin-Detail (doc/technik/technisches-konzept.md §8: „beide Oberflächen greifen auf dieselbe
  * Tabelle zu“).
  *
  * Erlaubt für jede eigene Buchung, unabhängig vom Zustand: Vorbereitung vor der Sitzung und

@@ -14,7 +14,7 @@ useHead({
 
 <template>
   <!-- Der Text steht in @hxroom/ui und gilt für alle Seiten von HxRoom; die Buchungsseiten
-       zeigen ihn mit dem jeweiligen Coach als Verantwortlichem (doc/legal.md §4). -->
+       zeigen ihn mit dem jeweiligen Coach als Verantwortlichem (doc/recht/legal.md §4). -->
   <div class="legal-container">
     <span class="legal-eyebrow">Rechtliches</span>
     <h1 class="legal-headline">Datenschutz&shy;erklärung</h1>

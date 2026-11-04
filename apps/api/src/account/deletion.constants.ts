@@ -1,4 +1,4 @@
-// Fristen der Kontolöschung. Die 30 Tage stammen aus doc/legal.md ("30 Tage Aufbewahrung
+// Fristen der Kontolöschung. Die 30 Tage stammen aus doc/recht/legal.md ("30 Tage Aufbewahrung
 // nach Kündigung dann Löschung") – der Coach behält damit ein Zeitfenster, in dem er die
 // Löschung zurücknehmen und seine Daten noch sichern kann.
 export const DELETION_GRACE_DAYS = 30;

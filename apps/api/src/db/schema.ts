@@ -73,12 +73,12 @@ export const organization = pgTable('organization', {
   createdAt: timestamp('created_at').notNull(),
   metadata: text('metadata'),
   // Läuft eine Kontolöschung, steht hier der Zeitpunkt, ab dem der Cron sie ausführt
-  // (30 Tage nach dem Antrag, siehe doc/legal.md); NULL = keine Löschung beantragt.
+  // (30 Tage nach dem Antrag, siehe doc/recht/legal.md); NULL = keine Löschung beantragt.
   //
   // Bewusst an der Organisation und nicht am User: die Sperre der öffentlichen
   // Buchungsseite hängt an OrganizationService.findBySlug und käme sonst nur über zwei
   // Rückwärts-Joins via `member` an das Flag – genau die Richtung, die
-  // doc/technisches-konzept.md §17 als Fehlerquelle beschreibt. Außerdem wäre bei
+  // doc/technik/technisches-konzept.md §17 als Fehlerquelle beschreibt. Außerdem wäre bei
   // mehreren Owner-Membern (Studio-Plan) nicht definiert, wessen Flag gilt.
   //
   // Gespeichert wird das Fälligkeitsdatum, nicht der Antragszeitpunkt: Cron-Filter,
@@ -118,7 +118,7 @@ export const bookingPage = pgTable('booking_page', {
   topics:          text('topics').array().notNull().default(sql`'{}'::text[]`),
   quote:           text('quote'),
   qualifications:  text('qualifications').array().notNull().default(sql`'{}'::text[]`),
-  // Impressum der Buchungsseite (doc/legal.md §3.2): Angaben im Formular (`form`) oder ein
+  // Impressum der Buchungsseite (doc/recht/legal.md §3.2): Angaben im Formular (`form`) oder ein
   // Link auf ein vorhandenes Impressum (`link`). Erst mit Bestätigung vollständig – ohne
   // vollständiges Impressum ist die Seite nicht buchbar (isImprintComplete).
   imprintMode:        text('imprint_mode').$type<ImprintMode>(),
@@ -149,7 +149,7 @@ export const bookingPage = pgTable('booking_page', {
   updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
 
-// Sitzungsangebote (Einzelsitzungen). Details: doc/funktionen/angebote-verfuegbarkeiten.md
+// Sitzungsangebote (Einzelsitzungen). Details: doc/produkt/funktionen/angebote-verfuegbarkeiten.md
 // Pakete/Mehrfachsitzungen sowie die Verknüpfung mit Verfügbarkeitsslots (Zwei-Stufen-Modell)
 // sind dort als spätere Ausbaustufe beschrieben und bewusst noch nicht Teil dieser Tabelle.
 export const offers = pgTable('offers', {
@@ -165,7 +165,7 @@ export const offers = pgTable('offers', {
   updatedAt:       timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
 
-// Klienten-Matching über mehrere Buchungen hinweg (siehe doc/technisches-konzept.md §11).
+// Klienten-Matching über mehrere Buchungen hinweg (siehe doc/technik/technisches-konzept.md §11).
 // Ein Datensatz pro (Organisation, E-Mail). `email` wird vom Service normalisiert
 // (lowercase, getrimmt) vor jedem Insert/Lookup, der Unique-Constraint allein ist
 // case-sensitive und reicht dafür nicht aus.
@@ -175,7 +175,7 @@ export const offers = pgTable('offers', {
 //   dann und nicht schon bei der Erstellung, das vermeidet "Geister-Klienten" durch nie
 //   bestätigte Buchungen.
 // - Manuell durch den Coach (ClientsService.create, Funktion 03 in
-//   doc/funktionen/backoffice-coach.md) – für Bestandsklienten aus anderen Systemen.
+//   doc/produkt/funktionen/backoffice-coach.md) – für Bestandsklienten aus anderen Systemen.
 //   Solche Datensätze haben zunächst keine Buchung; die "keine Geister-Klienten"-Regel
 //   gilt nur für den automatischen Weg.
 //
@@ -198,7 +198,7 @@ export const clients = pgTable('clients', {
 ]);
 
 // Buchungen durchlaufen einen Bestätigungsschritt per E-Mail-Link (siehe
-// doc/technisches-konzept.md §11): Status startet als 'pending', wird erst durch
+// doc/technik/technisches-konzept.md §11): Status startet als 'pending', wird erst durch
 // Bestätigung mit korrektem clientAccessToken zu 'confirmed' – dabei wird auch
 // erst der Klient gematcht/angelegt (clientId gesetzt). offerName/durationMinutes
 // sind Snapshots zum Buchungszeitpunkt, unabhängig von späteren Angebotsänderungen.
@@ -223,13 +223,13 @@ export const bookings = pgTable('bookings', {
   // Der Default trägt den Altbestand; rückwirkend lässt sich die Herkunft nicht ermitteln.
   origin:             text('origin').$type<BookingOrigin>().notNull().default('booking_page'),
   // Verbindet manuell angelegte Termine, die in einem Vorgang entstanden sind
-  // (doc/konzept-manuelle-termine.md §5). Jeder Termin bleibt für sich vollständig – die
+  // (doc/produkt/funktionen/manuelle-termine.md §5). Jeder Termin bleibt für sich vollständig – die
   // Serie trägt nur die Anzeige „Termin 2 von 5“. null für jeden einzeln angelegten Termin.
   seriesId:           text('series_id'),
   clientAccessToken:  text('client_access_token').notNull(),
   clientTokenUsedAt:  timestamp('client_token_used_at'),
   confirmedAt:        timestamp('confirmed_at'),
-  // Videocall (doc/technisches-konzept.md §8). Der Warteraum ist kein eigener
+  // Videocall (doc/technik/technisches-konzept.md §8). Der Warteraum ist kein eigener
   // LiveKit-Raum, sondern ein Zustand dieser Buchung – und er muss die Datenbank
   // erreichen: läge "eingelassen" nur im Speicher, würde ein Reload des Coach-Browsers
   // den bereits eingelassenen Klienten zurück in den Warteraum werfen.
@@ -263,7 +263,7 @@ export const bookings = pgTable('bookings', {
     .where(sql`status != 'cancelled'`),
 ]);
 
-// Sitzungsnotizen des Coachs (doc/technisches-konzept.md §8, doc/project.md §5a): im Call
+// Sitzungsnotizen des Coachs (doc/technik/technisches-konzept.md §8, doc/produkt/project.md §5a): im Call
 // geschrieben, danach im Termin weiter bearbeitbar, nie für den Klienten sichtbar.
 //
 // Eigene Tabelle statt Spalte an `bookings`: Buchungen werden an vielen Stellen vollständig
@@ -279,7 +279,7 @@ export const sessionNotes = pgTable('session_notes', {
   updatedAt:      timestamp('updated_at').notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
 
-// Chat einer Sitzung (doc/project.md §5a, doc/technisches-konzept.md §8). Rückfallebene
+// Chat einer Sitzung (doc/produkt/project.md §5a, doc/technik/technisches-konzept.md §8). Rückfallebene
 // bei Tonausfall und Weg für einen Link oder ein Dokument – kein Plauderkanal. Der Verlauf
 // wird gespeichert und ist rechtlich wie die Notizen zu behandeln.
 //
@@ -314,7 +314,7 @@ export const sessionChatMessages = pgTable('session_chat_messages', {
 
 // Im Chat geteilte Dateien (B7, zweiter Teil). Eine Datei je Nachricht, ein Begleittext ist
 // optional. Das Objekt liegt in S3 unter {organizationId}/sessions/{bookingId}/attachments/
-// {id}.{ext} – ohne echten Dateinamen, der steht hier (doc/s3-verzeichnisschema.md).
+// {id}.{ext} – ohne echten Dateinamen, der steht hier (doc/technik/s3-verzeichnisschema.md).
 //
 // Eigene Tabelle statt Spalten an der Nachricht: Die Angaben zur Datei werden auch gebraucht,
 // wo es um Dateien geht und nicht um den Verlauf – beim Zählen der Obergrenze und später beim
@@ -347,7 +347,7 @@ export const sessionChatFiles = pgTable('session_chat_files', {
 ]);
 
 // Allgemeine Verfügbarkeit (Stufe 1 des Zwei-Stufen-Modells, siehe
-// doc/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit
+// doc/produkt/funktionen/angebote-verfuegbarkeiten.md). Die Verknüpfung einzelner Slots mit
 // bestimmten Angeboten (Stufe 2, offer_availability_slots) ist bewusst noch nicht
 // Teil dieser Tabelle.
 export const availabilitySlots = pgTable('availability_slots', {
@@ -361,7 +361,7 @@ export const availabilitySlots = pgTable('availability_slots', {
 });
 
 // Coach-weite Einstellungen zur Slot-Berechnung (Stufe 1 des Zwei-Stufen-Modells,
-// siehe doc/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7: bewusst global pro
+// siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7: bewusst global pro
 // Coach, nicht pro Angebot). Wird aktuell nur gespeichert/editiert – die eigentliche
 // Slot-Berechnung, die diese Werte konsumiert, folgt in einem späteren Schritt.
 export const availabilitySettings = pgTable('availability_settings', {
@@ -374,7 +374,7 @@ export const availabilitySettings = pgTable('availability_settings', {
   updatedAt:          timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
 
-// Löschprotokoll für Coach-Konten (doc/technisches-konzept.md §7, Funktion 1.06: die
+// Löschprotokoll für Coach-Konten (doc/technik/technisches-konzept.md §7, Funktion 1.06: die
 // DSGVO-Löschung braucht einen Nachweis, dass und was gelöscht wurde).
 //
 // Der Name ist bewusst nicht `account_deletions`: `account` ist in diesem Schema die
@@ -409,7 +409,7 @@ export interface DeletedCounts {
   offers:   number;
 }
 
-// Löschprotokoll für einzelne Klienten (doc/funktionen/backoffice-coach.md 7.04, Löschung
+// Löschprotokoll für einzelne Klienten (doc/produkt/funktionen/backoffice-coach.md 7.04, Löschung
 // auf Anfrage nach Art. 17 DSGVO). Wie coach_deletions: nur IDs und Anzahlen, keine Namen
 // oder Adressen, und bewusst ohne references() – das Protokoll soll die Löschung belegen,
 // auch über die Löschung des Kontos hinaus.
@@ -424,7 +424,7 @@ export const clientDeletions = pgTable('client_deletions', {
   filesDeleted:    integer('files_deleted').notNull(),
 });
 
-// Zustimmung der Coachs zu AGB und AVV (doc/technisches-konzept.md §7). Eine Zeile je
+// Zustimmung der Coachs zu AGB und AVV (doc/technik/technisches-konzept.md §7). Eine Zeile je
 // angenommener Fassung (TERMS_VERSION), ohne IP-Adresse. Hängt mit Cascade am User: Mit dem
 // Konto endet auch der Vertrag.
 export const termsAcceptances = pgTable('terms_acceptances', {
@@ -436,7 +436,7 @@ export const termsAcceptances = pgTable('terms_acceptances', {
   unique('terms_acceptances_user_version_unique').on(table.userId, table.version),
 ]);
 
-// Rückmeldungen der Coachs über den Feedback-Knopf (doc/technisches-konzept.md §5, „Feedback“).
+// Rückmeldungen der Coachs über den Feedback-Knopf (doc/technik/technisches-konzept.md §5, „Feedback“).
 // Hängt mit Cascade an Organisation und User: Mit dem Konto verschwindet auch das Feedback.
 export const feedback = pgTable('feedback', {
   id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),

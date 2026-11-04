@@ -11,7 +11,7 @@ useHead({
 </script>
 
 <template>
-  <!-- AGB zwischen HxRoom und den Coachs (doc/legal.md §5.1), Fassung für die kostenlose Beta.
+  <!-- AGB zwischen HxRoom und den Coachs (doc/recht/legal.md §5.1), Fassung für die kostenlose Beta.
        Stile aus @hxroom/ui/theme (legal.css). Änderungen am Text: Stand-Datum unten und
        TERMS_VERSION in packages/shared/src/terms.ts mitziehen. -->
   <div class="legal-container">

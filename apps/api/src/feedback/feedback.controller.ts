@@ -6,7 +6,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { createFeedbackSchema, type CreateFeedbackDto } from '@hxroom/shared';
 import { FeedbackService } from './feedback.service';
 
-/** Feedback-Knopf der Coach-App (doc/technisches-konzept.md §5, „Feedback“). */
+/** Feedback-Knopf der Coach-App (doc/technik/technisches-konzept.md §5, „Feedback“). */
 @Controller('feedback')
 @UseGuards(AuthGuard)
 export class FeedbackController {

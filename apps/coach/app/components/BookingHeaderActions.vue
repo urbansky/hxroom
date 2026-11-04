@@ -25,7 +25,7 @@ const cancelReason = computed({
 
 const menuItems = computed<DropdownMenuItem[][]>(() => {
   const common: DropdownMenuItem[] = []
-  // Folgetermin (doc/konzept-manuelle-termine.md §2) – nur mit Klient: Er bekommt die
+  // Folgetermin (doc/produkt/funktionen/manuelle-termine.md §2) – nur mit Klient: Er bekommt die
   // Einladung, und eine Probe-Sitzung hat keinen.
   if (props.booking.clientId && !isTestSession(props.booking)) {
     common.push({

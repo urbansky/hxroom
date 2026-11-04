@@ -7,7 +7,7 @@ import CallCameraView from './CallCameraView.vue'
 import CallMicLevel from './CallMicLevel.vue'
 import type { CallDevice } from './types'
 
-// Geräte einrichten im Warteraum (doc/poc/videocall-v2.html, Screen 1): sich selbst sehen,
+// Geräte einrichten im Warteraum (doc/prototypen/videocall-v2.html, Screen 1): sich selbst sehen,
 // Kamera und Mikrofon wählen und an- oder ausschalten, am Pegel hören, ob das Mikrofon das
 // richtige ist. Was hier eingestellt wird, gilt beim Einlass.
 //

@@ -111,7 +111,7 @@ describe('Buchungs-Mail-Templates', () => {
     });
 
     // Mails an Klienten gehen im Namen des Coachs hinaus und verlinken deshalb das Impressum
-    // seiner Buchungsseite (doc/legal.md §3.2).
+    // seiner Buchungsseite (doc/recht/legal.md §3.2).
     it('verlinkt unter der Mail das Impressum der Buchungsseite', async () => {
       const html = await renderBookingConfirmedEmail(props);
 

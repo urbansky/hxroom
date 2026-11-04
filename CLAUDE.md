@@ -50,7 +50,7 @@ Wichtigste Regeln:
 
 Die Call-Oberfläche liegt rollenfrei in `packages/ui/components/call/` und trägt beide Seiten: `CallScreen` als Gerüst (Bühne, Steuerleiste, Slideover), dazu `CallVideoArea`, `CallControls`, `CallChatPanel`, `CallCameraView` und `CallAudioOutput`; für den Warteraum `CallDeviceSetup` (Vorschau, Geräteauswahl, gesperrter Weichzeichner) mit `CallMicLevel`. Die Vorschauspuren (`startPreview()`) übernimmt `joinCall()` beim Einlass – beendet werden sie deshalb auf Seitenebene, nie im Warteraum selbst. Was ein Browser nicht kann oder was noch nicht gebaut ist, bleibt hinter Schaltern ausgeblendet (`can-share` je nach `screenShareSupported()`, `can-blur` bis zum Weichzeichnen) – im echten Gespräch soll nichts eine Wirkung vortäuschen. Rollenspezifisches – Notizen, Klientenakte, Stummschalten, Timer, das Beenden-Modal – bleibt in der jeweiligen App und wird als Props und Slots hineingereicht (`#sidebar`, `#stage-overlay`). Einen Extension-Seam oder Event-Bus gibt es dafür bewusst nicht.
 
-Coach und Klient bleiben bewusst auf getrennten Hosts (`app.hxroom.de` vs. `[slug].hxroom.de`), damit die Coach-Session nie auf einer Custom-Domain (CNAME-Pro-Feature) landet. Details in `doc/technisches-konzept.md` §6 und §8.
+Coach und Klient bleiben bewusst auf getrennten Hosts (`app.hxroom.de` vs. `[slug].hxroom.de`), damit die Coach-Session nie auf einer Custom-Domain (CNAME-Pro-Feature) landet. Details in `doc/technik/technisches-konzept.md` §6 und §8.
 
 ## Dokumentation im Ordner `doc/`
 
@@ -65,8 +65,10 @@ Im Ordner `doc/` liegen die fachlichen und technischen Markdown-Dokumente zu **H
 
 Verwende diese Begriffe konsistent in Code, Kommentaren, Commits und neuen Dokumenten. Der Produktname ist immer **HxRoom**.
 
-**Schreibrechte auf `doc/`:**
-- **Technische Dokumente** (z. B. Architektur, API-Specs, Datenmodelle, Setup-Anleitungen, Build-/Deployment-Notizen): Du darfst diese eigenständig anpassen, erweitern oder korrigieren, wenn sich der Code oder die technische Realität ändert. Halte Änderungen knapp und nachvollziehbar.
-- **Fachliche/konzeptionelle Dokumente** (Produktvision, Rollenmodell, Geschäftslogik, UX-Konzepte, Pricing, Marketing, Zeitplan): Nicht ohne Rücksprache ändern. Schlage Änderungen vor, statt sie selbst durchzuführen.
+**Aufbau von `doc/`** (Übersicht in `doc/README.md`): `produkt/` (Vision, Pricing, UX, Zeitplan, Funktionskonzepte in `produkt/funktionen/`), `recht/`, `marketing/`, `technik/`, dazu `prototypen/` (HTML-Mockups) und `beispieldaten/`. Neue Dokumente kommen in den passenden Ordner, nicht auf die oberste Ebene.
+
+**Schreibrechte auf `doc/`** – richten sich nach dem Ordner:
+- **`technik/`** (Architektur, API-Specs, Datenmodelle, Setup-Anleitungen, Build-/Deployment-Notizen): Du darfst diese eigenständig anpassen, erweitern oder korrigieren, wenn sich der Code oder die technische Realität ändert. Halte Änderungen knapp und nachvollziehbar.
+- **Alle anderen Ordner** (`produkt/`, `recht/`, `marketing/`, `prototypen/`, `beispieldaten/`): Nicht ohne Rücksprache ändern. Schlage Änderungen vor, statt sie selbst durchzuführen. Ausgenommen sind reine Pfadkorrekturen, wenn Dateien verschoben werden.
 
 **Ignorieren:** Der Ordner `old/` (sofern vorhanden) ist veraltet und darf bei der Bearbeitung nicht berücksichtigt werden.

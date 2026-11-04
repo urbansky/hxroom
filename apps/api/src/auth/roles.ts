@@ -4,7 +4,7 @@
  * Nicht zu verwechseln mit `member.role`: das ist die Rolle *innerhalb* einer
  * Organisation ('owner'), während es hier um die Rolle auf der Plattform geht.
  * Ein Betreiber trägt 'admin' und ist Mitglied keiner Organisation – siehe
- * doc/technisches-konzept.md §7, Abschnitt „Betreiber-Zugang".
+ * doc/technik/technisches-konzept.md §7, Abschnitt „Betreiber-Zugang".
  */
 export const DEFAULT_ROLE = 'user';
 

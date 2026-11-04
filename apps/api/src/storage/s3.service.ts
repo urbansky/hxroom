@@ -52,7 +52,7 @@ export class S3Service {
 
   /**
    * Signierter Link auf ein Objekt, gültig für kurze Zeit
-   * (doc/s3-verzeichnisschema.md, doc/technisches-konzept.md §8, „Chat und Dateien“).
+   * (doc/technik/s3-verzeichnisschema.md, doc/technik/technisches-konzept.md §8, „Chat und Dateien“).
    *
    * Die Antwort steht in der Signatur, nicht beim Speicher: Dateiname, der hier übergebene
    * geprüfte Typ, ob der Browser anzeigt (`inline`) oder herunterlädt (`attachment`), und
@@ -95,13 +95,13 @@ export class S3Service {
   /**
    * Löscht alle Objekte unterhalb eines Prefixes und gibt die Anzahl zurück.
    *
-   * Gebraucht für die Kontolöschung: laut doc/s3-verzeichnisschema.md ist das oberste
+   * Gebraucht für die Kontolöschung: laut doc/technik/s3-verzeichnisschema.md ist das oberste
    * Pfadsegment die Coach-ID, damit dort ein einziger Prefix-Delete genügt. Ein gezieltes
    * deleteObject(coachAvatarKey(...)) würde heute zwar reichen – es gibt aktuell nur den
    * Avatar –, wäre aber ab dem ersten weiteren Objekttyp stillschweigend unvollständig.
    *
    * Bewusst einzelne DeleteObject-Aufrufe statt DeleteObjects (Batch): der Batch-Endpunkt
-   * ist bei RustFS, dem Dev-Backend laut doc/technisches-konzept.md §17, nicht zugesichert.
+   * ist bei RustFS, dem Dev-Backend laut doc/technik/technisches-konzept.md §17, nicht zugesichert.
    * Bei einer Handvoll Objekten pro Coach ist der Unterschied bedeutungslos.
    */
   async deletePrefix(prefix: string): Promise<number> {

@@ -168,7 +168,7 @@ function applyCancelled(updated: CoachBookingResponse) {
   }
 }
 
-// Termin anlegen (doc/konzept-manuelle-termine.md): aus dem Kopf oder per Klick auf eine
+// Termin anlegen (doc/produkt/funktionen/manuelle-termine.md): aus dem Kopf oder per Klick auf eine
 // freie Stelle der Wochenansicht. Klienten und Angebote erst beim Öffnen.
 const manualOpen = ref(false)
 const manualClients = ref<ClientListItem[]>([])

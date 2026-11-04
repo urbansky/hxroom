@@ -11,7 +11,7 @@ useHead({
 </script>
 
 <template>
-  <!-- Vertrag zur Auftragsverarbeitung (doc/legal.md §6), Bestandteil der AGB. Die Liste der
+  <!-- Vertrag zur Auftragsverarbeitung (doc/recht/legal.md §6), Bestandteil der AGB. Die Liste der
        Unterauftragsverarbeiter folgt legal.md §4.4, die Maßnahmen technisches-konzept.md §13
        und §17 – beide hier nachziehen, wenn sich dort etwas ändert. Stile aus legal.css.
        Neuer Text: Stand-Datum unten und TERMS_VERSION in packages/shared/src/terms.ts mitziehen. -->

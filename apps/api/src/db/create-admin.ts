@@ -3,7 +3,7 @@
  *
  * Hintergrund: `user.role` ist im better-auth admin-Plugin als `input: false` deklariert
  * und lässt sich deshalb über die reguläre Registrierung nicht setzen – der erste Betreiber
- * muss von außen entstehen. Siehe doc/technisches-konzept.md §7, „Betreiber-Zugang".
+ * muss von außen entstehen. Siehe doc/technik/technisches-konzept.md §7, „Betreiber-Zugang".
  *
  * Schreibt wie der Seed direkt per Drizzle. Das ist hier kein Umweg, sondern der Punkt:
  * ein Insert am better-auth-Adapter vorbei löst die databaseHooks nicht aus, es kann also

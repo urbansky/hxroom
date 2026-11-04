@@ -38,7 +38,7 @@ export class ClientsService {
   ) {}
 
   /**
-   * Klientenliste mit den Kennzahlen aus Funktion 01 (doc/funktionen/backoffice-coach.md):
+   * Klientenliste mit den Kennzahlen aus Funktion 01 (doc/produkt/funktionen/backoffice-coach.md):
    * Anzahl gehaltener Sitzungen, letzte und nächste Sitzung.
    *
    * Bewusst eine einzige Query mit FILTER-Aggregaten statt einer Zusatzabfrage pro
@@ -159,7 +159,7 @@ export class ClientsService {
   }
 
   /**
-   * Löscht einen Klienten mit allem, was zu ihm gehört (doc/funktionen/backoffice-coach.md
+   * Löscht einen Klienten mit allem, was zu ihm gehört (doc/produkt/funktionen/backoffice-coach.md
    * 7.04, Art. 17 DSGVO): Termine samt Notizen, Chat und geteilten Dateien.
    *
    * Termine hängen nur lose am Klienten (`client_id` mit onDelete 'set null') und tragen

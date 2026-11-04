@@ -90,7 +90,7 @@ export function useBookingActions(
     }
   }
 
-  // Manuelle Zuordnung zum Klientenstamm (doc/technisches-konzept.md §11).
+  // Manuelle Zuordnung zum Klientenstamm (doc/technik/technisches-konzept.md §11).
   // Die Kontaktdaten der Buchung bleiben dabei unverändert – sie halten fest, was der
   // Klient beim Buchen eingegeben hat.
   async function assignClient(clientId: string | null) {

@@ -107,7 +107,7 @@ function offsetTop(minutes: number): number {
   return (minutes - timeRange.value.start) * PIXELS_PER_MINUTE
 }
 
-// Termin anlegen per Klick in den Kalender (doc/konzept-manuelle-termine.md §2). Ein Klick
+// Termin anlegen per Klick in den Kalender (doc/produkt/funktionen/manuelle-termine.md §2). Ein Klick
 // auf einen Termin öffnet weiter dessen Detail; Vergangenes bleibt ohne Wirkung.
 function onColumnClick(event: MouseEvent, date: Date) {
   if ((event.target as HTMLElement).closest('button')) return

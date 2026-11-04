@@ -1,7 +1,7 @@
 import type { BookingStatus } from '@hxroom/shared';
 
 // Zeitfenster, in dem eine 'pending'-Buchung bestätigt werden muss, bevor sie verfällt
-// (siehe doc/technisches-konzept.md §11). Wird an drei Stellen gebraucht und muss dort
+// (siehe doc/technik/technisches-konzept.md §11). Wird an drei Stellen gebraucht und muss dort
 // zwingend derselbe Wert sein: beim Lazy-Check in BookingsService.confirm, im
 // Verfall-Cron (BookingExpiryService) und im Hinweistext der Bestätigungsmail.
 //
@@ -22,7 +22,7 @@ export function isExpiredPending(createdAt: Date, now: Date, ttlMinutes = CONFIR
 export const AD_HOC_OFFER_NAME = 'Spontan-Termin';
 export const AD_HOC_DURATION_MINUTES = 60;
 
-// Manuell angelegter Termin ohne Angebot (doc/konzept-manuelle-termine.md): Die Dauer gibt
+// Manuell angelegter Termin ohne Angebot (doc/produkt/funktionen/manuelle-termine.md): Die Dauer gibt
 // der Coach an, die Bezeichnung bleibt neutral.
 export const MANUAL_OFFER_NAME = 'Sitzung';
 
@@ -34,7 +34,7 @@ export const TEST_SESSION_DURATION_MINUTES = 15;
 export const TEST_SESSION_RETENTION_HOURS = 24;
 
 // Der Klient darf seinen Termin über den Link aus der Bestätigungsmail bis zum
-// Terminbeginn selbst absagen (doc/funktionen/backoffice-coach.md 2.06). Danach ist die
+// Terminbeginn selbst absagen (doc/produkt/funktionen/backoffice-coach.md 2.06). Danach ist die
 // Sitzung entweder gelaufen oder läuft gerade – dann gehört die Absage in die Hand des
 // Coachs, nicht in einen Mail-Link. Eine Absagefrist darüber hinaus gibt es im MVP nicht.
 //

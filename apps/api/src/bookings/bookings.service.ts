@@ -53,7 +53,7 @@ export class BookingsService {
     const org = await this.organizationService.findBySlug(slug);
     const requestedStart = new Date(dto.start);
 
-    // Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/legal.md
+    // Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/recht/legal.md
     // §3.2). Die Seite selbst blendet die Buttons dann schon aus (Profil: `bookable`); das
     // hier fängt ab, wer die API direkt aufruft. Spontan-Termine des Coachs laufen nicht hier
     // durch und bleiben möglich.
@@ -232,11 +232,11 @@ export class BookingsService {
 
   /**
    * Absage durch den Klienten über den Link aus der Bestätigungsmail
-   * (doc/funktionen/backoffice-coach.md 2.06). Der Slot wird dadurch sofort wieder
+   * (doc/produkt/funktionen/backoffice-coach.md 2.06). Der Slot wird dadurch sofort wieder
    * buchbar – dafür sorgt der partielle Unique-Index, der 'cancelled' ausnimmt.
    *
    * Der clientAccessToken wird bewusst nicht invalidiert: derselbe Token soll später den
-   * Warteraum öffnen (doc/technisches-konzept.md §8), und ein wiederholter Aufruf des
+   * Warteraum öffnen (doc/technik/technisches-konzept.md §8), und ein wiederholter Aufruf des
    * Links soll dem Klienten „bereits abgesagt" zeigen statt „ungültiger Link".
    */
   async cancelByClient(bookingId: string, token: string, reason?: string): Promise<BookingResponse> {
@@ -342,7 +342,7 @@ export class BookingsService {
   // Mail-Providers (MailService.send wirft) darf die Bestätigung nicht zurückrollen und den
   // Klienten nicht auf eine Fehlerseite schicken. Beide Mails laufen in getrennten
   // try/catch, damit die eine nicht an der anderen scheitert. Logs enthalten laut
-  // doc/technisches-konzept.md §17 ausschließlich IDs, keine Namen oder Adressen.
+  // doc/technik/technisches-konzept.md §17 ausschließlich IDs, keine Namen oder Adressen.
   private async sendBookingConfirmedMails(booking: BookingRow): Promise<void> {
     const org = await this.organizationService.findById(booking.organizationId);
     const coach = await this.organizationService.findOwnerContact(booking.organizationId);

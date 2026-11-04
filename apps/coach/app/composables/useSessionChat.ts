@@ -3,7 +3,7 @@ import type { CallChatMessage } from '@hxroom/ui'
 
 /**
  * Der gespeicherte Chat einer Sitzung zum Nachlesen – für das Termin-Detail
- * (doc/technisches-konzept.md §8). Gegenstück zu useCallChat, aber ohne Senden und ohne
+ * (doc/technik/technisches-konzept.md §8). Gegenstück zu useCallChat, aber ohne Senden und ohne
  * Nachholen über den Ereigniskanal: Hier wird zurückgeschaut, nicht mitgeschrieben.
  *
  * Geladen wird erst, wenn eine Buchung gesetzt ist – wie bei useSessionNotes also erst beim

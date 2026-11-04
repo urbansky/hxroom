@@ -2,7 +2,7 @@
 import { inject, type Ref } from 'vue';
 import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
 
-// Auf jeder Seite der Buchungsseite: Impressum und Datenschutzerklärung (doc/legal.md §3.2,
+// Auf jeder Seite der Buchungsseite: Impressum und Datenschutzerklärung (doc/recht/legal.md §3.2,
 // §4) und die AGB des Coachs, wenn er welche verlinkt hat.
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 </script>

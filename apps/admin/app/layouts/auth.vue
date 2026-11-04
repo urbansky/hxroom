@@ -13,7 +13,7 @@ import { Logo } from '@hxroom/ui'
     </main>
 
     <!-- Keine Impressum-/Datenschutz-Links wie im Coach-Layout: admin.hxroom.de ist ein
-         interner Zugang ohne öffentliche Anbieterkennzeichnung (doc/legal.md, Abschnitt 1). -->
+         interner Zugang ohne öffentliche Anbieterkennzeichnung (doc/recht/legal.md, Abschnitt 1). -->
     <footer class="py-6 text-center text-xs text-(--ui-text-muted)">
       Interner Bereich · nur für Betreiber
     </footer>

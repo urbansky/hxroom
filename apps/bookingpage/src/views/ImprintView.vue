@@ -8,7 +8,7 @@ import SiteHeader from '../components/SiteHeader.vue';
 import SiteFooter from '../components/SiteFooter.vue';
 import LoadingState from '../components/LoadingState.vue';
 
-// Impressum der Buchungsseite (doc/legal.md §3.2): oben der Coach als Anbieter dieser Seite,
+// Impressum der Buchungsseite (doc/recht/legal.md §3.2): oben der Coach als Anbieter dieser Seite,
 // darunter HxRoom als technischer Betreiber – derselbe Block wie auf hxroom.de/impressum.
 // Stile aus @hxroom/ui/theme (legal.css).
 

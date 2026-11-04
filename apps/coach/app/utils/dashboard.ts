@@ -5,7 +5,7 @@ import type { AvailabilitySlotResponse, ClientListItem, CoachBookingResponse, Of
  * Vue-Bezug: die Seite lädt, diese Datei rechnet, die Komponenten zeigen an.
  *
  * Alle Werte entstehen clientseitig aus den vorhandenen Listen-Endpunkten – die
- * serverseitigen Aggregate (doc/zeitplan.md, "Dashboard-Queries mit Drizzle")
+ * serverseitigen Aggregate (doc/produkt/zeitplan.md, "Dashboard-Queries mit Drizzle")
  * gibt es noch nicht. Deshalb wird hier nur gezählt, was die geladenen Daten
  * vollständig hergeben.
  */
@@ -95,7 +95,7 @@ export interface OnboardingBookingPage {
   avatarUpdatedAt: string | null
   /** Zeitpunkt, an dem die Erfolgsmeldung weggeklickt wurde; null = noch nicht gesehen. */
   onboardingCelebratedAt: string | null
-  /** Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/legal.md §3.2). */
+  /** Ohne vollständiges Impressum nimmt die Buchungsseite keine Buchungen an (doc/recht/legal.md §3.2). */
   imprintComplete: boolean
   /** Erste Probe-Sitzung, in der sich der Coach selbst eingelassen hat. */
   testSessionAt: string | null
@@ -106,7 +106,7 @@ export interface OnboardingBookingPage {
 }
 
 /**
- * Sechs Schritte bis zur ersten Buchung, auf die Beta ausgerichtet (doc/funktionen/
+ * Sechs Schritte bis zur ersten Buchung, auf die Beta ausgerichtet (doc/produkt/funktionen/
  * backoffice-coach.md 1.04, technisches-konzept.md §5). Der Zustand wird bei jedem
  * Laden neu aus den Daten abgeleitet. Probe-Sitzung, geteilter Link und geprüfte
  * Buchungsseite haben einen eigenen Merker an der Buchungsseite: Die Probe-Sitzung wird nach

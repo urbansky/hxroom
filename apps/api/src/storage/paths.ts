@@ -1,4 +1,4 @@
-// Pfad-Konstanten für S3-Objekte, siehe doc/s3-verzeichnisschema.md.
+// Pfad-Konstanten für S3-Objekte, siehe doc/technik/s3-verzeichnisschema.md.
 // Stand: Profilbild und Chat-Anhänge; das übrige im Doc beschriebene Schema
 // (Klienten-Dokumente, Aufzeichnungen, Studio-Assets) ist noch geplant.
 

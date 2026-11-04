@@ -172,7 +172,7 @@ export type Auth = ReturnType<typeof betterAuth>;
           // die user-Zeile, und via Cascade nur session/account/member/invitation. Die
           // Organisation hat keinen Fremdschlüssel auf user, also blieben Klienten,
           // Buchungen, Angebote und Buchungsseite verwaist zurück – genau davor warnt
-          // doc/technisches-konzept.md §17. Zuständig ist stattdessen das account-Modul,
+          // doc/technik/technisches-konzept.md §17. Zuständig ist stattdessen das account-Modul,
           // das über die Organisation löscht und ein Protokoll schreibt.
           user: {
             changeEmail: {

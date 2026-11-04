@@ -2,7 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import type { CoachListItem, CoachStatus, ListCoachesQuery } from '@hxroom/shared'
 
-// Coach-Liste (Funktion 01, doc/funktionen/backoffice-betreiber.md).
+// Coach-Liste (Funktion 01, doc/produkt/funktionen/backoffice-betreiber.md).
 //
 // Die im Fachdokument genannte Plan-Spalte fehlt bewusst: Es gibt im Datenmodell weder
 // Subscription-Tabelle noch Trial-Feld, sie käme mit der Billing-Phase. Der Status hier ist

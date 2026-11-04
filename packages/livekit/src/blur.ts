@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import type { LocalVideoTrack } from 'livekit-client'
 import { createLogger } from './logger'
 
-// Hintergrund weichzeichnen (doc/technisches-konzept.md §8). Viele Klienten sitzen in Küche
+// Hintergrund weichzeichnen (doc/technik/technisches-konzept.md §8). Viele Klienten sitzen in Küche
 // oder Kinderzimmer (project.md §5a).
 //
 // `@livekit/track-processors` hängt einen Prozessor an die lokale Kameraspur: MediaPipe

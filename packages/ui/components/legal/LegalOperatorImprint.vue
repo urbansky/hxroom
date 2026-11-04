@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Impressum des Betreibers (doc/legal.md §3.1) – die Angaben stehen nur hier.
+// Impressum des Betreibers (doc/recht/legal.md §3.1) – die Angaben stehen nur hier.
 //
 // `full` auf hxroom.de/impressum. `operator` als Block „Technischer Betrieb“ im Impressum
 // einer Buchungsseite (§3.2): dort nur Anbieter und Kontakt. Haftung und Streitbeilegung

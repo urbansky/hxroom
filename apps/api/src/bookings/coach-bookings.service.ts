@@ -155,7 +155,7 @@ export class CoachBookingsService {
   }
 
   /**
-   * Ordnet eine Buchung manuell einem Klienten zu (doc/technisches-konzept.md §11,
+   * Ordnet eine Buchung manuell einem Klienten zu (doc/technik/technisches-konzept.md §11,
    * „Klienten-Matching“). Korrigiert ein falsches automatisches
    * E-Mail-Matching und verknüpft manuell angelegte Termine – der Coach hat das
    * letzte Wort über die Zuordnung. `null` löst die Verknüpfung wieder.
@@ -171,7 +171,7 @@ export class CoachBookingsService {
   async assignClient(organizationId: string, bookingId: string, dto: AssignBookingClientDto): Promise<CoachBookingResponse> {
     await this.findOwn(organizationId, bookingId);
 
-    // Mandantentrennung (doc/technisches-konzept.md §11): ein Klient gehört exklusiv
+    // Mandantentrennung (doc/technik/technisches-konzept.md §11): ein Klient gehört exklusiv
     // einer Organisation. Ohne diese Prüfung könnte eine fremde clientId an die eigene
     // Buchung geraten und Klientendaten organisationsübergreifend zusammenführen.
     if (dto.clientId !== null) {
@@ -196,7 +196,7 @@ export class CoachBookingsService {
   }
 
   /**
-   * Spontan-Termin: eine Sitzung, die jetzt beginnt (doc/funktionen/backoffice-coach.md 2.04).
+   * Spontan-Termin: eine Sitzung, die jetzt beginnt (doc/produkt/funktionen/backoffice-coach.md 2.04).
    *
    * Bewusst ein eigener Weg neben BookingsService.create(): Dort prüft der öffentliche
    * Buchungsweg gegen einen berechneten Verfügbarkeits-Slot und endet in 'pending', bis
@@ -306,7 +306,7 @@ export class CoachBookingsService {
   }
 
   /**
-   * Manuell angelegte Termine (doc/konzept-manuelle-termine.md): ein oder mehrere Termine
+   * Manuell angelegte Termine (doc/produkt/funktionen/manuelle-termine.md): ein oder mehrere Termine
    * zu gewählten Zeitpunkten, abgesprochen mit dem Klienten und deshalb sofort 'confirmed'.
    *
    * Mehrere Startzeiten ergeben eine Serie mit gemeinsamer series_id. Jeder Termin ist
@@ -397,7 +397,7 @@ export class CoachBookingsService {
   }
 
   /**
-   * Hinweise vor dem manuellen Anlegen (doc/konzept-manuelle-termine.md §2): je Startzeit
+   * Hinweise vor dem manuellen Anlegen (doc/produkt/funktionen/manuelle-termine.md §2): je Startzeit
    * die anderen Termine des Coachs, die den Zeitraum samt Puffer berühren, und ob er
    * außerhalb der freigegebenen Zeiten liegt. Beides hindert nicht am Anlegen.
    */
@@ -597,7 +597,7 @@ export class CoachBookingsService {
   }
 
   // Eine Mail für den ganzen Vorgang, mit einem Kalendereintrag je Termin
-  // (doc/konzept-manuelle-termine.md §4).
+  // (doc/produkt/funktionen/manuelle-termine.md §4).
   private async sendAppointmentScheduledMail(slug: string, organizationId: string, created: { row: CoachBookingRow; token: string }[]): Promise<void> {
     const org = await this.organizationService.findById(organizationId);
     const coach = await this.organizationService.findOwnerContact(organizationId);

@@ -7,7 +7,7 @@ import { toCoachBookingResponse, type CoachBookingRow } from './coach-booking.ma
 type SeriesMember = { id: string; seriesId: string; startTime: Date };
 
 /**
- * „Termin 2 von 5“ (doc/konzept-manuelle-termine.md §5): Stelle jedes Termins in seiner
+ * „Termin 2 von 5“ (doc/produkt/funktionen/manuelle-termine.md §5): Stelle jedes Termins in seiner
  * Serie, gezählt über die nicht abgesagten Termine in zeitlicher Folge. Eine abgesagte
  * Sitzung zählt nicht mit – sonst bliebe „Termin 3 von 5“ stehen, obwohl nur noch vier
  * stattfinden.
