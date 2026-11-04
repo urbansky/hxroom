@@ -17,9 +17,10 @@ import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
 import { ActivityTracker } from './activity-tracker';
 import { buildLandingUrl } from '../bookings/booking-urls';
-import { TERMS_VERSION, isReservedSlug, isValidSlugFormat } from '@hxroom/shared';
+import { TERMS_VERSION, isReservedSlug, isValidSlugFormat, userNameSchema } from '@hxroom/shared';
 
 const SIGN_UP_PATH = '/sign-up/email';
+const UPDATE_USER_PATH = '/update-user';
 
 export const AUTH = Symbol('AUTH');
 export type Auth = ReturnType<typeof betterAuth>;
@@ -76,13 +77,26 @@ export type Auth = ReturnType<typeof betterAuth>;
             }),
           ],
           hooks: {
-            // Registrieren heißt AGB und AVV annehmen (phase5-umsetzungsplan.md, 5a). Das
-            // Formular schickt `acceptTerms: true` mit dem Klick auf „Konto erstellen“, unter
-            // dem der Hinweis auf AGB und AVV steht. Die Prüfung hier hält Aufrufe am Formular
-            // vorbei auf.
             before: createAuthMiddleware(async (ctx) => {
+              if (ctx.path !== SIGN_UP_PATH && ctx.path !== UPDATE_USER_PATH) return;
+              const body = ctx.body as { name?: unknown; acceptTerms?: unknown } | undefined;
+
+              // Der Name des Kontos entsteht bei der Registrierung und lässt sich unter
+              // Einstellungen → Account ändern. better-auth nimmt jeden String, auch einen
+              // leeren – der stünde dann in Menü, Begrüßung und Mails.
+              if (body?.name !== undefined && !userNameSchema.safeParse(body.name).success) {
+                throw new APIError('BAD_REQUEST', {
+                  message: 'Name must be between 2 and 160 characters',
+                  code: 'INVALID_NAME',
+                });
+              }
               if (ctx.path !== SIGN_UP_PATH) return;
-              if ((ctx.body as { acceptTerms?: unknown } | undefined)?.acceptTerms !== true) {
+
+              // Registrieren heißt AGB und AVV annehmen (phase5-umsetzungsplan.md, 5a). Das
+              // Formular schickt `acceptTerms: true` mit dem Klick auf „Konto erstellen“, unter
+              // dem der Hinweis auf AGB und AVV steht. Die Prüfung hier hält Aufrufe am Formular
+              // vorbei auf.
+              if (body?.acceptTerms !== true) {
                 throw new APIError('BAD_REQUEST', {
                   message: 'Terms must be accepted',
                   code: 'TERMS_NOT_ACCEPTED',

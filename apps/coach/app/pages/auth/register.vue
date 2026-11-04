@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { userNameSchema } from '@hxroom/shared'
 
 definePageMeta({ layout: 'auth' })
 
@@ -13,7 +14,7 @@ const errorMessage = ref<string | null>(null)
 const pending = ref(false)
 
 const schema = z.object({
-  name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
+  name: userNameSchema,
   email: z.string().email('Ungültige E-Mail-Adresse'),
   password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { AccountDeletionStatus } from '@hxroom/shared'
+import { USER_NAME_MAX_LENGTH, userNameSchema, type AccountDeletionStatus } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -10,6 +10,38 @@ const { session } = useAuth()
 const { $api } = useApi()
 
 const inputUi = { base: 'bg-white dark:bg-elevated' }
+
+// ─── Name ──────────────────────────────────────────────────────────────────────────────
+// Der Name des Kontos: Benutzermenü, Begrüßung, Mails an den Coach. Der Name auf der
+// Buchungsseite ist ein eigenes Feld und bleibt davon unberührt. updateUser lädt die Session
+// selbst neu, Menü und Begrüßung ziehen also ohne weiteres Zutun nach.
+const currentName = computed(() => session.value.data?.user?.name ?? '')
+
+const nameSchema = z.object({ name: userNameSchema })
+type NameSchema = z.infer<typeof nameSchema>
+
+const nameForm = reactive<NameSchema>({ name: '' })
+const nameEditing = ref(false)
+const namePending = ref(false)
+const nameError = ref<string | null>(null)
+
+function startNameEdit() {
+  nameForm.name = currentName.value
+  nameError.value = null
+  nameEditing.value = true
+}
+
+async function onSubmitName(event: FormSubmitEvent<NameSchema>) {
+  nameError.value = null
+  namePending.value = true
+  try {
+    const { error } = await $authClient.updateUser({ name: event.data.name })
+    if (error) nameError.value = 'Der Name konnte nicht geändert werden.'
+    else nameEditing.value = false
+  } finally {
+    namePending.value = false
+  }
+}
 
 // ─── E-Mail-Adresse ────────────────────────────────────────────────────────────────────
 // Der Wechsel braucht zwei Bestätigungen: erst gibt die bisherige Adresse ihn frei, dann
@@ -239,6 +271,55 @@ async function revokeDeletion() {
         </div>
       </template>
     </UAlert>
+
+    <!-- Name -->
+    <SettingsSection
+      title="Name"
+      description="So begrüßt dich HxRoom und so sprechen dich unsere Mails an. Den Namen auf deiner Buchungsseite änderst du unter Einstellungen → Buchungsseite."
+    >
+      <UForm
+        v-if="nameEditing"
+        :schema="nameSchema"
+        :state="nameForm"
+        class="flex flex-col gap-4"
+        @submit="onSubmitName"
+      >
+        <UAlert
+          v-if="nameError"
+          icon="i-lucide-circle-x"
+          color="error"
+          variant="soft"
+          :description="nameError"
+        />
+        <UFormField label="Name" name="name">
+          <UInput
+            v-model="nameForm.name"
+            autocomplete="name"
+            autofocus
+            :maxlength="USER_NAME_MAX_LENGTH"
+            class="w-full"
+            :ui="inputUi"
+            @keydown.esc="nameEditing = false"
+          />
+        </UFormField>
+        <div class="flex items-center gap-2">
+          <UButton type="submit" :loading="namePending" label="Speichern" />
+          <UButton color="neutral" variant="ghost" label="Abbrechen" @click="nameEditing = false" />
+        </div>
+      </UForm>
+
+      <div v-else class="flex items-center gap-2 text-sm">
+        <span class="text-highlighted">{{ currentName }}</span>
+        <UButton
+          icon="i-lucide-pencil"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          aria-label="Name bearbeiten"
+          @click="startNameEdit"
+        />
+      </div>
+    </SettingsSection>
 
     <!-- E-Mail-Adresse -->
     <SettingsSection

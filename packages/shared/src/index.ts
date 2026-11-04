@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { isReservedSlug } from './slugs.js';
 
 export { RESERVED_SLUGS, isReservedSlug, isValidSlugFormat } from './slugs.js';
+export { USER_NAME_MAX_LENGTH, userNameSchema } from './account.js';
 export { bookingPageCtaLabel, hasBookingPageAbout, formatOfferPrice, type BookingPageProfile } from './booking-page.js';
 export {
   LEGAL_FORMS,
