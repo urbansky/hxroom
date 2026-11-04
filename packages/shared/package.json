@@ -13,7 +13,7 @@
   },
   "scripts": {
     "build": "tsc && tsc -p tsconfig.cjs.json",
-    "dev": "tsc --watch"
+    "dev": "tsc --build tsconfig.json tsconfig.cjs.json --watch"
   },
   "dependencies": {
     "zod": "^4.5.4"
