@@ -188,7 +188,7 @@ async function openManual(start: Date | null = null) {
   manualOpen.value = true
 }
 
-// Still nachladen statt loadBookings(): Das Skelett ließe den Kalender hinter dem Modal flackern.
+// Still nachladen statt loadBookings(): Das Skelett ließe die Termine hinter dem Modal flackern.
 async function refreshBookings() {
   try {
     bookings.value = await $api<CoachBookingResponse[]>('/bookings', {
@@ -213,7 +213,7 @@ const emptyStateText = computed(() => {
   >
     <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-6">
       <div>
-        <h1 class="font-serif text-3xl text-highlighted mb-2">Kalender</h1>
+        <h1 class="font-serif text-3xl text-highlighted mb-2">Termine</h1>
         <p class="text-muted">Alle Termine – von Klienten gebucht oder von dir angelegt.</p>
       </div>
       <UButton label="Termin anlegen" icon="i-lucide-calendar-plus" size="sm" @click="openManual()" />

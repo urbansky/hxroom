@@ -32,7 +32,7 @@ const baseNavItems: NavItem[][] = [
   ],
   [
     { type: 'label', label: 'Buchungen' },
-    { label: 'Kalender', icon: 'i-lucide-calendar', to: '/bookings', description: 'Alle gebuchten Termine im Überblick' },
+    { label: 'Termine', icon: 'i-lucide-calendar', to: '/bookings', description: 'Alle Termine, gebucht oder von dir angelegt' },
     { label: 'Sitzungsangebote', icon: 'i-lucide-layers', to: '/bookings/offers', description: 'Buchbare Angebote mit Name, Dauer und Preis' },
     { label: 'Verfügbarkeit', icon: 'i-lucide-clock', to: '/bookings/availability', description: 'Buchbare Zeiten für deine Angebote' },
     { label: 'Buchungsseite', icon: 'i-lucide-layout-template', to: '/settings/bookingpage', description: 'Logo, Farbe und Profilseite' },
@@ -64,7 +64,7 @@ const visibleNavItems: NavItem[][] = baseNavItems
 // Ein Menüpunkt bleibt auch auf seinen Unterseiten markiert (Klientenliste auf
 // /clients/:id). Von sich aus markiert ULink nur exakte Treffer, weil die Detailseiten
 // keine verschachtelten Routen sind. Es gewinnt der längste passende Pfad – sonst stünde
-// „Kalender“ (/bookings) auf /bookings/offers neben „Sitzungsangebote“.
+// „Termine“ (/bookings) auf /bookings/offers neben „Sitzungsangebote“.
 const activeNavPath = computed(() => {
   const paths = visibleNavItems.flat().map(item => item.to).filter((to): to is string => typeof to === 'string')
   return paths
@@ -177,7 +177,7 @@ const deletionDateLabel = computed(() => {
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/': 'Dashboard',
-    '/bookings': 'Kalender',
+    '/bookings': 'Termine',
     '/bookings/offers': 'Sitzungsangebote',
     '/bookings/availability': 'Verfügbarkeit',
     '/clients': 'Klientenliste',

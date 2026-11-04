@@ -7,7 +7,7 @@ import type { ClientListItem } from '@hxroom/shared'
  * BookingInviteeFields.vue.
  *
  * `client` **oder** `clients` – nicht beides: Im Klientenprofil steht der Klient fest, im
- * Dashboard und im Kalender wird er gewählt.
+ * Dashboard und unter Termine wird er gewählt.
  */
 export function useBookingInvitee(source: () => { client?: { id: string, name: string } | null, clients?: ClientListItem[] }) {
   const mode = ref<'client' | 'email'>('client')

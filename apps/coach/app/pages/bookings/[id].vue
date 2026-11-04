@@ -64,8 +64,8 @@ const activeTab = computed<TabValue>({
   set: tab => router.replace({ query: { ...route.query, tab } }),
 })
 
-// Zurück dorthin, woher der Coach kam – Kalender, Dashboard, Klientenprofil oder der Call.
-// Ohne Vorgeschichte (Link geöffnet, neu geladen) auf den Kalender.
+// Zurück dorthin, woher der Coach kam – Termine, Dashboard, Klientenprofil oder der Call.
+// Ohne Vorgeschichte (Link geöffnet, neu geladen) auf die Termine.
 function goBack() {
   if (window.history.state?.back) router.back()
   else router.push('/bookings')

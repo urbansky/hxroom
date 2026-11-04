@@ -91,7 +91,7 @@ async function copyLink() {
       <div v-else class="flex flex-col gap-3 text-sm">
         <UAlert v-if="errorMessage" icon="i-lucide-circle-x" color="error" variant="soft" :description="errorMessage" />
         <p>Du startest ein echtes Gespräch mit dir selbst, 15 Minuten. Probiere Warteraum, Video, Chat, Dateien und Notizen aus.</p>
-        <p class="text-muted">Die Probe-Sitzung steht in deinem Kalender, zählt aber in keiner Kennzahl und legt keinen Klienten an. Nach 24 Stunden wird sie gelöscht.</p>
+        <p class="text-muted">Die Probe-Sitzung steht unter deinen Terminen, zählt aber in keiner Kennzahl und legt keinen Klienten an. Nach 24 Stunden wird sie gelöscht.</p>
       </div>
     </template>
 

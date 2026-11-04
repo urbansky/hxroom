@@ -8,7 +8,7 @@ import { MANUAL_BOOKING_MAX_COUNT, type ClientListItem, type ManualBookingCheckR
  *
  * Wer eingeladen wird, regeln useBookingInvitee und BookingInviteeFields wie beim
  * Spontan-Termin: `client` steht fest (Klientenseite, Folgetermin), `clients` ist die
- * Auswahl (Kalender).
+ * Auswahl (Termine).
  *
  * Mehrere Termine sind eine Liste konkreter Zeiten, keine Regel: Jede Zeile lässt sich
  * verschieben oder streichen, und je Zeile meldet die API Überschneidungen und Zeiten

@@ -7,7 +7,7 @@ const { $api } = useApi()
 const { session } = useAuth()
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 
-/** Mehr Termine passen nicht in eine Übersicht – der Rest steht im Kalender. */
+/** Mehr Termine passen nicht in eine Übersicht – der Rest steht unter Termine. */
 const AGENDA_LIMIT = 6
 
 const bookings = ref<CoachBookingResponse[]>([])
@@ -206,8 +206,8 @@ async function onClientSaved(_client: ClientResponse) {
           </div>
 
           <SettingsSection title="Nächste Termine">
-            <!-- Zwei Ziele statt eines "Kalender"-Links: der Auszug hier ist eine gekürzte
-                 Agenda, und beide Ansichten des Kalenders sind von hier aus gleich weit
+            <!-- Zwei Ziele statt eines "Termine"-Links: der Auszug hier ist eine gekürzte
+                 Agenda, und beide Ansichten der Termine sind von hier aus gleich weit
                  entfernt. Die Icons sind dieselben wie im Umschalter dort. -->
             <template #actions>
               <div class="flex items-center gap-1 shrink-0">
@@ -227,7 +227,7 @@ async function onClientSaved(_client: ClientResponse) {
               <UButton
                 v-if="hiddenCount"
                 to="/bookings"
-                :label="hiddenCount === 1 ? 'Ein weiterer Termin im Kalender' : `${hiddenCount} weitere Termine im Kalender`"
+                :label="hiddenCount === 1 ? 'Ein weiterer Termin' : `${hiddenCount} weitere Termine`"
                 trailing-icon="i-lucide-arrow-right"
                 color="primary"
                 variant="link"

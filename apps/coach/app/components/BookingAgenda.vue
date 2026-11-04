@@ -7,7 +7,7 @@ const props = defineProps<{
   highlightId?: string | null
   /**
    * 'card' (Standard): eigenständige Kacheln auf dem Seitenhintergrund – so steht die
-   * Agenda im Kalender.
+   * Agenda unter Termine.
    * 'flat': Zeilen ohne eigenen Rahmen, für die Einbettung in eine Karte. Dort trüge
    * jede Kachel sonst einen zweiten Rahmen in derselben Farbe wie die Karte um sie
    * herum, und der weiße Kachelgrund verschwände ohnehin im weißen Kartengrund.

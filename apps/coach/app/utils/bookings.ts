@@ -207,7 +207,7 @@ export function showAdHocBadge(booking: Pick<CoachBookingResponse, 'origin' | 'o
   return isAdHoc(booking) && !!booking.offerId
 }
 
-// Probe-Sitzung des Coachs mit sich selbst (Schritt 6a): erscheint in Kalender und Agenda,
+// Probe-Sitzung des Coachs mit sich selbst (Schritt 6a): erscheint unter Termine und in der Agenda,
 // damit er zurück in den Call findet, zählt aber in keiner Kennzahl.
 export function isTestSession(booking: Pick<CoachBookingResponse, 'origin'>): boolean {
   return booking.origin === 'test'

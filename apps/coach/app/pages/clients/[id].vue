@@ -303,7 +303,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
               <p class="text-sm text-muted">Für diesen Klienten ist noch kein Termin erfasst.</p>
             </div>
 
-            <!-- Kachel-Aufbau bewusst identisch zu BookingAgenda.vue (Kalender/Agenda):
+            <!-- Kachel-Aufbau bewusst identisch zu BookingAgenda.vue (Termine/Agenda):
                  gleiche Rahmen-/Hintergrundlogik je Status, gleiche dreizeilige Hierarchie.
                  Statt der Uhrzeit allein steht hier das Datum mit davor, weil es auf dieser
                  Seite keine Tagesgruppierung gibt. Der Klientenname entfällt – wir sind

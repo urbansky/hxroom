@@ -27,9 +27,9 @@ Begriffe wie im übrigen `doc/`: **Coach** ist der Kunde des Betreibers, **Klien
 - **Speichern:** Wo automatisch gespeichert wird, zeigt ein Speicherstand das an („Gespeichert“). Wo ausdrücklich gespeichert wird, gibt es „Speichern“ und „Abbrechen“ nebeneinander. Je Art von Inhalt gilt überall derselbe Weg.
 - **Leere Zustände:** Ein Satz, was hier stehen wird, und, wo möglich, die Aktion dazu. Kein leerer Kasten, kein leeres Formularfeld. Ist die Aktion der einzige Weg, die Liste zu füllen, ist ihr Knopf gefüllt (Sitzungsangebote). Füllt sich die Liste auch von selbst, ist er leise (`soft`, Klientenliste).
 - **Fehler:** Deutsch, konkret, mit Ausweg, etwa „Erneut versuchen“. Nie ein technischer Text.
-- **Zurück:** Führt dorthin, woher der Coach kam: Kalender, Dashboard, Klientenprofil. Reiter und Filter stehen in der URL und überstehen Neuladen und Zurück.
+- **Zurück:** Führt dorthin, woher der Coach kam: Termine, Dashboard, Klientenprofil. Reiter und Filter stehen in der URL und überstehen Neuladen und Zurück.
 - **Nur, was funktioniert:** Funktionen, die es noch nicht gibt, sind ausgeblendet, nicht als „Kommt bald“ angekündigt. Im Call täuscht nichts eine Wirkung vor.
-- **Handy:** Dieselben Funktionen wie am Rechner, die Navigation über den Menüknopf. Ausnahme ist die Wochenansicht des Kalenders.
+- **Handy:** Dieselben Funktionen wie am Rechner, die Navigation über den Menüknopf. Ausnahme ist die Wochenansicht unter Termine.
 
 **Heute:** Die Muster oben sind in Coach-App und Buchungsseite umgesetzt und in `technisches-konzept.md` beschrieben. Offen: Das Betreiber-Backoffice ist daraufhin nicht geprüft.
 
@@ -91,7 +91,7 @@ Begriffe wie im übrigen `doc/`: **Coach** ist der Kunde des Betreibers, **Klien
 
 **Kriterien:**
 - **Überall sichtbar:** Ein Hinweis in der Seitenleiste oder im Kopf, auf jeder Seite und auf dem Handy: „Claudia wartet seit 10:02“ oder „Gespräch mit Claudia läuft seit 10:05“, mit dem Knopf „Zum Gespräch“.
-- **Im Kalender und auf dem Dashboard:** Der betreffende Termin ist hervorgehoben, mit Zustand „wartet“ oder „läuft“ und der Dauer.
+- **Unter Termine und auf dem Dashboard:** Der betreffende Termin ist hervorgehoben, mit Zustand „wartet“ oder „läuft“ und der Dauer.
 - **Live:** Ankunft im Warteraum, Einlass und Ende erscheinen ohne Neuladen.
 - **Unterscheidbar:** „Wartet“ fällt stärker auf als „läuft“, denn dort wartet ein Mensch auf den Coach.
 - **Ohne Missverständnis:** Hat der Coach die Call-Seite geschlossen, während das Gespräch formal noch läuft, sagt der Hinweis das und bietet Zurückkehren oder Beenden an.

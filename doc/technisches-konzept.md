@@ -989,7 +989,7 @@ Fachlich beschrieben in `konzept-manuelle-termine.md`. Der Coach legt einen oder
 - **Serie:** Mehrere Startzeiten bekommen eine gemeinsame `bookings.series_id`. Jeder Termin hat eigenen Token, eigene Erinnerungen und eigene Absage. `withSeries()` (`bookings/booking-series.ts`) liefert in allen Coach-Antworten `series: { position, count }`, gezählt über die nicht abgesagten Termine der Serie. Angelegt wird alles oder nichts; eine Startzeit, an der schon ein Termin beginnt, ergibt `409`, Vergangenheit und doppelte Zeiten `400`.
 - **Hinweise vorab:** `POST /api/v1/bookings/manual/check` liefert je Startzeit Überschneidungen mit anderen Terminen samt Puffer und ob sie außerhalb der Verfügbarkeit liegt (`isWithinAvailability` in `availability/slot-calculation.ts`). Beides hindert nicht am Anlegen.
 - **Mail:** eine Mail pro Vorgang (`mail/templates/client/appointment-scheduled.tsx`), bei mehreren Terminen mit Links „Zum Warteraum“ und „Absagen“ je Termin. Im Anhang eine Kalenderdatei mit einem `VEVENT` je Termin (`buildBookingsIcs`).
-- **Coach-App:** `ManualBookingModal` auf der Klientenseite („Termin anlegen“) und im Kalender (Knopf im Kopf, Klick auf eine freie Stelle der Wochenansicht); `FollowUpBookingModal` als Folgetermin im ⋯-Menü der Terminseite und auf der Abschlusskarte, vorbelegt mit Klient, Angebot und derselben Uhrzeit eine Woche später.
+- **Coach-App:** `ManualBookingModal` auf der Klientenseite („Termin anlegen“) und unter Termine (Knopf im Kopf, Klick auf eine freie Stelle der Wochenansicht); `FollowUpBookingModal` als Folgetermin im ⋯-Menü der Terminseite und auf der Abschlusskarte, vorbelegt mit Klient, Angebot und derselben Uhrzeit eine Woche später.
 
 ### Stripe – Subscription & Billing
 

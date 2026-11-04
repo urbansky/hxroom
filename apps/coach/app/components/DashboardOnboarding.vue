@@ -80,7 +80,7 @@ const firstName = computed(() => props.coachName?.trim().split(/\s+/)[0] ?? null
       />
       <UButton
         to="/bookings"
-        label="Zum Kalender"
+        label="Zu den Terminen"
         trailing-icon="i-lucide-arrow-right"
         color="primary"
         variant="ghost"

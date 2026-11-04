@@ -25,7 +25,7 @@ Der Coach vereinbart Termine oft direkt mit dem Klienten: am Ende einer Sitzung,
 |---|---|---|
 | Klientenseite | Knopf „Termin anlegen“ im Kopf, neben „Spontan-Termin“ | Klient |
 | Terminseite und Abschlusskarte nach dem Call | „Folgetermin anlegen“ (im ⋯-Menü bzw. als zweite Aktion der Karte) | Klient, Angebot, gleiche Uhrzeit eine Woche später |
-| Kalender | Knopf im Kopf; in der Wochenansicht Klick auf eine freie Stelle | Datum und Uhrzeit |
+| Termine | Knopf im Kopf; in der Wochenansicht Klick auf eine freie Stelle | Datum und Uhrzeit |
 
 ### Dialog
 
