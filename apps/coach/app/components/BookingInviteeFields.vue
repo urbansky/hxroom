@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 
 // Eingabeflächen stehen weiß auf dem Modal-Grund (siehe AdHocSessionModal).
-const inputUi = { base: 'bg-white dark:bg-neutral-800', content: 'bg-white dark:bg-neutral-900' }
+const inputUi = { base: 'bg-white dark:bg-elevated', content: 'bg-white dark:bg-muted' }
 
 const MODE_ITEMS = [
   { label: 'Klient', value: 'client', icon: 'i-lucide-user' },

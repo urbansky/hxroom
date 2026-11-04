@@ -267,7 +267,7 @@ const previewProfile = computed<BookingPageProfile>(() => ({
 const previewShowAbout = computed(() => hasBookingPageAbout(previewProfile.value))
 const previewCtaLabel = computed(() => bookingPageCtaLabel(previewProfile.value.ctaButton))
 
-const inputUi = { base: 'bg-white dark:bg-neutral-800' }
+const inputUi = { base: 'bg-white dark:bg-elevated' }
 
 const features = [
   {

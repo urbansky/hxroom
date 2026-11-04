@@ -108,7 +108,7 @@ const columns: TableColumn<FeedbackItem>[] = [
           :items="categoryItems"
           value-key="value"
           class="w-44"
-          :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+          :ui="{ base: 'bg-white dark:bg-elevated' }"
         />
         <p v-if="!loading" class="text-sm text-muted shrink-0">
           {{ items.length }} {{ items.length === 1 ? 'Eintrag' : 'Einträge' }}
@@ -117,7 +117,7 @@ const columns: TableColumn<FeedbackItem>[] = [
 
       <p v-if="loadError" class="text-sm text-error mb-4">{{ loadError }}</p>
 
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 overflow-hidden">
+      <div class="rounded-xl border border-default bg-white dark:bg-muted overflow-hidden">
         <UTable :data="items" :columns="columns" :loading="loading">
           <template #createdAt-cell="{ row }">
             <span class="text-sm whitespace-nowrap tabular-nums">{{ formatDate(row.original.createdAt) }}</span>

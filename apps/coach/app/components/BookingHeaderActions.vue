@@ -101,7 +101,7 @@ const menuItems = computed<DropdownMenuItem[][]>(() => {
             autoresize
             class="w-full"
             placeholder="z. B. Ich bin an dem Tag leider verhindert."
-            :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+            :ui="{ base: 'bg-white dark:bg-elevated' }"
           />
         </UFormField>
         <p v-if="actions.actionError.value" class="mt-3 text-sm text-error">{{ actions.actionError.value }}</p>

@@ -89,7 +89,7 @@ function slotBlocks(weekday: number) {
 </script>
 
 <template>
-  <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 sm:p-5">
+  <div class="rounded-xl border border-default bg-white dark:bg-muted p-4 sm:p-5">
     <!-- Durchgehendes Gitter: Kopfzeile und Raster teilen sich dieselben Spalten, die
          Trennlinien laufen ohne Lücke durch. -->
     <div class="grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">

@@ -53,7 +53,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
          landet hier. Sackgasse vermeiden und direkt einen neuen anbieten. -->
     <div
       v-if="!token || linkError"
-      class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7"
+      class="rounded-xl border border-default bg-white dark:bg-muted p-6 sm:p-7"
     >
       <div class="flex flex-col items-center gap-4 py-4 text-center">
         <UIcon name="i-lucide-link-2-off" class="size-12 text-warning" />
@@ -74,7 +74,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     <div
       v-else-if="done"
-      class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7"
+      class="rounded-xl border border-default bg-white dark:bg-muted p-6 sm:p-7"
     >
       <div class="flex flex-col items-center gap-4 py-4 text-center">
         <UIcon name="i-lucide-check-circle" class="size-12 text-primary" />
@@ -100,7 +100,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         variant="soft"
         :description="errorMessage"
       />
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
+      <div class="rounded-xl border border-default bg-white dark:bg-muted p-6 sm:p-7">
         <div class="flex flex-col gap-5">
           <div class="flex flex-col items-center gap-2 text-center">
             <UIcon name="i-lucide-key-round" class="size-8 text-primary" />
@@ -115,7 +115,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 type="password"
                 autocomplete="new-password"
                 class="w-full"
-                :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+                :ui="{ base: 'bg-white dark:bg-elevated' }"
               />
             </UFormField>
             <UFormField label="Passwort wiederholen" name="repeatPassword">
@@ -124,7 +124,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 type="password"
                 autocomplete="new-password"
                 class="w-full"
-                :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+                :ui="{ base: 'bg-white dark:bg-elevated' }"
               />
             </UFormField>
             <UButton type="submit" block :loading="pending" label="Passwort setzen" />

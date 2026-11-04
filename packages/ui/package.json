@@ -8,6 +8,7 @@
   ],
   "exports": {
     ".": "./index.ts",
+    "./colors": "./colors.ts",
     "./theme": "./theme/main.css",
     "./vite": "./vite.ts"
   },

@@ -42,7 +42,7 @@ const firstName = computed(() => props.coachName?.trim().split(/\s+/)[0] ?? null
 <template>
   <section
     v-if="showCelebration"
-    class="celebration relative flex flex-col items-center gap-4 p-6 sm:p-8 rounded-xl border border-default text-center bg-gradient-to-br from-sage-50 via-white to-gold-50 dark:from-sage-950 dark:via-neutral-900 dark:to-neutral-900"
+    class="celebration relative flex flex-col items-center gap-4 p-6 sm:p-8 rounded-xl border border-default text-center bg-gradient-to-br from-sage-50 via-white to-gold-50 dark:from-sage-950 dark:via-(--ui-bg-muted) dark:to-(--ui-bg-muted)"
   >
     <UButton
       icon="i-lucide-x"
@@ -91,7 +91,7 @@ const firstName = computed(() => props.coachName?.trim().split(/\s+/)[0] ?? null
 
   <section
     v-else-if="!isComplete"
-    class="flex flex-col gap-5 p-6 sm:p-7 rounded-xl border border-default bg-white dark:bg-neutral-900"
+    class="flex flex-col gap-5 p-6 sm:p-7 rounded-xl border border-default bg-white dark:bg-muted"
   >
     <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <h2 class="font-bold">Einrichtung abschließen</h2>

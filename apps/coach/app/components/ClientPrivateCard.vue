@@ -64,7 +64,7 @@ async function save(field: Field) {
 </script>
 
 <template>
-  <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 flex flex-col gap-4">
+  <div class="rounded-xl border border-default bg-white dark:bg-muted p-4 flex flex-col gap-4">
     <div class="flex items-center gap-2 text-sm font-medium text-highlighted">
       <UIcon name="i-lucide-lock" class="size-4 text-primary" />
       Nur für dich

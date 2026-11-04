@@ -268,7 +268,7 @@ const historyEntries = computed<HistoryEntry[]>(() => {
 
           <!-- Chat & Dateien: der Verlauf zum Nachlesen. Entfernen darf der Coach eine Datei
                auch nach der Sitzung, etwa auf einen Löschwunsch des Klienten hin. -->
-          <div v-if="activeTab === 'chat'" class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4">
+          <div v-if="activeTab === 'chat'" class="rounded-xl border border-default bg-white dark:bg-muted p-4">
             <UAlert
               v-if="chatLoadError"
               icon="i-lucide-alert-circle"
@@ -289,7 +289,7 @@ const historyEntries = computed<HistoryEntry[]>(() => {
           </div>
 
           <!-- Details: was zur Buchung gehört, aber nicht in den Kopf -->
-          <dl v-else class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 flex flex-col gap-5 text-sm">
+          <dl v-else class="rounded-xl border border-default bg-white dark:bg-muted p-4 flex flex-col gap-5 text-sm">
             <div v-if="booking.clientNote">
               <dt class="text-xs uppercase tracking-wide text-muted mb-1">Nachricht des Klienten</dt>
               <dd class="text-highlighted whitespace-pre-line border-l-2 border-primary/40 pl-3">{{ booking.clientNote }}</dd>

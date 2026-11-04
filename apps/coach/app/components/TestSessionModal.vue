@@ -75,7 +75,7 @@ async function copyLink() {
 
         <UFormField label="Oder den Link öffnen">
           <div class="flex gap-2">
-            <UInput :model-value="created.callUrl" readonly class="flex-1" :ui="{ base: 'bg-white dark:bg-neutral-800' }" />
+            <UInput :model-value="created.callUrl" readonly class="flex-1" :ui="{ base: 'bg-white dark:bg-elevated' }" />
             <UButton icon="i-lucide-copy" color="neutral" variant="outline" aria-label="Link kopieren" @click="copyLink" />
           </div>
         </UFormField>

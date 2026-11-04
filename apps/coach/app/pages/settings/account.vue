@@ -9,7 +9,7 @@ const { $authClient } = useNuxtApp()
 const { session } = useAuth()
 const { $api } = useApi()
 
-const inputUi = { base: 'bg-white dark:bg-neutral-800' }
+const inputUi = { base: 'bg-white dark:bg-elevated' }
 
 // ─── E-Mail-Adresse ────────────────────────────────────────────────────────────────────
 // Der Wechsel braucht zwei Bestätigungen: erst gibt die bisherige Adresse ihn frei, dann

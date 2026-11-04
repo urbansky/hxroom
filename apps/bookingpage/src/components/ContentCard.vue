@@ -7,7 +7,7 @@ const { padded = true } = defineProps<{ padded?: boolean }>();
 
 <template>
   <div
-    class="rounded-xl border border-default bg-white dark:bg-neutral-900 overflow-hidden"
+    class="rounded-xl border border-default bg-white dark:bg-muted overflow-hidden"
     :class="padded ? 'p-6 sm:p-7' : ''"
   >
     <slot />

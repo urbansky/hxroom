@@ -155,7 +155,7 @@ const notice = computed(() => deviceNotice(cameraIssue.value, microphoneIssue.va
          Seiten sehen denselben Termin – er soll auch gleich aussehen. Statt der reinen
          Uhrzeit steht hier Wochentag und Datum mit, weil dem Klienten die Tagesüberschrift
          der Agenda fehlt. -->
-    <div class="w-full rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 flex items-start gap-3 text-left">
+    <div class="w-full rounded-xl border border-default bg-white dark:bg-muted p-4 flex items-start gap-3 text-left">
       <span
         v-if="call.offerId"
         class="w-1 rounded-full shrink-0 self-stretch"

@@ -266,12 +266,12 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
         <!-- Auf dem Handy kompakt: zwei kleine Karten nebeneinander, ohne Symbol. Drei große
              Karten untereinander schöben die Reiter fast einen Bildschirm tief. -->
         <dl class="sm:hidden grid grid-cols-2 gap-2">
-          <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 px-3 py-2.5">
+          <div class="rounded-xl border border-default bg-white dark:bg-muted px-3 py-2.5">
             <dt class="text-xs text-muted">Gehaltene Sitzungen</dt>
             <dd class="font-medium text-highlighted">{{ stats.heldCount }}</dd>
             <dd v-if="stats.lastHeldAt" class="text-xs text-muted">zuletzt {{ formatShortDate(stats.lastHeldAt) }}</dd>
           </div>
-          <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 px-3 py-2.5">
+          <div class="rounded-xl border border-default bg-white dark:bg-muted px-3 py-2.5">
             <dt class="text-xs text-muted">Nicht erschienen</dt>
             <dd class="font-medium text-highlighted">{{ stats.noShowCount ? `${stats.noShowCount}-mal` : 'nie' }}</dd>
           </div>
@@ -318,7 +318,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                     v-for="booking in upcoming"
                     :key="booking.id"
                     :to="`/bookings/${booking.id}`"
-                    class="w-full text-left flex items-start gap-3 rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 hover:border-accented transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
+                    class="w-full text-left flex items-start gap-3 rounded-xl border p-4 border-default bg-white dark:bg-muted hover:border-accented transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
                     :class="booking.status === 'pending' && 'booking-pending'"
                   >
                     <!-- Ohne Angebot neutral grau, damit der Text bündig steht (wie BookingAgenda). -->
@@ -362,7 +362,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
                     class="w-full text-left flex items-start gap-3 rounded-xl border p-4 transition-colors cursor-pointer outline-primary/25 focus-visible:outline-3"
                     :class="booking.status === 'cancelled'
                       ? 'border-default border-dashed bg-transparent opacity-60'
-                      : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
+                      : 'border-default bg-white dark:bg-muted hover:border-accented'"
                   >
                     <!-- Ohne Angebot neutral grau, damit der Text bündig steht (wie BookingAgenda). -->
                     <span
@@ -402,7 +402,7 @@ const moreItems = computed<DropdownMenuItem[][]>(() => [[
         <!-- Rechte Spalte: bleibt beim Scrollen stehen. Auf dem Handy der Reiter „Profil“. -->
         <!-- Zwei gleich gebaute Karten: Symbol und Titel oben, darunter der Inhalt zum Lesen. -->
         <aside v-if="showAside" class="flex flex-col gap-4 lg:sticky lg:top-0">
-          <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 flex flex-col gap-3">
+          <div class="rounded-xl border border-default bg-white dark:bg-muted p-4 flex flex-col gap-3">
             <h2 class="flex items-center gap-2 text-sm font-medium text-highlighted">
               <UIcon name="i-lucide-calendar-clock" class="size-4 text-primary" />
               Nächster Termin

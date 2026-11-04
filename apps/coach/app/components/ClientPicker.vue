@@ -49,7 +49,7 @@ function choose(clientId: string | null) {
           placeholder="Nach Name oder E-Mail suchen"
           icon="i-lucide-search"
           class="w-full"
-          :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+          :ui="{ base: 'bg-white dark:bg-elevated' }"
         />
 
         <p v-if="loadError" class="text-sm text-error">{{ loadError }}</p>

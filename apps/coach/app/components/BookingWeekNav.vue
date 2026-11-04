@@ -26,7 +26,7 @@ function goToToday() {
     <!-- Rahmen und Hintergrund spiegeln den Ansichts-Umschalter gegenüber. Die Pfeile bleiben
          als Paar zusammen, "Heute" springt absolut und steht deshalb daneben. Die Fokus-Outline
          des äußersten Buttons zeigt nach innen, sonst schneidet sie der Rand des Panels an. -->
-    <div class="inline-flex items-center gap-0.5 rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
+    <div class="inline-flex items-center gap-0.5 rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-elevated/50">
       <UButton size="sm" color="neutral" variant="ghost" @click="goToToday">
         Heute
       </UButton>

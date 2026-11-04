@@ -45,7 +45,7 @@ const toolbarItems: any[] = [
   <div
     class="border border-default overflow-hidden"
     :class="[
-      card ? 'rounded-xl bg-white dark:bg-neutral-900' : 'rounded-lg bg-white dark:bg-neutral-800',
+      card ? 'rounded-xl bg-white dark:bg-muted' : 'rounded-lg bg-white dark:bg-elevated',
       fill && 'flex flex-col min-h-0',
     ]"
   >

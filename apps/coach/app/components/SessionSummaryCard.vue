@@ -48,7 +48,7 @@ const followUpOpen = ref(false)
       <p class="text-sm text-muted">Als gehalten vermerkt.</p>
     </div>
 
-    <dl v-if="booking" class="w-full rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 text-left text-sm flex flex-col gap-2.5">
+    <dl v-if="booking" class="w-full rounded-xl border border-default bg-white dark:bg-muted p-4 text-left text-sm flex flex-col gap-2.5">
       <div class="flex justify-between gap-4">
         <dt class="text-muted">Klient</dt>
         <dd class="text-highlighted font-medium text-right truncate">{{ booking.clientName }}</dd>

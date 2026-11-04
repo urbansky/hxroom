@@ -88,7 +88,7 @@ async function onSubmit(event: FormSubmitEvent<Pick<CreateFeedbackDto, 'category
             :maxrows="14"
             class="w-full"
             placeholder="Beschreib kurz, was dir aufgefallen ist."
-            :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+            :ui="{ base: 'bg-white dark:bg-elevated' }"
           />
           <template #hint>
             <span :class="messageLength > FEEDBACK_MESSAGE_MAX_LENGTH ? 'text-error' : ''">

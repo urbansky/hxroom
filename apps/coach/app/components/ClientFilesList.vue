@@ -58,7 +58,7 @@ const firstName = computed(() => clientName.split(' ')[0] ?? clientName)
       v-for="file in files"
       v-else
       :key="file.id"
-      class="flex items-center gap-3 rounded-xl border border-default bg-white dark:bg-neutral-900 p-3"
+      class="flex items-center gap-3 rounded-xl border border-default bg-white dark:bg-muted p-3"
     >
       <span class="size-9 shrink-0 rounded-lg bg-elevated flex items-center justify-center">
         <UIcon :name="fileIcon(file.mimeType)" class="size-4 text-muted" />

@@ -54,7 +54,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         variant="soft"
         :description="errorMessage"
       />
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
+      <div class="rounded-xl border border-default bg-white dark:bg-muted p-6 sm:p-7">
         <UAuthForm
           title="Anmelden"
           description="Melde dich bei deinem HxRoom-Konto an"

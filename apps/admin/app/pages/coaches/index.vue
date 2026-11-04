@@ -159,14 +159,14 @@ const columns: TableColumn<CoachListItem>[] = [
             placeholder="Name, E-Mail oder Subdomain"
             icon="i-lucide-search"
             class="w-full max-w-xs"
-            :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+            :ui="{ base: 'bg-white dark:bg-elevated' }"
           />
           <USelect
             v-model="status"
             :items="statusItems"
             value-key="value"
             class="w-44"
-            :ui="{ base: 'bg-white dark:bg-neutral-800' }"
+            :ui="{ base: 'bg-white dark:bg-elevated' }"
           />
         </div>
         <p v-if="!loading" class="text-sm text-muted shrink-0">
@@ -176,7 +176,7 @@ const columns: TableColumn<CoachListItem>[] = [
 
       <p v-if="loadError" class="text-sm text-error mb-4">{{ loadError }}</p>
 
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 overflow-hidden">
+      <div class="rounded-xl border border-default bg-white dark:bg-muted overflow-hidden">
         <UTable
           :data="coaches"
           :columns="columns"

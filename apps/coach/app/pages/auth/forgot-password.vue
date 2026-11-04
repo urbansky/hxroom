@@ -49,7 +49,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         variant="soft"
         :description="errorMessage"
       />
-      <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
+      <div class="rounded-xl border border-default bg-white dark:bg-muted p-6 sm:p-7">
         <UAuthForm
           title="Passwort vergessen"
           description="Wir senden dir einen Link, mit dem du ein neues Passwort setzen kannst."
@@ -79,7 +79,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       </div>
     </template>
 
-    <div v-else class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-6 sm:p-7">
+    <div v-else class="rounded-xl border border-default bg-white dark:bg-muted p-6 sm:p-7">
       <div class="flex flex-col items-center gap-4 py-4 text-center">
         <UIcon name="i-lucide-mail-check" class="size-12 text-primary" />
         <div>

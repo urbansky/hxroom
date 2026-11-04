@@ -1,5 +1,6 @@
 import { resolve } from 'node:path'
 import { mediapipeAssets } from '@hxroom/livekit/vite'
+import { hxroomThemeColors } from '@hxroom/ui/colors'
 import { sentryVitePlugin } from '@sentry/bundler-plugins/vite'
 
 // Source Maps für die Fehlerüberwachung: Nur wenn die CI ein Token mitgibt, entstehen versteckte
@@ -72,9 +73,7 @@ export default defineNuxtConfig({
   },
 
   ui: {
-    theme: {
-      colors: ['primary', 'secondary', 'sage', 'gold', 'success', 'info', 'warning', 'error'],
-    },
+    theme: { colors: hxroomThemeColors },
   },
 
   css: ['@hxroom/ui/theme', '~/assets/main.css'],

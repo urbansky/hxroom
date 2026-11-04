@@ -16,7 +16,7 @@ import type { AdHocBookingResponse, ClientListItem, OfferResponse } from '@hxroo
 // denselben Token, aus dem auch die Modal-Fläche kommt, das Feld verschwindet dann darin.
 // Zentral in app.config.ts geht das nicht: Dort gewinnt die Varianten-Klasse bg-default
 // über slots.base. Dasselbe Muster steht in ClientFormSlideover und sechs weiteren Stellen.
-const inputUi = { base: 'bg-white dark:bg-neutral-800', content: 'bg-white dark:bg-neutral-900' }
+const inputUi = { base: 'bg-white dark:bg-elevated', content: 'bg-white dark:bg-muted' }
 
 const props = defineProps<{
   /** Vorgegebener Klient (Klientenprofil). */

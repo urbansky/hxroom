@@ -65,7 +65,7 @@ const summary = computed(() => facts.value.map((fact) => fact.title).join(' · '
   <UCollapsible
     v-model:open="open"
     as="section"
-    class="w-full rounded-xl border border-default bg-white dark:bg-neutral-900 text-left"
+    class="w-full rounded-xl border border-default bg-white dark:bg-muted text-left"
   >
     <button type="button" class="w-full flex items-center gap-3 p-4 text-left cursor-pointer">
       <div class="flex-1 min-w-0">

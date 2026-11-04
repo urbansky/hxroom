@@ -51,7 +51,7 @@ onMounted(load)
       v-for="entry in entries"
       v-else
       :key="entry.bookingId"
-      class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4"
+      class="rounded-xl border border-default bg-white dark:bg-muted p-4"
     >
       <header class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
         <div class="min-w-0">

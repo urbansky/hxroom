@@ -52,8 +52,8 @@ function rowClass(booking: CoachBookingResponse): string {
     return booking.status === 'pending' ? `${base} booking-pending` : base
   }
   if (booking.status === 'cancelled') return 'rounded-xl border p-4 border-default border-dashed bg-transparent opacity-60'
-  if (booking.status === 'pending') return 'rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 booking-pending hover:border-accented'
-  return 'rounded-xl border p-4 border-default bg-white dark:bg-neutral-900 hover:border-accented'
+  if (booking.status === 'pending') return 'rounded-xl border p-4 border-default bg-white dark:bg-muted booking-pending hover:border-accented'
+  return 'rounded-xl border p-4 border-default bg-white dark:bg-muted hover:border-accented'
 }
 </script>
 

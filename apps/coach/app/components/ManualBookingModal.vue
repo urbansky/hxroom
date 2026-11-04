@@ -29,7 +29,7 @@ const { $api } = useApi()
 const toast = useToast()
 
 // Eingabeflächen stehen weiß auf dem Modal-Grund (siehe AdHocSessionModal).
-const inputUi = { base: 'bg-white dark:bg-neutral-800', content: 'bg-white dark:bg-neutral-900' }
+const inputUi = { base: 'bg-white dark:bg-elevated', content: 'bg-white dark:bg-muted' }
 
 /** Näher als das am Jetzt ist ein Termin ein Spontan-Termin. */
 const MIN_LEAD_MINUTES = 15
@@ -336,7 +336,7 @@ const createdDescription = computed(() => {
           </p>
         </template>
 
-        <ul v-else class="max-h-72 overflow-y-auto rounded-lg border border-default divide-y divide-default bg-white dark:bg-neutral-900">
+        <ul v-else class="max-h-72 overflow-y-auto rounded-lg border border-default divide-y divide-default bg-white dark:bg-muted">
           <li v-for="(row, index) in rows" :key="row.key" class="flex flex-col gap-1 px-3 py-2">
             <div class="flex items-center gap-2">
               <template v-if="row.editing">

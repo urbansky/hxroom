@@ -18,7 +18,7 @@ defineEmits<{ open: [] }>()
     role="button"
     tabindex="0"
     draggable="true"
-    class="group relative flex items-start gap-3 rounded-xl border border-default bg-white dark:bg-neutral-900 p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
+    class="group relative flex items-start gap-3 rounded-xl border border-default bg-white dark:bg-muted p-5 text-left cursor-pointer transition-colors hover:border-accented outline-primary/25 focus-visible:outline-3"
     :class="[
       !offer.isActive && 'opacity-60',
       dragging && 'opacity-30',

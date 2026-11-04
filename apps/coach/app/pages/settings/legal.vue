@@ -291,7 +291,7 @@ const termsAcceptedLabel = computed(() => {
   return `Angenommen am ${at} (Fassung vom ${formatTermsVersion(t.acceptedVersion)})`
 })
 
-const inputUi = { base: 'bg-white dark:bg-neutral-800' }
+const inputUi = { base: 'bg-white dark:bg-elevated' }
 
 const features = [
   {

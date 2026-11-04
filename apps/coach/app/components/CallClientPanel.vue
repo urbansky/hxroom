@@ -125,7 +125,7 @@ function toggle(bookingId: string) {
           <div
             v-for="session in context.previousSessions"
             :key="session.bookingId"
-            class="rounded-lg border border-default bg-white dark:bg-neutral-900 px-3 py-2.5"
+            class="rounded-lg border border-default bg-white dark:bg-muted px-3 py-2.5"
           >
             <p class="text-xs text-dimmed mb-1">
               {{ formatShortDate(session.start) }} · {{ session.durationMinutes }} Min · {{ session.offerName }}

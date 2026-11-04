@@ -3,6 +3,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ui from '@nuxt/ui/vite';
 import type { Plugin } from 'vite';
+// Über den eigenen Paketnamen statt './colors': Node lädt diese Datei ungebündelt, und
+// ein relativer Import ohne Endung findet die .ts-Datei dann nicht.
+import { hxroomColors, hxroomThemeColors } from '@hxroom/ui/colors';
 
 type UIOptions = Parameters<typeof ui>[0];
 
@@ -48,16 +51,8 @@ function sharedIcons(dir = COMPONENTS_DIR, found = new Set<string>()): string[] 
  */
 export function hxroomUI(options: UIOptions = {}) {
   return [dedupeRouter(), ui({
-    theme: {
-      colors: ['primary', 'secondary', 'sage', 'gold', 'success', 'info', 'warning', 'error'],
-    },
-    ui: {
-      colors: {
-        primary: 'sage',
-        secondary: 'gold',
-        neutral: 'stone',
-      },
-    },
+    theme: { colors: hxroomThemeColors },
+    ui: { colors: hxroomColors },
     // Nimmt dieses Paket vom node_modules-Ausschluss des Komponenten-Resolvers aus. Heute
     // trägt die Auflösung ohnehin, weil pnpm-Symlinks auf Realpfade ohne node_modules
     // zeigen; das hier hält sie auch dann, wenn sich daran etwas ändert.

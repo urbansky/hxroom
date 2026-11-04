@@ -31,7 +31,7 @@ Wichtigste Regeln:
 - `v-model:open` für modal-artige Komponenten; Trigger im Default-Slot, Inhalt im `#content`-Slot
 - `@update:modelValue` statt `@change` für Wert-Updates
 - `:dismissible="false"` statt `prevent-close` zum Deaktivieren des Schließens
-- Globale Theme-Overrides in `app.config.ts` unter `ui.colors`, `ui.theme.defaultVariants` und pro Komponente
+- Globale Theme-Overrides in `app/app.config.ts` (Nuxt 4 liest sie nur aus `app/`) unter `ui.theme.defaultVariants` und pro Komponente. Die Farbzuordnung (`ui.colors`) kommt für alle Apps aus `@hxroom/ui/colors` und wird nicht je App gepflegt
 - Design-Tokens wie `text-muted`, `text-highlighted` für automatisches Light/Dark-Mode-Support
 - App mit `<UApp>` wrappen (wird für Toast, Tooltip etc. benötigt)
 

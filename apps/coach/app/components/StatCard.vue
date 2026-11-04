@@ -18,7 +18,7 @@ defineProps<{
   <component
     :is="to ? 'NuxtLink' : 'div'"
     :to="to"
-    class="flex items-start gap-4 p-4 rounded-xl border border-default bg-white dark:bg-neutral-900"
+    class="flex items-start gap-4 p-4 rounded-xl border border-default bg-white dark:bg-muted"
     :class="to ? 'transition-colors hover:border-accented' : ''"
   >
     <span class="size-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">

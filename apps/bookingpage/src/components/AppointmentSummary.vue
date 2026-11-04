@@ -5,7 +5,7 @@ defineProps<{ offer: string; appointment: string; coach: string }>();
 </script>
 
 <template>
-  <div class="w-full rounded-lg border border-default bg-muted dark:bg-neutral-800/50 p-4 flex flex-col gap-2 text-left">
+  <div class="w-full rounded-lg border border-default bg-muted dark:bg-elevated/50 p-4 flex flex-col gap-2 text-left">
     <div class="flex items-center justify-between gap-4 text-sm">
       <span class="text-muted shrink-0">Angebot</span>
       <span class="text-highlighted text-right">{{ offer }}</span>

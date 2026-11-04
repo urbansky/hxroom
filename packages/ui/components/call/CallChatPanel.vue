@@ -45,7 +45,7 @@ const peerShort = computed(() => firstName(props.peerName, 'Gegenüber'))
 
 // resize-none: Die Höhe regelt autoresize – ein Ziehgriff in der Ecke wäre ein zweiter,
 // widersprüchlicher Weg dazu.
-const inputUi = { base: 'bg-white dark:bg-neutral-800 resize-none' }
+const inputUi = { base: 'bg-white dark:bg-elevated resize-none' }
 
 /**
  * Enter sendet, Umschalt+Enter macht eine neue Zeile – wie in jedem Chat.
@@ -453,7 +453,7 @@ function splitLinks(text: string): MessagePart[] {
           <li
             v-for="message in sharedDocuments"
             :key="message.id"
-            class="flex items-center gap-1 rounded-lg border border-default bg-white dark:bg-neutral-900"
+            class="flex items-center gap-1 rounded-lg border border-default bg-white dark:bg-muted"
           >
             <!-- Neuer Tab aus demselben Grund wie im Verlauf: Im selben Tab endete das
                  Gespräch (livekit-client trennt bei beforeunload). -->
@@ -523,7 +523,7 @@ function splitLinks(text: string): MessagePart[] {
           :class="[
             message.from === 'self'
               ? 'bg-primary/10 text-toned'
-              : 'border border-default bg-white dark:bg-neutral-900 text-toned',
+              : 'border border-default bg-white dark:bg-muted text-toned',
             message.status === 'sending' ? 'opacity-60' : '',
           ]"
         ><!-- Ohne v-html: Die Teile stehen als Text im Baum, eine Nachricht kann also kein
@@ -597,7 +597,7 @@ function splitLinks(text: string): MessagePart[] {
             :href="message.file.href"
             :target="message.file.href ? '_blank' : undefined"
             :rel="message.file.href ? 'noopener noreferrer' : undefined"
-            class="min-w-0 flex items-center gap-2 rounded-lg border border-default px-3 py-2 bg-white dark:bg-neutral-900"
+            class="min-w-0 flex items-center gap-2 rounded-lg border border-default px-3 py-2 bg-white dark:bg-muted"
             :class="[
               message.file.href ? 'hover:border-primary hover:bg-elevated cursor-pointer' : 'opacity-60',
               message.status === 'sending' ? 'opacity-60' : '',

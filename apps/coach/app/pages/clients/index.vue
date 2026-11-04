@@ -50,7 +50,7 @@ async function onSaved(_client: ClientResponse) {
         placeholder="Nach Name oder E-Mail suchen"
         icon="i-lucide-search"
         class="w-full max-w-xs"
-        :ui="{ base: 'bg-white dark:bg-neutral-800', trailing: 'pe-1' }"
+        :ui="{ base: 'bg-white dark:bg-elevated', trailing: 'pe-1' }"
         @keydown.esc="search = ''"
       >
         <template v-if="search" #trailing>
@@ -84,7 +84,7 @@ async function onSaved(_client: ClientResponse) {
         v-for="client in results"
         :key="client.id"
         :to="`/clients/${client.id}`"
-        class="flex items-center gap-4 p-4 rounded-xl border border-default bg-white dark:bg-neutral-900 transition-colors hover:border-accented"
+        class="flex items-center gap-4 p-4 rounded-xl border border-default bg-white dark:bg-muted transition-colors hover:border-accented"
       >
         <!-- Personen-Icon statt Initialen – Größe und Farbgebung wie beim bisherigen Avatar. -->
         <span class="size-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">

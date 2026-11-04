@@ -8,7 +8,7 @@ const slots = useSlots()
 </script>
 
 <template>
-  <section class="flex flex-col gap-5 p-6 sm:p-7 rounded-xl border border-default bg-white dark:bg-neutral-900">
+  <section class="flex flex-col gap-5 p-6 sm:p-7 rounded-xl border border-default bg-white dark:bg-muted">
     <div v-if="title || description || slots.header || slots.actions" class="flex flex-col gap-1">
       <div class="flex items-center justify-between gap-2">
         <slot name="header">

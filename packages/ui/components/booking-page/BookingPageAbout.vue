@@ -36,7 +36,7 @@ const quote = computed(() => (profile.quote ?? '').trim().replace(/^["'„“”
         <div
           v-for="qualification in profile.qualifications"
           :key="qualification"
-          class="flex items-center gap-4 p-4 rounded-xl border border-default bg-white dark:bg-neutral-900"
+          class="flex items-center gap-4 p-4 rounded-xl border border-default bg-white dark:bg-muted"
         >
           <div class="size-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
             <UIcon name="i-lucide-award" class="size-5 text-primary" />

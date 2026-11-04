@@ -184,7 +184,7 @@ async function deleteDraft() {
   isDrawerOpen.value = false
 }
 
-const inputUi = { base: 'bg-white dark:bg-neutral-800' }
+const inputUi = { base: 'bg-white dark:bg-elevated' }
 
 const plannedFeatures = [
   {
@@ -318,7 +318,7 @@ const plannedFeatures = [
       <template #body>
         <div class="flex flex-col gap-6">
           <div
-            class="flex items-center justify-between gap-4 rounded-lg border border-default bg-neutral-50 dark:bg-neutral-800/50 p-4 cursor-pointer"
+            class="flex items-center justify-between gap-4 rounded-lg border border-default bg-neutral-50 dark:bg-elevated/50 p-4 cursor-pointer"
             @click="draft.isActive = !draft.isActive"
           >
             <div>

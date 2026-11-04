@@ -10,7 +10,7 @@ const open = defineModel<boolean>('open', { required: true })
 
 const { $api } = useApi()
 
-const inputUi = { base: 'bg-white dark:bg-neutral-800' }
+const inputUi = { base: 'bg-white dark:bg-elevated' }
 
 interface ClientDraft {
   name: string

@@ -16,7 +16,7 @@ const { offer, to } = defineProps<{
   <ULink
     :to="to"
     raw
-    class="group flex items-stretch gap-3 p-4 rounded-xl border border-default bg-white dark:bg-neutral-900 hover:border-accented transition-colors no-underline outline-primary/25 focus-visible:outline-3"
+    class="group flex items-stretch gap-3 p-4 rounded-xl border border-default bg-white dark:bg-muted hover:border-accented transition-colors no-underline outline-primary/25 focus-visible:outline-3"
   >
     <span class="w-1 rounded-full shrink-0 self-stretch" :style="{ backgroundColor: offerColor(offer.id) }" />
     <div class="flex-1 min-w-0">

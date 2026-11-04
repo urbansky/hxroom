@@ -368,7 +368,7 @@ async function submitBooking() {
 
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Kalender-Panel -->
-              <div class="rounded-lg border border-default bg-muted dark:bg-neutral-800/50 p-4">
+              <div class="rounded-lg border border-default bg-muted dark:bg-elevated/50 p-4">
                 <div class="flex items-center justify-between mb-3">
                   <UButton icon="i-lucide-chevron-left" size="xs" color="neutral" variant="ghost" :disabled="!canGoPrevMonth" @click="prevMonth" />
                   <div class="font-serif text-base text-highlighted">{{ monthLabel }}</div>
@@ -405,7 +405,7 @@ async function submitBooking() {
               </div>
 
               <!-- Zeiten-Panel -->
-              <div class="rounded-lg border border-default bg-muted dark:bg-neutral-800/50 p-4 min-h-[260px] flex flex-col">
+              <div class="rounded-lg border border-default bg-muted dark:bg-elevated/50 p-4 min-h-[260px] flex flex-col">
                 <div v-if="!selectedDayKey" class="m-auto text-center flex flex-col items-center gap-2 max-w-[200px]">
                   <UIcon name="i-lucide-calendar" class="size-6 text-dimmed" />
                   <p class="text-xs text-dimmed">Wähle einen markierten Tag im Kalender, um verfügbare Uhrzeiten zu sehen.</p>
@@ -423,7 +423,7 @@ async function submitBooking() {
                       class="flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-colors outline-primary/25 focus-visible:outline-3"
                       :class="selectedSlot?.start === slot.start
                         ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-default bg-white dark:bg-neutral-900 hover:border-accented'"
+                        : 'border-default bg-white dark:bg-muted hover:border-accented'"
                       @click="selectSlot(slot)"
                     >
                       <span class="text-sm text-highlighted">{{ formatTimeRange(slot.start, slot.end) }} Uhr</span>

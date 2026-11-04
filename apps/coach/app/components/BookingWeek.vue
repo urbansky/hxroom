@@ -171,7 +171,7 @@ function toneFor(booking: CoachBookingResponse, isPast: boolean) {
       // Beim Hover wächst er. Die Fläche bleibt in beiden Fällen unangetastet: Sie sagt,
       // ob ein Termin vorbei ist, und diese Aussage darf der Mauszeiger nicht umschreiben.
       // Dass der Block anklickbar ist, trägt allein der Rahmen.
-      isPast ? 'bg-elevated' : 'bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md',
+      isPast ? 'bg-elevated' : 'bg-white dark:bg-muted shadow-sm hover:shadow-md',
     ].join(' '),
     // Die Uhrzeit ist hier zurückgenommen, anders als in der Kachel: Im Raster sagt
     // schon die Position, wann der Termin liegt – der Name ist die eigentliche Nachricht.
@@ -274,7 +274,7 @@ function bookingBlocks(weekday: number) {
 </script>
 
 <template>
-  <div class="rounded-xl border border-default bg-white dark:bg-neutral-900 p-4 sm:p-5">
+  <div class="rounded-xl border border-default bg-white dark:bg-muted p-4 sm:p-5">
     <!-- Durchgehendes Gitter: Kopfzeile und Raster teilen sich dieselben Spalten, die
          Trennlinien laufen ohne Lücke durch. -->
     <div class="grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">

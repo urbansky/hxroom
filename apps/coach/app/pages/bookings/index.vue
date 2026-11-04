@@ -220,11 +220,11 @@ const emptyStateText = computed(() => {
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
-      <div class="inline-flex max-sm:hidden items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-neutral-800/50">
+      <div class="inline-flex max-sm:hidden items-center rounded-lg border border-default p-0.5 bg-neutral-50 dark:bg-elevated/50">
         <button
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
-          :class="viewMode === 'agenda' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
+          :class="viewMode === 'agenda' ? 'bg-white dark:bg-muted text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
           @click="viewMode = 'agenda'"
         >
           <UIcon name="i-lucide-list" class="size-4 shrink-0" />
@@ -233,7 +233,7 @@ const emptyStateText = computed(() => {
         <button
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
-          :class="viewMode === 'week' ? 'bg-white dark:bg-neutral-900 text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
+          :class="viewMode === 'week' ? 'bg-white dark:bg-muted text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
           @click="viewMode = 'week'"
         >
           <UIcon name="i-lucide-calendar-days" class="size-4 shrink-0" />

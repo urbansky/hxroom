@@ -1,3 +1,5 @@
+import { hxroomThemeColors } from '@hxroom/ui/colors'
+
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/content', '@nuxtjs/plausible'],
 
@@ -35,9 +37,7 @@ export default defineNuxtConfig({
   },
 
   ui: {
-    theme: {
-      colors: ['primary', 'secondary', 'sage', 'gold', 'success', 'info', 'warning', 'error'],
-    },
+    theme: { colors: hxroomThemeColors },
   },
 
   css: ['@hxroom/ui/theme'],
