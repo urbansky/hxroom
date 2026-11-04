@@ -86,7 +86,7 @@ Verfügbarkeits-Engine mit Slot-Logik, öffentliche gebrandete Buchungsseite auf
 ### Phase 4 – Videocall
 **Zeitraum:** Woche 13–16 · **Aufwand:** 40 Stunden · **Status:** ✅ abgeschlossen am 2026-09-29
 
-> Umgesetzt nach `videocall-umsetzungsplan.md`. Über den Plan hinaus dabei: Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum, Hintergrund-Weichzeichner und die Notizen im Call (aus Phase 5 vorgezogen). Der Warteraum zeigt das Coach-Foto bereits. Noch nicht dabei: das Einwilligungsbanner für Aufnahmen (Phase 6), die Willkommensnachricht und die konfigurierbare Danke-Seite (später).
+> Beschrieben in `technisches-konzept.md` §8. Über den Plan hinaus dabei: Chat mit geteilten Dateien, Geräte-Einrichtung im Warteraum, Hintergrund-Weichzeichner und die Notizen im Call (aus Phase 5 vorgezogen). Der Warteraum zeigt das Coach-Foto bereits. Noch nicht dabei: das Einwilligungsbanner für Aufnahmen (Phase 6), die Willkommensnachricht und die konfigurierbare Danke-Seite (später).
 
 *LiveKit · Warteraum · Call-UI · Sitzungsabschluss*
 
@@ -106,122 +106,28 @@ Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Gen
 ### Phase 5 – Nachbereitung & CRM
 **Zeitraum:** Woche 17–19 · **Aufwand:** 30 Stunden · **Status:** ✅ abgeschlossen am 2026-11-04
 
-> Umgesetzt nach `phase5-umsetzungsplan.md`, in Betrieb auf hxroom.de. Über den Plan hinaus dabei: Termine manuell anlegen, einzeln, als Serie oder als Folgetermin; Spontan-Termin auch per E-Mail-Adresse; Darstellung hell oder dunkel im Benutzermenü; Name des Kontos änderbar. Das Backup samt Off-Site-Kopie ist aus Phase 9 vorgezogen.
+> In Betrieb auf hxroom.de, beschrieben in `technisches-konzept.md` (§5 Coach-App, §6 Impressum und Datenschutz, §12 Erinnerungen, §13 Backup, §17 Fehlerüberwachung und Datenexport). Über den Plan hinaus dabei: Termine manuell anlegen, einzeln, als Serie oder als Folgetermin; Spontan-Termin auch per E-Mail-Adresse; Darstellung hell oder dunkel im Benutzermenü; Name des Kontos änderbar. Das Backup samt Off-Site-Kopie ist aus Phase 9 vorgezogen.
 
-*Notizen · Session-Protokoll · Klientenliste · Buchungsseite · Beta-Start*
+*Notizen · Terminseite · Klientenseite · Buchungsseite · Beta-Start*
 
-Nachbereitung für den Coach, eine vollständige Buchungsseite und alles, was eine Beta mit echten Coaches und Klienten braucht. Nach dieser Phase beginnt das Marketing: Interessierte Coaches buchen eine Produktvorführung, probieren HxRoom danach selbst aus und geben Feedback. Reihenfolge und Umsetzung: `phase5-umsetzungsplan.md`. Zieltermin: 01.11.2026.
+Nachbereitung für den Coach, eine vollständige Buchungsseite und alles, was eine Beta mit echten Coaches und Klienten braucht. Danach beginnt das Marketing: Interessierte Coaches buchen eine Produktvorführung auf `demo.hxroom.de`, probieren HxRoom selbst als Coach aus und geben Feedback. Beta-Tester arbeiten mit echten Klienten, die Registrierung bleibt offen.
 
-Schon umgesetzt (in Phase 4 vorgezogen): Notizen im Call und im Termin-Slideover mit Autosave, Klientenliste mit Sitzungshistorie, einfache Suche.
-
-#### Nachbereitung für den Coach
-
-**Terminseite (`/bookings/[id]`).** Das Termin-Slideover ist für Chatverlauf und später das Transkript zu eng. Es bleibt als Kurzansicht, alles Ausführliche bekommt eine eigene Seite.
-- **Slideover:**
-  - Termin, Klient, Status und die Aktionen (Call starten, absagen, Klient zuordnen, nicht erschienen)
-  - die Notizen, weiterhin direkt bearbeitbar
-  - Chat (und später Transkript) nur als Zusammenfassungszeile, z. B. „14 Nachrichten · 2 Dateien“, mit Sprung auf die Seite
-  - ein Knopf „Als Seite öffnen“
-- **Terminseite:**
-  - Kopf mit Datum, Klient, Angebot, Status und denselben Aktionen
-  - links die Notizen in großem Editor
-  - rechts Reiter für „Chat & Dateien“, „Transkript“ (ab Phase 6) und „Details“ (Nachricht des Klienten, Absage, No-Show)
-  - auf dem Handy untereinander
-
-Abschlusskarte und Notizen-Chronik verlinken auf die Seite.
-
-**Breitere Klientenseite (`/clients/[id]`).** Heute ist sie eine schmale Spalte mit Kontakt, interner Notiz, Terminliste und einer Platzhalter-Kachel. Künftig nutzt sie die Breite:
-- **Kopf** (volle Breite): Name, Kontakt, „Klient seit“, dazu eine Zeile Kennzahlen (gehaltene Sitzungen, letzte und nächste Sitzung, No-Shows). Aktionen wie bisher, Seltenes in einem Drei-Punkte-Menü.
-- **Linke Spalte mit Reitern:**
-  - **Termine:** die Terminliste wie heute, ohne Notizauszüge
-  - **Notizen:** alle Sitzungsnotizen hintereinander im Volltext, jeweils mit Sprung zur Terminseite. Das ist die Notizen-Chronik (Funktionsliste 4.02).
-  - **Dateien:** alle geteilten Dateien über alle Sitzungen
-  - **Transkripte:** ab Phase 6
-- **Rechte Spalte**, bleibt beim Scrollen stehen:
-  - nächster Termin mit Einstieg in den Call
-  - **Coaching-Ziele & Themen** als Freitext (Funktionsliste 3.05, ersetzt die Platzhalter-Kachel)
-  - die interne Notiz
-- **Auf dem Handy:** alles untereinander, Ziele und interne Notiz als eigener Reiter „Profil“.
-
-Vor dem Bau gibt es einen klickbaren Entwurf.
-
-**Abschlusskarte nach dem Call.** Nach „Sitzung beenden“ sieht der Coach eine Karte wie im Prototyp (`poc/videocall-v2.html`, Screen 4 „Sitzung abgeschlossen“): als gehalten markiert, Notizen verknüpft, Dauer, Datum, Speicherstand der Notizen, dazu „Zur Sitzung“ auf die Terminseite. Heute steht dort nur „Sitzung beendet – als gehalten vermerkt“.
-
-**Menüpunkt „Notizen“ entfällt**, samt Platzhalterseite (`apps/coach/app/pages/notes.vue`). Notizen gehören immer zu einer Sitzung und einem Klienten und werden dort gesucht: auf der Klientenseite und auf der Terminseite.
-
-#### Für Klienten sichtbar
-
-**Buchungsseite vollständig.** Die öffentliche Buchungsseite (`[slug].hxroom.de`) zeigt bei jedem Coach noch dieselben Beispielinhalte:
-- Titel, Themen und Kennzahlen („340+ Sitzungen", „8 Jahre", „4.9 Bewertung")
-- den Text im Kopfbereich
-- Zitat, Text und Qualifikationen unter „Über mich"
-- das Abzeichen „Verifiziert" und das Versprechen „Erstgespräch kostenlos"
-
-Die Links zu Datenschutz, Impressum und AGB führen ins Leere. Tagline, „Über mich" und Button-Text pflegt der Coach bereits in den Einstellungen, der öffentliche Endpunkt liefert sie aber nicht aus.
-
-Ziel: Jeder Inhalt der Seite kommt aus den Einstellungen des Coachs. Was er nicht pflegt, wird ausgeblendet statt durch Beispieltext ersetzt.
-
-**Datenschutz-Kasten im Warteraum.** Der Klient sieht, was mit seinem Gespräch geschieht: Aufzeichnung, Übertragung, Speicherung von Chat und Dateien, KI und Verschlüsselung, dazu ein Link zur Datenschutzerklärung des Coachs. Die genauen Aussagen legt der Betreiber noch fest. Es gelten zwei Regeln:
-- nur Tatsachen, die die Technik belegt, keine rechtlichen Wertungen wie „DSGVO-konform“
-- die Aussagen folgen dem echten Zustand, damit sie mit der Aufnahme in Phase 6 nicht falsch werden
-
-#### Beta-Start
-
-Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
-
-*Vorführung buchen:*
-- **Vorführ-Buchungsseite des Betreibers** unter `demo.hxroom.de`: ein gewöhnliches Coach-Konto mit dem Angebot „Produktvorführung“. Interessenten erleben so Buchungsseite, Bestätigungsmail, Warteraum und Call aus Sicht eines Klienten.
-- **Erinnerungsmails** 24 h und 1 h vor dem Termin an den Klienten (Funktionsliste 2.05). Bisher gibt es keine.
-- **Knopf „Vorführung buchen“ auf der Landingpage**, verlinkt auf die Vorführ-Buchungsseite. Heute bietet sie nur die Early-Access-Anmeldung an.
-- **Landingpage überarbeiten:** Inhalt und Gestaltung von `hxroom.de` neu fassen, als erste Station des Marketings und Weg zur Vorführung. Der genaue Umfang wird vor der Umsetzung festgelegt.
-
-*Selbst als Coach ausprobieren:*
-- **Probe-Sitzung mit sich selbst:** Ein Knopf startet eine Sitzung mit dem Coach als Klient und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Probe-Sitzungen erscheinen unter Termine, zählen aber nicht in Kennzahlen und legen keinen Eintrag in der Klientenliste an. Nach 24 Stunden werden sie gelöscht.
-- **Onboarding-Checkliste** auf die Beta ausrichten: Profil, Angebot, Verfügbarkeit, Impressum, Probe-Sitzung, Buchungslink teilen.
-- **„Kommt bald“ ausblenden:** Menüpunkte, die nur Ankündigungs-Kacheln zeigen (Notizen, Umsatz, Rechnungen, Warteraum, Benachrichtigungen, Plan & Abrechnung), verschwinden für die Beta, ebenso die Kacheln „Geplante Features“ in den übrigen Seiten.
-
-*Feedback einholen:*
-- **Feedback-Knopf in der Coach-App:** ein kurzes Formular, gespeichert und per Mail an den Betreiber, mit der Seite, auf der der Coach gerade war.
-- **Aktivität der Beta-Coaches im Betreiber-Backoffice:** zuletzt aktiv, Angebote, Buchungen, gehaltene Sitzungen und wie weit der Coach startklar ist (Impressum, Probe-Sitzung, Link geteilt).
-
-#### Voraussetzungen für echte Klienten
-
-- **Impressum und Datenschutzerklärung des Coachs:** HxRoom stellt eine Vorlage für die Datenschutzerklärung bereit (`legal.md` §4.3). Der Coach hinterlegt beides in den Einstellungen, die Buchungsseite verlinkt es.
-- **AGB zwischen HxRoom und Coach sowie der AVV** werden bei der Registrierung abgeschlossen (`legal.md` §5.1 und §6). Die Texte liefert der Betreiber.
-- **Datenexport auf Knopfdruck:** Der Coach lädt Klienten, Termine und Notizen jederzeit selbst herunter. Die Landingpage sagt das zu.
-- **Fehlerüberwachung** mit GlitchTip auf der Betriebs-Instanz
-- **Funktionierendes Backup** nach `technisches-konzept.md` §13: täglicher `pg_dump` mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm bei Fehlschlag, eine einmal durchgespielte Wiederherstellung
-
-#### Nicht in Phase 5
-
-- KI-Sitzungszusammenfassung, Zusammenfassungsmail an den Klienten und Willkommensnachricht im Warteraum (Nice-to-have)
-- konfigurierbare Danke-Seite. Die feste Danke-Seite bleibt.
-- Ende-zu-Ende-Verschlüsselung (Phase 6)
-
-**Technologien:** Notes-Modul · CRM-Queries · Dashboard · Buchungsseite · Erinnerungsmails · Feedback · **Beta-ready** ✓
+**Technologien:** Notes-Modul · CRM-Queries · Buchungsseite · Erinnerungsmails · Feedback · Backup · **Beta-ready** ✓
 
 **Claude Code Hauptaufgaben:**
-- Notes-Modul mit Auto-Save während des Calls
-- Client-Modul mit Sitzungshistorie und Klientenprofil
-- Dashboard-Queries mit Drizzle (Aggregate, Joins)
-- Vue-Tabellen-Komponenten für CRM-Ansichten
-- Terminseite `/bookings/[id]` (Notizen, Chat & Dateien, Details) und Termin-Slideover als Kurzansicht mit Sprung dorthin
-- Klientenseite zweispaltig: Reiter Termine, Notizen, Dateien; rechts nächster Termin, Coaching-Ziele (Freitext) und interne Notiz
-- Menüpunkt „Notizen“ und seine Platzhalterseite entfernen
-- Öffentlichen Coach-Endpunkt um die gepflegten Profilfelder erweitern, fehlende Felder (z. B. Schwerpunkte) in Schema und Einstellungen ergänzen
-- Beispielinhalte der Buchungsseite durch echte Daten ersetzen, leere Felder ausblenden
-- Impressum und Datenschutz des Coachs auf der Buchungsseite verlinken
-- Datenschutz-Kasten im Warteraum, abgeleitet aus dem tatsächlichen Zustand
+- Terminseite `/bookings/[id]` mit Notizen, Chat & Dateien und Details; Slideover als Kurzansicht; Abschlusskarte nach dem Call
+- Klientenseite zweispaltig: Reiter Termine, Notizen-Chronik und Dateien; rechts nächster Termin, Coaching-Ziele und interne Notiz
+- Buchungsseite vollständig aus den Einstellungen des Coachs, leere Felder ausgeblendet statt Beispieltext
+- Impressum des Coachs mit Buchungssperre, gemeinsame Datenschutzerklärung, Datenschutz-Kasten im Warteraum
+- AGB und AVV bei der Registrierung
 - Erinnerungsmails 24 h / 1 h vor dem Termin
-- Vorführ-Buchungsseite `demo.hxroom.de` einrichten, Knopf „Vorführung buchen“ auf der Landingpage
-- Landingpage inhaltlich und gestalterisch überarbeiten
-- Probe-Sitzung mit sich selbst (QR-Code, ohne Eintrag in der Klientenliste), Onboarding-Checkliste anpassen
-- „Kommt bald“-Menüpunkte für die Beta ausblenden
-- Feedback-Knopf in der Coach-App, Aktivität der Coaches im Betreiber-Backoffice
-- Datenexport auf Knopfdruck für Coachs (Klienten, Termine, Notizen)
-- Impressum und Datenschutzerklärung des Coachs in den Einstellungen, AGB und AVV bei der Registrierung
-- Fehlerüberwachung für API und Oberflächen
-- Backup: täglicher `pg_dump` mit GFS-Aufbewahrung, Off-Site-Kopie der Dateien, Alarm bei Fehlschlag, Wiederherstellung einmal durchspielen
+- Vorführ-Buchungsseite `demo.hxroom.de` und überarbeitete Landingpage mit „Vorführung buchen“
+- Probe-Sitzung mit sich selbst, Onboarding-Checkliste, „Kommt bald“-Seiten ausgeblendet
+- Feedback-Knopf, Aktivität der Coaches im Betreiber-Backoffice
+- Datenexport auf Knopfdruck, Coach-App auf dem Handy bedienbar
+- Fehlerüberwachung mit GlitchTip, Backup mit GFS-Aufbewahrung, Off-Site-Kopie, Alarm und durchgespielter Wiederherstellung
+
+**Nicht in Phase 5:** KI-Sitzungszusammenfassung, Zusammenfassungsmail an den Klienten, Willkommensnachricht im Warteraum und konfigurierbare Danke-Seite (Nice-to-have); Ende-zu-Ende-Verschlüsselung (Phase 6).
 
 ---
 
