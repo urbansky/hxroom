@@ -20,7 +20,9 @@ Von Null zum fertigen Produkt. 9 Phasen, ausschließlich mit Claude Code entwick
 ## Entwicklungsphasen
 
 ### Phase 1 – Fundament & Infrastruktur
-**Zeitraum:** Woche 1–4 · **Aufwand:** 40 Stunden
+**Zeitraum:** Woche 1–4 · **Aufwand:** 40 Stunden · **Status:** ✅ abgeschlossen
+
+> Anders als geplant: Redis gehört nicht zum Stack, weil die Erinnerungen ohne BullMQ auskommen (Phase 3). Whisper kommt mit Phase 6. Dazu gekommen sind ClamAV für den Virenscan geteilter Dateien und Hetzner Object Storage, lokal RustFS.
 
 *Monorepo · Docker Compose · DB-Schema · CLAUDE.md*
 
@@ -40,7 +42,9 @@ Monorepo-Setup mit pnpm Workspaces, Docker Compose Stack (Postgres, Redis, Caddy
 ---
 
 ### Phase 2 – Auth & Coach-Profil
-**Zeitraum:** Woche 5–7 · **Aufwand:** 30 Stunden
+**Zeitraum:** Woche 5–7 · **Aufwand:** 30 Stunden · **Status:** ✅ abgeschlossen
+
+> Noch nicht dabei: Logo und Primärfarbe der Buchungsseite. Beides ist für die Beta ausgeblendet. Das Profilfoto des Coachs gibt es.
 
 *better-auth · Subdomain-Routing · Branding · Onboarding*
 
@@ -58,7 +62,9 @@ better-auth Integration im NestJS Backend, Registrierung und Login, Subdomain-Ro
 ---
 
 ### Phase 3 – Buchungssystem
-**Zeitraum:** Woche 8–12 · **Aufwand:** 50 Stunden
+**Zeitraum:** Woche 8–12 · **Aufwand:** 50 Stunden · **Status:** ✅ abgeschlossen
+
+> Anders als geplant: Die Erinnerungen 24 h / 1 h laufen ohne BullMQ, über Spalten an der Buchung und einen Lauf alle 5 Minuten (`technisches-konzept.md` §12). Die Terminübersicht heißt „Termine“ und zeigt Agenda und Woche. Termine legt der Coach auch selbst an, einzeln oder als Serie (`konzept-manuelle-termine.md`).
 
 *Verfügbarkeiten · Buchungsseite · Erinnerungen · E-Mail*
 
@@ -98,7 +104,9 @@ Gebrandeter Warteraum mit Coach-Foto und Willkommensnachricht, LiveKit Token-Gen
 ---
 
 ### Phase 5 – Nachbereitung & CRM
-**Zeitraum:** Woche 17–19 · **Aufwand:** 30 Stunden
+**Zeitraum:** Woche 17–19 · **Aufwand:** 30 Stunden · **Status:** ✅ abgeschlossen am 2026-11-04
+
+> Umgesetzt nach `phase5-umsetzungsplan.md`, in Betrieb auf hxroom.de. Über den Plan hinaus dabei: Termine manuell anlegen, einzeln, als Serie oder als Folgetermin; Spontan-Termin auch per E-Mail-Adresse; Darstellung hell oder dunkel im Benutzermenü; Name des Kontos änderbar. Das Backup samt Off-Site-Kopie ist aus Phase 9 vorgezogen.
 
 *Notizen · Session-Protokoll · Klientenliste · Buchungsseite · Beta-Start*
 
@@ -168,7 +176,7 @@ Beta-Tester arbeiten mit echten Klienten. Die Registrierung bleibt offen.
 - **Landingpage überarbeiten:** Inhalt und Gestaltung von `hxroom.de` neu fassen, als erste Station des Marketings und Weg zur Vorführung. Der genaue Umfang wird vor der Umsetzung festgelegt.
 
 *Selbst als Coach ausprobieren:*
-- **Probe-Sitzung mit sich selbst:** Ein Knopf startet eine Sitzung mit dem Coach als Klient und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Probe-Sitzungen erscheinen im Kalender, zählen aber nicht in Kennzahlen und legen keinen Eintrag in der Klientenliste an. Nach 24 Stunden werden sie gelöscht.
+- **Probe-Sitzung mit sich selbst:** Ein Knopf startet eine Sitzung mit dem Coach als Klient und zeigt einen QR-Code für den Warteraum auf dem Handy. Der Coach erlebt so in zwei Minuten beide Seiten. Probe-Sitzungen erscheinen unter Termine, zählen aber nicht in Kennzahlen und legen keinen Eintrag in der Klientenliste an. Nach 24 Stunden werden sie gelöscht.
 - **Onboarding-Checkliste** auf die Beta ausrichten: Profil, Angebot, Verfügbarkeit, Impressum, Probe-Sitzung, Buchungslink teilen.
 - **„Kommt bald“ ausblenden:** Menüpunkte, die nur Ankündigungs-Kacheln zeigen (Notizen, Umsatz, Rechnungen, Warteraum, Benachrichtigungen, Plan & Abrechnung), verschwinden für die Beta, ebenso die Kacheln „Geplante Features“ in den übrigen Seiten.
 
@@ -259,6 +267,8 @@ Stripe Subscription-Integration, organizationBilling-Tabelle, Webhook-Handler f�
 ### Phase 8 – Pro-Features & Betreiber-Backoffice
 **Zeitraum:** Woche 27–32 · **Aufwand:** 60 Stunden
 
+> Schon da (Phase 5): das Betreiber-Backoffice unter admin.hxroom.de mit eigener Betreiber-Rolle und `AdminGuard`, Coach-Liste mit Aktivität und Sperren, eingegangenes Feedback. Offen sind Abos, MRR, Plan-Änderungen und Trial-Verlängerung.
+
 *Rechnungsstellung · Calendar Sync · Admin-Dashboard*
 
 PDF-Rechnungsgenerierung (nach jeder Sitzung → S3), Umsatzübersicht für Coach, Google Calendar Sync (iCal/OAuth), Betreiber-Backoffice unter admin.hxroom.de: Coach-Liste, Subscription-Verwaltung, MRR-Dashboard, Plan-Änderungen, Trial-Verlängerung.
@@ -268,13 +278,15 @@ PDF-Rechnungsgenerierung (nach jeder Sitzung → S3), Umsatzübersicht für Coac
 **Claude Code Hauptaufgaben:**
 - PDF-Rechnungs-Generator (puppeteer oder pdf-lib) → S3-Upload → signierte URL
 - Google Calendar OAuth-Flow und iCal-Integration
-- Admin-NestJS-Guards mit Betreiber-Rolle
+- ✅ Admin-NestJS-Guards mit Betreiber-Rolle (Phase 5)
 - Betreiber-Dashboard-Queries (MRR, Churn, Conversion)
 
 ---
 
 ### Phase 9 – Beta-Härtung & Launch
 **Zeitraum:** Woche 33–36 · **Aufwand:** 40 Stunden
+
+> Schon da (Phase 5): Backup mit GFS-Aufbewahrung, Off-Site-Kopie und Alarm, seit 05.10.2026 in Betrieb; Fehlerüberwachung mit GlitchTip; Löschfunktionen für Konten (mit 30 Tagen Frist) und Klienten, jeweils mit Löschprotokoll. Offen ist, sie zu prüfen und zu testen.
 
 *Tests · DSGVO · Backup · Monitoring · Produktion*
 
@@ -283,7 +295,7 @@ End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cas
 **Technologien:** pg_dump Backup · DSGVO Delete · Monitoring · Hetzner Prod · **Vollständiges Produkt** ✓
 
 **Claude Code Hauptaufgaben:**
-- Backup-Cron-Job mit GFS-Schema (täglich/wöchentlich/monatlich)
+- ✅ Backup-Cron-Job mit GFS-Schema (täglich/wöchentlich/monatlich, Phase 5)
 - DSGVO-Löschprotokoll-Implementierung prüfen und testen
 - Drizzle Query-Optimierung (Indizes, N+1-Probleme)
 - Produktions-Docker-Compose finalisieren und Deployment-Skripte
@@ -294,7 +306,7 @@ End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cas
 
 | Zeitpunkt | Meilenstein | Beschreibung |
 |---|---|---|
-| Woche 19 · ~5 Monate | **Beta mit echten Coaches** | Buchung, Videocall und Notizen funktionieren. Kein Billing nötig für die ersten Beta-Coaches. |
+| Woche 19 · ~5 Monate | **Beta mit echten Coaches** ✅ | Buchung, Videocall und Notizen funktionieren. Kein Billing nötig für die ersten Beta-Coaches. Erreicht mit Phase 5 am 2026-11-04. |
 | Woche 26 · ~6,5 Monate | **Erste zahlende Kunden** | Stripe Billing ist live. Trial-to-Paid-Conversion kann beginnen. |
 | Woche 36 · ~9 Monate | **Vollständiges Produkt** | Alle Features live, Betreiber-Backoffice aktiv, Production-ready. |
 
@@ -304,12 +316,12 @@ End-to-End-Tests mit echten Beta-Coaches, DSGVO-Löschfunktion verifizieren (Cas
 
 | Phase | Zeitraum | Stunden | Status |
 |---|---|---|---|
-| 1 – Fundament & Infrastruktur | Woche 1–4 | 40h | Start |
-| 2 – Auth & Coach-Profil | Woche 5–7 | 30h | — |
-| 3 – Buchungssystem | Woche 8–12 | 50h | Komplex |
+| 1 – Fundament & Infrastruktur | Woche 1–4 | 40h | ✅ Abgeschlossen |
+| 2 – Auth & Coach-Profil | Woche 5–7 | 30h | ✅ Abgeschlossen |
+| 3 – Buchungssystem | Woche 8–12 | 50h | ✅ Abgeschlossen |
 | 4 – Videocall | Woche 13–16 | 40h | ✅ Abgeschlossen |
-| 5 – Nachbereitung & CRM | Woche 17–19 | 30h | Beta-ready |
-| 6 – Whisper-Transkription | Woche 20–22 | 30h | — |
+| 5 – Nachbereitung & CRM | Woche 17–19 | 30h | ✅ Abgeschlossen · Beta-ready |
+| 6 – Whisper-Transkription | Woche 20–22 | 30h | Als Nächstes |
 | 7 – Billing (Stripe) | Woche 23–26 | 40h | Zahlende Kunden |
 | 8 – Pro-Features & Admin | Woche 27–32 | 60h | — |
 | 9 – Beta-Härtung & Launch | Woche 33–36 | 40h | Launch |
