@@ -11,9 +11,24 @@ const content = {
   note: '20 Minuten mit Stefan – oder gleich selbst loslegen, kostenlos in der Beta.',
 }
 
-// Das Poster des Hero-Loops ist das größte Element im ersten Bildschirm (LCP): früh laden.
+// Hero-Loop in zwei Fassungen: 16:10 und unter 640 px Breite eine eigene 4:5-Fassung mit größerer Schrift.
+const loop = {
+  video: '/video/hxroom-buchung-bis-videocall.mp4',
+  poster: '/video/hxroom-buchung-bis-videocall-poster.webp',
+  mobile: {
+    video: '/video/hxroom-buchung-bis-videocall-mobil.mp4',
+    src: '/video/hxroom-buchung-bis-videocall-mobil-poster.webp',
+    width: 1080,
+    height: 1350,
+  },
+}
+
+// Das Poster ist das größte Element im ersten Bildschirm (LCP): früh laden, je Bildschirmbreite nur eines.
 useHead({
-  link: [{ rel: 'preload', as: 'image', href: '/video/hxroom-buchung-bis-videocall-poster.webp', fetchpriority: 'high' }],
+  link: [
+    { rel: 'preload', as: 'image', href: loop.poster, media: '(min-width: 640px)', fetchpriority: 'high' },
+    { rel: 'preload', as: 'image', href: loop.mobile.src, media: '(max-width: 639px)', fetchpriority: 'high' },
+  ],
 })
 </script>
 
@@ -44,8 +59,9 @@ useHead({
         <!-- Quelle des Loops: media/hero-video/ (doc/technik/hero-video.md). Ohne Adresszeile,
              weil er zwischen Buchungsseite, Mail und Call wechselt. -->
         <ScreenFrame
-          video="/video/hxroom-buchung-bis-videocall.mp4"
-          src="/video/hxroom-buchung-bis-videocall-poster.webp"
+          :video="loop.video"
+          :src="loop.poster"
+          :mobile="loop.mobile"
           alt="Animierter Ablauf: Ein Klient bucht auf der Seite seines Coachs einen Termin, bekommt Bestätigung und Erinnerung per Mail, wartet im Warteraum, wird vom Coach eingelassen und das Videogespräch beginnt."
           :width="1440"
           :height="900"

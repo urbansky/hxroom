@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1350" />
+    <!--
+      Handy-Fassung des Hero-Loops (18 s, 4:5). Gleiche Szenen und gleiches Timing wie index.html,
+      aber für rund 330 px Anzeigebreite gebaut: wenige, große Elemente, Bildtext mit mindestens 52 px.
+      Der letzte Frame entspricht dem ersten (nahtlose Schleife).
+    -->
+    <script src="node_modules/gsap/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: 'Cormorant Garamond';
+        font-style: normal;
+        font-weight: 300 600;
+        src: url('assets/fonts/cormorant-garamond-latin-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'DM Sans';
+        font-style: normal;
+        font-weight: 300 500;
+        src: url('assets/fonts/dm-sans-latin.woff2') format('woff2');
+      }
+
+      :root {
+        --bg: #faf8f4;
+        --bg-muted: #f2efe8;
+        --bg-elevated: #eae6de;
+        --bg-accented: #e2ddd4;
+        --text: #2e3a2d;
+        --text-high: #141814;
+        --text-muted: #5c6e5b;
+        --text-dimmed: #8b9e8a;
+        --border: rgba(0, 0, 0, 0.08);
+        --sage-100: #e1e8e1;
+        --sage-600: #5c6e5b;
+        --sage-700: #4a5a49;
+        --gold-100: #f0e5d0;
+        --gold-400: #b5935a;
+        --gold-700: #634d2c;
+        --live: #2f9e5b;
+        --danger: #e5484d;
+        /* Ohne benannte Ersatzschriften: Der HyperFrames-Compiler lädt sonst Ersatz von Google Fonts nach. */
+        --serif: 'Cormorant Garamond', serif;
+        --sans: 'DM Sans', sans-serif;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body { width: 1080px; height: 1350px; overflow: hidden; background: var(--bg); }
+
+      #root {
+        position: relative; width: 1080px; height: 1350px; overflow: hidden;
+        font-family: var(--sans); color: var(--text);
+        background:
+          radial-gradient(900px 600px at 90% -10%, rgba(212, 174, 120, 0.12), transparent 70%),
+          radial-gradient(800px 600px at 0% 110%, rgba(116, 141, 115, 0.10), transparent 70%),
+          var(--bg);
+      }
+
+      .clip { position: absolute; inset: 0; }
+      svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+      /* ── Fortschritt ───────────────────────────────────────────── */
+      #steps { position: absolute; left: 60px; right: 60px; top: 44px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+      .step .bar { height: 10px; border-radius: 5px; background: var(--bg-accented); position: relative; overflow: hidden; }
+      .step .bar i { position: absolute; inset: 0; background: var(--gold-400); opacity: 0; display: block; }
+      .step .label { margin-top: 14px; font-size: 32px; line-height: 40px; font-weight: 500; color: var(--text-dimmed); position: relative; }
+      .step .label .on { position: absolute; left: 0; top: 0; color: var(--gold-700); opacity: 0; white-space: nowrap; }
+
+      /* ── Bildtext ──────────────────────────────────────────────── */
+      .caption {
+        position: absolute; left: 60px; right: 60px; bottom: 56px;
+        display: flex; align-items: center; justify-content: center; gap: 22px;
+        padding: 26px 44px; border-radius: 48px;
+        background: rgba(181, 147, 90, 0.09); border: 3px solid rgba(181, 147, 90, 0.24);
+        font-size: 54px; line-height: 66px; font-weight: 500; color: var(--gold-700); text-align: center;
+        opacity: 0;
+      }
+
+      .avatar { border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--bg-elevated) url('assets/stefan.jpg') center / cover no-repeat; }
+      .btn { display: flex; align-items: center; justify-content: center; position: relative; background: var(--sage-700); color: #fff; border-radius: 26px; font-weight: 500; }
+
+      /* ── Szene 1: Buchungsseite ───────────────────────────────── */
+      .booking { position: absolute; left: 60px; top: 150px; width: 960px; }
+      .coach-head { display: flex; align-items: center; gap: 30px; height: 130px; }
+      .coach-head .name { font-family: var(--serif); font-size: 72px; line-height: 80px; color: var(--text-high); }
+      .coach-head .role { font-size: 36px; line-height: 44px; color: var(--text-muted); }
+      .days { margin-top: 40px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+      .day { height: 156px; border-radius: 30px; background: var(--bg-accented); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+      .day.today { background: transparent; border: 3px solid var(--bg-accented); }
+      .day .wd, .day .n { position: relative; }
+      .day .wd { font-size: 30px; line-height: 38px; letter-spacing: 0.06em; color: var(--text-muted); }
+      .day .n { font-size: 56px; line-height: 66px; font-weight: 500; color: var(--text-high); }
+      .day.today .wd, .day.today .n { color: var(--text-dimmed); font-weight: 400; }
+      .day .sel { position: absolute; inset: 0; background: var(--sage-700); opacity: 0; }
+      .day .on { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; }
+      .day .on .wd, .day .on .n { color: #fff; }
+
+      .slots { margin-top: 30px; height: 520px; background: var(--bg-muted); border: 3px solid var(--border); border-radius: 44px; padding: 36px; position: relative; }
+      .slots-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; color: var(--text-dimmed); font-size: 42px; }
+      .slots-hint svg { font-size: 84px; color: var(--bg-accented); stroke-width: 1.6; }
+      .slots-body { opacity: 0; }
+      .slots-body .date { font-family: var(--serif); font-size: 60px; line-height: 70px; color: var(--text-high); margin-bottom: 14px; }
+      .slot { height: 112px; margin-top: 18px; border-radius: 28px; background: #fff; position: relative; overflow: hidden; font-size: 48px; color: var(--text-high); }
+      .slot .row { position: absolute; inset: 0; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; }
+      .slot .act { font-size: 34px; color: var(--text-muted); }
+      .slot .sel { position: absolute; inset: 0; background: var(--sage-700); opacity: 0; }
+      .slot .row.on { color: #fff; opacity: 0; }
+      .slot .row.on .act { color: #fff; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+      .slot .row.on .act svg { font-size: 44px; stroke-width: 2.6; }
+
+      /* ── Szene 2: Mail ────────────────────────────────────────── */
+      .mail { position: absolute; left: 60px; top: 140px; width: 960px; opacity: 0; }
+      .mail .brand { font-size: 52px; line-height: 64px; color: var(--gold-700); margin-left: 8px; }
+      .mail-card { margin-top: 18px; background: #fff; border: 3px solid var(--border); border-radius: 48px; padding: 52px 56px 56px; box-shadow: 0 30px 70px -40px rgba(46, 58, 45, 0.35); }
+      .mail-card h3 { font-family: var(--serif); font-size: 92px; line-height: 100px; font-weight: 500; color: var(--text-high); }
+      .mail-card .lead { margin-top: 18px; font-size: 44px; line-height: 56px; color: var(--text); }
+      .term { margin-top: 34px; padding-left: 32px; border-left: 8px solid var(--gold-400); }
+      .term .t { font-size: 44px; line-height: 56px; color: var(--text-high); }
+      .term .k { font-size: 50px; line-height: 62px; color: var(--text-high); }
+      .mail .btn { margin-top: 42px; height: 116px; font-size: 46px; }
+      .chips { position: absolute; left: 60px; top: 920px; width: 960px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .chip { display: flex; align-items: center; gap: 22px; padding: 26px 26px; background: #fff; border: 3px solid var(--border); border-radius: 34px; box-shadow: 0 20px 50px -32px rgba(46, 58, 45, 0.4); opacity: 0; }
+      .chip .ic { width: 84px; height: 84px; border-radius: 50%; background: var(--gold-100); color: var(--gold-700); display: flex; align-items: center; justify-content: center; font-size: 42px; flex-shrink: 0; }
+      .chip .tx { font-size: 38px; line-height: 46px; color: var(--text-high); font-weight: 500; }
+      .chip .tx small { display: block; font-size: 32px; line-height: 40px; color: var(--text-muted); font-weight: 400; }
+
+      /* ── Szene 3: Warteraum ───────────────────────────────────── */
+      .waiting { position: absolute; left: 60px; top: 170px; width: 960px; display: flex; flex-direction: column; align-items: center; text-align: center; opacity: 0; }
+      .waiting h3 { margin-top: 40px; font-family: var(--serif); font-size: 92px; line-height: 100px; font-weight: 400; color: var(--text-high); }
+      .waiting .sub { margin-top: 22px; font-size: 42px; line-height: 54px; color: var(--text-muted); }
+      .pill { margin-top: 36px; display: inline-flex; align-items: center; gap: 20px; height: 92px; padding: 0 44px; border-radius: 999px; background: var(--bg-elevated); font-size: 42px; color: var(--text); }
+      .pill .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--sage-600); }
+      .coach-card { position: absolute; left: 60px; top: 700px; width: 960px; opacity: 0; background: #fff; border: 3px solid var(--border); border-radius: 48px; padding: 40px 48px 48px; box-shadow: 0 40px 90px -40px rgba(20, 24, 20, 0.5); }
+      .coach-card .tag { font-size: 30px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dimmed); }
+      .coach-card .who { margin-top: 26px; display: flex; align-items: center; gap: 28px; }
+      .initials { width: 112px; height: 112px; border-radius: 50%; background: var(--sage-100); color: var(--sage-700); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 500; flex-shrink: 0; }
+      .coach-card .nm { font-size: 48px; line-height: 58px; color: var(--text-high); font-weight: 500; }
+      .coach-card .st { font-size: 38px; line-height: 48px; color: var(--text-muted); display: flex; align-items: center; gap: 14px; }
+      .coach-card .st i { width: 18px; height: 18px; border-radius: 50%; background: var(--live); display: inline-block; }
+      .coach-card .btn { margin-top: 36px; height: 116px; font-size: 46px; }
+      .coach-card .btn .lb { position: absolute; display: flex; align-items: center; gap: 16px; }
+      .coach-card .btn .lb.on { opacity: 0; }
+
+      /* ── Szene 4: Gespräch ────────────────────────────────────── */
+      .call { position: absolute; inset: 0; opacity: 0; }
+      .tile { position: absolute; left: 60px; top: 150px; width: 960px; height: 740px; border-radius: 44px; overflow: hidden; background: #d9dcd8; }
+      .tile img { position: absolute; left: 50%; top: 50%; width: 1000px; height: 1000px; margin-left: -500px; margin-top: -470px; object-fit: cover; }
+      .tile .ring { position: absolute; inset: 0; border-radius: 44px; box-shadow: inset 0 0 0 8px rgba(47, 158, 91, 0.75); opacity: 0; }
+      .tile .live { position: absolute; left: 32px; top: 32px; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 24px 0 20px; border-radius: 999px; background: rgba(250, 248, 244, 0.92); font-size: 32px; font-weight: 500; color: var(--live); }
+      .tile .live i { width: 16px; height: 16px; border-radius: 50%; background: var(--live); display: block; }
+      .tile .nametag { position: absolute; right: 32px; top: 32px; height: 72px; padding: 0 30px; border-radius: 999px; background: rgba(250, 248, 244, 0.92); display: flex; align-items: center; font-size: 38px; color: var(--text-high); }
+      .msg { position: absolute; right: 32px; bottom: 32px; width: 560px; opacity: 0; background: #fff; border-radius: 34px; padding: 26px 32px; box-shadow: 0 24px 60px -24px rgba(20, 24, 20, 0.45); }
+      .msg b { display: block; font-size: 30px; line-height: 38px; color: var(--text-muted); font-weight: 500; }
+      .msg p { margin-top: 6px; font-size: 40px; line-height: 50px; color: var(--text-high); }
+      .ctrls { position: absolute; left: 0; right: 0; top: 924px; display: flex; justify-content: center; align-items: center; gap: 26px; }
+      .ctrl { width: 112px; height: 112px; border-radius: 50%; background: var(--bg-muted); border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 48px; color: var(--text); }
+      .ctrl.end { background: var(--danger); color: #fff; border-color: transparent; }
+      .ctrl.end svg { transform: rotate(135deg); }
+
+      /* ── Zeiger ───────────────────────────────────────────────── */
+      #cursor { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; z-index: 10; }
+      #cursor svg { position: absolute; left: -15px; top: -15px; width: 90px; height: 90px; filter: drop-shadow(0 6px 10px rgba(20, 24, 20, 0.25)); }
+      #cursor svg path { fill: var(--text-high); stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
+      #ripple { position: absolute; left: -75px; top: -75px; width: 150px; height: 150px; border-radius: 50%; background: rgba(181, 147, 90, 0.35); opacity: 0; transform: scale(0.2); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="18" data-width="1080" data-height="1350">
+      <div id="film" class="clip" data-start="0" data-duration="18" data-track-index="0">
+
+        <div id="steps">
+          <div class="step" id="st1"><div class="bar"><i></i></div><div class="label">Buchen<span class="on">Buchen</span></div></div>
+          <div class="step" id="st2"><div class="bar"><i></i></div><div class="label">Mail<span class="on">Mail</span></div></div>
+          <div class="step" id="st3"><div class="bar"><i></i></div><div class="label">Warteraum<span class="on">Warteraum</span></div></div>
+          <div class="step" id="st4"><div class="bar"><i></i></div><div class="label">Gespräch<span class="on">Gespräch</span></div></div>
+        </div>
+
+        <!-- Szene 1: Buchungsseite -->
+        <section class="booking" id="s1">
+          <div class="coach-head">
+            <div class="avatar" style="width:130px;height:130px"></div>
+            <div>
+              <div class="name">Stefan Urbansky</div>
+              <div class="role">Coaching &amp; Beratung</div>
+            </div>
+          </div>
+          <div class="days">
+            <div class="day today"><span class="wd">MO</span><span class="n">26</span></div>
+            <div class="day" id="d27" data-layout-allow-overlap>
+              <div class="sel"></div>
+              <span class="wd">DI</span><span class="n">27</span>
+              <div class="on"><span class="wd">DI</span><span class="n">27</span></div>
+            </div>
+            <div class="day"><span class="wd">MI</span><span class="n">28</span></div>
+            <div class="day"><span class="wd">DO</span><span class="n">29</span></div>
+            <div class="day"><span class="wd">FR</span><span class="n">30</span></div>
+          </div>
+          <div class="slots">
+            <div class="slots-hint" id="slots-hint">
+              <svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+              Wähle einen freien Tag
+            </div>
+            <div class="slots-body" id="slots-body">
+              <div class="date">Dienstag, 27. Oktober</div>
+              <div class="slot" id="slot1" data-layout-allow-overlap>
+                <div class="sel"></div>
+                <div class="row off"><span>09:00 – 09:20</span><span class="act">Auswählen</span></div>
+                <div class="row on"><span>09:00 – 09:20</span><span class="act"><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>Ausgewählt</span></div>
+              </div>
+              <div class="slot"><div class="row"><span>09:35 – 09:55</span><span class="act">Auswählen</span></div></div>
+              <div class="slot"><div class="row"><span>10:10 – 10:30</span><span class="act">Auswählen</span></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Szene 2: Mail -->
+        <section class="mail" id="s2">
+          <div class="brand">HxRoom</div>
+          <div class="mail-card">
+            <h3>Hallo Miriam,</h3>
+            <div class="lead">dein Termin bei Stefan Urbansky ist bestätigt.</div>
+            <div class="term">
+              <div class="t">Di, 27. Oktober · 09:00</div>
+              <div class="k">Erstgespräch</div>
+            </div>
+            <div class="btn" id="mail-btn">Zum Warteraum</div>
+          </div>
+        </section>
+        <div class="chips" id="chips">
+          <div class="chip">
+            <div class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg></div>
+            <div class="tx">Kalender<small>im Anhang</small></div>
+          </div>
+          <div class="chip">
+            <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg></div>
+            <div class="tx">Erinnerung<small>24 h und 1 h vorher</small></div>
+          </div>
+        </div>
+
+        <!-- Szene 3: Warteraum -->
+        <section class="waiting" id="s3">
+          <div class="avatar" style="width:220px;height:220px"></div>
+          <h3>Dein Termin beginnt<br />um 09:00 Uhr</h3>
+          <div class="sub">Stefan holt dich gleich herein.</div>
+          <div class="pill"><span class="dot" id="wait-dot"></span>Es geht gleich los</div>
+        </section>
+        <div class="coach-card" id="coach-card">
+          <div class="tag">Deine Ansicht als Coach</div>
+          <div class="who">
+            <div class="initials">MK</div>
+            <div>
+              <div class="nm">Miriam Kastner</div>
+              <div class="st"><i></i>wartet im Warteraum</div>
+            </div>
+          </div>
+          <div class="btn" id="admit-btn" data-layout-allow-overlap>
+            <span class="lb off">Einlassen</span>
+            <span class="lb on"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M20 6 9 17l-5-5" /></svg>Eingelassen</span>
+          </div>
+        </div>
+
+        <!-- Szene 4: Gespräch -->
+        <section class="call" id="s4">
+          <div class="tile">
+            <img id="cam" src="assets/stefan.jpg" alt="" data-layout-allow-overflow />
+            <div class="ring" id="ring"></div>
+            <div class="live"><i id="live-dot"></i>Live</div>
+            <div class="nametag">Stefan Urbansky</div>
+            <div class="msg" id="msg" data-layout-allow-overlap><b>Chat · Stefan</b><p>Schön, dass du da bist, Miriam!</p></div>
+          </div>
+          <div class="ctrls">
+            <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><path d="M12 19v3" /></svg></div>
+            <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" /></svg></div>
+            <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg></div>
+            <div class="ctrl end"><svg class="i" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg></div>
+          </div>
+        </section>
+
+        <!-- Bildtexte -->
+        <div class="caption" id="c1">Dein Klient bucht auf deiner Seite</div>
+        <div class="caption" id="c2">Bestätigung und Erinnerung kommen automatisch</div>
+        <div class="caption" id="c3">Ohne Konto, ohne Download</div>
+        <div class="caption" id="c4">Unter deinem Namen – Server in Deutschland</div>
+
+        <div id="cursor">
+          <div id="ripple"></div>
+          <svg viewBox="0 0 24 24"><path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" /></svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Zielpunkte für den Zeiger, gemessen am ruhenden Layout (feste Größen, unabhängig von Schriften).
+      const center = (sel, dx = 0, dy = 0) => {
+        const r = document.querySelector(sel).getBoundingClientRect();
+        return { x: r.left + r.width / 2 + dx, y: r.top + r.height / 2 + dy };
+      };
+      const P = {
+        day: center('#d27', 10, 20),
+        slot: center('#slot1', 160, 10),
+        mailBtn: center('#mail-btn', 120, 10),
+        admit: center('#admit-btn', 120, 10),
+      };
+
+      const tl = gsap.timeline({ paused: true });
+      const ease = 'power2.inOut';
+      const out = 'power3.out';
+
+      const click = (p, t, travel = 0.7) => {
+        tl.to('#cursor', { x: p.x, y: p.y, duration: travel, ease }, t - travel - 0.05);
+        tl.to('#cursor svg', { scale: 0.86, duration: 0.08, transformOrigin: '12px 12px' }, t);
+        tl.to('#cursor svg', { scale: 1, duration: 0.18 }, t + 0.08);
+        tl.fromTo('#ripple', { scale: 0.2, opacity: 0.9 }, { scale: 1.4, opacity: 0, duration: 0.55, ease: out, immediateRender: false }, t);
+      };
+      const leave = (sel, t) => tl.to(sel, { opacity: 0, y: -50, duration: 0.5, ease: 'power2.in' }, t);
+      // immediateRender: false, sonst stünden die Startwerte schon auf Bild 0 (die Buchungsseite wäre unsichtbar).
+      const enter = (sel, t, from = 60) => tl.fromTo(sel, { opacity: 0, y: from }, { opacity: 1, y: 0, duration: 0.7, ease: out, immediateRender: false }, t);
+      const step = (n, on, t) => {
+        tl.to(`#st${n} .bar i, #st${n} .label .on`, { opacity: on ? 1 : 0, duration: 0.4 }, t);
+      };
+      const caption = (n, on, t) => tl.to(`#c${n}`, { opacity: on ? 1 : 0, y: on ? 0 : 10, duration: 0.45, ease: on ? out : 'power2.in' }, t);
+
+      // Startzustand (= Endzustand der Schleife)
+      tl.set('#cursor', { x: 900, y: 1450, opacity: 0 }, 0);
+      tl.set('#c1, #st1 .bar i, #st1 .label .on', { opacity: 1 }, 0);
+      tl.set('#chips .chip', { opacity: 0, y: 40 }, 0);
+      tl.set('#coach-card', { opacity: 0, y: 160 }, 0);
+
+      // ── Szene 1: Buchen (0–4 s)
+      tl.to('#cursor', { opacity: 1, duration: 0.3 }, 0.35);
+      click(P.day, 1.25, 0.8);
+      tl.to('#d27 .sel, #d27 .on', { opacity: 1, duration: 0.25 }, 1.27);
+      tl.to('#d27 > .wd, #d27 > .n', { opacity: 0, duration: 0.2 }, 1.27);
+      tl.to('#slots-hint', { opacity: 0, duration: 0.25 }, 1.35);
+      tl.fromTo('#slots-body', { opacity: 0 }, { opacity: 1, duration: 0.2 }, 1.45);
+      tl.from('#slots-body > *', { opacity: 0, y: 24, duration: 0.45, stagger: 0.07, ease: out }, 1.45);
+      click(P.slot, 2.55, 0.65);
+      tl.to('#slot1 .sel, #slot1 .row.on', { opacity: 1, duration: 0.25 }, 2.57);
+      tl.to('#slot1 .row.off', { opacity: 0, duration: 0.2 }, 2.57);
+      tl.from('#slot1 .row.on svg', { scale: 0.3, duration: 0.4, ease: 'back.out(3)' }, 2.6);
+
+      // ── Szene 2: Mail (4–8 s)
+      leave('#s1', 3.6);
+      caption(1, false, 3.6);
+      step(1, false, 3.8);
+      step(2, true, 3.8);
+      enter('#s2', 4.05);
+      caption(2, true, 4.15);
+      tl.to('#chips .chip', { opacity: 1, y: 0, duration: 0.55, stagger: 0.28, ease: out }, 4.8);
+      click(P.mailBtn, 6.55, 0.8);
+      tl.to('#mail-btn', { scale: 0.97, duration: 0.1 }, 6.55);
+      tl.to('#mail-btn', { scale: 1, duration: 0.25 }, 6.65);
+      leave('#s2', 7.25);
+      tl.to('#chips .chip', { opacity: 0, y: -50, duration: 0.5, ease: 'power2.in', stagger: 0.04 }, 7.25);
+      caption(2, false, 7.25);
+
+      // Buchungsseite unsichtbar zurücksetzen, damit die Schleife sauber neu beginnt.
+      tl.set('#d27 .sel, #d27 .on, #slots-body, #slot1 .sel, #slot1 .row.on', { opacity: 0 }, 5.0);
+      tl.set('#slots-hint, #slot1 .row.off, #d27 > .wd, #d27 > .n', { opacity: 1 }, 5.0);
+
+      // ── Szene 3: Warteraum (8–12 s)
+      step(2, false, 7.5);
+      step(3, true, 7.5);
+      enter('#s3', 7.75);
+      caption(3, true, 7.85);
+      tl.to('#wait-dot', { scale: 1.7, opacity: 0.35, duration: 0.55, yoyo: true, repeat: 5, ease: 'sine.inOut' }, 8.2);
+      // Erst rückt der Warteraum nach oben, dann kommt die Coach-Karte von unten.
+      // Die Statusanzeige weicht der Karte; dort steht „wartet im Warteraum".
+      tl.to('#s3', { y: -60, duration: 0.7, ease }, 8.7);
+      tl.to('#s3 .pill', { opacity: 0, duration: 0.4 }, 8.9);
+      tl.to('#coach-card', { opacity: 1, y: 0, duration: 0.65, ease: out }, 9.3);
+      click(P.admit, 10.35, 0.8);
+      tl.to('#admit-btn', { scale: 0.97, duration: 0.1 }, 10.35);
+      tl.to('#admit-btn', { scale: 1, duration: 0.25 }, 10.45);
+      tl.to('#admit-btn .lb.off', { opacity: 0, duration: 0.2 }, 10.4);
+      tl.to('#admit-btn .lb.on', { opacity: 1, duration: 0.25 }, 10.45);
+      tl.to('#cursor', { x: 950, y: 1500, duration: 0.8, ease: 'power2.in' }, 10.8);
+      tl.to('#s3', { opacity: 0, y: -110, duration: 0.5, ease: 'power2.in' }, 11.25);
+      tl.to('#coach-card', { opacity: 0, y: -50, duration: 0.5, ease: 'power2.in' }, 11.25);
+      caption(3, false, 11.25);
+
+      // ── Szene 4: Gespräch (12–16,5 s)
+      step(3, false, 11.5);
+      step(4, true, 11.5);
+      tl.fromTo('#s4', { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.75, ease: out }, 11.75);
+      caption(4, true, 11.9);
+      tl.fromTo('#cam', { scale: 1 }, { scale: 1.07, duration: 5.5, ease: 'none' }, 11.6);
+      tl.to('#ring', { opacity: 1, duration: 0.5, yoyo: true, repeat: 3, ease: 'sine.inOut' }, 12.4);
+      tl.to('#live-dot', { opacity: 0.3, duration: 0.5, yoyo: true, repeat: 7, ease: 'sine.inOut' }, 12.2);
+      tl.fromTo('#msg', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: out }, 13.3);
+
+      // ── Übergang zurück zum Anfang (16,5–18 s)
+      tl.to('#s4', { opacity: 0, scale: 1.03, duration: 0.55, ease: 'power2.in' }, 16.3);
+      caption(4, false, 16.3);
+      step(4, false, 16.7);
+      step(1, true, 16.7);
+      tl.set('#s2, #s3', { opacity: 0, y: 0 }, 16.5);
+      tl.set('#s3 .pill', { opacity: 1 }, 16.5);
+      enter('#s1', 16.9);
+      caption(1, true, 17.0);
+      tl.set('#cursor', { x: 900, y: 1450, opacity: 0 }, 17.99);
+      tl.set({}, {}, 18);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

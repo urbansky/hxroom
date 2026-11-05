@@ -5,15 +5,27 @@
 // Mit `video` ist `src` das Poster: Es steht da, bis das Video läuft, und bleibt stehen, wenn
 // der Besucher reduzierte Bewegung eingestellt hat. Der Loop startet erst im Browser, läuft
 // nur, solange er im Bild ist, und lässt sich in der Titelleiste anhalten (WCAG 2.2.2).
+//
+// `mobile` ist eine eigene Fassung für schmale Bildschirme (unter 640 px) mit eigenem
+// Seitenverhältnis. Das Poster liegt deshalb als <picture> unter dem Video: Das poster-Attribut
+// kennt keine Media-Queries. Das Video selbst wählt seine Quelle per <source media>.
+const MOBILE = '(max-width: 639px)'
+
 const props = withDefaults(defineProps<{
   src?: string
   video?: string
+  mobile?: { video: string, src: string, width: number, height: number }
   alt: string
   address?: string
   width?: number
   height?: number
   eager?: boolean
 }>(), { width: 1440, height: 900, eager: false })
+
+const ratio = computed(() => ({
+  '--ratio': `${props.width} / ${props.height}`,
+  '--ratio-mobile': props.mobile ? `${props.mobile.width} / ${props.mobile.height}` : `${props.width} / ${props.height}`,
+}))
 
 const videoEl = useTemplateRef<HTMLVideoElement>('videoEl')
 const playing = ref(false)
@@ -77,23 +89,27 @@ onBeforeUnmount(() => observer?.disconnect())
       />
     </div>
 
-    <video
-      v-if="video"
-      ref="videoEl"
-      :src="video"
-      :poster="src"
-      :width="width"
-      :height="height"
-      :aria-label="alt"
-      muted
-      loop
-      playsinline
-      disablepictureinpicture
-      preload="metadata"
-      class="block w-full h-auto"
-      @play="playing = true"
-      @pause="playing = false"
-    />
+    <div v-if="video" class="relative aspect-(--ratio) max-sm:aspect-(--ratio-mobile)" :style="ratio">
+      <picture v-if="src">
+        <source v-if="mobile" :media="MOBILE" :srcset="mobile.src">
+        <img :src="src" alt="" fetchpriority="high" class="absolute inset-0 size-full object-cover">
+      </picture>
+      <video
+        ref="videoEl"
+        :aria-label="alt"
+        muted
+        loop
+        playsinline
+        disablepictureinpicture
+        preload="metadata"
+        class="absolute inset-0 size-full object-cover"
+        @play="playing = true"
+        @pause="playing = false"
+      >
+        <source v-if="mobile" :src="mobile.video" :media="MOBILE" type="video/mp4">
+        <source :src="video" type="video/mp4">
+      </video>
+    </div>
     <img
       v-else-if="src"
       :src="src"
