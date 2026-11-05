@@ -39,6 +39,7 @@ Technische Dokumente werden mit dem Code gepflegt. Fachliche Dokumente ändert n
 **Marketing**
 - [marketing.md](marketing/marketing.md) – Tonalität, Akquise, Maßnahmen
 - [seo.md](marketing/seo.md) – SEO-Strategie
+- [linkedin.md](marketing/linkedin.md) – Unternehmensseite HxRoom: Felder, Texte, Bilder, erster Beitrag
 - [pitchdeck.html](marketing/pitchdeck.html) – Pitch Deck
 
 **Technik**
