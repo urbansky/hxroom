@@ -1,0 +1,16 @@
+{
+  "name": "hxroom-hero-video",
+  "private": true,
+  "description": "Stummer Hero-Loop der Landing-Page, gebaut mit HyperFrames (HTML → MP4)",
+  "type": "module",
+  "scripts": {
+    "preview": "HYPERFRAMES_NO_TELEMETRY=1 hyperframes preview",
+    "check": "HYPERFRAMES_NO_TELEMETRY=1 hyperframes check",
+    "snapshot": "HYPERFRAMES_NO_TELEMETRY=1 hyperframes snapshot",
+    "render": "HYPERFRAMES_NO_TELEMETRY=1 hyperframes render"
+  },
+  "devDependencies": {
+    "gsap": "3.15.1",
+    "hyperframes": "0.9.15"
+  }
+}

@@ -10,6 +10,11 @@ const content = {
   sub: 'Statt Calendly und Zoom: Deine Klienten buchen auf deiner Seite, bekommen Bestätigung und Erinnerung und kommen per Link direkt in deinen Videocall – ohne Konto, ohne Download. Alles unter deinem Namen, Server in Deutschland.',
   note: '20 Minuten mit Stefan – oder gleich selbst loslegen, kostenlos in der Beta.',
 }
+
+// Das Poster des Hero-Loops ist das größte Element im ersten Bildschirm (LCP): früh laden.
+useHead({
+  link: [{ rel: 'preload', as: 'image', href: '/video/hxroom-buchung-bis-videocall-poster.webp', fetchpriority: 'high' }],
+})
 </script>
 
 <template>
@@ -36,13 +41,14 @@ const content = {
       </div>
 
       <div class="a5">
+        <!-- Quelle des Loops: media/hero-video/ (doc/technik/hero-video.md). Ohne Adresszeile,
+             weil er zwischen Buchungsseite, Mail und Call wechselt. -->
         <ScreenFrame
-          src="/screens/call.webp"
-          alt="Videocall aus Sicht des Klienten: der Coach im Bild, daneben der Chat"
-          address="demo.hxroom.de/call/…"
-          :width="2880"
-          :height="1800"
-          eager
+          video="/video/hxroom-buchung-bis-videocall.mp4"
+          src="/video/hxroom-buchung-bis-videocall-poster.webp"
+          alt="Animierter Ablauf: Ein Klient bucht auf der Seite seines Coachs einen Termin, bekommt Bestätigung und Erinnerung per Mail, wartet im Warteraum, wird vom Coach eingelassen und das Videogespräch beginnt."
+          :width="1440"
+          :height="900"
         />
       </div>
     </div>

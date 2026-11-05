@@ -45,3 +45,4 @@ Technische Dokumente werden mit dem Code gepflegt. Fachliche Dokumente ändert n
 - [technisches-konzept.md](technik/technisches-konzept.md) – Stack, Architektur, Deployment, Videocall
 - [s3-verzeichnisschema.md](technik/s3-verzeichnisschema.md) – Ablage im Object Store
 - [newsletter-brevo.md](technik/newsletter-brevo.md) – Newsletter und Transaktionsmails über Brevo
+- [hero-video.md](technik/hero-video.md) – Hero-Loop der Landing-Page: Quelle, Rendern, Einbau

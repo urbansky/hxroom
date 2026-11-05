@@ -1,14 +1,55 @@
 <script setup lang="ts">
-// Browserrahmen um einen Screenshot. Ohne `src` zeigt er einen Platzhalter im selben
-// Seitenverhältnis, bis die echten Bilder da sind (technisches-konzept.md §15).
-withDefaults(defineProps<{
+// Browserrahmen um einen Screenshot oder einen stummen Loop. Ohne `src` zeigt er einen
+// Platzhalter im selben Seitenverhältnis, bis die echten Bilder da sind (technisches-konzept.md §15).
+//
+// Mit `video` ist `src` das Poster: Es steht da, bis das Video läuft, und bleibt stehen, wenn
+// der Besucher reduzierte Bewegung eingestellt hat. Der Loop startet erst im Browser, läuft
+// nur, solange er im Bild ist, und lässt sich in der Titelleiste anhalten (WCAG 2.2.2).
+const props = withDefaults(defineProps<{
   src?: string
+  video?: string
   alt: string
   address?: string
   width?: number
   height?: number
   eager?: boolean
 }>(), { width: 1440, height: 900, eager: false })
+
+const videoEl = useTemplateRef<HTMLVideoElement>('videoEl')
+const playing = ref(false)
+// Hat der Besucher selbst angehalten (oder will keine Bewegung), startet der Loop nicht von allein wieder.
+const heldByUser = ref(false)
+
+function play() {
+  videoEl.value?.play().catch(() => { playing.value = false })
+}
+
+function toggle() {
+  const el = videoEl.value
+  if (!el) return
+  if (el.paused) {
+    heldByUser.value = false
+    play()
+  }
+  else {
+    heldByUser.value = true
+    el.pause()
+  }
+}
+
+let observer: IntersectionObserver | undefined
+
+onMounted(() => {
+  if (!props.video || !videoEl.value) return
+  heldByUser.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  observer = new IntersectionObserver(([entry]) => {
+    if (!entry?.isIntersecting) videoEl.value?.pause()
+    else if (!heldByUser.value) play()
+  }, { threshold: 0.25 })
+  observer.observe(videoEl.value)
+})
+
+onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
@@ -24,10 +65,37 @@ withDefaults(defineProps<{
           {{ address }}
         </span>
       </div>
+      <UButton
+        v-if="video"
+        :icon="playing ? 'i-lucide-pause' : 'i-lucide-play'"
+        :aria-label="playing ? 'Animation anhalten' : 'Animation abspielen'"
+        color="neutral"
+        variant="ghost"
+        size="xs"
+        class="ml-auto -mr-2 text-(--ui-text-dimmed)"
+        @click="toggle"
+      />
     </div>
 
+    <video
+      v-if="video"
+      ref="videoEl"
+      :src="video"
+      :poster="src"
+      :width="width"
+      :height="height"
+      :aria-label="alt"
+      muted
+      loop
+      playsinline
+      disablepictureinpicture
+      preload="metadata"
+      class="block w-full h-auto"
+      @play="playing = true"
+      @pause="playing = false"
+    />
     <img
-      v-if="src"
+      v-else-if="src"
       :src="src"
       :alt="alt"
       :width="width"

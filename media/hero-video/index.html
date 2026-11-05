@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1200" />
+    <!--
+      Stummer Hero-Loop der Landing-Page (18 s, 16:10). Der Klient bucht, bekommt die Mail,
+      wartet im Warteraum, der Coach lässt ihn herein, das Gespräch beginnt. Die Oberfläche ist
+      vereinfacht nachgebaut (Farben, Schriften und Texte wie in HxRoom), damit sie auch bei
+      350 px Anzeigebreite lesbar bleibt. Der letzte Frame entspricht dem ersten (nahtlose Schleife).
+    -->
+    <script src="node_modules/gsap/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: 'Cormorant Garamond';
+        font-style: normal;
+        font-weight: 300 600;
+        src: url('assets/fonts/cormorant-garamond-latin-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Cormorant Garamond';
+        font-style: italic;
+        font-weight: 300 400;
+        src: url('assets/fonts/cormorant-garamond-latin-italic.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'DM Sans';
+        font-style: normal;
+        font-weight: 300 500;
+        src: url('assets/fonts/dm-sans-latin.woff2') format('woff2');
+      }
+
+      :root {
+        --bg: #faf8f4;
+        --bg-muted: #f2efe8;
+        --bg-elevated: #eae6de;
+        --bg-accented: #e2ddd4;
+        --text: #2e3a2d;
+        --text-high: #141814;
+        --text-muted: #5c6e5b;
+        --text-dimmed: #8b9e8a;
+        --border: rgba(0, 0, 0, 0.08);
+        --sage-100: #e1e8e1;
+        --sage-600: #5c6e5b;
+        --sage-700: #4a5a49;
+        --gold-100: #f0e5d0;
+        --gold-300: #d4ae78;
+        --gold-400: #b5935a;
+        --gold-700: #634d2c;
+        --live: #2f9e5b;
+        --danger: #e5484d;
+        /* Ohne benannte Ersatzschriften: Der HyperFrames-Compiler lädt sonst Ersatz von Google Fonts nach. */
+        --serif: 'Cormorant Garamond', serif;
+        --sans: 'DM Sans', sans-serif;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body {
+        width: 1920px;
+        height: 1200px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1200px;
+        overflow: hidden;
+        font-family: var(--sans);
+        color: var(--text);
+        background:
+          radial-gradient(1200px 700px at 85% -10%, rgba(212, 174, 120, 0.12), transparent 70%),
+          radial-gradient(1000px 700px at 0% 110%, rgba(116, 141, 115, 0.10), transparent 70%),
+          var(--bg);
+      }
+
+      .clip { position: absolute; inset: 0; }
+
+      svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+      /* ── Schrittleiste ─────────────────────────────────────────── */
+      #steps {
+        position: absolute;
+        top: 44px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 28px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 34px;
+        line-height: 44px;
+        font-weight: 500;
+        color: var(--text-dimmed);
+      }
+      .step .num {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid var(--bg-accented);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        line-height: 1;
+        position: relative;
+      }
+      .step .num .fill {
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        background: var(--gold-400);
+        opacity: 0;
+      }
+      .step .num span { position: relative; }
+      .step .label { position: relative; }
+      .step .label .on { position: absolute; left: 0; top: 0; color: var(--gold-700); opacity: 0; white-space: nowrap; }
+      .step-line { width: 64px; height: 2px; background: var(--bg-accented); border-radius: 2px; }
+
+      /* ── Bildtext ──────────────────────────────────────────────── */
+      .caption {
+        position: absolute;
+        left: 80px;
+        bottom: 56px;
+        display: inline-flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px 38px 20px 30px;
+        border-radius: 999px;
+        background: rgba(181, 147, 90, 0.09);
+        border: 2px solid rgba(181, 147, 90, 0.24);
+        font-size: 42px;
+        line-height: 52px;
+        font-weight: 500;
+        color: var(--gold-700);
+        white-space: nowrap;
+        opacity: 0;
+      }
+      .caption::before {
+        content: '';
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--gold-400);
+      }
+
+      /* ── Szene 1: Buchungsseite ───────────────────────────────── */
+      .booking { position: absolute; left: 160px; top: 128px; width: 1600px; }
+      .coach-head { display: flex; align-items: center; gap: 28px; height: 108px; }
+      .avatar {
+        border-radius: 50%; overflow: hidden; flex-shrink: 0;
+        background: var(--bg-elevated) url('assets/stefan.jpg') center / cover no-repeat;
+      }
+      .coach-head .name { font-family: var(--serif); font-size: 64px; line-height: 72px; font-weight: 400; color: var(--text-high); }
+      .coach-head .role { font-size: 30px; line-height: 36px; color: var(--text-muted); }
+      .free-title { margin-top: 22px; display: flex; align-items: baseline; gap: 28px; height: 76px; }
+      .free-title h2 { font-family: var(--serif); font-size: 66px; line-height: 76px; font-weight: 400; color: var(--text-high); }
+      .free-title span { font-size: 28px; color: var(--text-dimmed); }
+
+      .panels { margin-top: 20px; display: grid; grid-template-columns: 760px 1fr; gap: 36px; height: 584px; }
+      .panel { background: var(--bg-muted); border: 2px solid var(--border); border-radius: 40px; padding: 30px 40px; position: relative; }
+
+      .cal-head { display: flex; justify-content: space-between; align-items: center; height: 60px; color: var(--text); font-size: 40px; }
+      .cal-head .month { font-family: var(--serif); font-size: 52px; line-height: 60px; }
+      .cal-grid { margin-top: 12px; display: grid; grid-template-columns: repeat(7, 96px); justify-content: space-between; row-gap: 6px; }
+      .cal-grid .wd { height: 44px; text-align: center; font-size: 25px; line-height: 44px; color: var(--text-dimmed); letter-spacing: 0.06em; }
+      .day {
+        width: 76px; height: 76px; margin: 0 auto; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 34px; color: var(--text-dimmed); position: relative;
+      }
+      .day.today { border: 2px solid var(--text-dimmed); }
+      .day.free { background: var(--bg-accented); color: var(--text); font-weight: 500; }
+      .day .sel { position: absolute; inset: 0; border-radius: 50%; background: var(--sage-700); opacity: 0; }
+      .day .n { position: relative; }
+      .day .n.on { position: absolute; color: #fff; opacity: 0; }
+
+      .slots-hint {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+        color: var(--text-dimmed); font-size: 34px;
+      }
+      .slots-hint svg { font-size: 72px; color: var(--bg-accented); stroke-width: 1.6; }
+      .slots-body { opacity: 0; }
+      .slots-body .date { font-family: var(--serif); font-size: 56px; line-height: 64px; color: var(--text-high); }
+      .slots-body .tz { font-size: 26px; line-height: 34px; color: var(--text-dimmed); margin-bottom: 26px; }
+      .slot {
+        height: 98px; margin-top: 18px; border-radius: 26px; background: #fff;
+        display: flex; align-items: center; justify-content: space-between; padding: 0 36px;
+        font-size: 38px; color: var(--text-high); position: relative; overflow: hidden;
+        box-shadow: 0 2px 0 rgba(0, 0, 0, 0.03);
+      }
+      .slot .act { font-size: 28px; color: var(--text-muted); }
+      .slot .sel { position: absolute; inset: 0; background: var(--sage-700); opacity: 0; }
+      .slot .row { position: absolute; inset: 0; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; }
+      .slot .row.on { color: #fff; opacity: 0; }
+      .slot .row.on .act { color: #fff; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+      .slot .row.on .act svg { font-size: 34px; stroke-width: 2.6; }
+
+      /* ── Szene 2: Bestätigungsmail ────────────────────────────── */
+      .mail { position: absolute; left: 190px; top: 150px; width: 1080px; opacity: 0; }
+      .mail .brand { font-size: 46px; line-height: 60px; color: var(--gold-700); margin-left: 8px; letter-spacing: -0.01em; }
+      .mail-card { margin-top: 22px; background: #fff; border: 2px solid var(--border); border-radius: 44px; padding: 60px 70px 64px; box-shadow: 0 30px 70px -40px rgba(46, 58, 45, 0.35); }
+      .mail-card h3 { font-family: var(--serif); font-size: 84px; line-height: 92px; font-weight: 500; color: var(--text-high); }
+      .mail-card .lead { margin-top: 22px; font-size: 36px; line-height: 48px; color: var(--text); }
+      .mail-card .d { margin-top: 40px; font-size: 32px; line-height: 40px; color: var(--text-muted); }
+      .term { margin-top: 14px; padding-left: 30px; border-left: 7px solid var(--gold-400); }
+      .term .t { font-size: 36px; line-height: 46px; color: var(--text-high); }
+      .term .k { font-size: 42px; line-height: 54px; color: var(--text-high); }
+      .term .m { font-size: 30px; line-height: 40px; color: var(--text-muted); }
+      .btn {
+        display: inline-flex; align-items: center; justify-content: center; position: relative;
+        background: var(--sage-700); color: #fff; border-radius: 22px; font-weight: 500;
+      }
+      .mail .btn { margin-top: 48px; height: 100px; padding: 0 56px; font-size: 38px; }
+
+      .chips { position: absolute; left: 1330px; top: 330px; width: 470px; display: flex; flex-direction: column; gap: 30px; }
+      .chip {
+        display: flex; align-items: center; gap: 24px; padding: 26px 30px;
+        background: #fff; border: 2px solid var(--border); border-radius: 30px;
+        box-shadow: 0 20px 50px -32px rgba(46, 58, 45, 0.4); opacity: 0;
+      }
+      .chip .ic { width: 72px; height: 72px; border-radius: 50%; background: var(--gold-100); color: var(--gold-700); display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; }
+      .chip .tx { font-size: 32px; line-height: 40px; color: var(--text-high); font-weight: 500; }
+      .chip .tx small { display: block; font-size: 26px; line-height: 34px; color: var(--text-muted); font-weight: 400; }
+
+      /* ── Szene 3: Warteraum ───────────────────────────────────── */
+      .waiting { position: absolute; left: 360px; top: 140px; width: 1200px; display: flex; flex-direction: column; align-items: center; text-align: center; opacity: 0; }
+      .waiting h3 { margin-top: 34px; font-family: var(--serif); font-size: 76px; line-height: 88px; font-weight: 400; color: var(--text-high); white-space: nowrap; }
+      .waiting .sub { margin-top: 12px; font-size: 34px; line-height: 46px; color: var(--text-muted); }
+      .pill { margin-top: 30px; display: inline-flex; align-items: center; gap: 18px; height: 72px; padding: 0 36px; border-radius: 999px; background: var(--bg-elevated); font-size: 32px; color: var(--text); }
+      .pill .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--sage-600); }
+      .appt { margin-top: 36px; width: 900px; background: #fff; border: 2px solid var(--border); border-radius: 40px; padding: 32px 44px 32px 40px; text-align: left; display: flex; gap: 30px; }
+      .appt .bar-gold { width: 7px; border-radius: 4px; background: var(--gold-400); flex-shrink: 0; }
+      .appt .t { font-size: 34px; line-height: 44px; color: var(--text-high); }
+      .appt .k { font-size: 40px; line-height: 52px; color: var(--text-high); }
+      .appt .m { font-size: 30px; line-height: 40px; color: var(--text-muted); }
+
+      .coach-card {
+        position: absolute; left: 1310px; top: 250px; width: 520px; opacity: 0;
+        background: #fff; border: 2px solid var(--border); border-radius: 40px; padding: 36px 40px 40px;
+        box-shadow: 0 40px 90px -40px rgba(20, 24, 20, 0.45);
+      }
+      .coach-card .tag { font-size: 24px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dimmed); }
+      .coach-card .who { margin-top: 26px; display: flex; align-items: center; gap: 24px; }
+      .initials { width: 96px; height: 96px; border-radius: 50%; background: var(--sage-100); color: var(--sage-700); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 500; flex-shrink: 0; }
+      .coach-card .nm { font-size: 38px; line-height: 46px; color: var(--text-high); font-weight: 500; }
+      .coach-card .st { font-size: 28px; line-height: 36px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; }
+      .coach-card .st i { width: 14px; height: 14px; border-radius: 50%; background: var(--live); display: inline-block; }
+      .coach-card .btn { margin-top: 34px; width: 100%; height: 96px; font-size: 36px; gap: 14px; }
+      .coach-card .btn .lb { position: absolute; display: flex; align-items: center; gap: 14px; }
+      .coach-card .btn .lb.on { opacity: 0; }
+
+      /* ── Szene 4: Gespräch ────────────────────────────────────── */
+      .call { position: absolute; inset: 0; opacity: 0; }
+      .tile {
+        position: absolute; left: 80px; top: 130px; width: 1230px; height: 730px;
+        border-radius: 36px; overflow: hidden; background: #d9dcd8;
+      }
+      .tile img { position: absolute; left: 50%; top: 50%; width: 1230px; height: 1230px; margin-left: -615px; margin-top: -560px; object-fit: cover; }
+      .tile .ring { position: absolute; inset: 0; border-radius: 36px; box-shadow: inset 0 0 0 6px rgba(47, 158, 91, 0.75); opacity: 0; }
+      .tile .nametag { position: absolute; left: 30px; bottom: 30px; display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 28px 0 12px; border-radius: 999px; background: rgba(250, 248, 244, 0.92); font-size: 30px; color: var(--text-high); }
+      .tile .nametag b { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 500; color: var(--text-muted); }
+
+      .chat {
+        position: absolute; left: 1340px; top: 130px; width: 500px; height: 730px;
+        background: var(--bg); border: 2px solid var(--border); border-radius: 36px;
+        box-shadow: 0 30px 70px -45px rgba(46, 58, 45, 0.35);
+      }
+      .chat .hd { height: 104px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--border); font-size: 36px; font-weight: 500; color: var(--text-high); }
+      .chat .hd svg { font-size: 36px; color: var(--text-muted); }
+      .bubble { position: absolute; left: 32px; right: 40px; top: 136px; opacity: 0; }
+      .bubble p { background: #fff; border: 2px solid var(--border); border-radius: 28px; padding: 24px 28px; font-size: 31px; line-height: 42px; color: var(--text); }
+      .bubble small { display: block; margin-top: 12px; font-size: 22px; color: var(--text-dimmed); }
+      .typing { position: absolute; left: 32px; top: 136px; height: 76px; padding: 0 28px; border-radius: 28px; background: #fff; border: 2px solid var(--border); display: flex; align-items: center; gap: 10px; opacity: 0; }
+      .typing i { width: 12px; height: 12px; border-radius: 50%; background: var(--text-dimmed); display: block; }
+      .chat .in { position: absolute; left: 30px; right: 30px; bottom: 30px; height: 84px; display: flex; align-items: center; gap: 16px; }
+      .chat .in .clip-ic { width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-muted); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--text-muted); flex-shrink: 0; }
+      .chat .in .field { flex: 1; height: 72px; border-radius: 18px; border: 2px solid var(--border); background: #fff; display: flex; align-items: center; padding: 0 22px; font-size: 26px; color: var(--text-dimmed); }
+
+      .bar { position: absolute; left: 0; right: 0; top: 886px; height: 100px; }
+      .bar .me { position: absolute; left: 84px; top: 0; }
+      .bar .me .nm { font-family: var(--serif); font-size: 46px; line-height: 54px; color: var(--text-high); }
+      .bar .me .live { margin-top: 4px; display: inline-flex; align-items: center; gap: 10px; height: 38px; padding: 0 16px 0 12px; border-radius: 999px; background: rgba(47, 158, 91, 0.12); font-size: 24px; color: var(--live); font-weight: 500; }
+      .bar .me .live i { width: 12px; height: 12px; border-radius: 50%; background: var(--live); display: block; }
+      .ctrls { position: absolute; left: 50%; top: 0; transform: translateX(-50%); display: flex; align-items: center; gap: 22px; }
+      .ctrl { height: 96px; min-width: 96px; border-radius: 999px; background: var(--bg-muted); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 28px; font-size: 40px; color: var(--text); }
+      .ctrl.end { background: var(--danger); color: #fff; border-color: transparent; }
+      .ctrl.end svg { transform: rotate(135deg); }
+      .ctrl-sep { width: 2px; height: 56px; background: var(--border); }
+
+      /* ── Zeiger ───────────────────────────────────────────────── */
+      #cursor { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; z-index: 10; }
+      #cursor svg { position: absolute; left: -12px; top: -12px; width: 72px; height: 72px; filter: drop-shadow(0 6px 10px rgba(20, 24, 20, 0.25)); }
+      #cursor svg path { fill: var(--text-high); stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
+      #ripple { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; background: rgba(181, 147, 90, 0.35); opacity: 0; transform: scale(0.2); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="18" data-width="1920" data-height="1200">
+      <div id="film" class="clip" data-start="0" data-duration="18" data-track-index="0">
+
+        <!-- Schrittleiste -->
+        <div id="steps">
+          <div class="step" id="st1"><div class="num"><div class="fill"></div><span>1</span></div><div class="label">Buchen<span class="on">Buchen</span></div></div>
+          <div class="step-line"></div>
+          <div class="step" id="st2"><div class="num"><div class="fill"></div><span>2</span></div><div class="label">Mail<span class="on">Mail</span></div></div>
+          <div class="step-line"></div>
+          <div class="step" id="st3"><div class="num"><div class="fill"></div><span>3</span></div><div class="label">Warteraum<span class="on">Warteraum</span></div></div>
+          <div class="step-line"></div>
+          <div class="step" id="st4"><div class="num"><div class="fill"></div><span>4</span></div><div class="label">Gespräch<span class="on">Gespräch</span></div></div>
+        </div>
+
+        <!-- Szene 1: Buchungsseite -->
+        <section class="booking" id="s1">
+          <div class="coach-head">
+            <div class="avatar" style="width:116px;height:116px"></div>
+            <div>
+              <div class="name">Stefan Urbansky</div>
+              <div class="role">Coaching &amp; Beratung</div>
+            </div>
+          </div>
+          <div class="free-title"><h2>Freie Termine</h2><span>Alle Zeiten in deutscher Zeit</span></div>
+          <div class="panels">
+            <div class="panel">
+              <div class="cal-head">
+                <svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>
+                <span class="month">Oktober 2026</span>
+                <svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
+              </div>
+              <div class="cal-grid" id="cal"></div>
+            </div>
+            <div class="panel" id="slots-panel">
+              <div class="slots-hint" id="slots-hint">
+                <svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+                Wähle einen freien Tag
+              </div>
+              <div class="slots-body" id="slots-body">
+                <div class="date">Dienstag, 27. Oktober</div>
+                <div class="tz">Alle Zeiten in MEZ</div>
+                <div class="slot" id="slot1" data-layout-allow-overlap>
+                  <div class="sel"></div>
+                  <div class="row"><span>09:00 – 09:20 Uhr</span><span class="act">Auswählen</span></div>
+                  <div class="row on"><span>09:00 – 09:20 Uhr</span><span class="act"><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>Ausgewählt</span></div>
+                </div>
+                <div class="slot"><div class="row"><span>09:35 – 09:55 Uhr</span><span class="act">Auswählen</span></div></div>
+                <div class="slot"><div class="row"><span>10:10 – 10:30 Uhr</span><span class="act">Auswählen</span></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Szene 2: Bestätigungsmail -->
+        <section class="mail" id="s2">
+          <div class="brand">HxRoom</div>
+          <div class="mail-card">
+            <h3>Hallo Miriam,</h3>
+            <div class="lead">dein Termin bei Stefan Urbansky ist bestätigt.</div>
+            <div class="d">Dienstag, 27. Oktober</div>
+            <div class="term">
+              <div class="t">09:00 – 09:20</div>
+              <div class="k">Erstgespräch</div>
+              <div class="m">20 Min. · bei Stefan Urbansky</div>
+            </div>
+            <div class="btn" id="mail-btn">Zum Warteraum</div>
+          </div>
+        </section>
+        <div class="chips" id="chips">
+          <div class="chip">
+            <div class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg></div>
+            <div class="tx">Kalendereintrag<small>gleich im Anhang</small></div>
+          </div>
+          <div class="chip">
+            <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg></div>
+            <div class="tx">Erinnerung<small>24 Stunden vorher</small></div>
+          </div>
+          <div class="chip">
+            <div class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg></div>
+            <div class="tx">Erinnerung<small>1 Stunde vorher</small></div>
+          </div>
+        </div>
+
+        <!-- Szene 3: Warteraum -->
+        <section class="waiting" id="s3">
+          <div class="avatar" style="width:180px;height:180px"></div>
+          <h3>Dein Termin beginnt um 09:00 Uhr</h3>
+          <div class="sub">Stefan Urbansky holt dich gleich herein.</div>
+          <div class="pill"><span class="dot" id="wait-dot"></span>Es geht gleich los</div>
+          <div class="appt">
+            <div class="bar-gold"></div>
+            <div>
+              <div class="t">Dienstag, 27. Oktober, 09:00 – 09:20 Uhr</div>
+              <div class="k">Stefan Urbansky</div>
+              <div class="m">20 Min. · Erstgespräch</div>
+            </div>
+          </div>
+        </section>
+        <div class="coach-card" id="coach-card">
+          <div class="tag">Deine Ansicht als Coach</div>
+          <div class="who">
+            <div class="initials">MK</div>
+            <div>
+              <div class="nm">Miriam Kastner</div>
+              <div class="st"><i></i>wartet im Warteraum</div>
+            </div>
+          </div>
+          <div class="btn" id="admit-btn" data-layout-allow-overlap>
+            <span class="lb off">Einlassen</span>
+            <span class="lb on"><svg class="i" viewBox="0 0 24 24" style="stroke-width:2.6"><path d="M20 6 9 17l-5-5" /></svg>Eingelassen</span>
+          </div>
+        </div>
+
+        <!-- Szene 4: Gespräch -->
+        <section class="call" id="s4">
+          <div class="tile">
+            <img id="cam" src="assets/stefan.jpg" alt="" data-layout-allow-overflow />
+            <div class="ring" id="ring"></div>
+            <div class="nametag"><b>SU</b>Stefan Urbansky</div>
+          </div>
+          <div class="chat">
+            <div class="hd">Chat<svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg></div>
+            <div class="typing" id="typing"><i></i><i></i><i></i></div>
+            <div class="bubble" id="bubble">
+              <p>Schön, dass du da bist, Miriam! Wie geht es dir heute?</p>
+              <small>Stefan · 09:00</small>
+            </div>
+            <div class="in">
+              <div class="clip-ic"><svg class="i" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg></div>
+              <div class="field">Nachricht oder Link …</div>
+            </div>
+          </div>
+          <div class="bar">
+            <div class="me">
+              <div class="nm">Stefan Urbansky</div>
+              <div class="live"><i id="live-dot"></i>Live</div>
+            </div>
+            <div class="ctrls">
+              <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><path d="M12 19v3" /></svg></div>
+              <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" /></svg></div>
+              <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="m9 10 3-3 3 3" /><path d="M12 13V7" /><rect width="20" height="14" x="2" y="3" rx="2" /><path d="M12 17v4M8 21h8" /></svg></div>
+              <div class="ctrl"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg></div>
+              <div class="ctrl-sep"></div>
+              <div class="ctrl end"><svg class="i" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bildtexte -->
+        <div class="caption" id="c1">Dein Klient bucht auf deiner Seite</div>
+        <div class="caption" id="c2">Bestätigung und Erinnerung kommen automatisch</div>
+        <div class="caption" id="c3">Ohne Konto, ohne Download</div>
+        <div class="caption" id="c4">Unter deinem Namen – Server in Deutschland</div>
+
+        <!-- Zeiger -->
+        <div id="cursor">
+          <div id="ripple"></div>
+          <svg viewBox="0 0 24 24"><path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" /></svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Kalender Oktober 2026: der 1. ist ein Donnerstag, der 26. ist „heute", 27.–31. haben freie Termine.
+      const cal = document.getElementById('cal');
+      ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'].forEach((w) => {
+        cal.insertAdjacentHTML('beforeend', `<div class="wd">${w}</div>`);
+      });
+      for (let i = 0; i < 3; i++) cal.insertAdjacentHTML('beforeend', '<div></div>');
+      for (let d = 1; d <= 31; d++) {
+        const cls = d === 26 ? 'day today' : d >= 27 ? 'day free' : 'day';
+        const sel = d === 27 ? '<div class="sel"></div><span class="n on">27</span>' : '';
+        const overlap = d === 27 ? ' data-layout-allow-overlap' : '';
+        cal.insertAdjacentHTML('beforeend', `<div class="${cls}" id="d${d}"${overlap}>${sel}<span class="n">${d}</span></div>`);
+      }
+
+      // Zielpunkte für den Zeiger, gemessen am ruhenden Layout (feste Größen, unabhängig von Schriften).
+      const center = (sel, dx = 0, dy = 0) => {
+        const r = document.querySelector(sel).getBoundingClientRect();
+        return { x: r.left + r.width / 2 + dx, y: r.top + r.height / 2 + dy };
+      };
+      const P = {
+        day: center('#d27'),
+        slot: center('#slot1', 120, 0),
+        mailBtn: center('#mail-btn', 40, 6),
+        admit: center('#admit-btn', 30, 6),
+      };
+
+      const tl = gsap.timeline({ paused: true });
+      const ease = 'power2.inOut';
+      const out = 'power3.out';
+
+      // Zeiger fährt zum Ziel und klickt zum Zeitpunkt t.
+      const click = (p, t, travel = 0.7) => {
+        tl.to('#cursor', { x: p.x, y: p.y, duration: travel, ease }, t - travel - 0.05);
+        tl.to('#cursor svg', { scale: 0.86, duration: 0.08, transformOrigin: '12px 12px' }, t);
+        tl.to('#cursor svg', { scale: 1, duration: 0.18 }, t + 0.08);
+        tl.fromTo('#ripple', { scale: 0.2, opacity: 0.9 }, { scale: 1.4, opacity: 0, duration: 0.55, ease: out, immediateRender: false }, t);
+      };
+
+      // Szenenwechsel: alte Szene nach oben weg, neue von unten herein.
+      const leave = (sel, t) => tl.to(sel, { opacity: 0, y: -50, duration: 0.5, ease: 'power2.in' }, t);
+      // immediateRender: false, sonst stünden die Startwerte schon auf Bild 0 (die Buchungsseite wäre unsichtbar).
+      const enter = (sel, t, from = 60) => tl.fromTo(sel, { opacity: 0, y: from }, { opacity: 1, y: 0, duration: 0.7, ease: out, immediateRender: false }, t);
+
+      // Schrittleiste und Bildtext umschalten.
+      const step = (n, on, t) => {
+        tl.to(`#st${n} .fill`, { opacity: on ? 1 : 0, duration: 0.4 }, t);
+        tl.to(`#st${n} .num span`, { color: on ? '#ffffff' : '#8b9e8a', duration: 0.4 }, t);
+        tl.to(`#st${n} .num`, { borderColor: on ? '#b5935a' : '#e2ddd4', duration: 0.4 }, t);
+        tl.to(`#st${n} .label .on`, { opacity: on ? 1 : 0, duration: 0.4 }, t);
+      };
+      const caption = (n, on, t) => tl.to(`#c${n}`, { opacity: on ? 1 : 0, y: on ? 0 : 10, duration: 0.45, ease: on ? out : 'power2.in' }, t);
+
+      // Startzustand (= Endzustand der Schleife)
+      tl.set('#cursor', { x: 1500, y: 1300, opacity: 0 }, 0);
+      tl.set('#c1', { opacity: 1 }, 0);
+      tl.set('#st1 .fill, #st1 .label .on', { opacity: 1 }, 0);
+      tl.set('#st1 .num span', { color: '#ffffff' }, 0);
+      tl.set('#st1 .num', { borderColor: '#b5935a' }, 0);
+      tl.set('#chips .chip', { opacity: 0, x: 40 }, 0);
+      tl.set('#coach-card', { opacity: 0, x: 120 }, 0);
+
+      // ── Szene 1: Buchen (0–4 s)
+      tl.to('#cursor', { opacity: 1, duration: 0.3 }, 0.35);
+      click(P.day, 1.25, 0.8);
+      tl.to('#d27 .sel, #d27 .n.on', { opacity: 1, duration: 0.25 }, 1.27);
+      tl.to('#d27 .n:not(.on)', { opacity: 0, duration: 0.2 }, 1.27);
+      tl.to('#slots-hint', { opacity: 0, duration: 0.25 }, 1.35);
+      tl.fromTo('#slots-body', { opacity: 0 }, { opacity: 1, duration: 0.2 }, 1.45);
+      tl.from('#slots-body > *', { opacity: 0, y: 24, duration: 0.45, stagger: 0.07, ease: out }, 1.45);
+      click(P.slot, 2.55, 0.65);
+      tl.to('#slot1 .sel, #slot1 .row.on', { opacity: 1, duration: 0.25 }, 2.57);
+      tl.to('#slot1 .row:not(.on)', { opacity: 0, duration: 0.2 }, 2.57);
+      tl.from('#slot1 .row.on svg', { scale: 0.3, duration: 0.4, ease: 'back.out(3)' }, 2.6);
+
+      // ── Szene 2: Mail (4–8 s)
+      leave('#s1', 3.6);
+      caption(1, false, 3.6);
+      step(1, false, 3.8);
+      step(2, true, 3.8);
+      enter('#s2', 4.05);
+      caption(2, true, 4.15);
+      tl.to('#chips .chip', { opacity: 1, x: 0, duration: 0.55, stagger: 0.28, ease: out }, 4.7);
+      click(P.mailBtn, 6.55, 0.8);
+      tl.to('#mail-btn', { scale: 0.96, duration: 0.1 }, 6.55);
+      tl.to('#mail-btn', { scale: 1, duration: 0.25 }, 6.65);
+      leave('#s2', 7.25);
+      tl.to('#chips .chip', { opacity: 0, y: -50, duration: 0.5, ease: 'power2.in', stagger: 0.04 }, 7.25);
+      caption(2, false, 7.25);
+
+      // Buchungsseite unsichtbar zurücksetzen, damit die Schleife sauber neu beginnt.
+      tl.set('#d27 .sel, #d27 .n.on, #slots-body, #slot1 .sel, #slot1 .row.on', { opacity: 0 }, 5.0);
+      tl.set('#slots-hint, #slot1 .row:not(.on), #d27 .n:not(.on)', { opacity: 1 }, 5.0);
+
+      // ── Szene 3: Warteraum (8–12 s)
+      step(2, false, 7.5);
+      step(3, true, 7.5);
+      enter('#s3', 7.75);
+      caption(3, true, 7.85);
+      tl.to('#wait-dot', { scale: 1.7, opacity: 0.35, duration: 0.55, yoyo: true, repeat: 5, ease: 'sine.inOut' }, 8.2);
+      // Erst rückt der Warteraum zur Seite, dann kommt die Coach-Karte – sonst schneidet sie die Überschrift an.
+      tl.to('#s3', { x: -230, duration: 0.7, ease }, 8.7);
+      tl.to('#coach-card', { opacity: 1, x: 0, duration: 0.65, ease: out }, 9.3);
+      click(P.admit, 10.35, 0.8);
+      tl.to('#admit-btn', { scale: 0.96, duration: 0.1 }, 10.35);
+      tl.to('#admit-btn', { scale: 1, duration: 0.25 }, 10.45);
+      tl.to('#admit-btn .lb.off', { opacity: 0, duration: 0.2 }, 10.4);
+      tl.to('#admit-btn .lb.on', { opacity: 1, duration: 0.25 }, 10.45);
+      tl.to('#cursor', { x: 1650, y: 1320, duration: 0.8, ease: 'power2.in' }, 10.8);
+      leave('#s3', 11.25);
+      tl.to('#coach-card', { opacity: 0, y: -50, duration: 0.5, ease: 'power2.in' }, 11.25);
+      caption(3, false, 11.25);
+
+      // ── Szene 4: Gespräch (12–16,5 s)
+      step(3, false, 11.5);
+      step(4, true, 11.5);
+      tl.fromTo('#s4', { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.75, ease: out }, 11.75);
+      caption(4, true, 11.9);
+      tl.fromTo('#cam', { scale: 1 }, { scale: 1.07, duration: 5.5, ease: 'none' }, 11.6);
+      tl.to('#ring', { opacity: 1, duration: 0.5, yoyo: true, repeat: 3, ease: 'sine.inOut' }, 12.4);
+      tl.to('#live-dot', { opacity: 0.3, duration: 0.5, yoyo: true, repeat: 7, ease: 'sine.inOut' }, 12.2);
+      tl.to('#typing', { opacity: 1, duration: 0.25 }, 12.6);
+      tl.to('#typing i', { y: -8, duration: 0.25, yoyo: true, repeat: 3, stagger: 0.1, ease: 'sine.inOut' }, 12.65);
+      tl.to('#typing', { opacity: 0, duration: 0.15 }, 13.55);
+      tl.fromTo('#bubble', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: out }, 13.6);
+
+      // ── Übergang zurück zum Anfang (16,5–18 s)
+      tl.to('#s4', { opacity: 0, scale: 1.03, duration: 0.55, ease: 'power2.in' }, 16.3);
+      caption(4, false, 16.3);
+      step(4, false, 16.7);
+      step(1, true, 16.7);
+      tl.set('#s1, #s2, #s3', { x: 0 }, 16.5);
+      tl.set('#s2, #s3', { opacity: 0, y: 0 }, 16.5);
+      enter('#s1', 16.9);
+      caption(1, true, 17.0);
+      tl.set('#cursor', { x: 1500, y: 1300, opacity: 0 }, 17.99);
+      tl.set({}, {}, 18);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

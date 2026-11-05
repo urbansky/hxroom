@@ -14,3 +14,6 @@ coverage
 .env.*.local
 !.env.example
 doc
+
+# Quellprojekte für Medien (z. B. media/hero-video mit eigenen node_modules und Renders)
+media
