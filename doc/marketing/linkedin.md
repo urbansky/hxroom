@@ -96,7 +96,7 @@ Videoplattform für Coaches, Online-Coaching, Terminbuchung, Buchungsseite, Vide
 | Logo | `media/linkedin/hxroom-logo.png` | 800 × 800 (LinkedIn: mind. 400 × 400) | `media/linkedin/logo.html` |
 | Titelbild | `media/linkedin/hxroom-titelbild.png` | 2256 × 382 (LinkedIn: 1128 × 191) | `media/linkedin/banner.html` |
 
-Das Logo zeigt dasselbe Motiv wie `Logo.vue` in `packages/ui`: einen Kreis im Salbei-Verlauf mit Kamera-Icon auf Creme. Das Titelbild nutzt Schriften und Farben des Themes (`packages/ui/theme`). Links unten legt LinkedIn das Seitenlogo über das Titelbild und verdeckt dabei etwa das erste Viertel. Der Text steht deshalb mittig im Bereich rechts davon (`padding-left: 300px` bei 1128 px Breite).
+Das Logo zeigt dasselbe Motiv wie `Logo.vue` in `packages/ui`: einen Kreis im Salbei-Verlauf mit Kamera-Icon auf Creme. Das Titelbild nutzt Schriften und Farben des Themes (`packages/ui/theme`). Links unten legt LinkedIn das Seitenlogo über das Titelbild und verdeckt dabei etwa das erste Viertel. Von der Mitte des Logos laufen feine Salbei-Ringe nach rechts aus und betten es ein; der Text steht rechtsbündig mit 72 px Rand.
 
 Die HTML-Dateien öffnen die Schriften relativ aus `packages/ui/theme/fonts`. Neu gerendert wird mit Playwright im Faktor 2: das Element `.tile` bzw. `.banner` als Screenshot.
 

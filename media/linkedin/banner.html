@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Quelle für media/linkedin/hxroom-titelbild.png (1128 × 191, gerendert mit Faktor 2).
      Das Seitenlogo deckt links unten etwa das erste Viertel des Bildes ab (bis ~270 px).
-     Der Text steht deshalb mittig im Bereich rechts davon. -->
+     Von seiner Mitte laufen feine Ringe nach rechts aus; der Text steht rechtsbündig. -->
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -22,17 +22,26 @@
   .banner {
     position: relative; overflow: hidden;
     width: 1128px; height: 191px;
-    box-sizing: border-box; padding-left: 300px;
-    background:
-      radial-gradient(circle at 12% 120%, rgba(139, 158, 138, 0.28), transparent 45%),
-      radial-gradient(circle at 92% -30%, rgba(181, 147, 90, 0.18), transparent 40%),
-      #F5F0E8;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center;
+    box-sizing: border-box; padding-right: 72px;
+    background: #F5F0E8;
+    display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+    text-align: right;
     font-family: 'DM Sans', sans-serif;
   }
+  .glow {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 92% -30%, rgba(181, 147, 90, 0.16), transparent 40%);
+  }
+  /* Mittelpunkt der Ringe = Mitte des Seitenlogos, wie LinkedIn es überlagert. */
+  .waves { position: absolute; left: 148px; top: 180px; width: 0; height: 0; }
+  .waves i {
+    position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
+    width: var(--d); height: var(--d);
+    border: 1px solid rgba(139, 158, 138, var(--o));
+  }
+  .content { position: relative; display: flex; flex-direction: column; align-items: flex-end; }
   .eyebrow {
-    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
     color: #634d2c; margin-bottom: 10px;
   }
   h1 {
@@ -41,16 +50,26 @@
   }
   h1 em { font-style: italic; color: #5C6E5B; }
   .facts {
-    margin-top: 12px; font-size: 13px; color: #4a5a49; letter-spacing: 0.02em;
+    margin-top: 12px; font-size: 16px; color: #4a5a49; letter-spacing: 0.01em;
   }
   .facts span { margin: 0 10px; color: #B5935A; }
 </style>
 </head>
 <body>
   <div class="banner">
-    <div class="eyebrow">Videoplattform für Coaches</div>
-    <h1>Terminbuchung und Videocall – <em>in einem.</em></h1>
-    <div class="facts">Klienten ohne Konto<span>·</span>Server in Deutschland<span>·</span>hxroom.de</div>
+    <div class="glow"></div>
+    <div class="waves">
+      <i style="--d: 300px; --o: 0.45"></i>
+      <i style="--d: 420px; --o: 0.34"></i>
+      <i style="--d: 540px; --o: 0.24"></i>
+      <i style="--d: 660px; --o: 0.16"></i>
+      <i style="--d: 780px; --o: 0.09"></i>
+    </div>
+    <div class="content">
+      <div class="eyebrow">Videoplattform für Coaches</div>
+      <h1>Terminbuchung und Videocall – <em>in einem.</em></h1>
+      <div class="facts">Klienten ohne Konto<span>·</span>Server in Deutschland<span>·</span>hxroom.de</div>
+    </div>
   </div>
 </body>
 </html>
