@@ -59,11 +59,12 @@ describe('request context', () => {
 });
 
 describe('AppLogger', () => {
-  function capture(run: (logger: AppLogger) => void): Record<string, unknown> {
+  function capture(run: (logger: AppLogger) => void): string {
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     try {
-      run(new AppLogger({ json: true, flattenParams: true }));
-      return JSON.parse(String(write.mock.calls[0][0]));
+      run(new AppLogger({ colors: false }));
+      expect(write).toHaveBeenCalledTimes(1);
+      return String(write.mock.calls[0][0]);
     } finally {
       write.mockRestore();
     }
@@ -75,20 +76,17 @@ describe('AppLogger', () => {
         logger.log('Booking requested', { bookingId: 'b1' }, 'Bookings'),
       ),
     );
-    expect(line).toMatchObject({
-      level: 'log',
-      message: 'Booking requested',
-      context: 'Bookings',
-      requestId: 'r1',
-      userId: 'u1',
-      organizationId: 'o1',
-      bookingId: 'b1',
-    });
+    expect(line).toContain('[Bookings] Booking requested');
+    expect(line).toContain("requestId: 'r1'");
+    expect(line).toContain("userId: 'u1'");
+    expect(line).toContain("organizationId: 'o1'");
+    expect(line).toContain("bookingId: 'b1'");
+    expect(line.trimEnd()).not.toContain('\n');
   });
 
   it('logs without request fields outside a request', () => {
     const line = capture((logger) => logger.log('Expired 2 unconfirmed booking(s)', 'BookingExpiry'));
-    expect(line).toMatchObject({ message: 'Expired 2 unconfirmed booking(s)', context: 'BookingExpiry' });
-    expect(line).not.toHaveProperty('requestId');
+    expect(line).toContain('[BookingExpiry] Expired 2 unconfirmed booking(s)');
+    expect(line).not.toContain('requestId');
   });
 });

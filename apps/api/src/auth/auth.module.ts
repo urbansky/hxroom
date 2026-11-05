@@ -185,7 +185,7 @@ export type Auth = ReturnType<typeof betterAuth>;
             },
           },
           // Die eigenen Meldungen von better-auth über den Nest-Logger, damit sie Request-ID
-          // und JSON-Form tragen. Stufe ausdrücklich `warn`: Auf `info` schreibt better-auth
+          // und dieselbe Form tragen. Stufe ausdrücklich `warn`: Auf `info` schreibt better-auth
           // u. a. „Sign-up attempt for existing email: <Adresse>“. Von den Zusatzargumenten
           // nur Stacktraces – ein Datenbankfehler trüge im Detail sonst den betroffenen Wert.
           logger: {

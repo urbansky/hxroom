@@ -8,8 +8,8 @@ import { currentRequestContext, requestContextFields } from './request-context';
  * Request-ID, userId und organizationId daran. So lassen sich alle Zeilen einer Anfrage
  * finden, ohne dass jede Stelle sie selbst mitgeben muss.
  *
- * In Produktion JSON, eine Zeile pro Eintrag, die Felder auf oberster Ebene – lesbar mit
- * `journalctl -u docker … -o cat | jq`. Lokal Nests farbige Textform.
+ * Nests Textform; die Felder stehen einzeilig hinter der Meldung (`{ requestId: '…', … }`).
+ * In Produktion ohne Farben, damit keine ANSI-Codes ins Systemjournal geraten.
  *
  * Was hier hineingehört und was nicht, steht in §17: IDs, Zustände, Zahlen. Nie Namen,
  * E-Mail-Adressen, Dateinamen, Inhalte, Tokens oder Query-Strings.
@@ -45,8 +45,7 @@ export function logLevelsFrom(level: string | undefined, production: boolean): L
 export function createAppLogger(env: NodeJS.ProcessEnv = process.env): AppLogger {
   const production = env.NODE_ENV === 'production';
   return new AppLogger({
-    json: production,
-    flattenParams: true,
+    colors: !production,
     logLevels: logLevelsFrom(env.LOG_LEVEL, production),
   });
 }
