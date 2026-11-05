@@ -60,7 +60,7 @@ describe('MailService', () => {
 
   describe('HTTP-Request-Form', () => {
     it('postet gegen /smtp/email mit API-Key-Header und JSON-Content-Type', async () => {
-      await service.send({ to: { email: 'a@b.de' }, subject: 'Hi', textContent: 'Test' });
+      await service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi', textContent: 'Test' });
 
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       expect(fetchSpy).toHaveBeenCalledWith(
@@ -76,14 +76,14 @@ describe('MailService', () => {
     });
 
     it('normalisiert Single-Empfänger zu einem Array', async () => {
-      await service.send({ to: { email: 'a@b.de' }, subject: 'Hi' });
+      await service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' });
       expect(parseSentBody(fetchSpy).to).toEqual([{ email: 'a@b.de' }]);
     });
 
     it('reicht Array-Empfänger unverändert durch', async () => {
       await service.send({
         to: [{ email: 'a@b.de' }, { email: 'c@d.de', name: 'C' }],
-        subject: 'Hi',
+        kind: 'test', subject: 'Hi',
       });
       expect(parseSentBody(fetchSpy).to).toEqual([
         { email: 'a@b.de' },
@@ -94,7 +94,7 @@ describe('MailService', () => {
 
   describe('Sender-Handling', () => {
     it('nutzt Default-Sender aus der Config, wenn options.sender fehlt', async () => {
-      await service.send({ to: { email: 'a@b.de' }, subject: 'Hi' });
+      await service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' });
       expect(parseSentBody(fetchSpy).sender).toEqual({
         email: 'noreply@hxroom.de',
         name: 'HxRoom',
@@ -103,7 +103,7 @@ describe('MailService', () => {
 
     it('lässt den Default-Sender ohne BREVO_SENDER_NAME ohne `name`', async () => {
       service = await buildService({ BREVO_SENDER_NAME: undefined });
-      await service.send({ to: { email: 'a@b.de' }, subject: 'Hi' });
+      await service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' });
       const sender = parseSentBody(fetchSpy).sender as Record<string, unknown>;
       expect(sender.email).toBe('noreply@hxroom.de');
       expect(sender).not.toHaveProperty('name');
@@ -112,7 +112,7 @@ describe('MailService', () => {
     it('lässt sich per options.sender pro Aufruf überschreiben', async () => {
       await service.send({
         to: { email: 'a@b.de' },
-        subject: 'Hi',
+        kind: 'test', subject: 'Hi',
         sender: { email: 'override@hxroom.de', name: 'Override' },
       });
       expect(parseSentBody(fetchSpy).sender).toEqual({
@@ -124,7 +124,7 @@ describe('MailService', () => {
 
   describe('Optionale Felder', () => {
     it('serialisiert htmlContent und textContent nur, wenn gesetzt', async () => {
-      await service.send({ to: { email: 'a@b.de' }, subject: 'Hi' });
+      await service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' });
       const body = parseSentBody(fetchSpy);
       expect(body).not.toHaveProperty('htmlContent');
       expect(body).not.toHaveProperty('textContent');
@@ -133,7 +133,7 @@ describe('MailService', () => {
     it('reicht htmlContent und textContent durch, wenn gesetzt', async () => {
       await service.send({
         to: { email: 'a@b.de' },
-        subject: 'Hi',
+        kind: 'test', subject: 'Hi',
         htmlContent: '<p>Hi</p>',
         textContent: 'Hi',
       });
@@ -145,7 +145,7 @@ describe('MailService', () => {
     it('serialisiert templateId + params im Template-Modus', async () => {
       await service.send({
         to: { email: 'a@b.de' },
-        subject: 'Hi',
+        kind: 'test', subject: 'Hi',
         templateId: 7,
         params: { firstName: 'Anna' },
       });
@@ -157,7 +157,7 @@ describe('MailService', () => {
     it('reicht replyTo, cc, bcc und tags durch', async () => {
       await service.send({
         to: { email: 'a@b.de' },
-        subject: 'Hi',
+        kind: 'test', subject: 'Hi',
         replyTo: { email: 'reply@hxroom.de' },
         cc: [{ email: 'cc@hxroom.de' }],
         bcc: [{ email: 'bcc@hxroom.de' }],
@@ -173,7 +173,7 @@ describe('MailService', () => {
     it('reicht Attachments durch (base64-Inhalt, z. B. termin.ics)', async () => {
       await service.send({
         to: { email: 'a@b.de' },
-        subject: 'Hi',
+        kind: 'test', subject: 'Hi',
         attachment: [{ name: 'termin.ics', content: 'QkVHSU46VkNBTEVOREFS' }],
       });
       expect(parseSentBody(fetchSpy).attachment).toEqual([
@@ -182,7 +182,7 @@ describe('MailService', () => {
     });
 
     it('lässt optionale Felder weg, wenn nicht gesetzt', async () => {
-      await service.send({ to: { email: 'a@b.de' }, subject: 'Hi' });
+      await service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' });
       const body = parseSentBody(fetchSpy);
       expect(body).not.toHaveProperty('cc');
       expect(body).not.toHaveProperty('bcc');
@@ -200,21 +200,21 @@ describe('MailService', () => {
         new Response('{"code":"invalid_parameter"}', { status: 400 }),
       );
       await expect(
-        service.send({ to: { email: 'a@b.de' }, subject: 'Hi' }),
+        service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' }),
       ).rejects.toBeInstanceOf(InternalServerErrorException);
     });
 
     it('wirft InternalServerErrorException bei 5xx-Response', async () => {
       fetchSpy.mockResolvedValueOnce(new Response('boom', { status: 500 }));
       await expect(
-        service.send({ to: { email: 'a@b.de' }, subject: 'Hi' }),
+        service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' }),
       ).rejects.toBeInstanceOf(InternalServerErrorException);
     });
 
     it('wirft, wenn BREVO_API_KEY fehlt (getOrThrow-Sicherheitsnetz)', async () => {
       service = await buildService({ BREVO_API_KEY: undefined });
       await expect(
-        service.send({ to: { email: 'a@b.de' }, subject: 'Hi' }),
+        service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' }),
       ).rejects.toThrow(/BREVO_API_KEY/);
       expect(fetchSpy).not.toHaveBeenCalled();
     });
@@ -222,7 +222,7 @@ describe('MailService', () => {
     it('wirft, wenn BREVO_SENDER_EMAIL fehlt und kein sender-Override gesetzt ist', async () => {
       service = await buildService({ BREVO_SENDER_EMAIL: undefined });
       await expect(
-        service.send({ to: { email: 'a@b.de' }, subject: 'Hi' }),
+        service.send({ to: { email: 'a@b.de' }, kind: 'test', subject: 'Hi' }),
       ).rejects.toThrow(/BREVO_SENDER_EMAIL/);
     });
   });
@@ -234,6 +234,7 @@ describe('MailService', () => {
 
       await service
         .send({
+          kind: 'test',
           to: { email: 'pii@hxroom.de' },
           subject: 'Geheimes Subject',
           htmlContent: '<p>vertrauliche Daten</p>',
@@ -249,6 +250,22 @@ describe('MailService', () => {
       expect(logged).toContain('500');
     });
 
+    it('loggt beim Versand nur Art und messageId – weder Betreff noch Empfänger', async () => {
+      const logSpy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
+      fetchSpy.mockResolvedValueOnce(new Response('{"messageId":"<m1@smtp-relay.brevo.com>"}', { status: 201 }));
+
+      await service.send({
+        kind: 'coach-new-booking',
+        to: { email: 'anna.mueller@example.com', name: 'Anna Müller' },
+        subject: 'Neue Buchung: Anna Müller am 12. Dezember',
+      });
+
+      expect(logSpy).toHaveBeenCalledWith('Mail sent', { kind: 'coach-new-booking', messageId: '<m1@smtp-relay.brevo.com>' });
+      const allLogged = JSON.stringify(logSpy.mock.calls);
+      expect(allLogged).not.toContain('Anna');
+      expect(allLogged).not.toContain('example.com');
+    });
+
     it('loggt keine Attachment-Inhalte', async () => {
       const errSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
       const logSpy = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
@@ -258,7 +275,7 @@ describe('MailService', () => {
       await service
         .send({
           to: { email: 'pii@hxroom.de' },
-          subject: 'Hi',
+          kind: 'test', subject: 'Hi',
           attachment: [{ name: 'termin.ics', content: secret }],
         })
         .catch(() => {});

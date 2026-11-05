@@ -98,6 +98,7 @@ export class DeletionCronService {
     const deletionDateLabel = formatDeletionDate(scheduledFor);
 
     await this.mail.send({
+      kind: 'account-deletion-reminder',
       to: { email: coach.email, name: coach.name },
       subject: `Erinnerung: Dein Konto wird am ${deletionDateLabel} gelöscht – HxRoom`,
       htmlContent: await renderDeletionReminderEmail({

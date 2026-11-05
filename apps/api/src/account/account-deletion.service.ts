@@ -180,6 +180,7 @@ export class AccountDeletionService {
       const deletionDateLabel = formatDeletionDate(scheduledFor);
 
       await this.mail.send({
+        kind: 'account-deletion-scheduled',
         to: { email: coach.email, name: coach.name },
         subject: `Löschung deines Kontos am ${deletionDateLabel} – HxRoom`,
         htmlContent: await renderDeletionRequestedEmail({

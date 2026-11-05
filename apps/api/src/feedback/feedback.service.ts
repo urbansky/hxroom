@@ -80,6 +80,7 @@ export class FeedbackService {
       const categoryLabel = FEEDBACK_CATEGORY_LABELS[dto.category];
 
       await this.mail.send({
+        kind: 'feedback',
         to: { email: to },
         replyTo: { email: author.email, name: author.name },
         subject: `Feedback (${categoryLabel}): ${author.name}`,

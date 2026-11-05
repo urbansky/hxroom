@@ -14,6 +14,11 @@ export interface MailAttachment {
 }
 
 export interface SendMailOptions {
+  /**
+   * Fester Bezeichner der Mail-Art fürs Log, z. B. `booking-confirmed`. Steht dort anstelle
+   * des Betreffs, denn der trägt oft Namen („Neue Buchung: …“).
+   */
+  kind: string;
   to: MailAddress | MailAddress[];
   subject: string;
   htmlContent?: string;
@@ -73,17 +78,22 @@ export class MailService {
 
     if (!response.ok) {
       const body = await response.text();
-      // Keine personenbezogenen Daten loggen – nur Status + Brevo-Fehlertext
-      this.logger.error(`Brevo mail send failed: ${response.status} ${body.slice(0, 200)}`);
+      // Keine personenbezogenen Daten loggen – nur Art, Status und Brevo-Fehlertext
+      this.logger.error(`Brevo mail send failed: ${response.status} ${body.slice(0, 200)}`, { kind: options.kind });
       throw new InternalServerErrorException('E-Mail-Versand fehlgeschlagen.');
     }
 
-    const firstTo = Array.isArray(options.to) ? options.to[0] : options.to;
-    this.logger.log(`Mail sent: "${options.subject}" → ${this.maskEmail(firstTo.email)}`);
+    // Weder Betreff noch Empfänger (technisches-konzept.md §17). Die messageId von Brevo
+    // genügt, um eine Mail im Brevo-Log wiederzufinden.
+    this.logger.log('Mail sent', { kind: options.kind, messageId: await readMessageId(response) });
   }
+}
 
-  private maskEmail(email: string): string {
-    const [local, domain] = email.split('@');
-    return `${local[0]}***@${domain}`;
+async function readMessageId(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.json()) as { messageId?: unknown };
+    return typeof body.messageId === 'string' ? body.messageId : undefined;
+  } catch {
+    return undefined;
   }
 }

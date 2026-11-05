@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException, type MessageEvent } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, Logger, NotFoundException, UnauthorizedException, type MessageEvent } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Observable, concat, concatMap, defer, finalize, interval, map, merge, of } from 'rxjs';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -38,6 +38,8 @@ const HEARTBEAT_INTERVAL_MS = 25_000;
  */
 @Injectable()
 export class CallService {
+  private readonly logger = new Logger(CallService.name);
+
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly organizationService: OrganizationService,
@@ -81,7 +83,10 @@ export class CallService {
       return { booking: updated, changed: true };
     });
 
-    if (changed) this.events.notifyChanged(bookingId);
+    if (changed) {
+      this.logger.log('Client entered waiting room', { bookingId, organizationId: booking.organizationId });
+      this.events.notifyChanged(bookingId);
+    }
     return this.toResponse(booking, { role: 'client' });
   }
 
@@ -136,6 +141,7 @@ export class CallService {
       allowed: canAdmit,
       values: () => ({ admittedAt: new Date() }),
       conflict: 'Session cannot be opened in its current state',
+      event: 'Client admitted',
     });
     await this.markTestSessionDone(organizationId, bookingId);
     return result;
@@ -173,6 +179,7 @@ export class CallService {
       allowed: canEnd,
       values: () => ({ callEndedAt: new Date(), status: 'completed' as const, coachLeftAt: null }),
       conflict: 'Session is not running',
+      event: 'Session ended by coach',
     });
   }
 
@@ -278,6 +285,8 @@ export class CallService {
       allowed: (state: ReturnType<typeof resolveCallState>) => boolean;
       values: () => Partial<BookingRow>;
       conflict: string;
+      /** Logzeile für den tatsächlichen Wechsel; der Doppelklick (No-Op) bleibt still. */
+      event: string;
     },
   ): Promise<CallAccessResponse> {
     const { booking, changed } = await this.db.transaction(async (tx) => {
@@ -300,7 +309,10 @@ export class CallService {
     // Erst nach dem Commit melden – und nur, wenn tatsächlich geschrieben wurde. Der
     // No-Op-Pfad oben ist der Doppelklick des Coachs; als Ereignis gemeldet, käme er beim
     // Klienten als zweiter Zustandswechsel an.
-    if (changed) this.events.notifyChanged(bookingId);
+    if (changed) {
+      this.logger.log(step.event, { bookingId });
+      this.events.notifyChanged(bookingId);
+    }
     return this.toResponse(booking, { role: 'coach', userId });
   }
 

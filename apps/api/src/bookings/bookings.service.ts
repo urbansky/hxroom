@@ -106,6 +106,8 @@ export class BookingsService {
       }
     });
 
+    this.logger.log('Booking requested', { bookingId: booking.id, organizationId: org.id });
+
     // Erst nach dem Commit der Transaktion versenden: die Buchung existiert bereits
     // (der Klient sieht im UI die "Termin vorgemerkt"-Ansicht) – ein Mail-Fehler soll
     // den Request nicht als 500 enden lassen, nur geloggt werden.
@@ -113,6 +115,7 @@ export class BookingsService {
       const confirmUrl = buildConfirmUrl(this.config, org.slug, booking.id, booking.clientAccessToken);
       try {
         await this.mailService.send({
+          kind: 'booking-confirmation-request',
           to: { email: booking.clientEmail, name: booking.clientName },
           subject: 'Bitte bestätige deinen Termin – HxRoom',
           htmlContent: await renderBookingConfirmationEmail({
@@ -170,6 +173,7 @@ export class BookingsService {
         .where(and(eq(clients.organizationId, booking.organizationId), eq(clients.email, normalizedEmail)))
         .limit(1);
 
+      const clientCreated = !client;
       if (!client) {
         [client] = await tx
           .insert(clients)
@@ -183,12 +187,20 @@ export class BookingsService {
         .where(eq(bookings.id, bookingId))
         .returning();
 
-      return { expired: false as const, booking: confirmed };
+      return { expired: false as const, booking: confirmed, clientCreated };
     });
 
     if (result.expired) {
+      this.logger.log('Booking confirmation too late, booking expired', { bookingId });
       throw new ConflictException('Confirmation window has expired');
     }
+
+    this.logger.log('Booking confirmed by client', {
+      bookingId,
+      organizationId: result.booking.organizationId,
+      clientId: result.booking.clientId,
+      clientCreated: result.clientCreated,
+    });
 
     // Äußeres Netz für alles, was vor dem eigentlichen Versand schiefgehen kann
     // (Coach-Lookup, Konfiguration): Der Klient hat bestätigt, das ist der Erfolgsfall.
@@ -274,6 +286,8 @@ export class BookingsService {
       return updated;
     });
 
+    this.logger.log('Booking cancelled by client', { bookingId, organizationId: cancelled.organizationId });
+
     // Nach dem Commit: die Absage steht und der Slot ist frei – daran darf ein Ausfall
     // des Mail-Providers nichts ändern, der Klient hat seine Erfolgsseite verdient.
     try {
@@ -297,6 +311,7 @@ export class BookingsService {
 
     try {
       await this.mailService.send({
+        kind: 'client-cancellation-receipt',
         to: { email: booking.clientEmail, name: booking.clientName },
         subject: 'Dein Termin wurde abgesagt – HxRoom',
         replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
@@ -321,6 +336,7 @@ export class BookingsService {
 
     try {
       await this.mailService.send({
+        kind: 'coach-cancellation-notice',
         to: { email: coach.email, name: coach.name },
         subject: `Absage: ${booking.clientName} am ${formatDayLabel(booking)}`,
         replyTo: { email: booking.clientEmail, name: booking.clientName },
@@ -369,6 +385,7 @@ export class BookingsService {
 
     try {
       await this.mailService.send({
+        kind: 'booking-confirmed',
         to: { email: booking.clientEmail, name: booking.clientName },
         subject: 'Dein Termin ist bestätigt – HxRoom',
         // Antworten des Klienten sollen beim Coach landen, nicht beim Betreiber –
@@ -393,6 +410,7 @@ export class BookingsService {
 
     try {
       await this.mailService.send({
+        kind: 'coach-new-booking',
         to: { email: coach.email, name: coach.name },
         subject: `Neue Buchung: ${booking.clientName} am ${formatDayLabel(booking)}`,
         replyTo: { email: booking.clientEmail, name: booking.clientName },

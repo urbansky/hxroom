@@ -101,6 +101,7 @@ export class BookingReminderService {
       const dayLabel = relativeDayLabel(booking.startTime, new Date());
 
       await this.mailService.send({
+        kind: `reminder-${kind}`,
         to: { email: booking.clientEmail, name: booking.clientName },
         subject: kind === '24h'
           ? `Erinnerung: Dein Termin ${dayLabel} um ${startTimeLabel} Uhr – HxRoom`

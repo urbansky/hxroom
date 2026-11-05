@@ -1,16 +1,27 @@
 // Muss das erste Modul bleiben, siehe instrument.ts
 import './instrument';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { toNodeHandler } from 'better-auth/node';
 import { AUTH, type Auth } from './auth/auth.module';
 import { runMigrations } from './db/migrate';
+import { createAppLogger } from './common/logging/app-logger';
+import { requestLogging } from './common/logging/request-logging';
 
 async function bootstrap() {
+  // Vor den Migrationen, damit schon deren Zeilen im selben Format erscheinen.
+  const appLogger = createAppLogger();
+  Logger.overrideLogger(appLogger);
+  const logger = new Logger('Bootstrap');
+
   await runMigrations();
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: appLogger });
+
+  // Als Erstes: Request-ID und Zeile pro Anfrage auch für CORS-Abweisungen und better-auth.
+  app.use(requestLogging);
 
   const auth = app.get<Auth>(AUTH);
 
@@ -55,11 +66,11 @@ async function bootstrap() {
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port).catch((err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${port} ist bereits belegt. Anderer Prozess läuft noch?`);
+      logger.fatal(`Port ${port} ist bereits belegt. Anderer Prozess läuft noch?`);
       process.exit(1);
     }
     throw err;
   });
-  console.log(`API running on http://localhost:${port}/api/v1`);
+  logger.log(`API running on http://localhost:${port}/api/v1`);
 }
 bootstrap();

@@ -215,6 +215,7 @@ export class DeletionExecutorService {
       // noch die Löschung aufhalten.
       try {
         await this.mail.send({
+          kind: 'account-deletion-cancellation',
           to: { email: booking.clientEmail, name: booking.clientName },
           subject: 'Dein Termin wurde abgesagt – HxRoom',
           htmlContent: await renderBookingCancelledEmail({
@@ -242,6 +243,7 @@ export class DeletionExecutorService {
   private async sendExecutedMail(owner: Owner, counts: DeletedCounts): Promise<void> {
     try {
       await this.mail.send({
+        kind: 'account-deleted',
         to: { email: owner.email, name: owner.name },
         subject: 'Dein HxRoom-Konto wurde gelöscht',
         htmlContent: await renderDeletionExecutedEmail({

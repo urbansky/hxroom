@@ -130,6 +130,7 @@ export class ClientsService {
         })
         .returning();
 
+      this.logger.log('Client created', { clientId: row.id });
       return toClientResponse(row);
     } catch (err) {
       throw this.translateUniqueViolation(err);
@@ -215,6 +216,7 @@ export class ClientsService {
       bookingsDeleted: bookingIds.length,
       filesDeleted,
     });
+    this.logger.log('Client deleted', { clientId: id, bookingsDeleted: bookingIds.length, filesDeleted });
 
     return { bookingsDeleted: bookingIds.length, filesDeleted };
   }

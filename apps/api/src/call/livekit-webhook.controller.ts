@@ -2,6 +2,9 @@ import { Body, Controller, Headers, HttpCode, HttpStatus, Inject, Logger, Post, 
 import { ConfigService } from '@nestjs/config';
 import { WebhookReceiver } from 'livekit-server-sdk';
 import { CallPresenceService } from './call-presence.service';
+import { bookingIdFromRoomName, roleFromIdentity } from './livekit-token';
+
+const LOGGED_EVENTS = new Set(['room_started', 'room_finished', 'participant_joined', 'participant_left']);
 
 /**
  * Webhooks von LiveKit (doc/technik/technisches-konzept.md §8, „Sitzungsende und Webhooks“).
@@ -43,7 +46,18 @@ export class LivekitWebhookController {
     try {
       event = await this.receiver.receive(Buffer.isBuffer(body) ? body.toString('utf8') : '', authorization);
     } catch {
+      this.logger.warn('Webhook rejected: invalid signature');
       throw new UnauthorizedException('Invalid webhook signature');
+    }
+
+    // Raum und Teilnehmer, nicht die Spuren: track_published und Co. kommen bei jedem
+    // Kamera- oder Mikrofonwechsel und sagten im Log nichts. Vom Teilnehmer nur die Rolle –
+    // die Identität trüge beim Coach seine userId, die aus der Buchung ohnehin folgt.
+    if (LOGGED_EVENTS.has(event.event)) {
+      this.logger.log(`LiveKit ${event.event}`, {
+        bookingId: bookingIdFromRoomName(event.room?.name) ?? undefined,
+        role: roleFromIdentity(event.participant?.identity) ?? undefined,
+      });
     }
 
     // Ein Fehler hier soll LiveKit nicht zu endlosen Wiederholungen bringen: Der Lauf in

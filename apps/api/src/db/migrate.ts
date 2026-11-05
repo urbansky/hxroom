@@ -28,6 +28,9 @@ export async function runMigrations() {
     user: POSTGRES_USER,
     password: POSTGRES_PASSWORD,
     max: 1,
+    // Hinweise wie „schema "drizzle" already exists, skipping“ bei jedem Start. postgres-js
+    // schreibt sie sonst als mehrzeiliges Objekt mit console.log und zerreißt das JSON-Log.
+    onnotice: (notice) => logger.debug(`Postgres: ${notice.message}`),
   });
 
   try {

@@ -9,6 +9,7 @@ import {
 import { fromNodeHeaders } from 'better-auth/node';
 import { AUTH, type Auth } from './auth.module';
 import { isAdminRole } from './roles';
+import { setRequestActor } from '../common/logging/request-context';
 
 /**
  * Zugang zum Betreiber-Backoffice (admin.hxroom.de).
@@ -37,6 +38,7 @@ export class AdminGuard implements CanActivate {
     }
 
     req.session = session;
+    setRequestActor({ userId: session.user.id });
     return true;
   }
 }

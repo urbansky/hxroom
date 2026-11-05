@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { betterAuth, generateId } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
@@ -17,9 +17,13 @@ import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
 import { ActivityTracker } from './activity-tracker';
 import { buildLandingUrl } from '../bookings/booking-urls';
-import { TERMS_VERSION, isReservedSlug, isValidSlugFormat, userNameSchema } from '@hxroom/shared';
+import { TERMS_VERSION, isReservedSlug, isValidSlugFormat, scrubSensitiveText, userNameSchema } from '@hxroom/shared';
+import { describeAuthEvent } from './auth-events';
+import { setRequestActor } from '../common/logging/request-context';
 
 const SIGN_UP_PATH = '/sign-up/email';
+const authLogger = new Logger('Auth');
+const betterAuthLogger = new Logger('BetterAuth');
 const UPDATE_USER_PATH = '/update-user';
 
 export const AUTH = Symbol('AUTH');
@@ -103,6 +107,25 @@ export type Auth = ReturnType<typeof betterAuth>;
                 });
               }
             }),
+            // Anmeldungen, Passwort-Vorgänge und Betreiber-Aktionen ins Log (auth-events.ts).
+            after: createAuthMiddleware(async (ctx) => {
+              const session = ctx.context.session as
+                | { user?: { id?: string }; session?: { impersonatedBy?: string | null } }
+                | null
+                | undefined;
+              const newSessionUserId = ctx.context.newSession?.user.id;
+              setRequestActor({ userId: newSessionUserId ?? session?.user?.id });
+
+              const event = describeAuthEvent({
+                path: ctx.path,
+                returned: ctx.context.returned,
+                sessionUserId: session?.user?.id,
+                impersonatedBy: session?.session?.impersonatedBy,
+                newSessionUserId,
+                body: ctx.body,
+              });
+              if (event) authLogger[event.level](event.message, event.fields);
+            }),
           },
           databaseHooks: {
             user: {
@@ -161,6 +184,19 @@ export type Auth = ReturnType<typeof betterAuth>;
               },
             },
           },
+          // Die eigenen Meldungen von better-auth über den Nest-Logger, damit sie Request-ID
+          // und JSON-Form tragen. Stufe ausdrücklich `warn`: Auf `info` schreibt better-auth
+          // u. a. „Sign-up attempt for existing email: <Adresse>“. Von den Zusatzargumenten
+          // nur Stacktraces – ein Datenbankfehler trüge im Detail sonst den betroffenen Wert.
+          logger: {
+            level: 'warn',
+            log: (level, message, ...args) => {
+              const stacks = args.filter((arg): arg is Error => arg instanceof Error).map((err) => err.stack);
+              const text = scrubSensitiveText(message);
+              if (level === 'error') betterAuthLogger.error(text, ...stacks);
+              else betterAuthLogger.warn(text);
+            },
+          },
           secret: config.getOrThrow<string>('BETTER_AUTH_SECRET'),
           // Objekt statt String: better-auth löst die baseURL dann pro Request aus dem
           // Host-Header auf und lässt nur die gelisteten Hosts zu (siehe auth-hosts.ts).
@@ -181,6 +217,7 @@ export type Auth = ReturnType<typeof betterAuth>;
               // better-auth selbst über sendVerificationEmail unten aus.
               sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
                 await mail.send({
+                  kind: 'email-change-approval',
                   to: { email: user.email },
                   subject: 'Änderung deiner E-Mail-Adresse freigeben – HxRoom',
                   htmlContent: await renderEmailChangeApprovalEmail({
@@ -200,6 +237,7 @@ export type Auth = ReturnType<typeof betterAuth>;
             revokeSessionsOnPasswordReset: true,
             sendResetPassword: async ({ user, url }) => {
               await mail.send({
+                kind: 'password-reset',
                 to: { email: user.email },
                 subject: 'Passwort zurücksetzen – HxRoom',
                 htmlContent: await renderPasswordResetEmail({ name: user.name, resetUrl: url }),
@@ -221,6 +259,7 @@ export type Auth = ReturnType<typeof betterAuth>;
               const isEmailChange = !!stored && stored.email !== user.email;
 
               await mail.send({
+                kind: isEmailChange ? 'email-change-verification' : 'email-verification',
                 to: { email: user.email },
                 subject: isEmailChange
                   ? 'Neue E-Mail-Adresse bestätigen – HxRoom'

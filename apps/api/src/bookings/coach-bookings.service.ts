@@ -80,6 +80,7 @@ export class CoachBookingsService {
       })
       .where(eq(bookings.id, bookingId))
       .returning(coachBookingColumns);
+    this.logger.log('Booking cancelled by coach', { bookingId, origin: cancelled.origin });
 
     // Sitzt der Klient in diesem Moment im Warteraum, soll er die Absage sofort sehen und
     // nicht auf einen Coach warten, der nicht mehr kommt (A2). Die anderen Wege in den
@@ -131,6 +132,7 @@ export class CoachBookingsService {
         .returning(coachBookingColumns);
       return updated;
     });
+    this.logger.log('Booking marked as no-show', { bookingId });
 
     // Sitzt der Klient doch im Warteraum, verlässt er ihn mit dem passenden Hinweis.
     this.callEvents.notifyChanged(bookingId);
@@ -149,6 +151,7 @@ export class CoachBookingsService {
       .set({ status: 'confirmed' })
       .where(and(eq(bookings.id, bookingId), eq(bookings.status, 'no_show')))
       .returning(coachBookingColumns);
+    this.logger.log('No-show mark removed', { bookingId });
 
     this.callEvents.notifyChanged(bookingId);
     return this.respond(organizationId, updated);
@@ -191,6 +194,7 @@ export class CoachBookingsService {
       .set({ clientId: dto.clientId })
       .where(eq(bookings.id, bookingId))
       .returning(coachBookingColumns);
+    this.logger.log('Booking assigned to client', { bookingId, clientId: dto.clientId });
 
     return this.respond(organizationId, updated);
   }
@@ -275,6 +279,7 @@ export class CoachBookingsService {
       }
       throw err;
     }
+    this.logger.log('Ad-hoc session created', { bookingId: booking.id, clientId: booking.clientId });
 
     const callUrl = buildCallUrl(this.config, org.slug, booking.id, clientAccessToken);
 
@@ -287,6 +292,7 @@ export class CoachBookingsService {
       const clientName = greetingName(booking);
 
       await this.mailService.send({
+        kind: 'session-invitation',
         to: { email: booking.clientEmail, name: clientName ?? undefined },
         subject: `${coachDisplayName} möchte jetzt mit dir sprechen – HxRoom`,
         replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
@@ -380,6 +386,11 @@ export class CoachBookingsService {
       }
       throw err;
     }
+    this.logger.log('Manual bookings created', {
+      bookingIds: created.map(({ row }) => row.id),
+      seriesId,
+      clientId: created[0].row.clientId,
+    });
 
     // Nach dem Commit und in try/catch wie überall sonst: Die Termine stehen, und der
     // Coach hat die Links in der Antwort – ein Mail-Fehler darf den Aufruf nicht kippen.
@@ -494,6 +505,7 @@ export class CoachBookingsService {
       }
       throw err;
     }
+    this.logger.log('Test session created', { bookingId: booking.id });
 
     return { ...toCoachBookingResponse(booking), callUrl: buildCallUrl(this.config, org.slug, booking.id, clientAccessToken) };
   }
@@ -622,6 +634,7 @@ export class CoachBookingsService {
     })));
 
     await this.mailService.send({
+      kind: 'appointment-scheduled',
       to: { email: first.row.clientEmail, name: greetingName(first.row) ?? undefined },
       subject: created.length === 1
         ? `Dein Termin bei ${coachDisplayName} – HxRoom`
@@ -671,6 +684,7 @@ export class CoachBookingsService {
     const clientName = greetingName(booking);
 
     await this.mailService.send({
+      kind: 'coach-cancellation',
       to: { email: booking.clientEmail, name: clientName ?? undefined },
       subject: 'Dein Termin wurde abgesagt – HxRoom',
       replyTo: coach ? { email: coach.email, name: coach.name } : undefined,
