@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import type { AvailabilitySlotResponse, CoachBookingResponse } from '@hxroom/shared'
+import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, CoachBookingResponse } from '@hxroom/shared'
 
 const props = defineProps<{
   bookings: CoachBookingResponse[]
   /** Wöchentliche Verfügbarkeitsregeln – als Hintergrundraster hinter den Buchungen. */
   availability: AvailabilitySlotResponse[]
+  /**
+   * Ausnahmen, die die Woche berühren (kalenderabgleich.md §2): Freigaben erscheinen im
+   * selben Band wie die Wochenzeiten, Sperren als graue Fläche hinter den Terminen.
+   */
+  exceptions: AvailabilityExceptionResponse[]
   /** Montag der angezeigten Woche. Gewechselt wird über BookingWeekNav. */
   weekStart: Date
 }>()
 
 const emit = defineEmits<{
   select: [booking: CoachBookingResponse]
+  /** Klick auf eine Sperre: zum Bearbeiten öffnen. */
+  selectException: [exception: AvailabilityExceptionResponse]
   /** Klick auf eine freie Stelle: Termin anlegen, auf die Viertelstunde abgerundet. */
   create: [start: Date]
 }>()
@@ -69,7 +76,35 @@ const bookingsByWeekday = computed(() => {
   return map
 })
 
-// Sichtbarer Zeitbereich: umschließt Verfügbarkeiten und Termine der Woche, mindestens 8–18 Uhr.
+/**
+ * Ausnahmen je Tag, auf den Kalendertag zugeschnitten und in Minuten seit Mitternacht.
+ * Eine mehrtägige Sperre erscheint so an jedem ihrer Tage.
+ */
+const exceptionsByWeekday = computed(() => {
+  const map = new Map<number, { exception: AvailabilityExceptionResponse, startMinutes: number, endMinutes: number }[]>()
+  for (const day of days.value) {
+    const dayStart = day.date.getTime()
+    const nextDay = new Date(day.date)
+    nextDay.setDate(nextDay.getDate() + 1)
+    const dayEnd = nextDay.getTime()
+    const list = []
+    for (const exception of props.exceptions) {
+      const start = Math.max(new Date(exception.start).getTime(), dayStart)
+      const end = Math.min(new Date(exception.end).getTime(), dayEnd)
+      if (start >= end) continue
+      // Minuten über die Wanduhr statt über die Differenz: an Tagen mit Zeitumstellung
+      // hat der Tag nicht 1440 Minuten.
+      const endMinutes = end === dayEnd ? 24 * 60 : minutesSinceMidnight(new Date(end).toISOString())
+      list.push({ exception, startMinutes: minutesSinceMidnight(new Date(start).toISOString()), endMinutes })
+    }
+    map.set(day.value, list)
+  }
+  return map
+})
+
+// Sichtbarer Zeitbereich: umschließt Verfügbarkeiten, Freigaben und Termine der Woche,
+// mindestens 8–18 Uhr. Sperren erweitern ihn nicht – eine ganztägige Sperre zöge das
+// Raster sonst auf 0–24 Uhr auf.
 const timeRange = computed(() => {
   let min = 8 * 60
   let max = 18 * 60
@@ -77,6 +112,13 @@ const timeRange = computed(() => {
   for (const slot of props.availability) {
     min = Math.min(min, parseTimeToMinutes(slot.startTime))
     max = Math.max(max, parseTimeToMinutes(slot.endTime))
+  }
+  for (const list of exceptionsByWeekday.value.values()) {
+    for (const item of list) {
+      if (item.exception.kind !== 'available') continue
+      min = Math.min(min, item.startMinutes)
+      max = Math.max(max, item.endMinutes)
+    }
   }
   for (const list of bookingsByWeekday.value.values()) {
     for (const booking of list) {
@@ -121,13 +163,42 @@ function onColumnClick(event: MouseEvent, date: Date) {
 }
 
 function availabilityBlocks(weekday: number) {
-  return props.availability
+  const fromRules = props.availability
     .filter(slot => slot.weekday === weekday)
     .map(slot => ({
       id: slot.id,
       top: offsetTop(parseTimeToMinutes(slot.startTime)),
       height: (parseTimeToMinutes(slot.endTime) - parseTimeToMinutes(slot.startTime)) * PIXELS_PER_MINUTE,
     }))
+  // Freigaben sind für die Buchbarkeit nichts anderes als Wochenzeiten und sehen deshalb
+  // genauso aus. Überlappen sie sich, verdoppelt sich die Tönung leicht – das ist gewollt
+  // unauffällig.
+  const fromExceptions = (exceptionsByWeekday.value.get(weekday) ?? [])
+    .filter(item => item.exception.kind === 'available')
+    .map(item => ({
+      id: item.exception.id,
+      top: offsetTop(item.startMinutes),
+      height: (item.endMinutes - item.startMinutes) * PIXELS_PER_MINUTE,
+    }))
+  return [...fromRules, ...fromExceptions]
+}
+
+/** Sperren als Fläche hinter den Terminen, auf den sichtbaren Zeitbereich zugeschnitten. */
+function blockedBlocks(weekday: number) {
+  return (exceptionsByWeekday.value.get(weekday) ?? [])
+    .filter(item => item.exception.kind === 'blocked')
+    .map((item) => {
+      const start = Math.max(item.startMinutes, timeRange.value.start)
+      const end = Math.min(item.endMinutes, timeRange.value.end)
+      return {
+        exception: item.exception,
+        top: offsetTop(start),
+        height: (end - start) * PIXELS_PER_MINUTE,
+        label: exceptionLabel(item.exception),
+        title: `${exceptionLabel(item.exception)} · ${formatExceptionRange(item.exception)}`,
+      }
+    })
+    .filter(block => block.height > 0)
 }
 
 /**
@@ -336,6 +407,23 @@ function bookingBlocks(weekday: number) {
           :style="{ top: `${block.top}px`, height: `${block.height}px` }"
         />
 
+        <!-- Sperren: graue Fläche hinter den Terminen, ohne Schraffur – die steht hier für
+             „unbestätigt“. Anklickbar zum Bearbeiten; Termine liegen darüber. -->
+        <button
+          v-for="block in blockedBlocks(day.value)"
+          :key="`blocked-${block.exception.id}`"
+          type="button"
+          class="absolute inset-x-0 flex items-start bg-accented/60 hover:bg-accented border-y border-default/60 text-left px-1.5 py-1 overflow-hidden cursor-pointer transition-colors outline-primary/25 focus-visible:outline-3"
+          :title="block.title"
+          :style="{ top: `${block.top}px`, height: `${block.height}px` }"
+          @click="$emit('selectException', block.exception)"
+        >
+          <span class="block text-xs leading-tight text-muted truncate">
+            <UIcon name="i-lucide-lock" class="size-3 align-[-2px] mr-0.5" />
+            {{ block.label }}
+          </span>
+        </button>
+
         <!-- Buchungen -->
         <button
           v-for="block in bookingBlocks(day.value)"
@@ -390,7 +478,7 @@ function bookingBlocks(weekday: number) {
     </div>
 
     <p class="text-xs text-muted mt-4">
-      Der helle Hintergrund zeigt deine Verfügbarkeit, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet. Ein Klick auf eine freie Stelle legt dort einen Termin an.
+      Der helle Hintergrund zeigt deine Verfügbarkeit samt Freigaben, graue Flächen gesperrte Zeiträume, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet. Ein Klick auf eine freie Stelle legt dort einen Termin an.
     </p>
   </div>
 </template>

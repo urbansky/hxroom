@@ -31,6 +31,7 @@ Technische Dokumente werden mit dem Code gepflegt. Fachliche Dokumente ändert n
 - [backoffice-betreiber.md](produkt/funktionen/backoffice-betreiber.md) – Funktionsliste des Betreiber-Backoffice
 - [angebote-verfuegbarkeiten.md](produkt/funktionen/angebote-verfuegbarkeiten.md) – Angebote und Verfügbarkeiten
 - [manuelle-termine.md](produkt/funktionen/manuelle-termine.md) – Termine manuell anlegen, einzeln oder als Serie
+- [kalenderabgleich.md](produkt/funktionen/kalenderabgleich.md) – Zeiträume sperren und freigeben, belegte Zeiten aus externen Kalendern, Termine als Kalender-Abo
 - [crm.md](produkt/funktionen/crm.md) – Vorschlag: Klientenbeziehung pflegen, in drei Stufen
 
 **Recht**

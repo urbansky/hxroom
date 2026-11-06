@@ -313,6 +313,50 @@ export const availabilitySlotResponseSchema = z.object({
 });
 export type AvailabilitySlotResponse = z.infer<typeof availabilitySlotResponseSchema>;
 
+// Ausnahmen von den Wochenzeiten (doc/produkt/funktionen/kalenderabgleich.md §2): 'blocked'
+// sperrt einen Zeitraum, 'available' gibt ihn zusätzlich frei. Eine Freigabe liegt immer an
+// einem einzelnen Tag und ist nie ganztägig – sonst entstünden Slots rund um die Uhr. Diese
+// Tagesgrenze prüft die API in Europe/Berlin, nicht das Schema.
+export const AvailabilityExceptionKind = z.enum(['blocked', 'available']);
+export type AvailabilityExceptionKind = z.infer<typeof AvailabilityExceptionKind>;
+
+/** Längste Sperre in Tagen – ein Sabbatjahr, nicht mehr. */
+export const AVAILABILITY_EXCEPTION_MAX_DAYS = 366;
+
+// Anlegen und Bearbeiten senden dasselbe vollständige Objekt: Der Dialog kennt immer alle Felder.
+export const availabilityExceptionSchema = z.object({
+  kind:   AvailabilityExceptionKind,
+  start:  z.string().datetime({ message: 'Ungültiger Beginn' }),
+  end:    z.string().datetime({ message: 'Ungültiges Ende' }),
+  allDay: z.boolean().default(false),
+  note:   z.string().trim().max(200, 'Die Notiz darf höchstens 200 Zeichen lang sein').optional().nullable(),
+}).strict()
+  .refine((dto) => new Date(dto.start) < new Date(dto.end), { message: 'Das Ende muss nach dem Beginn liegen', path: ['end'] })
+  .refine((dto) => !(dto.kind === 'available' && dto.allDay), { message: 'Eine Freigabe braucht Uhrzeiten', path: ['allDay'] })
+  .refine(
+    (dto) => new Date(dto.end).getTime() - new Date(dto.start).getTime() <= AVAILABILITY_EXCEPTION_MAX_DAYS * 24 * 60 * 60_000,
+    { message: `Eine Ausnahme darf höchstens ${AVAILABILITY_EXCEPTION_MAX_DAYS} Tage lang sein`, path: ['end'] },
+  );
+export type AvailabilityExceptionDto = z.infer<typeof availabilityExceptionSchema>;
+
+// Ohne from/to: alle Ausnahmen, die noch nicht vorbei sind (Liste unter „Verfügbarkeit“).
+// Mit from/to: alle, die den Zeitraum berühren (Wochenansicht).
+export const listAvailabilityExceptionsQuerySchema = z.object({
+  from: z.string().datetime().optional(),
+  to:   z.string().datetime().optional(),
+});
+export type ListAvailabilityExceptionsQuery = z.infer<typeof listAvailabilityExceptionsQuerySchema>;
+
+export const availabilityExceptionResponseSchema = z.object({
+  id:     z.string(),
+  kind:   AvailabilityExceptionKind,
+  start:  z.string(),
+  end:    z.string(),
+  allDay: z.boolean(),
+  note:   z.string().nullable(),
+});
+export type AvailabilityExceptionResponse = z.infer<typeof availabilityExceptionResponseSchema>;
+
 // Coach-weite Zeitslot-Einstellungen (Pufferzeit, Buchungsvorlaufzeit) – global pro
 // Coach, nicht pro Angebot (siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
 export const availabilitySettingsSchema = z.object({
@@ -555,6 +599,8 @@ export const manualBookingCheckResponseSchema = z.array(z.object({
   start:               z.string(),
   // Andere Termine des Coachs, die den Zeitraum einschließlich Puffer berühren
   conflicts:           z.array(z.object({ clientName: z.string(), start: z.string(), end: z.string() })),
+  // Gesperrte Ausnahme, die den Termin überschneidet (die erste, falls mehrere)
+  blockedBy:           z.object({ note: z.string().nullable(), start: z.string(), end: z.string(), allDay: z.boolean() }).nullable(),
   outsideAvailability: z.boolean(),
 }));
 export type ManualBookingCheckResponse = z.infer<typeof manualBookingCheckResponseSchema>;

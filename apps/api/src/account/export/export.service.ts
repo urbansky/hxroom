@@ -4,6 +4,7 @@ import { strToU8, zipSync, type Zippable } from 'fflate';
 import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy } from '@hxroom/shared';
 import { DRIZZLE, type DrizzleDb } from '../../db/db.module';
 import {
+  availabilityExceptions,
   availabilitySettings,
   availabilitySlots,
   bookingPage,
@@ -110,6 +111,7 @@ export class ExportService {
     const [page] = await this.db.select().from(bookingPage).where(eq(bookingPage.organizationId, organizationId)).limit(1);
     const [settings] = await this.db.select().from(availabilitySettings).where(eq(availabilitySettings.organizationId, organizationId)).limit(1);
     const slots = await this.db.select().from(availabilitySlots).where(eq(availabilitySlots.organizationId, organizationId)).orderBy(asc(availabilitySlots.weekday), asc(availabilitySlots.startTime));
+    const exceptionRows = await this.db.select().from(availabilityExceptions).where(eq(availabilityExceptions.organizationId, organizationId)).orderBy(asc(availabilityExceptions.startTime));
     const offerRows = await this.db.select().from(offers).where(eq(offers.organizationId, organizationId)).orderBy(asc(offers.sortOrder));
     const clientRows = await this.db.select().from(clients).where(eq(clients.organizationId, organizationId)).orderBy(asc(clients.name));
     const bookingRows = await this.db
@@ -259,6 +261,13 @@ export class ExportService {
         minLeadTimeHours: settings?.minLeadTimeHours ?? null,
         bookingWindowWeeks: settings?.bookingWindowWeeks ?? null,
         slots: slots.map((s) => ({ weekday: WEEKDAYS[s.weekday], start: s.startTime, end: s.endTime })),
+        exceptions: exceptionRows.map((e) => ({
+          kind: e.kind,
+          start: e.startTime.toISOString(),
+          end: e.endTime.toISOString(),
+          allDay: e.allDay,
+          note: e.note,
+        })),
       },
       clients: clientRows.map((c) => ({
         id: c.id,

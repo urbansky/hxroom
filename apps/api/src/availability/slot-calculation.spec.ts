@@ -4,6 +4,7 @@ import {
   AVAILABLE_SLOTS_MAX_COUNT,
   AVAILABLE_SLOTS_WINDOW_DAYS,
   computeAvailableSlots,
+  isWithinAvailability,
   type ComputeAvailableSlotsParams,
   type WeeklyAvailabilityRule,
 } from './slot-calculation';
@@ -42,6 +43,11 @@ function localRanges(slots: { start: Date; end: Date }[]): string[] {
     (s) =>
       `${formatInTimeZone(s.start, TZ, 'yyyy-MM-dd HH:mm')}–${formatInTimeZone(s.end, TZ, 'HH:mm')}`,
   );
+}
+
+/** Zeitraum aus lokalen Berliner Zeiten ("2026-08-10T10:00"). */
+function range(start: string, end: string) {
+  return { start: fromZonedTime(`${start}:00`, TZ), end: fromZonedTime(`${end}:00`, TZ) };
 }
 
 /** Verfügbarkeit Mo–Fr, zwei Fenster pro Tag – Grundlage für die Cap-Regression. */
@@ -206,6 +212,105 @@ describe('computeAvailableSlots', () => {
 
       // Der 09:00-Slot fällt weg, die folgenden bleiben im ursprünglichen Raster
       expect(localStarts(slots)).toEqual(['2026-08-10 10:00', '2026-08-10 11:00']);
+    });
+
+    it('sperrt mit einer ganztägigen Ausnahme den ganzen Tag', () => {
+      const slots = computeAvailableSlots(
+        params({
+          rules: [
+            { weekday: MONTAG, startTime: '09:00', endTime: '12:00' },
+            { weekday: DIENSTAG, startTime: '09:00', endTime: '10:00' },
+          ],
+          excludeRanges: [range('2026-08-10T00:00', '2026-08-11T00:00')],
+        }),
+      );
+
+      expect(localStarts(slots)).toEqual(['2026-08-11 09:00']);
+    });
+  });
+
+  describe('extraWindows (Freigaben)', () => {
+    it('erzeugt Slots in einer Freigabe außerhalb der Wochenzeiten', () => {
+      const slots = computeAvailableSlots(
+        params({ extraWindows: [range('2026-08-15T10:00', '2026-08-15T12:00')] }),
+      );
+
+      expect(localStarts(slots)).toEqual([
+        '2026-08-10 09:00', '2026-08-10 10:00', '2026-08-10 11:00',
+        '2026-08-15 10:00', '2026-08-15 11:00',
+      ]);
+    });
+
+    it('verlängert ein Fenster der Wochenzeiten, in das die Freigabe hineinragt, ohne doppelte Slots', () => {
+      const slots = computeAvailableSlots(
+        params({ extraWindows: [range('2026-08-10T11:00', '2026-08-10T14:00')] }),
+      );
+
+      expect(localStarts(slots)).toEqual([
+        '2026-08-10 09:00', '2026-08-10 10:00', '2026-08-10 11:00', '2026-08-10 12:00', '2026-08-10 13:00',
+      ]);
+    });
+
+    it('lässt eine angrenzende Freigabe als eigenes Fenster mit eigenem Raster stehen', () => {
+      const slots = computeAvailableSlots(
+        params({
+          rules: [{ weekday: MONTAG, startTime: '09:00', endTime: '11:30' }],
+          durationMinutes: 45,
+          extraWindows: [range('2026-08-10T11:30', '2026-08-10T13:00')],
+        }),
+      );
+
+      // Zusammengelegt wären es 09:00 … 11:15, 12:00. Getrennt endet das Raster der
+      // Wochenzeiten bei 10:30, die Freigabe beginnt um 11:30 ihr eigenes.
+      expect(localStarts(slots)).toEqual([
+        '2026-08-10 09:00', '2026-08-10 09:45', '2026-08-10 10:30',
+        '2026-08-10 11:30', '2026-08-10 12:15',
+      ]);
+    });
+
+    it('verwirft Slots einer Freigabe, die eine Sperre überlappen', () => {
+      const slots = computeAvailableSlots(
+        params({
+          rules: [],
+          extraWindows: [range('2026-08-15T10:00', '2026-08-15T13:00')],
+          excludeRanges: [range('2026-08-15T11:00', '2026-08-15T12:00')],
+        }),
+      );
+
+      expect(localStarts(slots)).toEqual(['2026-08-15 10:00', '2026-08-15 12:00']);
+    });
+
+    it('ignoriert Freigaben hinter dem Buchungsfenster und in der Vergangenheit', () => {
+      const slots = computeAvailableSlots(
+        params({
+          rules: [],
+          now: new Date('2026-08-10T08:00:00Z'),
+          extraWindows: [
+            range('2026-08-10T08:00', '2026-08-10T09:00'), // vor now (10:00 Berlin)
+            range('2026-08-17T10:00', '2026-08-17T11:00'), // Tag 8 bei daysAhead 7
+            range('2026-08-16T10:00', '2026-08-16T11:00'),
+          ],
+        }),
+      );
+
+      expect(localStarts(slots)).toEqual(['2026-08-16 10:00']);
+    });
+  });
+
+  describe('isWithinAvailability', () => {
+    const rules = [{ weekday: MONTAG, startTime: '09:00', endTime: '12:00' }];
+
+    it('erkennt einen Termin in den Wochenzeiten', () => {
+      expect(isWithinAvailability(range('2026-08-10T10:00', '2026-08-10T11:00'), rules, TZ)).toBe(true);
+      expect(isWithinAvailability(range('2026-08-10T11:30', '2026-08-10T12:30'), rules, TZ)).toBe(false);
+    });
+
+    it('zählt Freigaben mit, auch wenn der Termin über die Grenze der Wochenzeiten reicht', () => {
+      const extra = [range('2026-08-10T12:00', '2026-08-10T14:00'), range('2026-08-15T10:00', '2026-08-15T12:00')];
+
+      expect(isWithinAvailability(range('2026-08-10T11:30', '2026-08-10T12:30'), rules, TZ, extra)).toBe(true);
+      expect(isWithinAvailability(range('2026-08-15T10:00', '2026-08-15T11:00'), rules, TZ, extra)).toBe(true);
+      expect(isWithinAvailability(range('2026-08-15T11:30', '2026-08-15T12:30'), rules, TZ, extra)).toBe(false);
     });
   });
 

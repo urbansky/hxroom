@@ -134,7 +134,8 @@ function rowError(index: number): string | null {
 }
 
 const timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' })
-// Hinweise der API, je Zeile: Überschneidung mit einem anderen Termin, außerhalb der Verfügbarkeit.
+// Hinweise der API, je Zeile: Überschneidung mit einem anderen Termin, gesperrter Zeitraum,
+// außerhalb der Verfügbarkeit – in dieser Rangfolge, nur der wichtigste wird genannt.
 function rowHint(index: number): string | null {
   const start = rowStarts.value[index]
   if (!start) return null
@@ -144,6 +145,11 @@ function rowHint(index: number): string | null {
   if (conflict) {
     const more = check.conflicts.length > 1 ? ` und ${check.conflicts.length - 1} weiteren` : ''
     return `Überschneidet sich mit ${conflict.clientName}, ${timeFormatter.format(new Date(conflict.start))}${more}.`
+  }
+  if (check.blockedBy) {
+    return check.blockedBy.note
+      ? `Liegt in einem gesperrten Zeitraum (${check.blockedBy.note}).`
+      : 'Liegt in einem gesperrten Zeitraum.'
   }
   if (check.outsideAvailability) return 'Außerhalb deiner Verfügbarkeit.'
   return null

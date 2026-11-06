@@ -3,11 +3,15 @@ import { and, asc, eq, ne } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, offers, bookingPage, availabilitySlots, availabilitySettings, bookings, member, user } from '../db/schema';
 import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS, type DateRange } from '../availability/slot-calculation';
+import { AvailabilityExceptionsService } from '../availability/availability-exceptions.service';
 import { isImprintComplete } from '@hxroom/shared';
 
 @Injectable()
 export class OrganizationService {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDb) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: DrizzleDb,
+    private readonly exceptionsService: AvailabilityExceptionsService,
+  ) {}
 
   /**
    * Auflösung der Klienten-Subdomain. Einziger Zugang zur öffentlichen Buchungsseite und
@@ -224,6 +228,15 @@ export class OrganizationService {
       .from(bookings)
       .where(and(eq(bookings.organizationId, org.id), ne(bookings.status, 'cancelled')));
 
+    const now = new Date();
+    const daysAhead = (settingsRow?.bookingWindowWeeks ?? DEFAULT_BOOKING_WINDOW_WEEKS) * 7;
+    // Ausnahmen (kalenderabgleich.md §2): Sperren wirken wie belegte Zeiten, Freigaben als
+    // zusätzliche Zeitfenster. Ein Tag Zuschlag deckt die Zeitzonenkante am Fensterende ab.
+    const exceptions = await this.exceptionsService.loadForSlots(org.id, {
+      start: now,
+      end: new Date(now.getTime() + (daysAhead + 1) * 24 * 60 * 60_000),
+    });
+
     const slots = computeAvailableSlots({
       rules,
       settings: {
@@ -231,10 +244,14 @@ export class OrganizationService {
         minLeadTimeHours: settingsRow?.minLeadTimeHours ?? 0,
       },
       durationMinutes: offer.durationMinutes,
-      now: new Date(),
+      now,
       timeZone: 'Europe/Berlin',
-      daysAhead: (settingsRow?.bookingWindowWeeks ?? DEFAULT_BOOKING_WINDOW_WEEKS) * 7,
-      excludeRanges: existingBookings.map((b) => ({ start: b.startTime, end: b.endTime })),
+      daysAhead,
+      excludeRanges: [
+        ...existingBookings.map((b) => ({ start: b.startTime, end: b.endTime })),
+        ...exceptions.blocked.map((e) => ({ start: e.startTime, end: e.endTime })),
+      ],
+      extraWindows: exceptions.available,
     });
 
     return { offer, slots };

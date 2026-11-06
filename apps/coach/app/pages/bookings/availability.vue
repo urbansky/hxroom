@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilitySlotResponse, AvailabilitySettingsResponse } from '@hxroom/shared'
+import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, AvailabilitySettingsResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -20,7 +20,7 @@ const weekdaySelectItems = [
 // aber das aufgeklappte Select-Dropdown schwer lesbar – hier deckend erzwingen.
 const opaqueSelectContentUi = { content: 'bg-[#faf8f4] dark:bg-[#141814]' }
 
-type TabValue = 'availability' | 'settings' | 'sync'
+type TabValue = 'availability' | 'exceptions' | 'settings' | 'sync'
 
 // Unterstrichene Tabs, nicht der Segmented-Control-Umschalter der Terminansicht:
 // Dort wechselt man die Darstellung derselben Termine, hier den Bereich.
@@ -29,10 +29,17 @@ type TabValue = 'availability' | 'settings' | 'sync'
 // "Kalendersync" kündigt bisher nur an und bleibt in der Beta ausgeblendet (utils/beta.ts).
 const TAB_ITEMS = [
   { label: 'Zeiten', value: 'availability' },
+  { label: 'Ausnahmen', value: 'exceptions' },
   { label: 'Einstellungen', value: 'settings' },
   ...(SHOW_UPCOMING_FEATURES ? [{ label: 'Kalendersync', value: 'sync' }] : []),
 ]
-const activeTab = ref<TabValue>('availability')
+// Der Reiter steht in der URL, damit ein Link (z. B. aus der Wochenansicht) direkt dort landet.
+const route = useRoute()
+const router = useRouter()
+const activeTab = ref<TabValue>(route.query.tab === 'exceptions' ? 'exceptions' : 'availability')
+watch(activeTab, (tab) => {
+  router.replace({ query: tab === 'exceptions' ? { tab } : {} })
+})
 
 const rows = ref<AvailabilitySlotResponse[]>([])
 
@@ -42,6 +49,40 @@ await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
     rows.value = response._data as AvailabilitySlotResponse[]
   },
 })
+
+// --- Ausnahmen-Tab (doc/produkt/funktionen/kalenderabgleich.md §2) ---
+// Ohne Zeitraum liefert die API nur, was noch nicht vorbei ist – vergangene Ausnahmen
+// wirken nicht mehr und bleiben aus der Liste.
+const exceptions = ref<AvailabilityExceptionResponse[]>([])
+
+await useFetch<AvailabilityExceptionResponse[]>('/availability-exceptions', {
+  $fetch: $api,
+  onResponse({ response }) {
+    exceptions.value = response._data as AvailabilityExceptionResponse[]
+  },
+})
+
+const isExceptionOpen = ref(false)
+const editedException = ref<AvailabilityExceptionResponse | null>(null)
+
+function openExceptionCreate() {
+  editedException.value = null
+  isExceptionOpen.value = true
+}
+
+function openExceptionEdit(exception: AvailabilityExceptionResponse) {
+  editedException.value = exception
+  isExceptionOpen.value = true
+}
+
+function onExceptionSaved(saved: AvailabilityExceptionResponse) {
+  exceptions.value = [...exceptions.value.filter(e => e.id !== saved.id), saved]
+    .sort((a, b) => a.start.localeCompare(b.start))
+}
+
+function onExceptionDeleted(id: string) {
+  exceptions.value = exceptions.value.filter(e => e.id !== id)
+}
 
 // --- Einstellungen-Tab: Pufferzeit, Buchungsvorlaufzeit & Buchungsfenster ---
 const BUFFER_OPTIONS = [0, 5, 10, 15, 30].map(v => ({ label: v === 0 ? 'Kein Puffer' : `${v} Min.`, value: v }))
@@ -191,10 +232,61 @@ async function deleteDraft() {
       >
         <span class="max-sm:hidden">Zeit hinzufügen</span>
       </UButton>
+      <UButton
+        v-else-if="activeTab === 'exceptions'"
+        icon="i-lucide-plus"
+        color="primary"
+        class="mb-2 shrink-0"
+        aria-label="Ausnahme hinzufügen"
+        @click="openExceptionCreate()"
+      >
+        <span class="max-sm:hidden">Ausnahme hinzufügen</span>
+      </UButton>
     </div>
 
     <template v-if="activeTab === 'availability'">
       <AvailabilityWeek :slots="rows" @select="openEdit" @create="openCreate" />
+    </template>
+
+    <template v-else-if="activeTab === 'exceptions'">
+      <p class="text-sm text-muted mb-4">
+        Sperre einzelne Zeiträume wie Urlaub oder einen Arzttermin, oder gib zusätzlich Zeit frei, etwa einen Samstagvormittag. Ausnahmen gelten für alle Angebote; bestehende Termine bleiben unberührt.
+      </p>
+
+      <div
+        v-if="exceptions.length === 0"
+        class="rounded-xl border border-dashed border-default p-10 flex flex-col items-center justify-center gap-2 text-center"
+      >
+        <UIcon name="i-lucide-calendar-off" class="size-6 text-muted" />
+        <p class="text-sm text-muted">Keine kommenden Ausnahmen. Es gelten deine Wochenzeiten.</p>
+      </div>
+
+      <ul v-else class="flex flex-col gap-2">
+        <li v-for="exception in exceptions" :key="exception.id">
+          <button
+            type="button"
+            class="w-full flex items-center gap-3 rounded-xl border border-default bg-white dark:bg-muted px-4 py-3 text-left transition hover:border-accented cursor-pointer outline-primary/25 focus-visible:outline-3"
+            @click="openExceptionEdit(exception)"
+          >
+            <UIcon
+              :name="exception.kind === 'blocked' ? 'i-lucide-calendar-off' : 'i-lucide-calendar-plus'"
+              class="size-5 shrink-0"
+              :class="exception.kind === 'blocked' ? 'text-muted' : 'text-primary'"
+            />
+            <span class="flex-1 min-w-0">
+              <span class="block text-sm font-medium text-highlighted tabular-nums">{{ formatExceptionRange(exception) }}</span>
+              <span v-if="exception.note" class="block text-sm text-muted truncate">{{ exception.note }}</span>
+            </span>
+            <UBadge
+              :label="EXCEPTION_KIND_LABELS[exception.kind]"
+              :color="exception.kind === 'blocked' ? 'neutral' : 'primary'"
+              variant="subtle"
+              size="sm"
+              class="shrink-0"
+            />
+          </button>
+        </li>
+      </ul>
     </template>
 
     <template v-else-if="activeTab === 'settings'">
@@ -297,5 +389,12 @@ async function deleteDraft() {
         </div>
       </template>
     </USlideover>
+
+    <AvailabilityExceptionSlideover
+      v-model:open="isExceptionOpen"
+      :exception="editedException"
+      @saved="onExceptionSaved"
+      @deleted="onExceptionDeleted"
+    />
   </div>
 </template>

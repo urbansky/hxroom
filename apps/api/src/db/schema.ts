@@ -1,6 +1,6 @@
 import { bigserial, index, pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { BookingOrigin, BookingStatus, CallChatSender, CancelledBy, FeedbackCategory, Imprint, ImprintMode } from '@hxroom/shared';
+import type { AvailabilityExceptionKind, BookingOrigin, BookingStatus, CallChatSender, CancelledBy, FeedbackCategory, Imprint, ImprintMode } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -359,6 +359,25 @@ export const availabilitySlots = pgTable('availability_slots', {
   createdAt:      timestamp('created_at').notNull().defaultNow(),
   updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });
+
+// Ausnahmen von den Wochenzeiten (doc/produkt/funktionen/kalenderabgleich.md §2): ein fester
+// Zeitraum, gesperrt ('blocked') oder zusätzlich freigegeben ('available'). Absolute
+// Zeitpunkte wie bei `bookings`; eine ganztägige Sperre läuft von 00:00 Uhr (Europe/Berlin)
+// des ersten bis 00:00 Uhr des Tages nach dem letzten Tag, `allDay` dient nur der Anzeige.
+// `note` schreibt nur der Coach, Klienten sehen sie nie.
+export const availabilityExceptions = pgTable('availability_exceptions', {
+  id:             text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId: text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  kind:           text('kind').$type<AvailabilityExceptionKind>().notNull(),
+  startTime:      timestamp('start_time').notNull(),
+  endTime:        timestamp('end_time').notNull(),
+  allDay:         boolean('all_day').notNull().default(false),
+  note:           text('note'),
+  createdAt:      timestamp('created_at').notNull().defaultNow(),
+  updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+}, (table) => [
+  index('availability_exceptions_org_end_idx').on(table.organizationId, table.endTime),
+]);
 
 // Coach-weite Einstellungen zur Slot-Berechnung (Stufe 1 des Zwei-Stufen-Modells,
 // siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7: bewusst global pro

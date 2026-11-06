@@ -129,8 +129,8 @@ export class DeletionExecutorService {
       // Prefix, was harmlos ist.
       const deletedObjects = await this.s3.deletePrefix(`${organizationId}/`);
 
-      // Cascade räumt member, booking_page, offers, clients, bookings, availability_slots und
-      // availability_settings mit.
+      // Cascade räumt member, booking_page, offers, clients, bookings, availability_slots,
+      // availability_exceptions und availability_settings mit.
       await tx.delete(organization).where(eq(organization.id, organizationId));
       // Der Coach hängt nicht am Cascade der Organisation und muss separat weg; mit ihm gehen
       // session, account und invitation.

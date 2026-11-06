@@ -18,6 +18,7 @@ import { buildBookingPageUrl, buildCallUrl, buildCancelUrl, buildLegalLinks } fr
 import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } from './coach-booking.mapper';
 import { withSeries } from './booking-series';
 import { isWithinAvailability } from '../availability/slot-calculation';
+import { AvailabilityExceptionsService } from '../availability/availability-exceptions.service';
 import { CallEventsService } from '../call/call-events.service';
 import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
 import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CheckManualBookingDto, CoachBookingResponse, CreateAdHocBookingDto, CreateManualBookingDto, ListCoachBookingsQuery, ManualBookingCheckResponse, ManualBookingResponse } from '@hxroom/shared';
@@ -37,6 +38,7 @@ export class CoachBookingsService {
     private readonly mailService: MailService,
     private readonly config: ConfigService,
     private readonly callEvents: CallEventsService,
+    private readonly exceptionsService: AvailabilityExceptionsService,
   ) {}
 
   // `from`/`to` begrenzen den Beginn, nicht das Ende – ob ein Termin schon vorbei ist,
@@ -447,15 +449,23 @@ export class CoachBookingsService {
       ))
       .orderBy(asc(bookings.startTime));
 
+    // Ausnahmen (kalenderabgleich.md §2): Eine Sperre wird als Hinweis genannt, eine Freigabe
+    // zählt als freigegebene Zeit. Ohne Puffer – die Sperre gilt genau für ihren Zeitraum.
+    const exceptions = await this.exceptionsService.loadForSlots(organizationId, { start: earliest, end: latest });
+
     return ranges.map(({ start, startTime, endTime }) => {
       const from = startTime.getTime() - bufferMs;
       const to = endTime.getTime() + bufferMs;
+      const blocked = exceptions.blocked.find((e) => e.startTime < endTime && e.endTime > startTime);
       return {
         start,
         conflicts: others
           .filter((other) => other.startTime.getTime() < to && other.endTime.getTime() > from)
           .map((other) => ({ clientName: other.clientName, start: other.startTime.toISOString(), end: other.endTime.toISOString() })),
-        outsideAvailability: !isWithinAvailability({ start: startTime, end: endTime }, rules, 'Europe/Berlin'),
+        blockedBy: blocked
+          ? { note: blocked.note, start: blocked.startTime.toISOString(), end: blocked.endTime.toISOString(), allDay: blocked.allDay }
+          : null,
+        outsideAvailability: !isWithinAvailability({ start: startTime, end: endTime }, rules, 'Europe/Berlin', exceptions.available),
       };
     });
   }

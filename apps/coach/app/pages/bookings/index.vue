@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilitySlotResponse, ClientListItem, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
+import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, ClientListItem, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -111,6 +111,48 @@ await useFetch<AvailabilitySlotResponse[]>('/availability-slots', {
 
 watch([viewMode, filter, weekStart], loadBookings)
 
+// Ausnahmen der angezeigten Woche (kalenderabgleich.md §2) – nur für die Wochenansicht.
+const exceptions = ref<AvailabilityExceptionResponse[]>([])
+
+async function loadExceptions() {
+  if (viewMode.value !== 'week') return
+  try {
+    exceptions.value = await $api<AvailabilityExceptionResponse[]>('/availability-exceptions', { query: queryForWeek() })
+  } catch {
+    // Ohne Ausnahmen bleibt die Woche benutzbar; die Termine sind das Wesentliche.
+    exceptions.value = []
+  }
+}
+
+await loadExceptions()
+watch([viewMode, weekStart], loadExceptions)
+
+const isExceptionOpen = ref(false)
+const editedException = ref<AvailabilityExceptionResponse | null>(null)
+
+function openBlockCreate() {
+  editedException.value = null
+  isExceptionOpen.value = true
+}
+
+function openExceptionEdit(exception: AvailabilityExceptionResponse) {
+  editedException.value = exception
+  isExceptionOpen.value = true
+}
+
+const toast = useToast()
+
+// In der Agenda ist eine neue Sperre nicht zu sehen – die Rückmeldung kommt deshalb als Toast.
+function onExceptionSaved(saved: AvailabilityExceptionResponse) {
+  loadExceptions()
+  toast.add({
+    title: `${EXCEPTION_KIND_LABELS[saved.kind]}: ${formatExceptionRange(saved)}`,
+    description: 'Alle Ausnahmen findest du unter Verfügbarkeit.',
+    icon: saved.kind === 'blocked' ? 'i-lucide-calendar-off' : 'i-lucide-calendar-plus',
+    color: 'success',
+  })
+}
+
 // Kommend und vergangen trennt das Ende des Termins, nicht sein Beginn: Ein Termin, der
 // gerade läuft, gehört zu den kommenden (siehe queryForFilter) und steht deshalb nicht
 // zugleich in der Vergangenheit, obwohl er dort über `to: now` mitgeladen wird.
@@ -216,7 +258,11 @@ const emptyStateText = computed(() => {
         <h1 class="font-serif text-3xl text-highlighted mb-2">Termine</h1>
         <p class="text-muted">Alle Termine – von Klienten gebucht oder von dir angelegt.</p>
       </div>
-      <UButton label="Termin anlegen" icon="i-lucide-calendar-plus" size="sm" @click="openManual()" />
+      <!-- „Zeit sperren“ leiser als „Termin anlegen“: Termine anlegen ist die häufigere Handlung. -->
+      <div class="flex items-center gap-2">
+        <UButton label="Zeit sperren" icon="i-lucide-calendar-off" size="sm" color="neutral" variant="outline" @click="openBlockCreate()" />
+        <UButton label="Termin anlegen" icon="i-lucide-calendar-plus" size="sm" @click="openManual()" />
+      </div>
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-4">
@@ -271,7 +317,9 @@ const emptyStateText = computed(() => {
         :week-start="weekStart"
         :bookings="bookings"
         :availability="availability"
+        :exceptions="exceptions"
         @select="openDetail"
+        @select-exception="openExceptionEdit"
         @create="openManual"
       />
     </template>
@@ -314,6 +362,14 @@ const emptyStateText = computed(() => {
       :offers="manualOffers"
       :preset="manualPreset"
       @created="refreshBookings"
+    />
+
+    <AvailabilityExceptionSlideover
+      v-model:open="isExceptionOpen"
+      :exception="editedException"
+      :preset="{ kind: 'blocked' }"
+      @saved="onExceptionSaved"
+      @deleted="loadExceptions"
     />
   </div>
 </template>
