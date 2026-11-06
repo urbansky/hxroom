@@ -166,6 +166,31 @@ const { data: terms, refresh: refreshTerms } = await useFetch<TermsStatus | null
 })
 const termsMissing = computed(() => !!terms.value && terms.value.acceptedVersion === null)
 
+// Kalenderabgleich (kalenderabgleich.md §3.3): Arbeit im Backoffice stößt einen Abgleich an –
+// beim Laden, beim Zurückwechseln in den Tab und beim Öffnen von Terminen oder Verfügbarkeit.
+// Die API gleicht nur ab, was älter als fünf Minuten ist.
+const calendarSync = useCalendarSync()
+const failingCalendars = calendarSync.failing
+
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') calendarSync.syncActivity()
+}
+onMounted(() => {
+  calendarSync.syncActivity()
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+onBeforeUnmount(() => document.removeEventListener('visibilitychange', onVisibilityChange))
+watch(() => route.path, (path) => {
+  if (path === '/bookings' || path === '/bookings/availability') calendarSync.syncActivity()
+})
+
+const failingCalendarsTitle = computed(() => {
+  const names = failingCalendars.value.map(c => `„${c.name}“`)
+  return names.length === 1
+    ? `Dein Kalender ${names[0]} lässt sich nicht abgleichen`
+    : `Deine Kalender ${names.join(', ')} lassen sich nicht abgleichen`
+})
+
 const deletionDateLabel = computed(() => {
   const scheduledFor = deletion.value?.scheduledFor
   if (!scheduledFor) return null
@@ -280,6 +305,16 @@ const pageTitle = computed(() => {
           :title="`Dein Konto wird am ${deletionDateLabel} gelöscht`"
           description="Deine Buchungsseite ist offline. Bis zum Stichtag kannst du die Löschung zurücknehmen."
           :actions="[{ label: 'Löschung zurücknehmen', color: 'warning', variant: 'outline', to: '/settings/account' }]"
+        />
+        <UAlert
+          v-if="failingCalendars.length > 0"
+          icon="i-lucide-calendar-x"
+          color="warning"
+          variant="soft"
+          class="mb-4 shrink-0"
+          :title="failingCalendarsTitle"
+          description="Neue Termine aus diesem Kalender blockieren deine Buchungsseite noch nicht. Die zuletzt bekannten bleiben blockiert."
+          :actions="[{ label: 'Kalender prüfen', color: 'warning', variant: 'outline', to: '/bookings/availability?tab=calendar' }]"
         />
         <UAlert
           v-if="termsMissing && terms?.impersonated"

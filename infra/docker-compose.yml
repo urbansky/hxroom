@@ -153,6 +153,10 @@ services:
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME}
       - FEEDBACK_EMAIL=${FEEDBACK_EMAIL:-}
+      # Schlüssel für die iCal-Adressen der Coach-Kalender (calendar-import/url-crypto.ts).
+      # Ohne ihn startet die API nicht. Nie wechseln, ohne die Adressen neu zu verschlüsseln:
+      # Sonst lässt sich kein hinterlegter Kalender mehr abrufen.
+      - CALENDAR_URL_KEY=${CALENDAR_URL_KEY}
       # Hetzner Object Storage (extern, S3-kompatibel). Anders als in der
       # Entwicklung (docker-compose.dev.yml, RustFS) läuft hier kein eigener
       # Object-Store-Container; Endpunkt, Region und Schlüssel kommen aus der .env.

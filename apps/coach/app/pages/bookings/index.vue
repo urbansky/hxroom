@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, ClientListItem, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
+import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, CalendarBusyTimeResponse, ClientListItem, CoachBookingResponse, OfferResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -126,6 +126,32 @@ async function loadExceptions() {
 
 await loadExceptions()
 watch([viewMode, weekStart], loadExceptions)
+
+// Belegte Zeiten aus externen Kalendern (kalenderabgleich.md §3) – ebenfalls nur für die Woche.
+// Nach jedem Abgleich (Aktivität im Layout oder Knopf hier) neu laden.
+const calendarSync = useCalendarSync()
+const { active: activeCalendars, oldestSuccessAt, syncing: calendarSyncing } = calendarSync
+const busyTimes = ref<CalendarBusyTimeResponse[]>([])
+
+async function loadBusyTimes() {
+  if (viewMode.value !== 'week') return
+  try {
+    busyTimes.value = await $api<CalendarBusyTimeResponse[]>('/calendar-imports/busy-times', { query: queryForWeek() })
+  } catch {
+    busyTimes.value = []
+  }
+}
+
+await loadBusyTimes()
+watch([viewMode, weekStart, () => calendarSync.imports.value], loadBusyTimes)
+
+async function syncCalendarsNow() {
+  try {
+    await calendarSync.syncManual()
+  } catch {
+    toast.add({ title: 'Abgleich fehlgeschlagen', description: 'Bitte versuche es gleich noch einmal.', color: 'error', icon: 'i-lucide-circle-x' })
+  }
+}
 
 const isExceptionOpen = ref(false)
 const editedException = ref<AvailabilityExceptionResponse | null>(null)
@@ -287,7 +313,23 @@ const emptyStateText = computed(() => {
         </button>
       </div>
 
-      <BookingWeekNav v-if="viewMode === 'week'" v-model:week-start="weekStart" />
+      <div v-if="viewMode === 'week'" class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <!-- Stand des Kalenderabgleichs (kalenderabgleich.md §3.3): der älteste Stand aller
+             aktiven Kalender, daneben der Knopf. Ohne verbundenen Kalender nichts. -->
+        <div v-if="activeCalendars.length > 0" class="flex items-center gap-1 text-xs text-muted">
+          <span>Kalender abgeglichen {{ formatSyncAge(oldestSuccessAt) }}</span>
+          <UButton
+            icon="i-lucide-refresh-cw"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Kalender jetzt abgleichen"
+            :loading="calendarSyncing"
+            @click="syncCalendarsNow()"
+          />
+        </div>
+        <BookingWeekNav v-model:week-start="weekStart" />
+      </div>
 
       <!-- Bewusst leiser als der Umschalter der Ansicht links – ohne Rahmen und Icons –, damit
            die beiden Leisten nicht wie zwei gleichrangige Hauptauswahlen nebeneinanderstehen. -->
@@ -318,6 +360,7 @@ const emptyStateText = computed(() => {
         :bookings="bookings"
         :availability="availability"
         :exceptions="exceptions"
+        :busy-times="busyTimes"
         @select="openDetail"
         @select-exception="openExceptionEdit"
         @create="openManual"

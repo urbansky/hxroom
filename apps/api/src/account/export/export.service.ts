@@ -9,6 +9,7 @@ import {
   availabilitySlots,
   bookingPage,
   bookings,
+  calendarImports,
   clients,
   offers,
   organization,
@@ -111,6 +112,7 @@ export class ExportService {
     const [page] = await this.db.select().from(bookingPage).where(eq(bookingPage.organizationId, organizationId)).limit(1);
     const [settings] = await this.db.select().from(availabilitySettings).where(eq(availabilitySettings.organizationId, organizationId)).limit(1);
     const slots = await this.db.select().from(availabilitySlots).where(eq(availabilitySlots.organizationId, organizationId)).orderBy(asc(availabilitySlots.weekday), asc(availabilitySlots.startTime));
+    const calendarRows = await this.db.select({ name: calendarImports.name, isActive: calendarImports.isActive, blockAllDay: calendarImports.blockAllDay }).from(calendarImports).where(eq(calendarImports.organizationId, organizationId)).orderBy(asc(calendarImports.createdAt));
     const exceptionRows = await this.db.select().from(availabilityExceptions).where(eq(availabilityExceptions.organizationId, organizationId)).orderBy(asc(availabilityExceptions.startTime));
     const offerRows = await this.db.select().from(offers).where(eq(offers.organizationId, organizationId)).orderBy(asc(offers.sortOrder));
     const clientRows = await this.db.select().from(clients).where(eq(clients.organizationId, organizationId)).orderBy(asc(clients.name));
@@ -268,6 +270,9 @@ export class ExportService {
           allDay: e.allDay,
           note: e.note,
         })),
+        // Nur die Namen: Die Adressen sind Zugangsdaten, die belegten Zeiten eine Kopie
+        // aus dem Kalender des Coachs, die er dort selbst hat.
+        calendars: calendarRows.map((c) => ({ name: c.name, isActive: c.isActive, blockAllDay: c.blockAllDay })),
       },
       clients: clientRows.map((c) => ({
         id: c.id,

@@ -1,6 +1,6 @@
 import { bigserial, index, pgTable, text, timestamp, boolean, integer, jsonb, unique, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import type { AvailabilityExceptionKind, BookingOrigin, BookingStatus, CallChatSender, CancelledBy, FeedbackCategory, Imprint, ImprintMode } from '@hxroom/shared';
+import type { AvailabilityExceptionKind, CalendarImportError, BookingOrigin, BookingStatus, CallChatSender, CancelledBy, FeedbackCategory, Imprint, ImprintMode } from '@hxroom/shared';
 
 // better-auth: core tables
 export const user = pgTable('user', {
@@ -377,6 +377,44 @@ export const availabilityExceptions = pgTable('availability_exceptions', {
   updatedAt:      timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 }, (table) => [
   index('availability_exceptions_org_end_idx').on(table.organizationId, table.endTime),
+]);
+
+// Externe Kalender, deren belegte Zeiten Slots blockieren (doc/produkt/funktionen/kalenderabgleich.md §3).
+// Die iCal-Adresse ist ein Zugangsdatum: verschlüsselt gespeichert (calendar-import/url-crypto.ts),
+// angezeigt wird nur `urlHint`. `lastError` ist ein Fehlercode, nie Inhalt der Kalenderdatei.
+export const calendarImports = pgTable('calendar_imports', {
+  id:                text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  organizationId:    text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  name:              text('name').notNull(),
+  urlEncrypted:      text('url_encrypted').notNull(),
+  urlHint:           text('url_hint').notNull(),
+  isActive:          boolean('is_active').notNull().default(true),
+  blockAllDay:       boolean('block_all_day').notNull().default(false),
+  // Sperre gegen parallele Abrufe desselben Kalenders (Lauf, Knopf, Buchungsseite). Ein
+  // Zeitstempel statt eines Flags, damit ein abgestürzter Abruf die Sperre nicht ewig hält.
+  syncingSince:      timestamp('syncing_since'),
+  lastAttemptAt:     timestamp('last_attempt_at'),
+  lastSuccessAt:     timestamp('last_success_at'),
+  lastError:         text('last_error').$type<CalendarImportError>(),
+  failingSince:      timestamp('failing_since'),
+  failureMailSentAt: timestamp('failure_mail_sent_at'),
+  createdAt:        timestamp('created_at').notNull().defaultNow(),
+  updatedAt:         timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
+}, (table) => [
+  index('calendar_imports_org_idx').on(table.organizationId),
+]);
+
+// Belegte Zeiten aus einem externen Kalender – nur Beginn und Ende, keine Titel, Orte oder
+// Teilnehmer. Ein erfolgreicher Abruf ersetzt alle Zeilen seines Kalenders in einer Transaktion.
+export const calendarBusyTimes = pgTable('calendar_busy_times', {
+  id:               text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  calendarImportId: text('calendar_import_id').notNull().references(() => calendarImports.id, { onDelete: 'cascade' }),
+  organizationId:   text('organization_id').notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  startTime:        timestamp('start_time').notNull(),
+  endTime:          timestamp('end_time').notNull(),
+}, (table) => [
+  index('calendar_busy_times_org_start_idx').on(table.organizationId, table.startTime),
+  index('calendar_busy_times_import_idx').on(table.calendarImportId),
 ]);
 
 // Coach-weite Einstellungen zur Slot-Berechnung (Stufe 1 des Zwei-Stufen-Modells,

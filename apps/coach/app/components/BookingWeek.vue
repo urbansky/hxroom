@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, CoachBookingResponse } from '@hxroom/shared'
+import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, CalendarBusyTimeResponse, CoachBookingResponse } from '@hxroom/shared'
 
 const props = defineProps<{
   bookings: CoachBookingResponse[]
@@ -10,6 +10,8 @@ const props = defineProps<{
    * selben Band wie die Wochenzeiten, Sperren als graue Fläche hinter den Terminen.
    */
   exceptions: AvailabilityExceptionResponse[]
+  /** Belegte Zeiten aus externen Kalendern (kalenderabgleich.md §3) – wie Sperren, aber nicht anklickbar. */
+  busyTimes: CalendarBusyTimeResponse[]
   /** Montag der angezeigten Woche. Gewechselt wird über BookingWeekNav. */
   weekStart: Date
 }>()
@@ -77,30 +79,33 @@ const bookingsByWeekday = computed(() => {
 })
 
 /**
- * Ausnahmen je Tag, auf den Kalendertag zugeschnitten und in Minuten seit Mitternacht.
- * Eine mehrtägige Sperre erscheint so an jedem ihrer Tage.
+ * Zeiträume je Tag, auf den Kalendertag zugeschnitten und in Minuten seit Mitternacht.
+ * Ein mehrtägiger Zeitraum erscheint so an jedem seiner Tage.
  */
-const exceptionsByWeekday = computed(() => {
-  const map = new Map<number, { exception: AvailabilityExceptionResponse, startMinutes: number, endMinutes: number }[]>()
+function splitByWeekday<T extends { start: string, end: string }>(items: T[]) {
+  const map = new Map<number, { item: T, startMinutes: number, endMinutes: number }[]>()
   for (const day of days.value) {
     const dayStart = day.date.getTime()
     const nextDay = new Date(day.date)
     nextDay.setDate(nextDay.getDate() + 1)
     const dayEnd = nextDay.getTime()
     const list = []
-    for (const exception of props.exceptions) {
-      const start = Math.max(new Date(exception.start).getTime(), dayStart)
-      const end = Math.min(new Date(exception.end).getTime(), dayEnd)
+    for (const item of items) {
+      const start = Math.max(new Date(item.start).getTime(), dayStart)
+      const end = Math.min(new Date(item.end).getTime(), dayEnd)
       if (start >= end) continue
       // Minuten über die Wanduhr statt über die Differenz: an Tagen mit Zeitumstellung
       // hat der Tag nicht 1440 Minuten.
       const endMinutes = end === dayEnd ? 24 * 60 : minutesSinceMidnight(new Date(end).toISOString())
-      list.push({ exception, startMinutes: minutesSinceMidnight(new Date(start).toISOString()), endMinutes })
+      list.push({ item, startMinutes: minutesSinceMidnight(new Date(start).toISOString()), endMinutes })
     }
     map.set(day.value, list)
   }
   return map
-})
+}
+
+const exceptionsByWeekday = computed(() => splitByWeekday(props.exceptions))
+const busyByWeekday = computed(() => splitByWeekday(props.busyTimes))
 
 // Sichtbarer Zeitbereich: umschließt Verfügbarkeiten, Freigaben und Termine der Woche,
 // mindestens 8–18 Uhr. Sperren erweitern ihn nicht – eine ganztägige Sperre zöge das
@@ -115,7 +120,7 @@ const timeRange = computed(() => {
   }
   for (const list of exceptionsByWeekday.value.values()) {
     for (const item of list) {
-      if (item.exception.kind !== 'available') continue
+      if (item.item.kind !== 'available') continue
       min = Math.min(min, item.startMinutes)
       max = Math.max(max, item.endMinutes)
     }
@@ -174,9 +179,9 @@ function availabilityBlocks(weekday: number) {
   // genauso aus. Überlappen sie sich, verdoppelt sich die Tönung leicht – das ist gewollt
   // unauffällig.
   const fromExceptions = (exceptionsByWeekday.value.get(weekday) ?? [])
-    .filter(item => item.exception.kind === 'available')
+    .filter(item => item.item.kind === 'available')
     .map(item => ({
-      id: item.exception.id,
+      id: item.item.id,
       top: offsetTop(item.startMinutes),
       height: (item.endMinutes - item.startMinutes) * PIXELS_PER_MINUTE,
     }))
@@ -186,16 +191,40 @@ function availabilityBlocks(weekday: number) {
 /** Sperren als Fläche hinter den Terminen, auf den sichtbaren Zeitbereich zugeschnitten. */
 function blockedBlocks(weekday: number) {
   return (exceptionsByWeekday.value.get(weekday) ?? [])
-    .filter(item => item.exception.kind === 'blocked')
+    .filter(item => item.item.kind === 'blocked')
     .map((item) => {
       const start = Math.max(item.startMinutes, timeRange.value.start)
       const end = Math.min(item.endMinutes, timeRange.value.end)
       return {
-        exception: item.exception,
+        exception: item.item,
         top: offsetTop(start),
         height: (end - start) * PIXELS_PER_MINUTE,
-        label: exceptionLabel(item.exception),
-        title: `${exceptionLabel(item.exception)} · ${formatExceptionRange(item.exception)}`,
+        label: exceptionLabel(item.item),
+        title: `${exceptionLabel(item.item)} · ${formatExceptionRange(item.item)}`,
+      }
+    })
+    .filter(block => block.height > 0)
+}
+
+const busyTimeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' })
+
+/**
+ * Belegte Zeiten aus externen Kalendern: dieselbe graue Fläche wie Sperren, beschriftet mit
+ * dem Kalendernamen. Nicht anklickbar – ändern lassen sie sich nur im Kalender selbst.
+ * Überschneiden sich Zeiten mehrerer Kalender, liegen die Flächen übereinander.
+ */
+function busyBlocks(weekday: number) {
+  return (busyByWeekday.value.get(weekday) ?? [])
+    .map((entry) => {
+      const start = Math.max(entry.startMinutes, timeRange.value.start)
+      const end = Math.min(entry.endMinutes, timeRange.value.end)
+      const range = `${busyTimeFormatter.format(new Date(entry.item.start))} – ${busyTimeFormatter.format(new Date(entry.item.end))}`
+      return {
+        key: `${entry.item.calendarImportId}-${entry.item.start}`,
+        top: offsetTop(start),
+        height: (end - start) * PIXELS_PER_MINUTE,
+        label: `Belegt · ${entry.item.calendarName}`,
+        title: `Belegt · ${entry.item.calendarName} · ${range}`,
       }
     })
     .filter(block => block.height > 0)
@@ -424,6 +453,22 @@ function bookingBlocks(weekday: number) {
           </span>
         </button>
 
+        <!-- Belegte Zeiten aus externen Kalendern: wie Sperren, aber kein Knopf. Ein Klick
+             darauf landet in der Tagesspalte und legt dort einen Termin an – der Coach
+             entscheidet selbst, ob er neben einem privaten Termin noch etwas einträgt. -->
+        <div
+          v-for="block in busyBlocks(day.value)"
+          :key="`busy-${block.key}`"
+          class="absolute inset-x-0 flex items-start bg-accented/60 border-y border-default/60 px-1.5 py-1 overflow-hidden"
+          :title="block.title"
+          :style="{ top: `${block.top}px`, height: `${block.height}px` }"
+        >
+          <span class="block text-xs leading-tight text-muted truncate">
+            <UIcon name="i-lucide-calendar" class="size-3 align-[-2px] mr-0.5" />
+            {{ block.label }}
+          </span>
+        </div>
+
         <!-- Buchungen -->
         <button
           v-for="block in bookingBlocks(day.value)"
@@ -478,7 +523,7 @@ function bookingBlocks(weekday: number) {
     </div>
 
     <p class="text-xs text-muted mt-4">
-      Der helle Hintergrund zeigt deine Verfügbarkeit samt Freigaben, graue Flächen gesperrte Zeiträume, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet. Ein Klick auf eine freie Stelle legt dort einen Termin an.
+      Der helle Hintergrund zeigt deine Verfügbarkeit samt Freigaben, graue Flächen gesperrte Zeiträume und Termine aus deinen Kalendern, die Blöcke deine Termine. Schraffierte Blöcke sind noch nicht bestätigt, abgesagte Termine werden hier ausgeblendet. Ein Klick auf eine freie Stelle legt dort einen Termin an.
     </p>
   </div>
 </template>

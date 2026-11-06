@@ -357,6 +357,96 @@ export const availabilityExceptionResponseSchema = z.object({
 });
 export type AvailabilityExceptionResponse = z.infer<typeof availabilityExceptionResponseSchema>;
 
+// Externe Kalender über ihre iCal-Adresse (doc/produkt/funktionen/kalenderabgleich.md §3).
+export const CALENDAR_IMPORT_MAX_COUNT = 5;
+
+// Warum ein Abruf fehlschlug – als Code, damit weder Antworttexte fremder Server noch Inhalte
+// der Kalenderdatei in Datenbank oder Log landen. Die Coach-App übersetzt in Klartext.
+export const CalendarImportError = z.enum([
+  'invalid_url',        // keine https-/webcal-Adresse
+  'blocked_address',    // zeigt auf ein internes Netz
+  'unreachable',        // DNS oder Verbindung gescheitert
+  'timeout',
+  'too_many_redirects',
+  'forbidden',          // 401/403 – Adresse widerrufen oder nicht freigegeben
+  'not_found',          // 404/410
+  'http_error',         // sonstiger Status
+  'too_large',
+  'not_ical',           // Antwort ist keine Kalenderdatei
+]);
+export type CalendarImportError = z.infer<typeof CalendarImportError>;
+
+/** Klartext für Coach-App und Fehler-Mail – ein Satz, der sagt, was zu tun ist. */
+export const CALENDAR_IMPORT_ERROR_TEXTS: Record<CalendarImportError, string> = {
+  invalid_url:        'Die Adresse muss mit https:// oder webcal:// beginnen.',
+  blocked_address:    'Diese Adresse zeigt auf ein internes Netz und kann nicht abgerufen werden.',
+  unreachable:        'Die Adresse ist nicht erreichbar. Prüfe sie, oder versuche es später erneut.',
+  timeout:            'Der Kalender hat nicht rechtzeitig geantwortet.',
+  too_many_redirects: 'Die Adresse leitet zu oft weiter.',
+  forbidden:          'Der Zugriff wurde verweigert. Vermutlich wurde die Adresse zurückgesetzt oder die Freigabe beendet.',
+  not_found:          'Unter dieser Adresse gibt es keinen Kalender (mehr).',
+  http_error:         'Der Kalenderdienst hat mit einem Fehler geantwortet.',
+  too_large:          'Die Kalenderdatei ist größer als 10 MB.',
+  not_ical:           'Unter dieser Adresse liegt keine Kalenderdatei. Kopiere die iCal-Adresse, nicht den Link zur Webansicht.',
+};
+
+// http lässt das Schema durch, damit die Entwicklung gegen einen lokalen Testserver laufen
+// kann; in Produktion lehnt die API es ab (fetch-ical.ts, Code 'invalid_url').
+const calendarUrlSchema = z.string().trim()
+  .max(2000, 'Die Adresse ist zu lang')
+  .regex(/^(https?|webcal):\/\/\S+$/i, 'Die Adresse muss mit https:// oder webcal:// beginnen');
+
+export const createCalendarImportSchema = z.object({
+  name:        z.string().trim().min(1, 'Name ist erforderlich').max(60, 'Der Name darf höchstens 60 Zeichen lang sein'),
+  url:         calendarUrlSchema,
+  blockAllDay: z.boolean().default(false),
+}).strict();
+export type CreateCalendarImportDto = z.infer<typeof createCalendarImportSchema>;
+
+// Die Adresse lässt sich nicht ändern – dafür den Kalender entfernen und neu hinzufügen.
+export const updateCalendarImportSchema = z.object({
+  name:        z.string().trim().min(1, 'Name ist erforderlich').max(60, 'Der Name darf höchstens 60 Zeichen lang sein').optional(),
+  isActive:    z.boolean().optional(),
+  blockAllDay: z.boolean().optional(),
+}).strict();
+export type UpdateCalendarImportDto = z.infer<typeof updateCalendarImportSchema>;
+
+// 'activity': Coach-App meldet sich (Laden, Tab-Wechsel, Termine/Verfügbarkeit geöffnet),
+// 'manual': Knopf „Jetzt abgleichen“. Die Mindestabstände setzt die API.
+export const syncCalendarImportsSchema = z.object({
+  trigger: z.enum(['activity', 'manual']),
+}).strict();
+export type SyncCalendarImportsDto = z.infer<typeof syncCalendarImportsSchema>;
+
+export const calendarImportResponseSchema = z.object({
+  id:            z.string(),
+  name:          z.string(),
+  urlHint:       z.string(),
+  isActive:      z.boolean(),
+  blockAllDay:   z.boolean(),
+  lastAttemptAt: z.string().nullable(),
+  lastSuccessAt: z.string().nullable(),
+  lastError:     CalendarImportError.nullable(),
+  failingSince:  z.string().nullable(),
+  // Belegte Zeiten ab jetzt – für „23 belegte Zeiten gefunden“
+  busyCount:     z.number(),
+});
+export type CalendarImportResponse = z.infer<typeof calendarImportResponseSchema>;
+
+export const calendarBusyTimeResponseSchema = z.object({
+  calendarImportId: z.string(),
+  calendarName:     z.string(),
+  start:            z.string(),
+  end:              z.string(),
+});
+export type CalendarBusyTimeResponse = z.infer<typeof calendarBusyTimeResponseSchema>;
+
+export const listCalendarBusyTimesQuerySchema = z.object({
+  from: z.string().datetime(),
+  to:   z.string().datetime(),
+});
+export type ListCalendarBusyTimesQuery = z.infer<typeof listCalendarBusyTimesQuerySchema>;
+
 // Coach-weite Zeitslot-Einstellungen (Pufferzeit, Buchungsvorlaufzeit) – global pro
 // Coach, nicht pro Angebot (siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
 export const availabilitySettingsSchema = z.object({
@@ -601,6 +691,8 @@ export const manualBookingCheckResponseSchema = z.array(z.object({
   conflicts:           z.array(z.object({ clientName: z.string(), start: z.string(), end: z.string() })),
   // Gesperrte Ausnahme, die den Termin überschneidet (die erste, falls mehrere)
   blockedBy:           z.object({ note: z.string().nullable(), start: z.string(), end: z.string(), allDay: z.boolean() }).nullable(),
+  // Belegte Zeit aus einem externen Kalender, die den Termin überschneidet
+  busyBy:              z.object({ calendarName: z.string(), start: z.string(), end: z.string() }).nullable(),
   outsideAvailability: z.boolean(),
 }));
 export type ManualBookingCheckResponse = z.infer<typeof manualBookingCheckResponseSchema>;

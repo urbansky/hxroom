@@ -19,6 +19,7 @@ import { coachBookingColumns, toCoachBookingResponse, type CoachBookingRow } fro
 import { withSeries } from './booking-series';
 import { isWithinAvailability } from '../availability/slot-calculation';
 import { AvailabilityExceptionsService } from '../availability/availability-exceptions.service';
+import { CalendarImportsService } from '../calendar-import/calendar-imports.service';
 import { CallEventsService } from '../call/call-events.service';
 import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
 import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CheckManualBookingDto, CoachBookingResponse, CreateAdHocBookingDto, CreateManualBookingDto, ListCoachBookingsQuery, ManualBookingCheckResponse, ManualBookingResponse } from '@hxroom/shared';
@@ -39,6 +40,7 @@ export class CoachBookingsService {
     private readonly config: ConfigService,
     private readonly callEvents: CallEventsService,
     private readonly exceptionsService: AvailabilityExceptionsService,
+    private readonly calendarImports: CalendarImportsService,
   ) {}
 
   // `from`/`to` begrenzen den Beginn, nicht das Ende – ob ein Termin schon vorbei ist,
@@ -452,11 +454,14 @@ export class CoachBookingsService {
     // Ausnahmen (kalenderabgleich.md §2): Eine Sperre wird als Hinweis genannt, eine Freigabe
     // zählt als freigegebene Zeit. Ohne Puffer – die Sperre gilt genau für ihren Zeitraum.
     const exceptions = await this.exceptionsService.loadForSlots(organizationId, { start: earliest, end: latest });
+    // Belegte Zeiten aus externen Kalendern (kalenderabgleich.md §5), ebenfalls ohne Puffer.
+    const busyTimes = await this.calendarImports.busyTimes(organizationId, { start: earliest, end: latest });
 
     return ranges.map(({ start, startTime, endTime }) => {
       const from = startTime.getTime() - bufferMs;
       const to = endTime.getTime() + bufferMs;
       const blocked = exceptions.blocked.find((e) => e.startTime < endTime && e.endTime > startTime);
+      const busy = busyTimes.find((b) => new Date(b.start) < endTime && new Date(b.end) > startTime);
       return {
         start,
         conflicts: others
@@ -465,6 +470,7 @@ export class CoachBookingsService {
         blockedBy: blocked
           ? { note: blocked.note, start: blocked.startTime.toISOString(), end: blocked.endTime.toISOString(), allDay: blocked.allDay }
           : null,
+        busyBy: busy ? { calendarName: busy.calendarName, start: busy.start, end: busy.end } : null,
         outsideAvailability: !isWithinAvailability({ start: startTime, end: endTime }, rules, 'Europe/Berlin', exceptions.available),
       };
     });

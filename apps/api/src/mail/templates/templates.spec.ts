@@ -13,6 +13,7 @@ import { renderEmailChangeVerificationEmail } from './coach/email-change-verific
 import { renderPasswordResetEmail } from './coach/password-reset';
 import { renderDeletionRequestedEmail } from './coach/deletion-requested';
 import { renderDeletionReminderEmail } from './coach/deletion-reminder';
+import { renderCalendarImportFailingEmail } from './coach/calendar-import-failing';
 import { renderDeletionExecutedEmail } from './coach/deletion-executed';
 import { renderFeedbackReceivedEmail } from './operator/feedback-received';
 
@@ -442,6 +443,24 @@ describe('Account-Mail-Templates', () => {
       expect(html).toContain('7 Tage');
       expect(html).toContain('16. September 2026');
       expect(html).toContain('https://app.hxroom.de/settings/account');
+    });
+  });
+
+  describe('Kalenderabgleich schlägt fehl', () => {
+    it('nennt Kalender, Grund in Klartext, letzten Abgleich und den Link zur Einstellung', async () => {
+      const html = await renderCalendarImportFailingEmail({
+        name: 'Anna Bergmann',
+        calendarName: 'Privat',
+        reason: 'forbidden',
+        lastSuccessAt: new Date('2026-11-06T08:15:00Z'),
+        settingsUrl: 'https://app.hxroom.de/bookings/availability?tab=calendar',
+      });
+
+      expect(html).toContain('Privat');
+      expect(html).toContain('Zugriff wurde verweigert');
+      expect(html).toContain('6. November');
+      expect(html).toContain('09:15');
+      expect(html).toContain('https://app.hxroom.de/bookings/availability?tab=calendar');
     });
   });
 

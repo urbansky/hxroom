@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AvailabilityExceptionResponse, AvailabilitySlotResponse, AvailabilitySettingsResponse } from '@hxroom/shared'
+import { CALENDAR_IMPORT_ERROR_TEXTS, CALENDAR_IMPORT_MAX_COUNT, type AvailabilityExceptionResponse, type AvailabilitySlotResponse, type AvailabilitySettingsResponse, type CalendarImportResponse } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -20,26 +20,74 @@ const weekdaySelectItems = [
 // aber das aufgeklappte Select-Dropdown schwer lesbar – hier deckend erzwingen.
 const opaqueSelectContentUi = { content: 'bg-[#faf8f4] dark:bg-[#141814]' }
 
-type TabValue = 'availability' | 'exceptions' | 'settings' | 'sync'
+type TabValue = 'availability' | 'exceptions' | 'calendar' | 'settings'
 
 // Unterstrichene Tabs, nicht der Segmented-Control-Umschalter der Terminansicht:
 // Dort wechselt man die Darstellung derselben Termine, hier den Bereich.
 // "Zeiten" statt "Verfügbarkeit": Die Seitenüberschrift sagt bereits, worum es geht –
 // der Tab muss sie nicht wiederholen.
-// "Kalendersync" kündigt bisher nur an und bleibt in der Beta ausgeblendet (utils/beta.ts).
 const TAB_ITEMS = [
   { label: 'Zeiten', value: 'availability' },
   { label: 'Ausnahmen', value: 'exceptions' },
+  { label: 'Kalender', value: 'calendar' },
   { label: 'Einstellungen', value: 'settings' },
-  ...(SHOW_UPCOMING_FEATURES ? [{ label: 'Kalendersync', value: 'sync' }] : []),
 ]
-// Der Reiter steht in der URL, damit ein Link (z. B. aus der Wochenansicht) direkt dort landet.
+// Der Reiter steht in der URL, damit ein Link (Wochenansicht, Banner, Fehler-Mail) direkt dort landet.
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref<TabValue>(route.query.tab === 'exceptions' ? 'exceptions' : 'availability')
+const LINKABLE_TABS: TabValue[] = ['exceptions', 'calendar']
+const activeTab = ref<TabValue>(LINKABLE_TABS.includes(route.query.tab as TabValue) ? route.query.tab as TabValue : 'availability')
 watch(activeTab, (tab) => {
-  router.replace({ query: tab === 'exceptions' ? { tab } : {} })
+  router.replace({ query: LINKABLE_TABS.includes(tab) ? { tab } : {} })
 })
+// Ein Link auf denselben Pfad (Banner im Layout) ändert nur die Query – der Reiter folgt ihr.
+watch(() => route.query.tab, (tab) => {
+  if (LINKABLE_TABS.includes(tab as TabValue)) activeTab.value = tab as TabValue
+})
+
+// --- Kalender-Tab (kalenderabgleich.md §3) ---
+const calendarSync = useCalendarSync()
+const { imports: calendars, syncing: calendarSyncing } = calendarSync
+await calendarSync.load()
+
+const isCalendarOpen = ref(false)
+const editedCalendar = ref<CalendarImportResponse | null>(null)
+const toast = useToast()
+
+function openCalendarCreate() {
+  editedCalendar.value = null
+  isCalendarOpen.value = true
+}
+
+function openCalendarEdit(calendar: CalendarImportResponse) {
+  editedCalendar.value = calendar
+  isCalendarOpen.value = true
+}
+
+function onCalendarSaved(saved: CalendarImportResponse, created: boolean) {
+  const list = calendars.value ?? []
+  calendars.value = list.some(c => c.id === saved.id) ? list.map(c => (c.id === saved.id ? saved : c)) : [...list, saved]
+  if (created) {
+    toast.add({
+      title: `Verbunden: ${saved.name}`,
+      description: saved.busyCount === 1 ? '1 belegte Zeit gefunden.' : `${saved.busyCount} belegte Zeiten gefunden.`,
+      icon: 'i-lucide-calendar-check',
+      color: 'success',
+    })
+  }
+}
+
+function onCalendarDeleted(id: string) {
+  calendars.value = (calendars.value ?? []).filter(c => c.id !== id)
+}
+
+async function syncCalendarsNow() {
+  try {
+    await calendarSync.syncManual()
+  } catch {
+    toast.add({ title: 'Abgleich fehlgeschlagen', description: 'Bitte versuche es gleich noch einmal.', color: 'error', icon: 'i-lucide-circle-x' })
+  }
+}
 
 const rows = ref<AvailabilitySlotResponse[]>([])
 
@@ -242,6 +290,17 @@ async function deleteDraft() {
       >
         <span class="max-sm:hidden">Ausnahme hinzufügen</span>
       </UButton>
+      <UButton
+        v-else-if="activeTab === 'calendar'"
+        icon="i-lucide-plus"
+        color="primary"
+        class="mb-2 shrink-0"
+        aria-label="Kalender hinzufügen"
+        :disabled="(calendars?.length ?? 0) >= CALENDAR_IMPORT_MAX_COUNT"
+        @click="openCalendarCreate()"
+      >
+        <span class="max-sm:hidden">Kalender hinzufügen</span>
+      </UButton>
     </div>
 
     <template v-if="activeTab === 'availability'">
@@ -334,11 +393,65 @@ async function deleteDraft() {
       </SettingsSection>
     </template>
 
-    <template v-else-if="activeTab === 'sync'">
-      <div class="rounded-xl border border-dashed border-default p-10 flex flex-col items-center justify-center gap-2 text-center">
-        <UIcon name="i-lucide-refresh-cw" class="size-6 text-muted" />
-        <p class="text-sm text-muted">Kalendersync (z. B. Google Calendar, iCal) folgt hier in einer späteren Version.</p>
-      </div>
+    <template v-else-if="activeTab === 'calendar'">
+      <SettingsSection
+        title="Belegte Zeiten übernehmen"
+        description="Termine aus deinem Google-, Outlook- oder Apple-Kalender blockieren die passenden Zeiten auf deiner Buchungsseite. HxRoom liest nur Beginn und Ende, keine Titel oder Teilnehmer."
+      >
+        <div
+          v-if="!calendars || calendars.length === 0"
+          class="rounded-xl border border-dashed border-default p-8 flex flex-col items-center justify-center gap-2 text-center"
+        >
+          <UIcon name="i-lucide-calendar-sync" class="size-6 text-muted" />
+          <p class="text-sm text-muted">Noch kein Kalender verbunden. Füge die iCal-Adresse deines Kalenders hinzu, damit private Termine nicht mehr buchbar sind.</p>
+        </div>
+
+        <template v-else>
+          <ul class="flex flex-col gap-2">
+            <li v-for="calendar in calendars" :key="calendar.id">
+              <button
+                type="button"
+                class="w-full flex items-center gap-3 rounded-xl border border-default bg-white dark:bg-muted px-4 py-3 text-left transition hover:border-accented cursor-pointer outline-primary/25 focus-visible:outline-3"
+                @click="openCalendarEdit(calendar)"
+              >
+                <UIcon
+                  :name="calendar.lastError ? 'i-lucide-calendar-x' : 'i-lucide-calendar-check'"
+                  class="size-5 shrink-0"
+                  :class="!calendar.isActive ? 'text-dimmed' : calendar.lastError ? 'text-error' : 'text-primary'"
+                />
+                <span class="flex-1 min-w-0">
+                  <span class="block text-sm font-medium text-highlighted">{{ calendar.name }}</span>
+                  <span v-if="!calendar.isActive" class="block text-sm text-muted">Pausiert – blockiert keine Zeiten</span>
+                  <template v-else-if="calendar.lastError">
+                    <span class="block text-sm text-error">{{ CALENDAR_IMPORT_ERROR_TEXTS[calendar.lastError] }}</span>
+                    <span class="block text-xs text-muted">Zuletzt abgeglichen {{ formatSyncAge(calendar.lastSuccessAt) }} – diese Zeiten bleiben blockiert.</span>
+                  </template>
+                  <span v-else class="block text-sm text-muted">
+                    Abgeglichen {{ formatSyncAge(calendar.lastSuccessAt) }} · {{ calendar.busyCount === 1 ? '1 belegte Zeit' : `${calendar.busyCount} belegte Zeiten` }}
+                  </span>
+                </span>
+                <UBadge v-if="calendar.blockAllDay" label="Ganztägig blockiert" color="neutral" variant="subtle" size="sm" class="shrink-0 max-sm:hidden" />
+              </button>
+            </li>
+          </ul>
+
+          <div class="flex items-center justify-between gap-4">
+            <p class="text-xs text-muted">
+              Abgleich alle 15 Minuten, bei deiner Arbeit im Backoffice und wenn Klienten deine Buchungsseite öffnen.
+            </p>
+            <UButton
+              label="Jetzt abgleichen"
+              icon="i-lucide-refresh-cw"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              class="shrink-0"
+              :loading="calendarSyncing"
+              @click="syncCalendarsNow()"
+            />
+          </div>
+        </template>
+      </SettingsSection>
     </template>
 
     <!-- Anlegen-/Bearbeiten-Drawer -->
@@ -389,6 +502,13 @@ async function deleteDraft() {
         </div>
       </template>
     </USlideover>
+
+    <CalendarImportSlideover
+      v-model:open="isCalendarOpen"
+      :calendar="editedCalendar"
+      @saved="onCalendarSaved"
+      @deleted="onCalendarDeleted"
+    />
 
     <AvailabilityExceptionSlideover
       v-model:open="isExceptionOpen"

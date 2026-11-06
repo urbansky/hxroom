@@ -4,6 +4,8 @@ import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, offers, bookingPage, availabilitySlots, availabilitySettings, bookings, member, user } from '../db/schema';
 import { computeAvailableSlots, DEFAULT_BOOKING_WINDOW_WEEKS, type DateRange } from '../availability/slot-calculation';
 import { AvailabilityExceptionsService } from '../availability/availability-exceptions.service';
+import { CalendarImportsService } from '../calendar-import/calendar-imports.service';
+import { CalendarImportSyncService } from '../calendar-import/calendar-import-sync.service';
 import { isImprintComplete } from '@hxroom/shared';
 
 @Injectable()
@@ -11,6 +13,8 @@ export class OrganizationService {
   constructor(
     @Inject(DRIZZLE) private readonly db: DrizzleDb,
     private readonly exceptionsService: AvailabilityExceptionsService,
+    private readonly calendarImports: CalendarImportsService,
+    private readonly calendarSync: CalendarImportSyncService,
   ) {}
 
   /**
@@ -189,6 +193,11 @@ export class OrganizationService {
     const org = await this.findBySlug(slug);
     const { slots } = await this.resolveOfferAndSlots(org, offerId);
 
+    // Lädt ein Klient die freien Zeiten, lohnt ein frischer Blick in die Kalender des Coachs –
+    // im Hintergrund: Die Antwort wartet nicht, abgesichert ist die Buchung selbst
+    // (BookingsService.create gleicht vorher ab).
+    this.calendarSync.refreshInBackground(org.id);
+
     return slots.map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString() }));
   }
 
@@ -232,10 +241,10 @@ export class OrganizationService {
     const daysAhead = (settingsRow?.bookingWindowWeeks ?? DEFAULT_BOOKING_WINDOW_WEEKS) * 7;
     // Ausnahmen (kalenderabgleich.md §2): Sperren wirken wie belegte Zeiten, Freigaben als
     // zusätzliche Zeitfenster. Ein Tag Zuschlag deckt die Zeitzonenkante am Fensterende ab.
-    const exceptions = await this.exceptionsService.loadForSlots(org.id, {
-      start: now,
-      end: new Date(now.getTime() + (daysAhead + 1) * 24 * 60 * 60_000),
-    });
+    const horizon = { start: now, end: new Date(now.getTime() + (daysAhead + 1) * 24 * 60 * 60_000) };
+    const exceptions = await this.exceptionsService.loadForSlots(org.id, horizon);
+    // Belegte Zeiten aus den Kalendern des Coachs (kalenderabgleich.md §3) blockieren wie Buchungen.
+    const busyTimes = await this.calendarImports.busyTimes(org.id, horizon);
 
     const slots = computeAvailableSlots({
       rules,
@@ -250,6 +259,7 @@ export class OrganizationService {
       excludeRanges: [
         ...existingBookings.map((b) => ({ start: b.startTime, end: b.endTime })),
         ...exceptions.blocked.map((e) => ({ start: e.startTime, end: e.endTime })),
+        ...busyTimes.map((b) => ({ start: new Date(b.start), end: new Date(b.end) })),
       ],
       extraWindows: exceptions.available,
     });

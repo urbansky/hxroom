@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { DRIZZLE, type DrizzleDb } from '../db/db.module';
 import { organization, bookings, clients } from '../db/schema';
 import { OrganizationService } from '../organization/organization.service';
+import { CalendarImportSyncService } from '../calendar-import/calendar-import-sync.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
 import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
@@ -47,6 +48,7 @@ export class BookingsService {
     private readonly organizationService: OrganizationService,
     private readonly mailService: MailService,
     private readonly config: ConfigService,
+    private readonly calendarSync: CalendarImportSyncService,
   ) {}
 
   async create(slug: string, offerId: string, dto: CreateBookingDto) {
@@ -60,6 +62,12 @@ export class BookingsService {
     if (!isImprintComplete(await this.organizationService.findImprintState(org.id))) {
       throw new ForbiddenException('Bookings are not available for this coach yet');
     }
+
+    // Vor der Transaktion, nicht darin: Der Abruf fremder Kalender darf die Sperre auf der
+    // Organisation nicht halten. Ist der letzte Abgleich älter als zehn Minuten, wird
+    // abgeglichen – höchstens fünf Sekunden lang, danach gilt der letzte Stand
+    // (kalenderabgleich.md §3.3).
+    await this.calendarSync.ensureFresh(org.id, 5_000);
 
     const booking = await this.db.transaction(async (tx) => {
       // Sperrt die Organisation-Zeile für die Dauer der Transaktion: eine zweite,

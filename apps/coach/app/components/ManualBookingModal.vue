@@ -134,7 +134,7 @@ function rowError(index: number): string | null {
 }
 
 const timeFormatter = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' })
-// Hinweise der API, je Zeile: Überschneidung mit einem anderen Termin, gesperrter Zeitraum,
+// Hinweise der API, je Zeile: Überschneidung mit einem anderen Termin, gesperrter Zeitraum, Termin aus einem Kalender,
 // außerhalb der Verfügbarkeit – in dieser Rangfolge, nur der wichtigste wird genannt.
 function rowHint(index: number): string | null {
   const start = rowStarts.value[index]
@@ -151,6 +151,7 @@ function rowHint(index: number): string | null {
       ? `Liegt in einem gesperrten Zeitraum (${check.blockedBy.note}).`
       : 'Liegt in einem gesperrten Zeitraum.'
   }
+  if (check.busyBy) return `Überschneidet sich mit einem Termin aus deinem Kalender „${check.busyBy.calendarName}“.`
   if (check.outsideAvailability) return 'Außerhalb deiner Verfügbarkeit.'
   return null
 }

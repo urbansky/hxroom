@@ -81,7 +81,7 @@ Neben jedem Kalender steht der Stand: „Abgeglichen vor 3 Minuten“. Die Kopfz
 - **Ein fehlgeschlagener Abruf ändert nichts.** Die zuletzt bekannten belegten Zeiten gelten weiter. Würden sie verworfen, wären auf einen Schlag alle privaten Termine buchbar.
 - Der Kalender zeigt den Fehler an („Letzter Abruf fehlgeschlagen: Adresse antwortet nicht“) und wann zuletzt erfolgreich abgeglichen wurde.
 - Schlägt der Abruf **6 Stunden lang** fehl, bekommt der Coach eine Mail mit dem Grund und dem Link zur Einstellung. Danach keine weitere Mail, bis der Kalender wieder einmal erfolgreich war.
-- Ein Banner in der Coach-App weist auf den Fehler hin, solange er besteht.
+- Ein Banner in der Coach-App weist auf den Fehler hin, solange er besteht – ab 30 Minuten Fehlerdauer, damit ein einzelner Aussetzer nicht aufblinkt.
 
 ## 4. Termine im eigenen Kalender (Feed)
 
@@ -186,7 +186,6 @@ export const calendarImports = pgTable('calendar_imports', {
   lastError:           text('last_error'),                  // Fehlercode, kein Inhalt
   failingSince:        timestamp('failing_since'),
   failureMailSentAt:   timestamp('failure_mail_sent_at'),
-  etag / lastModified: text(...),                           // bedingter Abruf
   createdAt / updatedAt
 });
 
@@ -216,13 +215,14 @@ Ein erfolgreicher Abruf ersetzt die belegten Zeiten seines Kalenders in einer Tr
 | `GET/POST /api/v1/availability-exceptions`, `PATCH/DELETE …/:id` | Ausnahmen |
 | `GET/POST /api/v1/calendar-imports`, `PATCH/DELETE …/:id` | Kalender verwalten; `POST` ruft sofort ab |
 | `POST /api/v1/calendar-imports/sync` | Abgleich aller Kalender, Body `{ trigger: 'activity' \| 'manual' }`; Mindestabstand serverseitig |
+| `GET /api/v1/calendar-imports/busy-times?from&to` | belegte Zeiten aktiver Kalender mit Kalendername, für die Wochenansicht |
 | `GET /api/v1/calendar-feed`, `PATCH`, `POST …/regenerate` | Feed-Adresse und Einstellung |
 | `GET /api/v1/calendar-feeds/:token.ics` | öffentlicher Feed, ohne Session |
 
 ### Abruf und Läufe
 
 - **Parser:** `ical.js` (Mozilla, auch in Thunderbird) für Zeitzonen und Serientermine.
-- **`CalendarImportSyncService`:** `@Cron` alle 5 Minuten, höchstens 3 Abrufe gleichzeitig. Alle Anlässe aus Abschnitt 3.3 laufen über dieselbe Methode; `syncingSince` verhindert doppelte Abrufe desselben Kalenders. Nach einem Abgleich mit geänderten Zeiten meldet der Ereigniskanal (SSE) der Coach-App, dass sie die Wochenansicht neu laden soll.
+- **`CalendarImportSyncService`:** `@Cron` alle 5 Minuten, höchstens 3 Abrufe gleichzeitig. Alle Anlässe aus Abschnitt 3.3 laufen über dieselbe Methode; `syncingSince` verhindert doppelte Abrufe desselben Kalenders. Kein bedingter Abruf über ETag: Auch eine unveränderte Datei wird neu gelesen, weil das Zeitfenster täglich weiterwandert. Die Wochenansicht lädt die belegten Zeiten nach jedem Abgleich aus der Coach-App neu (Aktivität oder Knopf); einen allgemeinen Ereigniskanal der Coach-App gibt es nicht.
 - **Fehler-Mail:** neue Vorlage `mail/templates/coach/calendar-import-failing.tsx`.
 - **Feed:** Erzeugung über `mail/ics.ts`, erweitert um `STATUS`, `SEQUENCE` und Kopfzeilen für den Kalender (`X-WR-CALNAME`, `X-PUBLISHED-TTL`, `REFRESH-INTERVAL`).
 - **Coach-Mails:** `BookingsService` hängt an „Neue Buchung“ und „Termin abgesagt“ die Datei aus `buildBookingIcs` an, wie bei den Klienten-Mails. Die Links für Google und Outlook entstehen in einem kleinen Helfer neben `mail/ics.ts`.
@@ -230,7 +230,7 @@ Ein erfolgreicher Abruf ersetzt die belegten Zeiten seines Kalenders in einer Tr
 ## 9. Reihenfolge der Umsetzung
 
 1. **Ausnahmen** ✅ umgesetzt: Tabelle, Endpunkte, Erweiterung der Slot-Berechnung, Reiter „Ausnahmen“, Blöcke in der Wochenansicht, Hinweis beim manuellen Anlegen. Legt die Grundlage, auf der der Import aufsetzt.
-2. **Import:** Tabellen, Abruf mit SSRF-Schutz und Verschlüsselung, Lauf, Reiter „Kalender“, Anlässe aus 3.3, Fehler-Mail.
+2. **Import** ✅ umgesetzt: Tabellen, Abruf mit SSRF-Schutz und Verschlüsselung, Lauf, Reiter „Kalender“, Anlässe aus 3.3, Fehler-Mail und Banner, belegte Zeiten in der Wochenansicht, Hinweis beim manuellen Anlegen.
 3. **Feed und Coach-Mails:** Token, öffentlicher Endpunkt, Logfilter, Abschnitt „Termine in deinem Kalender“; Kalenderdatei und Links in „Neue Buchung“ und „Termin abgesagt“.
 
 **Abnahme:** je Schritt im Browser: Sperre setzen → Slot verschwindet auf der Buchungsseite; privaten Termin im Google-Kalender anlegen → nach „Jetzt abgleichen“ ist der Slot weg; Feed in Apple Kalender abonnieren → Buchung erscheint, Absage verschwindet.
