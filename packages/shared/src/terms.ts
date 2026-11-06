@@ -10,7 +10,7 @@ import { z } from 'zod';
  * Mail mit Widerspruchsfrist; erneut zustimmen muss deshalb nur, wer noch gar keine Fassung
  * angenommen hat.
  */
-export const TERMS_VERSION = '2026-10-27';
+export const TERMS_VERSION = '2026-11-06';
 
 export const termsStatusSchema = z.object({
   currentVersion:  z.string(),

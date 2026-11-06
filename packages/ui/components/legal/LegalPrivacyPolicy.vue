@@ -290,6 +290,7 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
       <ul class="legal-list">
         <li>was du für deine Buchungsseite pflegst: Profilfoto, Texte, Schwerpunkte, Qualifikationen, Impressum, Links</li>
         <li>Angebote, Verfügbarkeiten und Einstellungen</li>
+        <li>wenn du externe Kalender verbindest: deren iCal-Adresse (verschlüsselt gespeichert und nur für den Abgleich verwendet) sowie Beginn und Ende der dort eingetragenen Termine, damit diese Zeiten auf deiner Buchungsseite nicht buchbar sind. Titel, Orte und Teilnehmer speichere ich nicht. Entfernst du einen Kalender, lösche ich seine Adresse und alle übernommenen Zeiten.</li>
         <li>die Daten deiner Klienten, Termine, Notizen und Gesprächsinhalte. Für sie bist du verantwortlich, ich verarbeite sie in deinem Auftrag (siehe Abschnitt 8 und den Auftragsverarbeitungsvertrag).</li>
       </ul>
 
@@ -522,5 +523,5 @@ const { controller = null, imprintHref = null, coachPrivacyUrl = null } = define
     </div>
   </section>
 
-  <p class="legal-updated">Stand: 27. Oktober 2026</p>
+  <p class="legal-updated">Stand: 6. November 2026</p>
 </template>

@@ -61,6 +61,7 @@ useHead({
           <li>Termine, gebuchte Angebote, Nachrichten zur Buchung, Zeitpunkte von Einlass und Gesprächsende</li>
           <li>deine Notizen und Anmerkungen zu Klienten</li>
           <li>Chatnachrichten und geteilte Dateien aus dem Gespräch</li>
+          <li>belegte Zeiten aus Kalendern, die du verbindest: nur Beginn und Ende. Der Kalender wird dafür regelmäßig abgerufen; Titel, Orte und Teilnehmer werden dabei nicht gespeichert.</li>
           <li>während des Gesprächs: Bild und Ton sowie IP-Adresse und technische Verbindungsdaten. Bild und Ton werden nur weitergeleitet, nicht gespeichert.</li>
         </ul>
         <p>Notizen, Chat und Dateien können <strong>besondere Kategorien</strong> personenbezogener Daten nach Art. 9 DSGVO enthalten, etwa Angaben zur Gesundheit, wenn du oder deine Klienten sie dort festhalten. Ob und auf welcher Grundlage das zulässig ist, verantwortest du.</p>
@@ -241,6 +242,6 @@ useHead({
       </div>
     </section>
 
-    <p class="legal-updated">Stand: 27. Oktober 2026</p>
+    <p class="legal-updated">Stand: 6. November 2026</p>
   </div>
 </template>

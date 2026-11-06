@@ -226,6 +226,6 @@ useHead({
       </div>
     </section>
 
-    <p class="legal-updated">Stand: 27. Oktober 2026</p>
+    <p class="legal-updated">Stand: 6. November 2026</p>
   </div>
 </template>
