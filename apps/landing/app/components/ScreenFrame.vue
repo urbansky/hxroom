@@ -9,18 +9,40 @@
 // `mobile` ist eine eigene Fassung für schmale Bildschirme (unter 640 px) mit eigenem
 // Seitenverhältnis. Das Poster liegt deshalb als <picture> unter dem Video: Das poster-Attribut
 // kennt keine Media-Queries. Das Video selbst wählt seine Quelle per <source media>.
+//
+// `dark` ist dieselbe Fassung im dunklen Farbschema. Bis zum Mount wählt das Poster per
+// `prefers-color-scheme` (statisches HTML, keine Hydrationsabweichung), danach folgen Poster und
+// Video der Einstellung der Seite, auch beim Umschalten im Footer. Die Videoquellen kommen erst
+// im Browser dazu, damit niemand die Fassung des anderen Schemas vorlädt.
 const MOBILE = '(max-width: 639px)'
+const DARK = '(prefers-color-scheme: dark)'
+
+interface Variant { video: string, src: string }
 
 const props = withDefaults(defineProps<{
   src?: string
   video?: string
-  mobile?: { video: string, src: string, width: number, height: number }
+  mobile?: Variant & { width: number, height: number }
+  dark?: Variant & { mobile?: Variant }
   alt: string
   address?: string
   width?: number
   height?: number
   eager?: boolean
 }>(), { width: 1440, height: 900, eager: false })
+
+const colorMode = useColorMode()
+const mounted = ref(false)
+// null bis zum Mount: Dann entscheidet allein der Browser über die Media-Queries.
+const scheme = computed(() => mounted.value ? (colorMode.value === 'dark' ? 'dark' : 'light') : null)
+const current = computed(() => {
+  const dark = scheme.value === 'dark' ? props.dark : undefined
+  return {
+    video: dark?.video ?? props.video,
+    src: dark?.src ?? props.src,
+    mobile: dark ? dark.mobile : props.mobile,
+  }
+})
 
 const ratio = computed(() => ({
   '--ratio': `${props.width} / ${props.height}`,
@@ -50,15 +72,30 @@ function toggle() {
 }
 
 let observer: IntersectionObserver | undefined
+let visible = false
 
 onMounted(() => {
+  mounted.value = true
   if (!props.video || !videoEl.value) return
   heldByUser.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   observer = new IntersectionObserver(([entry]) => {
-    if (!entry?.isIntersecting) videoEl.value?.pause()
+    visible = !!entry?.isIntersecting
+    if (!visible) videoEl.value?.pause()
     else if (!heldByUser.value) play()
   }, { threshold: 0.25 })
   observer.observe(videoEl.value)
+})
+
+// Schema gewechselt: Die neuen <source> greifen erst nach load(). Den ersten Schritt (null → Schema)
+// braucht es nicht, beim Einfügen der ersten Quelle wählt der Browser von selbst.
+watch(scheme, async (now, before) => {
+  if (!before || !props.dark) return
+  await nextTick()
+  const el = videoEl.value
+  if (!el) return
+  el.load()
+  playing.value = false
+  if (visible && !heldByUser.value) play()
 })
 
 onBeforeUnmount(() => observer?.disconnect())
@@ -91,8 +128,13 @@ onBeforeUnmount(() => observer?.disconnect())
 
     <div v-if="video" class="relative aspect-(--ratio) max-sm:aspect-(--ratio-mobile)" :style="ratio">
       <picture v-if="src">
-        <source v-if="mobile" :media="MOBILE" :srcset="mobile.src">
-        <img :src="src" alt="" fetchpriority="high" class="absolute inset-0 size-full object-cover">
+        <template v-if="!scheme">
+          <source v-if="mobile && dark?.mobile" :media="`${MOBILE} and ${DARK}`" :srcset="dark.mobile.src">
+          <source v-if="mobile" :media="MOBILE" :srcset="mobile.src">
+          <source v-if="dark" :media="DARK" :srcset="dark.src">
+        </template>
+        <source v-else-if="current.mobile" :media="MOBILE" :srcset="current.mobile.src">
+        <img :src="current.src" alt="" fetchpriority="high" class="absolute inset-0 size-full object-cover">
       </picture>
       <video
         ref="videoEl"
@@ -106,8 +148,10 @@ onBeforeUnmount(() => observer?.disconnect())
         @play="playing = true"
         @pause="playing = false"
       >
-        <source v-if="mobile" :src="mobile.video" :media="MOBILE" type="video/mp4">
-        <source :src="video" type="video/mp4">
+        <template v-if="scheme">
+          <source v-if="current.mobile" :src="current.mobile.video" :media="MOBILE" type="video/mp4">
+          <source :src="current.video" type="video/mp4">
+        </template>
       </video>
     </div>
     <img

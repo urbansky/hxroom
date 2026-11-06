@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-composition-variables='[{"id":"theme","type":"enum","label":"Farbschema","default":"light","options":[{"value":"light","label":"Hell"},{"value":"dark","label":"Dunkel"}]}]'>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1200" />
@@ -8,6 +8,7 @@
       wartet im Warteraum, der Coach lässt ihn herein, das Gespräch beginnt. Die Oberfläche ist
       vereinfacht nachgebaut (Farben, Schriften und Texte wie in HxRoom), damit sie auch bei
       350 px Anzeigebreite lesbar bleibt. Der letzte Frame entspricht dem ersten (nahtlose Schleife).
+      Hell oder dunkel wählt die Variable `theme` (--variables '{"theme":"dark"}').
     -->
     <script src="node_modules/gsap/dist/gsap.min.js"></script>
     <style>
@@ -40,6 +41,9 @@
         --text-muted: #5c6e5b;
         --text-dimmed: #8b9e8a;
         --border: rgba(0, 0, 0, 0.08);
+        --surface: #fff;
+        --line: #e2ddd4;
+        --glass: rgba(250, 248, 244, 0.92);
         --sage-100: #e1e8e1;
         --sage-600: #5c6e5b;
         --sage-700: #4a5a49;
@@ -52,6 +56,37 @@
         /* Ohne benannte Ersatzschriften: Der HyperFrames-Compiler lädt sonst Ersatz von Google Fonts nach. */
         --serif: 'Cormorant Garamond', serif;
         --sans: 'DM Sans', sans-serif;
+      }
+
+      /* Dunkle Fassung: Werte aus packages/ui/theme/main.css (.dark), Karten wie `dark:bg-muted`.
+         Gedämpfte Texte sind etwas heller als im Theme, damit sie verkleinert lesbar bleiben. */
+      html[data-theme='dark'] {
+        --bg: #141814;
+        --bg-muted: #1a1e1a;
+        --bg-elevated: #1e231e;
+        --bg-accented: #262c26;
+        --text: rgba(255, 255, 255, 0.88);
+        --text-high: #fff;
+        --text-muted: rgba(255, 255, 255, 0.5);
+        --text-dimmed: rgba(255, 255, 255, 0.32);
+        --border: rgba(255, 255, 255, 0.08);
+        --surface: #1e231e;
+        --line: rgba(255, 255, 255, 0.14);
+        --glass: rgba(20, 24, 20, 0.82);
+        --sage-100: rgba(116, 141, 115, 0.2);
+        --sage-600: #748d73;
+        --sage-700: #748d73;
+        --gold-100: rgba(181, 147, 90, 0.16);
+        --gold-700: #d4ae78;
+      }
+      /* Die Mail bleibt hell – so sieht sie im Postfach aus. */
+      html[data-theme='dark'] .mail-card {
+        --surface: #fff;
+        --text: #2e3a2d;
+        --text-high: #141814;
+        --text-muted: #5c6e5b;
+        --border: rgba(0, 0, 0, 0.08);
+        --sage-700: #4a5a49;
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -104,7 +139,7 @@
         width: 44px;
         height: 44px;
         border-radius: 50%;
-        border: 2px solid var(--bg-accented);
+        border: 2px solid var(--line);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -122,7 +157,7 @@
       .step .num span { position: relative; }
       .step .label { position: relative; }
       .step .label .on { position: absolute; left: 0; top: 0; color: var(--gold-700); opacity: 0; white-space: nowrap; }
-      .step-line { width: 64px; height: 2px; background: var(--bg-accented); border-radius: 2px; }
+      .step-line { width: 64px; height: 2px; background: var(--line); border-radius: 2px; }
 
       /* ── Bildtext ──────────────────────────────────────────────── */
       .caption {
@@ -187,12 +222,12 @@
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
         color: var(--text-dimmed); font-size: 34px;
       }
-      .slots-hint svg { font-size: 72px; color: var(--bg-accented); stroke-width: 1.6; }
+      .slots-hint svg { font-size: 72px; color: var(--line); stroke-width: 1.6; }
       .slots-body { opacity: 0; }
       .slots-body .date { font-family: var(--serif); font-size: 56px; line-height: 64px; color: var(--text-high); }
       .slots-body .tz { font-size: 26px; line-height: 34px; color: var(--text-dimmed); margin-bottom: 26px; }
       .slot {
-        height: 98px; margin-top: 18px; border-radius: 26px; background: #fff;
+        height: 98px; margin-top: 18px; border-radius: 26px; background: var(--surface);
         display: flex; align-items: center; justify-content: space-between; padding: 0 36px;
         font-size: 38px; color: var(--text-high); position: relative; overflow: hidden;
         box-shadow: 0 2px 0 rgba(0, 0, 0, 0.03);
@@ -207,7 +242,7 @@
       /* ── Szene 2: Bestätigungsmail ────────────────────────────── */
       .mail { position: absolute; left: 190px; top: 150px; width: 1080px; opacity: 0; }
       .mail .brand { font-size: 46px; line-height: 60px; color: var(--gold-700); margin-left: 8px; letter-spacing: -0.01em; }
-      .mail-card { margin-top: 22px; background: #fff; border: 2px solid var(--border); border-radius: 44px; padding: 60px 70px 64px; box-shadow: 0 30px 70px -40px rgba(46, 58, 45, 0.35); }
+      .mail-card { margin-top: 22px; background: var(--surface); border: 2px solid var(--border); border-radius: 44px; padding: 60px 70px 64px; box-shadow: 0 30px 70px -40px rgba(46, 58, 45, 0.35); }
       .mail-card h3 { font-family: var(--serif); font-size: 84px; line-height: 92px; font-weight: 500; color: var(--text-high); }
       .mail-card .lead { margin-top: 22px; font-size: 36px; line-height: 48px; color: var(--text); }
       .mail-card .d { margin-top: 40px; font-size: 32px; line-height: 40px; color: var(--text-muted); }
@@ -224,7 +259,7 @@
       .chips { position: absolute; left: 1330px; top: 330px; width: 470px; display: flex; flex-direction: column; gap: 30px; }
       .chip {
         display: flex; align-items: center; gap: 24px; padding: 26px 30px;
-        background: #fff; border: 2px solid var(--border); border-radius: 30px;
+        background: var(--surface); border: 2px solid var(--border); border-radius: 30px;
         box-shadow: 0 20px 50px -32px rgba(46, 58, 45, 0.4); opacity: 0;
       }
       .chip .ic { width: 72px; height: 72px; border-radius: 50%; background: var(--gold-100); color: var(--gold-700); display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; }
@@ -237,7 +272,7 @@
       .waiting .sub { margin-top: 12px; font-size: 34px; line-height: 46px; color: var(--text-muted); }
       .pill { margin-top: 30px; display: inline-flex; align-items: center; gap: 18px; height: 72px; padding: 0 36px; border-radius: 999px; background: var(--bg-elevated); font-size: 32px; color: var(--text); }
       .pill .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--sage-600); }
-      .appt { margin-top: 36px; width: 900px; background: #fff; border: 2px solid var(--border); border-radius: 40px; padding: 32px 44px 32px 40px; text-align: left; display: flex; gap: 30px; }
+      .appt { margin-top: 36px; width: 900px; background: var(--surface); border: 2px solid var(--border); border-radius: 40px; padding: 32px 44px 32px 40px; text-align: left; display: flex; gap: 30px; }
       .appt .bar-gold { width: 7px; border-radius: 4px; background: var(--gold-400); flex-shrink: 0; }
       .appt .t { font-size: 34px; line-height: 44px; color: var(--text-high); }
       .appt .k { font-size: 40px; line-height: 52px; color: var(--text-high); }
@@ -245,7 +280,7 @@
 
       .coach-card {
         position: absolute; left: 1310px; top: 250px; width: 520px; opacity: 0;
-        background: #fff; border: 2px solid var(--border); border-radius: 40px; padding: 36px 40px 40px;
+        background: var(--surface); border: 2px solid var(--border); border-radius: 40px; padding: 36px 40px 40px;
         box-shadow: 0 40px 90px -40px rgba(20, 24, 20, 0.45);
       }
       .coach-card .tag { font-size: 24px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dimmed); }
@@ -266,7 +301,7 @@
       }
       .tile img { position: absolute; left: 50%; top: 50%; width: 1230px; height: 1230px; margin-left: -615px; margin-top: -560px; object-fit: cover; }
       .tile .ring { position: absolute; inset: 0; border-radius: 36px; box-shadow: inset 0 0 0 6px rgba(47, 158, 91, 0.75); opacity: 0; }
-      .tile .nametag { position: absolute; left: 30px; bottom: 30px; display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 28px 0 12px; border-radius: 999px; background: rgba(250, 248, 244, 0.92); font-size: 30px; color: var(--text-high); }
+      .tile .nametag { position: absolute; left: 30px; bottom: 30px; display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 28px 0 12px; border-radius: 999px; background: var(--glass); font-size: 30px; color: var(--text-high); }
       .tile .nametag b { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 500; color: var(--text-muted); }
 
       .chat {
@@ -277,13 +312,13 @@
       .chat .hd { height: 104px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--border); font-size: 36px; font-weight: 500; color: var(--text-high); }
       .chat .hd svg { font-size: 36px; color: var(--text-muted); }
       .bubble { position: absolute; left: 32px; right: 40px; top: 136px; opacity: 0; }
-      .bubble p { background: #fff; border: 2px solid var(--border); border-radius: 28px; padding: 24px 28px; font-size: 31px; line-height: 42px; color: var(--text); }
+      .bubble p { background: var(--surface); border: 2px solid var(--border); border-radius: 28px; padding: 24px 28px; font-size: 31px; line-height: 42px; color: var(--text); }
       .bubble small { display: block; margin-top: 12px; font-size: 22px; color: var(--text-dimmed); }
-      .typing { position: absolute; left: 32px; top: 136px; height: 76px; padding: 0 28px; border-radius: 28px; background: #fff; border: 2px solid var(--border); display: flex; align-items: center; gap: 10px; opacity: 0; }
+      .typing { position: absolute; left: 32px; top: 136px; height: 76px; padding: 0 28px; border-radius: 28px; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; gap: 10px; opacity: 0; }
       .typing i { width: 12px; height: 12px; border-radius: 50%; background: var(--text-dimmed); display: block; }
       .chat .in { position: absolute; left: 30px; right: 30px; bottom: 30px; height: 84px; display: flex; align-items: center; gap: 16px; }
       .chat .in .clip-ic { width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-muted); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--text-muted); flex-shrink: 0; }
-      .chat .in .field { flex: 1; height: 72px; border-radius: 18px; border: 2px solid var(--border); background: #fff; display: flex; align-items: center; padding: 0 22px; font-size: 26px; color: var(--text-dimmed); }
+      .chat .in .field { flex: 1; height: 72px; border-radius: 18px; border: 2px solid var(--border); background: var(--surface); display: flex; align-items: center; padding: 0 22px; font-size: 26px; color: var(--text-dimmed); }
 
       .bar { position: absolute; left: 0; right: 0; top: 886px; height: 100px; }
       .bar .me { position: absolute; left: 84px; top: 0; }
@@ -299,7 +334,8 @@
       /* ── Zeiger ───────────────────────────────────────────────── */
       #cursor { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; z-index: 10; }
       #cursor svg { position: absolute; left: -12px; top: -12px; width: 72px; height: 72px; filter: drop-shadow(0 6px 10px rgba(20, 24, 20, 0.25)); }
-      #cursor svg path { fill: var(--text-high); stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
+      /* Der Zeiger bleibt in beiden Fassungen schwarz mit weißem Rand, wie ein Systemzeiger. */
+      #cursor svg path { fill: #141814; stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
       #ripple { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; background: rgba(181, 147, 90, 0.35); opacity: 0; transform: scale(0.2); }
     </style>
   </head>
@@ -467,6 +503,12 @@
     </div>
 
     <script>
+      // Farbschema aus der Render-Variable; ohne HyperFrames-Laufzeit (Datei im Browser) per ?theme=dark.
+      const theme = window.__hyperframes?.getVariables?.().theme ?? new URLSearchParams(location.search).get('theme');
+      if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+      const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      const STEP = { on: '#ffffff', off: cssVar('--text-dimmed'), ringOn: cssVar('--gold-400'), ringOff: cssVar('--line') };
+
       // Kalender Oktober 2026: der 1. ist ein Donnerstag, der 26. ist „heute", 27.–31. haben freie Termine.
       const cal = document.getElementById('cal');
       ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'].forEach((w) => {
@@ -512,8 +554,8 @@
       // Schrittleiste und Bildtext umschalten.
       const step = (n, on, t) => {
         tl.to(`#st${n} .fill`, { opacity: on ? 1 : 0, duration: 0.4 }, t);
-        tl.to(`#st${n} .num span`, { color: on ? '#ffffff' : '#8b9e8a', duration: 0.4 }, t);
-        tl.to(`#st${n} .num`, { borderColor: on ? '#b5935a' : '#e2ddd4', duration: 0.4 }, t);
+        tl.to(`#st${n} .num span`, { color: on ? STEP.on : STEP.off, duration: 0.4 }, t);
+        tl.to(`#st${n} .num`, { borderColor: on ? STEP.ringOn : STEP.ringOff, duration: 0.4 }, t);
         tl.to(`#st${n} .label .on`, { opacity: on ? 1 : 0, duration: 0.4 }, t);
       };
       const caption = (n, on, t) => tl.to(`#c${n}`, { opacity: on ? 1 : 0, y: on ? 0 : 10, duration: 0.45, ease: on ? out : 'power2.in' }, t);
@@ -522,8 +564,8 @@
       tl.set('#cursor', { x: 1500, y: 1300, opacity: 0 }, 0);
       tl.set('#c1', { opacity: 1 }, 0);
       tl.set('#st1 .fill, #st1 .label .on', { opacity: 1 }, 0);
-      tl.set('#st1 .num span', { color: '#ffffff' }, 0);
-      tl.set('#st1 .num', { borderColor: '#b5935a' }, 0);
+      tl.set('#st1 .num span', { color: STEP.on }, 0);
+      tl.set('#st1 .num', { borderColor: STEP.ringOn }, 0);
       tl.set('#chips .chip', { opacity: 0, x: 40 }, 0);
       tl.set('#coach-card', { opacity: 0, x: 120 }, 0);
 

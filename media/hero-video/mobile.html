@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-composition-variables='[{"id":"theme","type":"enum","label":"Farbschema","default":"light","options":[{"value":"light","label":"Hell"},{"value":"dark","label":"Dunkel"}]}]'>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1080, height=1350" />
@@ -7,6 +7,7 @@
       Handy-Fassung des Hero-Loops (18 s, 4:5). Gleiche Szenen und gleiches Timing wie index.html,
       aber für rund 330 px Anzeigebreite gebaut: wenige, große Elemente, Bildtext mit mindestens 52 px.
       Der letzte Frame entspricht dem ersten (nahtlose Schleife).
+      Hell oder dunkel wählt die Variable `theme` (--variables '{"theme":"dark"}'), Farben wie in index.html.
     -->
     <script src="node_modules/gsap/dist/gsap.min.js"></script>
     <style>
@@ -33,6 +34,9 @@
         --text-muted: #5c6e5b;
         --text-dimmed: #8b9e8a;
         --border: rgba(0, 0, 0, 0.08);
+        --surface: #fff;
+        --line: #e2ddd4;
+        --glass: rgba(250, 248, 244, 0.92);
         --sage-100: #e1e8e1;
         --sage-600: #5c6e5b;
         --sage-700: #4a5a49;
@@ -44,6 +48,37 @@
         /* Ohne benannte Ersatzschriften: Der HyperFrames-Compiler lädt sonst Ersatz von Google Fonts nach. */
         --serif: 'Cormorant Garamond', serif;
         --sans: 'DM Sans', sans-serif;
+      }
+
+      /* Dunkle Fassung: Werte aus packages/ui/theme/main.css (.dark), Karten wie `dark:bg-muted`.
+         Gedämpfte Texte sind etwas heller als im Theme, damit sie verkleinert lesbar bleiben. */
+      html[data-theme='dark'] {
+        --bg: #141814;
+        --bg-muted: #1a1e1a;
+        --bg-elevated: #1e231e;
+        --bg-accented: #262c26;
+        --text: rgba(255, 255, 255, 0.88);
+        --text-high: #fff;
+        --text-muted: rgba(255, 255, 255, 0.5);
+        --text-dimmed: rgba(255, 255, 255, 0.32);
+        --border: rgba(255, 255, 255, 0.08);
+        --surface: #1e231e;
+        --line: rgba(255, 255, 255, 0.14);
+        --glass: rgba(20, 24, 20, 0.82);
+        --sage-100: rgba(116, 141, 115, 0.2);
+        --sage-600: #748d73;
+        --sage-700: #748d73;
+        --gold-100: rgba(181, 147, 90, 0.16);
+        --gold-700: #d4ae78;
+      }
+      /* Die Mail bleibt hell – so sieht sie im Postfach aus. */
+      html[data-theme='dark'] .mail-card {
+        --surface: #fff;
+        --text: #2e3a2d;
+        --text-high: #141814;
+        --text-muted: #5c6e5b;
+        --border: rgba(0, 0, 0, 0.08);
+        --sage-700: #4a5a49;
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -64,7 +99,7 @@
 
       /* ── Fortschritt ───────────────────────────────────────────── */
       #steps { position: absolute; left: 60px; right: 60px; top: 44px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-      .step .bar { height: 10px; border-radius: 5px; background: var(--bg-accented); position: relative; overflow: hidden; }
+      .step .bar { height: 10px; border-radius: 5px; background: var(--line); position: relative; overflow: hidden; }
       .step .bar i { position: absolute; inset: 0; background: var(--gold-400); opacity: 0; display: block; }
       .step .label { margin-top: 14px; font-size: 32px; line-height: 40px; font-weight: 500; color: var(--text-dimmed); position: relative; }
       .step .label .on { position: absolute; left: 0; top: 0; color: var(--gold-700); opacity: 0; white-space: nowrap; }
@@ -89,7 +124,7 @@
       .coach-head .role { font-size: 36px; line-height: 44px; color: var(--text-muted); }
       .days { margin-top: 40px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
       .day { height: 156px; border-radius: 30px; background: var(--bg-accented); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-      .day.today { background: transparent; border: 3px solid var(--bg-accented); }
+      .day.today { background: transparent; border: 3px solid var(--line); }
       .day .wd, .day .n { position: relative; }
       .day .wd { font-size: 30px; line-height: 38px; letter-spacing: 0.06em; color: var(--text-muted); }
       .day .n { font-size: 56px; line-height: 66px; font-weight: 500; color: var(--text-high); }
@@ -100,10 +135,10 @@
 
       .slots { margin-top: 30px; height: 520px; background: var(--bg-muted); border: 3px solid var(--border); border-radius: 44px; padding: 36px; position: relative; }
       .slots-hint { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; color: var(--text-dimmed); font-size: 42px; }
-      .slots-hint svg { font-size: 84px; color: var(--bg-accented); stroke-width: 1.6; }
+      .slots-hint svg { font-size: 84px; color: var(--line); stroke-width: 1.6; }
       .slots-body { opacity: 0; }
       .slots-body .date { font-family: var(--serif); font-size: 60px; line-height: 70px; color: var(--text-high); margin-bottom: 14px; }
-      .slot { height: 112px; margin-top: 18px; border-radius: 28px; background: #fff; position: relative; overflow: hidden; font-size: 48px; color: var(--text-high); }
+      .slot { height: 112px; margin-top: 18px; border-radius: 28px; background: var(--surface); position: relative; overflow: hidden; font-size: 48px; color: var(--text-high); }
       .slot .row { position: absolute; inset: 0; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; }
       .slot .act { font-size: 34px; color: var(--text-muted); }
       .slot .sel { position: absolute; inset: 0; background: var(--sage-700); opacity: 0; }
@@ -114,7 +149,7 @@
       /* ── Szene 2: Mail ────────────────────────────────────────── */
       .mail { position: absolute; left: 60px; top: 140px; width: 960px; opacity: 0; }
       .mail .brand { font-size: 52px; line-height: 64px; color: var(--gold-700); margin-left: 8px; }
-      .mail-card { margin-top: 18px; background: #fff; border: 3px solid var(--border); border-radius: 48px; padding: 52px 56px 56px; box-shadow: 0 30px 70px -40px rgba(46, 58, 45, 0.35); }
+      .mail-card { margin-top: 18px; background: var(--surface); border: 3px solid var(--border); border-radius: 48px; padding: 52px 56px 56px; box-shadow: 0 30px 70px -40px rgba(46, 58, 45, 0.35); }
       .mail-card h3 { font-family: var(--serif); font-size: 92px; line-height: 100px; font-weight: 500; color: var(--text-high); }
       .mail-card .lead { margin-top: 18px; font-size: 44px; line-height: 56px; color: var(--text); }
       .term { margin-top: 34px; padding-left: 32px; border-left: 8px solid var(--gold-400); }
@@ -122,7 +157,7 @@
       .term .k { font-size: 50px; line-height: 62px; color: var(--text-high); }
       .mail .btn { margin-top: 42px; height: 116px; font-size: 46px; }
       .chips { position: absolute; left: 60px; top: 920px; width: 960px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-      .chip { display: flex; align-items: center; gap: 22px; padding: 26px 26px; background: #fff; border: 3px solid var(--border); border-radius: 34px; box-shadow: 0 20px 50px -32px rgba(46, 58, 45, 0.4); opacity: 0; }
+      .chip { display: flex; align-items: center; gap: 22px; padding: 26px 26px; background: var(--surface); border: 3px solid var(--border); border-radius: 34px; box-shadow: 0 20px 50px -32px rgba(46, 58, 45, 0.4); opacity: 0; }
       .chip .ic { width: 84px; height: 84px; border-radius: 50%; background: var(--gold-100); color: var(--gold-700); display: flex; align-items: center; justify-content: center; font-size: 42px; flex-shrink: 0; }
       .chip .tx { font-size: 38px; line-height: 46px; color: var(--text-high); font-weight: 500; }
       .chip .tx small { display: block; font-size: 32px; line-height: 40px; color: var(--text-muted); font-weight: 400; }
@@ -133,7 +168,7 @@
       .waiting .sub { margin-top: 22px; font-size: 42px; line-height: 54px; color: var(--text-muted); }
       .pill { margin-top: 36px; display: inline-flex; align-items: center; gap: 20px; height: 92px; padding: 0 44px; border-radius: 999px; background: var(--bg-elevated); font-size: 42px; color: var(--text); }
       .pill .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--sage-600); }
-      .coach-card { position: absolute; left: 60px; top: 700px; width: 960px; opacity: 0; background: #fff; border: 3px solid var(--border); border-radius: 48px; padding: 40px 48px 48px; box-shadow: 0 40px 90px -40px rgba(20, 24, 20, 0.5); }
+      .coach-card { position: absolute; left: 60px; top: 700px; width: 960px; opacity: 0; background: var(--surface); border: 3px solid var(--border); border-radius: 48px; padding: 40px 48px 48px; box-shadow: 0 40px 90px -40px rgba(20, 24, 20, 0.5); }
       .coach-card .tag { font-size: 30px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dimmed); }
       .coach-card .who { margin-top: 26px; display: flex; align-items: center; gap: 28px; }
       .initials { width: 112px; height: 112px; border-radius: 50%; background: var(--sage-100); color: var(--sage-700); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 500; flex-shrink: 0; }
@@ -149,10 +184,10 @@
       .tile { position: absolute; left: 60px; top: 150px; width: 960px; height: 740px; border-radius: 44px; overflow: hidden; background: #d9dcd8; }
       .tile img { position: absolute; left: 50%; top: 50%; width: 1000px; height: 1000px; margin-left: -500px; margin-top: -470px; object-fit: cover; }
       .tile .ring { position: absolute; inset: 0; border-radius: 44px; box-shadow: inset 0 0 0 8px rgba(47, 158, 91, 0.75); opacity: 0; }
-      .tile .live { position: absolute; left: 32px; top: 32px; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 24px 0 20px; border-radius: 999px; background: rgba(250, 248, 244, 0.92); font-size: 32px; font-weight: 500; color: var(--live); }
+      .tile .live { position: absolute; left: 32px; top: 32px; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 24px 0 20px; border-radius: 999px; background: var(--glass); font-size: 32px; font-weight: 500; color: var(--live); }
       .tile .live i { width: 16px; height: 16px; border-radius: 50%; background: var(--live); display: block; }
-      .tile .nametag { position: absolute; right: 32px; top: 32px; height: 72px; padding: 0 30px; border-radius: 999px; background: rgba(250, 248, 244, 0.92); display: flex; align-items: center; font-size: 38px; color: var(--text-high); }
-      .msg { position: absolute; right: 32px; bottom: 32px; width: 560px; opacity: 0; background: #fff; border-radius: 34px; padding: 26px 32px; box-shadow: 0 24px 60px -24px rgba(20, 24, 20, 0.45); }
+      .tile .nametag { position: absolute; right: 32px; top: 32px; height: 72px; padding: 0 30px; border-radius: 999px; background: var(--glass); display: flex; align-items: center; font-size: 38px; color: var(--text-high); }
+      .msg { position: absolute; right: 32px; bottom: 32px; width: 560px; opacity: 0; background: var(--surface); border-radius: 34px; padding: 26px 32px; box-shadow: 0 24px 60px -24px rgba(20, 24, 20, 0.45); }
       .msg b { display: block; font-size: 30px; line-height: 38px; color: var(--text-muted); font-weight: 500; }
       .msg p { margin-top: 6px; font-size: 40px; line-height: 50px; color: var(--text-high); }
       .ctrls { position: absolute; left: 0; right: 0; top: 924px; display: flex; justify-content: center; align-items: center; gap: 26px; }
@@ -163,7 +198,8 @@
       /* ── Zeiger ───────────────────────────────────────────────── */
       #cursor { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; z-index: 10; }
       #cursor svg { position: absolute; left: -15px; top: -15px; width: 90px; height: 90px; filter: drop-shadow(0 6px 10px rgba(20, 24, 20, 0.25)); }
-      #cursor svg path { fill: var(--text-high); stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
+      /* Der Zeiger bleibt in beiden Fassungen schwarz mit weißem Rand, wie ein Systemzeiger. */
+      #cursor svg path { fill: #141814; stroke: #fff; stroke-width: 1.6; stroke-linejoin: round; }
       #ripple { position: absolute; left: -75px; top: -75px; width: 150px; height: 150px; border-radius: 50%; background: rgba(181, 147, 90, 0.35); opacity: 0; transform: scale(0.2); }
     </style>
   </head>
@@ -293,6 +329,10 @@
     </div>
 
     <script>
+      // Farbschema aus der Render-Variable; ohne HyperFrames-Laufzeit (Datei im Browser) per ?theme=dark.
+      const theme = window.__hyperframes?.getVariables?.().theme ?? new URLSearchParams(location.search).get('theme');
+      if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+
       // Zielpunkte für den Zeiger, gemessen am ruhenden Layout (feste Größen, unabhängig von Schriften).
       const center = (sel, dx = 0, dy = 0) => {
         const r = document.querySelector(sel).getBoundingClientRect();

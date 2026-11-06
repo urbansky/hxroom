@@ -11,7 +11,8 @@ const content = {
   note: '20 Minuten mit Stefan – oder gleich selbst loslegen, kostenlos in der Beta.',
 }
 
-// Hero-Loop in zwei Fassungen: 16:10 und unter 640 px Breite eine eigene 4:5-Fassung mit größerer Schrift.
+// Hero-Loop in zwei Fassungen: 16:10 und unter 640 px Breite eine eigene 4:5-Fassung mit größerer
+// Schrift. Beide gibt es hell und dunkel; ScreenFrame wählt nach dem Farbschema der Seite.
 const loop = {
   video: '/video/hxroom-buchung-bis-videocall.mp4',
   poster: '/video/hxroom-buchung-bis-videocall-poster.webp',
@@ -21,13 +22,27 @@ const loop = {
     width: 1080,
     height: 1350,
   },
+  dark: {
+    video: '/video/hxroom-buchung-bis-videocall-dunkel.mp4',
+    src: '/video/hxroom-buchung-bis-videocall-dunkel-poster.webp',
+    mobile: {
+      video: '/video/hxroom-buchung-bis-videocall-mobil-dunkel.mp4',
+      src: '/video/hxroom-buchung-bis-videocall-mobil-dunkel-poster.webp',
+    },
+  },
 }
 
-// Das Poster ist das größte Element im ersten Bildschirm (LCP): früh laden, je Bildschirmbreite nur eines.
+// Das Poster ist das größte Element im ersten Bildschirm (LCP): früh laden, je Bildschirmbreite und
+// Farbschema des Systems nur eines – dieselben Media-Queries wie das <picture> in ScreenFrame.
+const WIDE = '(min-width: 640px)'
+const NARROW = '(max-width: 639px)'
+const preload = (href: string, media: string) => ({ rel: 'preload', as: 'image', href, media, fetchpriority: 'high' as const })
 useHead({
   link: [
-    { rel: 'preload', as: 'image', href: loop.poster, media: '(min-width: 640px)', fetchpriority: 'high' },
-    { rel: 'preload', as: 'image', href: loop.mobile.src, media: '(max-width: 639px)', fetchpriority: 'high' },
+    preload(loop.poster, `${WIDE} and (prefers-color-scheme: light)`),
+    preload(loop.mobile.src, `${NARROW} and (prefers-color-scheme: light)`),
+    preload(loop.dark.src, `${WIDE} and (prefers-color-scheme: dark)`),
+    preload(loop.dark.mobile.src, `${NARROW} and (prefers-color-scheme: dark)`),
   ],
 })
 </script>
@@ -62,6 +77,7 @@ useHead({
           :video="loop.video"
           :src="loop.poster"
           :mobile="loop.mobile"
+          :dark="loop.dark"
           alt="Animierter Ablauf: Ein Klient bucht auf der Seite seines Coachs einen Termin, bekommt Bestätigung und Erinnerung per Mail, wartet im Warteraum, wird vom Coach eingelassen und das Videogespräch beginnt."
           :width="1440"
           :height="900"
