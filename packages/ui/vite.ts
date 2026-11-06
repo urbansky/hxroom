@@ -46,8 +46,7 @@ function sharedIcons(dir = COMPONENTS_DIR, found = new Set<string>()): string[] 
  * Vorkonfiguriertes Nuxt UI Vite-Plugin mit HxRoom-Theme.
  * Nutzung in vite.config.ts: `plugins: [vue(), hxroomUI()]`
  *
- * `options` wird an das Nuxt-UI-Plugin durchgereicht – die Buchungsseite nutzt das für
- * `colorMode: false`, weil sie bewusst nur hell erscheint.
+ * `options` wird an das Nuxt-UI-Plugin durchgereicht.
  */
 export function hxroomUI(options: UIOptions = {}) {
   return [dedupeRouter(), ui({

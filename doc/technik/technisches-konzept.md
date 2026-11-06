@@ -33,7 +33,7 @@ Alle externen Dienste laufen im EU-Raum. Stripe ist als Zahlungsanbieter bewusst
 | Technologie | Rolle |
 |---|---|
 | **Nuxt 4** | Vue 3 Meta-Framework (file-based Routing, Auto-Imports); Coach-App und Admin als SPA, Landingpage statisch erzeugt. Die Buchungsseite ist eine Vite-SPA. |
-| **Nuxt UI v4** | Komponenten-Bibliothek (Reka UI + Tailwind), Theme und Farben aus `@hxroom/ui` |
+| **Nuxt UI v4** | Komponenten-Bibliothek (Reka UI + Tailwind), Theme und Farben aus `@hxroom/ui`. Alle Apps gibt es hell und dunkel; ohne Wahl gilt das Farbschema des Systems. Die Coach-App schaltet im Benutzermenü um (§5), Landingpage und Buchungsseite im Footer. Die Buchungsseite setzt das Schema schon in `index.html`, damit sie auf dunklen Systemen nicht kurz hell aufblitzt. |
 | **LiveKit JS SDK** | WebRTC-Client-Integration |
 
 ### Infrastruktur

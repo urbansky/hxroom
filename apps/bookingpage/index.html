@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>HxRoom</title>
+    <!-- Setzt .dark vor dem ersten Bild, sonst blitzt die Seite auf dunklen Systemen kurz hell
+         auf, bis Nuxt UI geladen ist. Schlüssel und Werte wie useDark() aus VueUse. -->
+    <script>
+      try {
+        var scheme = localStorage.getItem('vueuse-color-scheme');
+        if (scheme === 'dark' || (scheme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

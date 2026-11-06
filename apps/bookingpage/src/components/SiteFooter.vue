@@ -3,7 +3,8 @@ import { inject, type Ref } from 'vue';
 import { COACH_KEY, type CoachProfile } from '../composables/useCoach';
 
 // Auf jeder Seite der Buchungsseite: Impressum und Datenschutzerklärung (doc/recht/legal.md §3.2,
-// §4) und die AGB des Coachs, wenn er welche verlinkt hat.
+// §4) und die AGB des Coachs, wenn er welche verlinkt hat. Dazu der Umschalter hell/dunkel;
+// ohne Wahl folgt die Seite dem System.
 const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
 </script>
 
@@ -26,6 +27,7 @@ const coachProfile = inject<Ref<CoachProfile | null>>(COACH_KEY);
           rel="noopener noreferrer"
           class="text-xs text-dimmed hover:text-muted transition-colors no-underline"
         >AGB</a>
+        <UColorModeButton size="xs" />
       </div>
     </template>
   </UFooter>

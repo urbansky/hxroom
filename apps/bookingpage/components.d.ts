@@ -28,6 +28,8 @@ declare module 'vue' {
     UButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UCarousel: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Carousel.vue')['default']
     UChip: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Chip.vue')['default']
+    UCollapsible: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Collapsible.vue')['default']
+    UColorModeButton: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/color-mode/ColorModeButton.vue')['default']
     UDropdownMenu: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
     UFooter: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
     UFormField: typeof import('./../../node_modules/.pnpm/@nuxt+ui@4.11.1_187ecd7a45982ef94b9834527ae575ae/node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']

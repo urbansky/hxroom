@@ -42,7 +42,9 @@ const { profile } = defineProps<{ profile: BookingPageProfile }>()
     #c5d0c4;
 }
 
-:global(.dark) .coach-card-header {
+/* Ohne :global() – Vue machte aus `:global(.dark) .coach-card-header` nur `.dark` und legte
+   die Fläche so auf <html>. So hängt das Scope-Attribut an .coach-card-header. */
+.dark .coach-card-header {
   background:
     radial-gradient(ellipse 60% 80% at 40% 60%, rgba(92, 110, 91, 0.25) 0%, transparent 60%),
     radial-gradient(ellipse 40% 60% at 70% 30%, rgba(181, 147, 90, 0.1) 0%, transparent 60%),

@@ -16,9 +16,9 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    // colorMode: false – die Klientenseite erscheint bewusst immer hell (kein Umschalter,
-    // kein OS-Abgleich), damit sie dieselbe Fläche zeigt wie das Coach-Backoffice.
-    hxroomUI({ colorMode: false }),
+    // Hell oder dunkel folgt dem System des Klienten, im Footer lässt es sich umschalten.
+    // Gespeichert wird die Wahl von VueUse unter `vueuse-color-scheme` (siehe index.html).
+    hxroomUI(),
     // WASM und Modell des Weichzeichners von der eigenen Origin statt von jsDelivr und Google
     // (packages/livekit/vite.ts).
     mediapipeAssets(),

@@ -307,7 +307,8 @@ async function onSubmit() {
   text-underline-offset: 2px;
   transition: color 0.2s;
 }
-:global(.dark) .newsletter-consent :deep(a) {
+/* Ohne :global() – Vue machte daraus nur `.dark` und färbte so <html>. */
+.dark .newsletter-consent :deep(a) {
   color: var(--color-sage-200);
 }
 .newsletter-consent :deep(a:hover) {
