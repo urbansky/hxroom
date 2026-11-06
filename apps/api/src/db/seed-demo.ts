@@ -17,7 +17,7 @@ import { hashPassword } from 'better-auth/crypto';
 import { and, eq, like, notLike } from 'drizzle-orm';
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import type { Imprint, ImprintMode } from '@hxroom/shared';
+import { TERMS_VERSION, type Imprint, type ImprintMode } from '@hxroom/shared';
 import { normalizeEmail } from '../clients/normalize-email';
 import * as schema from './schema';
 import { planBookings } from './seed/booking-plan';
@@ -160,6 +160,9 @@ async function main(): Promise<void> {
         id: `${PREFIX}account`, accountId: USER_ID, providerId: 'credential', userId: USER_ID,
         password: passwordHash, createdAt: now, updatedAt: now,
       });
+      // Wie bei der Registrierung: AGB und AVV der aktuellen Fassung angenommen, sonst legt sich
+      // der Zustimmungsdialog über die Coach-App (und über den Dashboard-Screenshot).
+      await tx.insert(schema.termsAcceptances).values({ userId: USER_ID, version: TERMS_VERSION, acceptedAt: now });
       await tx.insert(schema.organization).values({ id: ORG_ID, name: profile.name, slug: SLUG, createdAt: now });
       await tx.insert(schema.member).values({
         id: `${PREFIX}member`, organizationId: ORG_ID, userId: USER_ID, role: 'owner', createdAt: now,

@@ -10,8 +10,8 @@
 // Seitenverhältnis. Das Poster liegt deshalb als <picture> unter dem Video: Das poster-Attribut
 // kennt keine Media-Queries. Das Video selbst wählt seine Quelle per <source media>.
 //
-// `dark` ist dieselbe Fassung im dunklen Farbschema. Bis zum Mount wählt das Poster per
-// `prefers-color-scheme` (statisches HTML, keine Hydrationsabweichung), danach folgen Poster und
+// `dark` ist dasselbe Bild oder Video im dunklen Farbschema. Bis zum Mount wählt das Bild per
+// `prefers-color-scheme` (statisches HTML, keine Hydrationsabweichung), danach folgen Bild und
 // Video der Einstellung der Seite, auch beim Umschalten im Footer. Die Videoquellen kommen erst
 // im Browser dazu, damit niemand die Fassung des anderen Schemas vorlädt.
 const MOBILE = '(max-width: 639px)'
@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{
   src?: string
   video?: string
   mobile?: Variant & { width: number, height: number }
-  dark?: Variant & { mobile?: Variant }
+  dark?: { src: string, video?: string, mobile?: Variant }
   alt: string
   address?: string
   width?: number
@@ -154,16 +154,18 @@ onBeforeUnmount(() => observer?.disconnect())
         </template>
       </video>
     </div>
-    <img
-      v-else-if="src"
-      :src="src"
-      :alt="alt"
-      :width="width"
-      :height="height"
-      :loading="eager ? 'eager' : 'lazy'"
-      decoding="async"
-      class="block w-full h-auto"
-    >
+    <picture v-else-if="src" class="block">
+      <source v-if="dark && !scheme" :media="DARK" :srcset="dark.src">
+      <img
+        :src="current.src"
+        :alt="alt"
+        :width="width"
+        :height="height"
+        :loading="eager ? 'eager' : 'lazy'"
+        decoding="async"
+        class="block w-full h-auto"
+      >
+    </picture>
     <div
       v-else
       class="flex items-center justify-center bg-linear-to-br from-sage-100/70 to-gold-100/50 dark:from-sage-900/40 dark:to-gold-900/20"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Produkt-Tour aus Sicht des Klienten. Die Bilder erzeugt scripts/screenshots.mjs
-// (doc/technik/technisches-konzept.md §15); fehlt eines, zeigt ScreenFrame einen Platzhalter.
+// (doc/technik/technisches-konzept.md §15), jeweils hell und dunkel (`srcDark`); fehlt eines,
+// zeigt ScreenFrame einen Platzhalter.
 const content = {
   label: 'So funktioniert’s',
   // Je Satz ein Block, damit nur zwischen den Sätzen umbrochen wird.
@@ -12,6 +13,7 @@ const content = {
       title: 'Er bucht auf deiner Seite',
       text: 'Deine Buchungsseite unter deinname.hxroom.de: dein Foto, deine Angebote, freie Zeiten aus deiner Verfügbarkeit. Dein Klient wählt einen Termin und bestätigt ihn per Mail.',
       src: '/screens/booking-page.webp',
+      srcDark: '/screens/booking-page-dark.webp',
       alt: 'Buchungsseite mit Angebot, Kalender und freien Zeiten',
       address: 'demo.hxroom.de/offers/…',
     },
@@ -19,6 +21,7 @@ const content = {
       title: 'Er bekommt alles per Mail',
       text: 'Die Bestätigung mit Termin, Kalendereintrag und dem Link zu eurem Gespräch. 24 Stunden und eine Stunde vorher erinnert HxRoom ihn automatisch.',
       src: '/screens/confirmation-mail.webp',
+      srcDark: '/screens/confirmation-mail-dark.webp',
       alt: 'Bestätigungsmail mit Termin und Knopf zum Warteraum',
       address: undefined,
     },
@@ -26,6 +29,7 @@ const content = {
       title: 'Er wartet bei dir, nicht bei Zoom',
       text: 'Ein Klick auf den Link, und er sitzt in deinem Warteraum: mit deinem Foto und deinem Namen. Kamera und Mikrofon prüft er vorher in Ruhe. Du siehst sofort, dass er da ist.',
       src: '/screens/waiting-room.webp',
+      srcDark: '/screens/waiting-room-dark.webp',
       alt: 'Warteraum mit Foto des Coachs und Termin',
       address: 'demo.hxroom.de/call/…',
     },
@@ -33,6 +37,7 @@ const content = {
       title: 'Du lässt ihn herein',
       text: 'Ihr sprecht in einem ruhigen Raum ohne Ablenkung. Daneben deine Notizen, und wenn ihr sie braucht, Chat und Dateien.',
       src: '/screens/call-coach.webp',
+      srcDark: '/screens/call-coach-dark.webp',
       alt: 'Gespräch aus Sicht des Coachs mit geöffneten Notizen',
       address: 'app.hxroom.de/call/…',
     },
@@ -66,7 +71,7 @@ const content = {
             <h3 class="font-serif text-[30px] font-normal leading-[1.2] text-(--color-cream) mb-4">{{ step.title }}</h3>
             <p class="text-[16px] text-(--ui-text) opacity-85 leading-[1.75] max-w-[440px]">{{ step.text }}</p>
           </div>
-          <ScreenFrame :src="step.src" :alt="step.alt" :address="step.address" :width="2880" :height="1800" />
+          <ScreenFrame :src="step.src" :dark="{ src: step.srcDark }" :alt="step.alt" :address="step.address" :width="2880" :height="1800" />
         </li>
       </ol>
     </div>

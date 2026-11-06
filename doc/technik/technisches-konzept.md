@@ -721,7 +721,7 @@ pnpm db:seed                # Testdaten: Coachs anna@ und martina@hxroom.test, P
 
 Aufgerufen wird über die Caddy-Subdomains, nicht über `localhost`-Ports: `app.hxroom.localhost` (Coach-App), `admin.hxroom.localhost`, `hxroom.localhost` (Landingpage), `anna.hxroom.localhost` (Buchungsseite eines Coachs). Die Buchungsseite liest den Slug aus dem Hostnamen, und die API vertraut nur diesen Origins.
 
-**Screenshots der Landingpage:** `pnpm --filter api db:seed:demo` legt Demodaten an, `apps/landing/scripts/screenshots.mjs` nimmt damit die Bilder unter `apps/landing/public/screens/` auf (Voraussetzungen im Kopf der Datei).
+**Screenshots der Landingpage:** `pnpm --filter api db:seed:demo` legt Demodaten an, `apps/landing/scripts/screenshots.mjs` nimmt damit die Bilder unter `apps/landing/public/screens/` auf, jeweils hell und dunkel (`name-dark.webp`); `ScreenFrame` wählt nach dem Farbschema der Seite (Voraussetzungen im Kopf der Datei).
 
 **LiveKit ohne HxRoom prüfen:** Der Medienserver lässt sich mit dem LiveKit-CLI (`lk`,
 Homebrew) isoliert testen, und zwar in drei Stufen, weil jede eine andere Fehlerquelle

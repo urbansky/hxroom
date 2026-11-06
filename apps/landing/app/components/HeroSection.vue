@@ -36,7 +36,7 @@ const loop = {
 // Farbschema des Systems nur eines – dieselben Media-Queries wie das <picture> in ScreenFrame.
 const WIDE = '(min-width: 640px)'
 const NARROW = '(max-width: 639px)'
-const preload = (href: string, media: string) => ({ rel: 'preload', as: 'image', href, media, fetchpriority: 'high' as const })
+const preload = (href: string, media: string) => ({ rel: 'preload', as: 'image', href, media, fetchpriority: 'high' }) as const
 useHead({
   link: [
     preload(loop.poster, `${WIDE} and (prefers-color-scheme: light)`),

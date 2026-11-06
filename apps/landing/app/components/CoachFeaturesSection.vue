@@ -42,6 +42,7 @@ const content = {
 
         <ScreenFrame
           src="/screens/dashboard.webp"
+          :dark="{ src: '/screens/dashboard-dark.webp' }"
           alt="Dashboard des Coachs mit den nächsten Terminen und Klienten"
           address="app.hxroom.de"
           :width="2880"
