@@ -6,6 +6,11 @@
 
 ## 1. Rolle der Seite
 
+| Auftritt | Adresse |
+|---|---|
+| Unternehmensseite HxRoom | https://www.linkedin.com/company/hxroom |
+| Persönliches Profil Stefan | https://www.linkedin.com/in/stefan-urbansky-99291484/ |
+
 Auf LinkedIn erreicht HxRoom Coachs vor allem über Stefans persönliches Profil: Direktansprache, Posts und Artikel ([marketing.md](marketing.md), Abschnitt 2). Die Unternehmensseite liefert dazu:
 
 - das Logo am Erfahrungseintrag „Gründer · HxRoom“ in Stefans Profil
@@ -23,7 +28,7 @@ LinkedIn → „Für Unternehmen“ → „Unternehmensseite erstellen“ → �
 | Feld | Eintrag |
 |---|---|
 | Name | HxRoom |
-| LinkedIn-URL | `linkedin.com/company/hxroom` (falls vergeben: `hxroom-de`) |
+| LinkedIn-URL | `linkedin.com/company/hxroom` |
 | Website | `https://hxroom.de` |
 | Branche | Softwareentwicklung |
 | Unternehmensgröße | 0–1 Beschäftigte |

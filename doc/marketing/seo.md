@@ -368,7 +368,7 @@ Backlink-Aufbau ist im Coach-Markt **nicht über klassische Outreach-Listen** zu
 
 - **„HxRoom" als Marke** in Google Business Profile anlegen (Service Area: Deutschland, Österreich, Schweiz). Keine physische Adresse nötig.
 - Kategorie: „Software-Unternehmen" / „Online-Coaching-Plattform".
-- Verknüpft mit `hxroom.de` und Stefans LinkedIn.
+- Verknüpft mit `hxroom.de` und der [LinkedIn-Unternehmensseite](https://www.linkedin.com/company/hxroom).
 
 ### 7.2 Brand-Such-Hygiene
 
@@ -376,7 +376,7 @@ Wer „HxRoom" googelt, soll auf Seite 1 finden:
 
 1. Hauptdomain `hxroom.de`
 2. `/preise`, `/funktionen`, `/blog` als Sitelinks
-3. LinkedIn-Profil von Stefan
+3. LinkedIn: [Unternehmensseite HxRoom](https://www.linkedin.com/company/hxroom) und [Profil von Stefan](https://www.linkedin.com/in/stefan-urbansky-99291484/)
 4. Google Business Profile mit Bewertungen
 5. Erste Case Studies / Coach-Testimonials
 

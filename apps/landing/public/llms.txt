@@ -32,3 +32,4 @@ HxRoom ist in der Beta und läuft mit echten Klienten. Die Nutzung ist in der Be
 - [Startseite](https://hxroom.de): Was HxRoom ist, Produkt-Tour mit Screenshots, Funktionen, häufige Fragen
 - [Vorführung buchen](https://demo.hxroom.de): 20-minütige Produktvorführung mit Stefan Urbansky, kostenlos
 - [Kostenlos ausprobieren](https://app.hxroom.de/auth/register): Registrierung als Coach
+- [LinkedIn](https://www.linkedin.com/company/hxroom): Unternehmensseite von HxRoom

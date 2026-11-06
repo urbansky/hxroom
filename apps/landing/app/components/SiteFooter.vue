@@ -14,6 +14,7 @@ const linkClass = 'text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) tra
         <p class="mt-4 text-[14px] text-(--ui-text-muted) leading-[1.6] max-w-[320px]">
           Der Videocall-Raum für Coaches – unter deinem Namen, mit Servern in Deutschland.
         </p>
+        <a href="https://www.linkedin.com/company/hxroom" :class="[linkClass, 'mt-4 inline-block']">HxRoom auf LinkedIn</a>
       </div>
 
       <nav aria-label="Produkt">
