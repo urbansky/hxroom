@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- Quelle für die Bilder unter media/instagram/beitraege/ (540 × 675, gerendert mit Faktor 2 auf 1080 × 1350).
+     Jedes Element .tile ist ein Bild, data-datei nennt die Zieldatei. Texte: doc/marketing/instagram.md, Abschnitt 6.
+     Vorlagen: titel (erstes Bild), punkt (nummerierte Aussage), abschluss, zitat (Coach-Alltag), portraet. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: 'Cormorant Garamond'; font-style: normal; font-weight: 300 600;
+    src: url('../../packages/ui/theme/fonts/cormorant-garamond-latin-normal.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Cormorant Garamond'; font-style: italic; font-weight: 300 400;
+    src: url('../../packages/ui/theme/fonts/cormorant-garamond-latin-italic.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'DM Sans'; font-style: normal; font-weight: 300 500;
+    src: url('../../packages/ui/theme/fonts/dm-sans-latin.woff2') format('woff2');
+  }
+  html, body { margin: 0; background: #ddd; }
+  #bilder { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+
+  .tile {
+    position: relative; overflow: hidden; box-sizing: border-box;
+    width: 540px; height: 675px; padding: 56px 52px;
+    display: flex; flex-direction: column;
+    font-family: 'DM Sans', sans-serif;
+    background: #F5F0E8; color: #2e3a2d;
+  }
+  .tile.dunkel { background: linear-gradient(135deg, #5C6E5B, #3b483a); color: #F5F0E8; }
+
+  .ringe { position: absolute; right: -150px; top: -150px; width: 0; height: 0; left: auto; }
+  .ringe i {
+    position: absolute; border-radius: 50%; transform: translate(-50%, -50%);
+    left: 150px; top: 150px; width: var(--d); height: var(--d);
+    border: 1px solid rgba(139, 158, 138, var(--o));
+  }
+  .dunkel .ringe i { border-color: rgba(245, 240, 232, var(--o)); }
+
+  .kopf {
+    position: relative; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: #634d2c;
+  }
+  .dunkel .kopf { color: #c5d0c4; }
+
+  .inhalt { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+  h2 {
+    margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 400;
+    font-size: 52px; line-height: 1.1; letter-spacing: -0.01em;
+  }
+  .punkt h2 { font-size: 42px; line-height: 1.14; }
+  .zitat h2 { font-size: 46px; line-height: 1.16; }
+  .nummer {
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300;
+    font-size: 96px; line-height: 1; color: #B5935A; margin-bottom: 18px;
+  }
+  .szene { font-size: 19px; line-height: 1.5; color: #c5d0c4; margin-bottom: 18px; }
+
+  .fuss {
+    position: relative; display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #5C6E5B;
+  }
+  .dunkel .fuss { color: #c5d0c4; }
+  .marke { display: flex; align-items: center; gap: 8px; }
+  .marke svg { width: 18px; height: 18px; }
+
+  .foto { width: 220px; height: 220px; border-radius: 50%; object-fit: cover; margin-bottom: 32px; border: 3px solid #fff; }
+  .portraet h2 { font-size: 46px; }
+  .portraet p { margin: 20px 0 0; font-size: 19px; line-height: 1.55; color: #4a5a49; }
+</style>
+</head>
+<body>
+<div id="bilder"></div>
+<script>
+  const marke = `<span class="marke"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" /></svg>HxRoom</span>`
+  const ringe = `<div class="ringe">${[[300, 0.4], [430, 0.3], [560, 0.2], [690, 0.12]].map(([d, o]) => `<i style="--d: ${d}px; --o: ${o}"></i>`).join('')}</div>`
+
+  const beitraege = [
+    {
+      ordner: '1-fuenf-momente', kopf: 'Checkliste',
+      titel: 'Fünf Momente vor der Sitzung, die den ersten Eindruck prägen',
+      punkte: [
+        'Der Termin-Button ist auf jeder Seite leicht zu finden',
+        'Das Formular fragt nur Name, E-Mail und Termin ab',
+        'Die Bestätigung kommt sofort, mit Kalendereintrag und einem Satz zum ersten Gespräch',
+        'Die Erinnerung kommt 24 Stunden und eine Stunde vorher',
+        'Im Warteraum warten dein Foto und ein Willkommenstext statt einer leeren Fläche',
+      ],
+      abschluss: 'Vertrauen beginnt vor der ersten Minute',
+    },
+    {
+      ordner: '4-datenschutz-fehler', kopf: 'Datenschutz',
+      titel: 'Fünf Datenschutz-Fehler im Online-Coaching',
+      punkte: [
+        'Zoom-Link in der Bio, AVV nicht dokumentiert',
+        'Aufnahme mit nur mündlicher Zustimmung',
+        'WhatsApp für die Klientenkommunikation',
+        'Kopierte, veraltete Datenschutzerklärung',
+        'Keine Löschung nach Coaching-Ende',
+      ],
+      abschluss: 'Der ganze Artikel: hxroom.de/blog',
+    },
+    {
+      ordner: '5-unserioes-wirken', kopf: 'Dein Auftritt',
+      titel: 'Sieben kleine Dinge, die deinen Auftritt unseriös wirken lassen',
+      punkte: [
+        'Gmail oder GMX als Geschäfts-Mail',
+        'Stock-Foto als Profilbild',
+        'Generische Zoom-Links',
+        'Fehlendes oder veraltetes Impressum',
+        'Tippfehler im Buchungsformular',
+        'Keine SSL-Verschlüsselung der Website',
+        'Lieber ein gepflegter Kanal als drei halbtote',
+      ],
+    },
+  ]
+
+  const bilder = []
+  const fuss = (seite, gesamt) => `<div class="fuss">${marke}<span>${seite} / ${gesamt}</span></div>`
+
+  for (const b of beitraege) {
+    const gesamt = 1 + b.punkte.length + (b.abschluss ? 1 : 0)
+    let seite = 1
+    const datei = () => `beitraege/${b.ordner}/${String(seite).padStart(2, '0')}.png`
+    bilder.push({ datei: datei(), klasse: 'dunkel titel', html: `${ringe}<div class="kopf">${b.kopf}</div><div class="inhalt"><h2>${b.titel}</h2></div>${fuss(seite, gesamt)}` })
+    b.punkte.forEach((punkt, i) => {
+      seite++
+      bilder.push({ datei: datei(), klasse: 'punkt', html: `${ringe}<div class="kopf">${b.kopf}</div><div class="inhalt"><div class="nummer">${i + 1}</div><h2>${punkt}</h2></div>${fuss(seite, gesamt)}` })
+    })
+    if (b.abschluss) {
+      seite++
+      bilder.push({ datei: datei(), klasse: 'dunkel abschluss', html: `${ringe}<div class="kopf">${b.kopf}</div><div class="inhalt"><h2>${b.abschluss}</h2></div>${fuss(seite, gesamt)}` })
+    }
+  }
+
+  bilder.push({
+    datei: 'beitraege/2-wo-war-der-link.png', klasse: 'dunkel zitat',
+    html: `${ringe}<div class="kopf">Coach-Alltag</div><div class="inhalt"><div class="szene">Sitzung in zwei Minuten. Dein Klient:</div><h2>„Wo war noch mal der Link?“</h2></div><div class="fuss">${marke}</div>`,
+  })
+  bilder.push({
+    datei: 'beitraege/3-wer-das-baut.png', klasse: 'portraet',
+    html: `${ringe}<div class="kopf">Wer das baut</div><div class="inhalt"><img class="foto" src="../../apps/landing/public/stefan.jpg" alt=""><h2>Ich bin Stefan und baue HxRoom.</h2><p>Wenn du mir schreibst, schreibe ich zurück.</p></div><div class="fuss">${marke}</div>`,
+  })
+
+  document.getElementById('bilder').innerHTML = bilder
+    .map(b => `<div class="tile ${b.klasse}" data-datei="${b.datei}">${b.html}</div>`)
+    .join('')
+</script>
+</body>
+</html>
