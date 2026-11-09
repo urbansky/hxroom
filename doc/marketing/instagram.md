@@ -95,7 +95,7 @@ Instagram schneidet Beiträge in der Profilansicht an. Texte bleiben deshalb mit
 
 Die Gestaltung folgt dem Theme (`packages/ui/theme`): Creme und Salbei, Serifenschrift für Überschriften, wenig Text je Bild. Jedes Format hat eine feste Vorlage, damit das Profil ruhig wirkt. Das erste Bild eines Karussells trägt eine Aussage in einem Satz, das letzte fasst sie zusammen.
 
-Unten links steht auf jedem Bild der Absender: Stefans Foto, darunter „Stefan“ und „HxRoom“. So steht hinter jedem Beitrag ein Gesicht, auch hinter den Ratgebern. Groß erscheint Stefan nur in Beiträgen der Reihe „Stefan baut HxRoom“, möglichst mit Alltagsfotos statt immer demselben Porträt.
+Die Kopfzeile oben nennt Thema und Zielgruppe, zum Beispiel „Checkliste für Coachs“. Unten links steht auf jedem Bild der Absender: Stefans Foto, daneben „Stefan“ und „HxRoom · Buchung & Videocall für Coachs“. So steht hinter jedem Beitrag ein Gesicht, auch hinter den Ratgebern, und neue Besucher sehen nebenbei, was HxRoom ist. Groß erscheint Stefan nur in Beiträgen der Reihe „Stefan baut HxRoom“, möglichst mit Alltagsfotos statt immer demselben Porträt.
 
 Die Vorlagen stehen in `media/instagram/beitraege.html`: Jedes Element `.tile` ist ein Bild, `data-datei` nennt die Zieldatei. Gerendert wird wie bei den LinkedIn-Bildern mit Playwright im Faktor 2 ([linkedin.md](linkedin.md), Abschnitt 4).
 
