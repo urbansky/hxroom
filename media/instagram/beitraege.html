@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <!-- Quelle für die Bilder unter media/instagram/beitraege/ (540 × 675, gerendert mit Faktor 2 auf 1080 × 1350).
      Jedes Element .tile ist ein Bild, data-datei nennt die Zieldatei. Texte: doc/marketing/instagram.md, Abschnitt 6.
-     Vorlagen: titel (erstes Bild), punkt (nummerierte Aussage), abschluss, zitat (Coach-Alltag), portraet. -->
+     Vorlagen: titel (erstes Bild), punkt (nummerierte Aussage), abschluss, zitat (Coach-Alltag), portraet.
+     Fußzeile: Absender mit Stefans Foto; nur das Porträt, das ihn schon groß zeigt, trägt die Marke. -->
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -66,6 +67,16 @@
   .marke { display: flex; align-items: center; gap: 8px; }
   .marke svg { width: 18px; height: 18px; }
 
+  .absender { display: flex; align-items: center; gap: 12px; }
+  .absender img {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 0 0 2px #fff;
+  }
+  .dunkel .absender img { box-shadow: 0 0 0 2px rgba(245, 240, 232, 0.85); }
+  .absender b { display: block; font-weight: 500; font-size: 14px; color: #2e3a2d; }
+  .dunkel .absender b { color: #F5F0E8; }
+  .absender span { display: block; font-size: 12px; margin-top: 1px; }
+
   .foto { width: 220px; height: 220px; border-radius: 50%; object-fit: cover; margin-bottom: 32px; border: 3px solid #fff; }
   .portraet h2 { font-size: 46px; }
   .portraet p { margin: 20px 0 0; font-size: 19px; line-height: 1.55; color: #4a5a49; }
@@ -75,6 +86,7 @@
 <div id="bilder"></div>
 <script>
   const marke = `<span class="marke"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" /><rect x="2" y="6" width="14" height="12" rx="2" /></svg>HxRoom</span>`
+  const absender = `<span class="absender"><img src="../../apps/landing/public/stefan.jpg" alt=""><span><b>Stefan</b><span>HxRoom</span></span></span>`
   const ringe = `<div class="ringe">${[[300, 0.4], [430, 0.3], [560, 0.2], [690, 0.12]].map(([d, o]) => `<i style="--d: ${d}px; --o: ${o}"></i>`).join('')}</div>`
 
   const beitraege = [
@@ -118,7 +130,7 @@
   ]
 
   const bilder = []
-  const fuss = (seite, gesamt) => `<div class="fuss">${marke}<span>${seite} / ${gesamt}</span></div>`
+  const fuss = (seite, gesamt) => `<div class="fuss">${absender}<span>${seite} / ${gesamt}</span></div>`
 
   for (const b of beitraege) {
     const gesamt = 1 + b.punkte.length + (b.abschluss ? 1 : 0)
@@ -137,7 +149,7 @@
 
   bilder.push({
     datei: 'beitraege/2-wo-war-der-link.png', klasse: 'dunkel zitat',
-    html: `${ringe}<div class="kopf">Coach-Alltag</div><div class="inhalt"><div class="szene">Sitzung in zwei Minuten. Dein Klient:</div><h2>„Wo war noch mal der Link?“</h2></div><div class="fuss">${marke}</div>`,
+    html: `${ringe}<div class="kopf">Coach-Alltag</div><div class="inhalt"><div class="szene">Sitzung in zwei Minuten. Dein Klient:</div><h2>„Wo war noch mal der Link?“</h2></div><div class="fuss">${absender}</div>`,
   })
   bilder.push({
     datei: 'beitraege/3-wer-das-baut.png', klasse: 'portraet',
