@@ -6,7 +6,7 @@ const content = {
   headlineEm: 'das dir nicht im Weg steht.',
   lede: 'Termine, Klienten und Notizen an einem Ort – so einfach, dass du es zwischen zwei Sitzungen erledigst.',
   features: [
-    { icon: 'i-lucide-calendar-sync', title: 'Passt zu deinem Kalender', text: 'Wo du in Google, Outlook oder iCloud belegt bist, kann niemand buchen. Deine Termine aus HxRoom abonnierst du in deinem Kalender.' },
+    { icon: 'i-lucide-calendar-sync', title: 'Kalender-Synchronisierung', text: 'Steht in deinem Kalender (z. B. Google, Outlook oder iCloud) schon ein Termin, ist die Zeit auf deiner Buchungsseite auch entsprechend blockiert.' },
     { icon: 'i-lucide-layout-template', title: 'Buchungsseite mit deinem Namen', text: 'Foto, Texte, Angebote und Impressum – unter deinname.hxroom.de.' },
     { icon: 'i-lucide-bell-ring', title: 'Erinnerungen automatisch', text: 'Deine Klienten bekommen 24 Stunden und eine Stunde vorher eine Mail.' },
     { icon: 'i-lucide-notebook-pen', title: 'Notizen im Gespräch', text: 'Schreib mit, während ihr sprecht. Die Notizen bleiben beim Termin und beim Klienten.' },
