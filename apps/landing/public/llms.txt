@@ -9,7 +9,8 @@ HxRoom ist in der Beta und läuft mit echten Klienten. Die Nutzung ist in der Be
 ## Funktionen
 
 - Buchungsseite unter eigener Subdomain (name.hxroom.de) mit Foto, Texten, Angeboten und Impressum
-- Kalender und Verfügbarkeiten, freie Zeiten werden daraus berechnet
+- Kalender und Verfügbarkeiten, freie Zeiten werden daraus berechnet; einzelne Zeiträume lassen sich sperren (Urlaub) oder zusätzlich freigeben
+- Kalenderabgleich: belegte Zeiten aus Google, Outlook oder iCloud (über die iCal-Adresse) sind nicht buchbar, gespeichert werden nur Beginn und Ende; die eigenen HxRoom-Termine lassen sich als Kalender-Abo in Apple, Google oder Outlook einbinden
 - Bestätigungsmail mit Kalendereintrag, Erinnerungsmails 24 Stunden und eine Stunde vor dem Termin
 - Warteraum mit Foto und Namen des Coachs, Kamera- und Mikrofontest vorab
 - Videocall im Browser mit Chat und Dateien, Notizen für den Coach während des Gesprächs
@@ -23,6 +24,7 @@ HxRoom ist in der Beta und läuft mit echten Klienten. Die Nutzung ist in der Be
 - **Was kostet HxRoom?** In der Beta nichts. Die regulären Preise stehen zum offiziellen Start fest, Orientierung ab etwa 19 € im Monat. Beta-Coaches bekommen einen vergünstigten Einführungspreis.
 - **Wie läuft eine Vorführung ab?** 20 Minuten, kostenlos, gebucht über demo.hxroom.de. Man erlebt HxRoom aus Sicht der Klienten – Buchung, Bestätigungsmail, Warteraum, Gespräch – und sieht danach das Backoffice des Coachs.
 - **Kann ich meinen Zoom behalten?** Ja. Viele Coaches nutzen HxRoom zuerst mit einzelnen Klienten und wechseln Schritt für Schritt.
+- **Funktioniert HxRoom mit Google- oder Outlook-Kalender?** Ja. Der Coach verbindet Kalender aus Google, Outlook oder iCloud; wo er dort belegt ist, ist auf der Buchungsseite kein Termin frei. HxRoom speichert davon nur Beginn und Ende. Umgekehrt lassen sich die HxRoom-Termine im eigenen Kalender abonnieren.
 - **Brauchen Klienten einen Account?** Nein. Link anklicken, direkt im Warteraum landen – kein Download, keine Registrierung, kein Passwort.
 - **Wo liegen die Daten?** Auf Servern in Deutschland (Hetzner). AVV inklusive, Subdienstleister transparent aufgeführt, keine Weitergabe an US-Dienste.
 - **Was passiert mit den Daten beim Aufhören?** Klienten, Termine und Notizen lassen sich jederzeit mit einem Klick exportieren. Das Konto löscht der Coach selbst; nach 30 Tagen Bedenkzeit sind alle Daten gelöscht.

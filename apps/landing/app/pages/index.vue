@@ -56,6 +56,7 @@ useHead({
             featureList: [
               'Buchungsseite mit eigenem Namen',
               'Videocall mit Warteraum',
+              'Abgleich mit Google-, Outlook- und iCloud-Kalender',
               'Bestätigungs- und Erinnerungsmails',
               'Notizen, Chat und Dateien im Gespräch',
               'Kein Account für Klienten erforderlich',

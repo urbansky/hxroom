@@ -11,7 +11,7 @@ const content = {
   steps: [
     {
       title: 'Er bucht auf deiner Seite',
-      text: 'Deine Buchungsseite unter deinname.hxroom.de: dein Foto, deine Angebote, freie Zeiten aus deiner Verfügbarkeit. Dein Klient wählt einen Termin und bestätigt ihn per Mail.',
+      text: 'Deine Buchungsseite unter deinname.hxroom.de: dein Foto, deine Angebote, freie Zeiten aus deiner Verfügbarkeit – abgeglichen mit deinem Kalender. Dein Klient wählt einen Termin und bestätigt ihn per Mail.',
       src: '/screens/booking-page.webp',
       srcDark: '/screens/booking-page-dark.webp',
       alt: 'Buchungsseite mit Angebot, Kalender und freien Zeiten',

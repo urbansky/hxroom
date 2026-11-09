@@ -18,6 +18,11 @@ export const FAQ_ITEMS = [
     a: 'Natürlich. Viele Coaches nutzen HxRoom zuerst mit einzelnen Klienten und wechseln dann Schritt für Schritt. Einen harten Schnitt braucht es nicht.',
   },
   {
+    q: 'Funktioniert HxRoom mit meinem Google- oder Outlook-Kalender?',
+    // Kalenderabgleich aus doc/produkt/funktionen/kalenderabgleich.md (Import, Feed, Ausnahmen).
+    a: 'Ja. Du verbindest deinen Kalender aus Google, Outlook oder iCloud. Wo du dort belegt bist, ist auf deiner Buchungsseite kein Termin frei. HxRoom merkt sich davon nur Beginn und Ende, keine Titel und keine Teilnehmer. Umgekehrt abonnierst du deine HxRoom-Termine in deinem Kalender. Urlaub oder einen freien Nachmittag sperrst du mit zwei Klicks.',
+  },
+  {
     q: 'Brauchen meine Klienten einen Account?',
     a: 'Nein. Deine Klienten klicken auf einen Link und landen direkt in deinem Warteraum. Kein Download, keine Registrierung, kein Passwort.',
   },
