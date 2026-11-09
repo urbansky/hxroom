@@ -452,6 +452,8 @@ async function deleteDraft() {
           </div>
         </template>
       </SettingsSection>
+
+      <CalendarFeedSection class="mt-6" />
     </template>
 
     <!-- Anlegen-/Bearbeiten-Drawer -->

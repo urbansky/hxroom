@@ -1,9 +1,16 @@
 import { Link } from 'react-email';
 import { MailLayout } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
-import { Field, Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_components/blocks';
+import { Field, Footnote, Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_components/blocks';
 import { link } from '../_components/styles';
 import { renderEmail } from '../../render';
+
+/** Vorausgefüllte Eintragsseiten der Kalenderanbieter (mail/coach-calendar.ts). */
+export interface CalendarLinks {
+  google: string;
+  outlookWork: string;
+  outlookPersonal: string;
+}
 
 interface BookingNotificationEmailProps {
   coachName: string;
@@ -13,6 +20,8 @@ interface BookingNotificationEmailProps {
   clientNote?: string | null;
   appointment: AppointmentInfo;
   bookingsUrl: string;
+  /** Links zum Eintragen; die Kalenderdatei hängt zusätzlich an der Mail. */
+  calendarLinks?: CalendarLinks;
 }
 
 // Benachrichtigung an den Coach, sobald ein Klient seine Buchung bestätigt hat
@@ -30,6 +39,7 @@ export default function BookingNotificationEmail({
   clientNote,
   appointment,
   bookingsUrl,
+  calendarLinks,
 }: BookingNotificationEmailProps) {
   return (
     <MailLayout preview={`Neue Buchung: ${clientName}, ${appointment.dayLabel}, ${appointment.timeRangeLabel}`}>
@@ -59,6 +69,22 @@ export default function BookingNotificationEmail({
       ) : null}
 
       <PrimaryButton href={bookingsUrl}>Zu deinen Buchungen</PrimaryButton>
+
+      {/* Sofort in den eigenen Kalender (kalenderabgleich.md §4) – für die Zeit, bis ein
+          abonnierter Feed nachgeladen hat. Die angehängte Datei deckt Apple Kalender ab. */}
+      {calendarLinks ? (
+        <Footnote>
+          In deinen Kalender eintragen:{' '}
+          <Link href={calendarLinks.google} style={link}>Google Kalender</Link>
+          {' · '}
+          <Link href={calendarLinks.outlookWork} style={link}>Outlook (Microsoft 365)</Link>
+          {' · '}
+          <Link href={calendarLinks.outlookPersonal} style={link}>Outlook.com</Link>
+          {' · '}
+          oder die angehängte Kalenderdatei öffnen. Nutzt du das Kalender-Abo von HxRoom,
+          erscheint der Termin dort ohnehin.
+        </Footnote>
+      ) : null}
     </MailLayout>
   );
 }
@@ -77,6 +103,11 @@ BookingNotificationEmail.PreviewProps = {
     durationMinutes: 60,
   },
   bookingsUrl: 'https://app.hxroom.de/bookings',
+  calendarLinks: {
+    google: 'https://calendar.google.com/calendar/render?action=TEMPLATE',
+    outlookWork: 'https://outlook.office.com/calendar/0/deeplink/compose',
+    outlookPersonal: 'https://outlook.live.com/calendar/0/deeplink/compose',
+  },
 } satisfies BookingNotificationEmailProps;
 
 export async function renderBookingNotificationEmail(props: BookingNotificationEmailProps): Promise<string> {

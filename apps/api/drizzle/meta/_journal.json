@@ -274,6 +274,13 @@
       "when": 1793949877119,
       "tag": "0038_chief_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794199940047,
+      "tag": "0039_futuristic_big_bertha",
+      "breakpoints": true
     }
   ]
 }

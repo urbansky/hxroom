@@ -447,6 +447,19 @@ export const listCalendarBusyTimesQuerySchema = z.object({
 });
 export type ListCalendarBusyTimesQuery = z.infer<typeof listCalendarBusyTimesQuerySchema>;
 
+// Kalender-Abo des Coachs (doc/produkt/funktionen/kalenderabgleich.md §4). `token` ist null,
+// solange kein Abo eingerichtet ist; die Coach-App baut die Adresse aus ihrer API-Adresse.
+export const calendarFeedResponseSchema = z.object({
+  token:           z.string().nullable(),
+  hideClientNames: z.boolean(),
+});
+export type CalendarFeedResponse = z.infer<typeof calendarFeedResponseSchema>;
+
+export const updateCalendarFeedSchema = z.object({
+  hideClientNames: z.boolean(),
+}).strict();
+export type UpdateCalendarFeedDto = z.infer<typeof updateCalendarFeedSchema>;
+
 // Coach-weite Zeitslot-Einstellungen (Pufferzeit, Buchungsvorlaufzeit) – global pro
 // Coach, nicht pro Angebot (siehe doc/produkt/funktionen/angebote-verfuegbarkeiten.md, Abschnitt 7)
 export const availabilitySettingsSchema = z.object({

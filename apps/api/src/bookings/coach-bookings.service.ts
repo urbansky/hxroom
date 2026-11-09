@@ -20,6 +20,8 @@ import { withSeries } from './booking-series';
 import { isWithinAvailability } from '../availability/slot-calculation';
 import { AvailabilityExceptionsService } from '../availability/availability-exceptions.service';
 import { CalendarImportsService } from '../calendar-import/calendar-imports.service';
+import { CalendarFeedService } from '../calendar-feed/calendar-feed.service';
+import { coachIcsInput } from '../mail/coach-calendar';
 import { CallEventsService } from '../call/call-events.service';
 import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
 import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CheckManualBookingDto, CoachBookingResponse, CreateAdHocBookingDto, CreateManualBookingDto, ListCoachBookingsQuery, ManualBookingCheckResponse, ManualBookingResponse } from '@hxroom/shared';
@@ -41,6 +43,7 @@ export class CoachBookingsService {
     private readonly callEvents: CallEventsService,
     private readonly exceptionsService: AvailabilityExceptionsService,
     private readonly calendarImports: CalendarImportsService,
+    private readonly calendarFeed: CalendarFeedService,
   ) {}
 
   // `from`/`to` begrenzen den Beginn, nicht das Ende – ob ein Termin schon vorbei ist,
@@ -527,19 +530,14 @@ export class CoachBookingsService {
   }
 
   /** iCalendar-Datei für einen einzelnen Termin – zum Import in den Kalender des Coachs. */
+  /**
+   * Kalendereintrag für den Coach selbst (Terminseite → Kalendereintrag). Dieselbe Darstellung
+   * wie Kalender-Abo und Mail-Anhang (mail/coach-calendar.ts): ohne Organisator und Teilnehmer –
+   * sonst bieten Outlook und Apple an, dem Klienten Updates zu schicken – und ohne seine Nachricht.
+   */
   async buildIcs(organizationId: string, bookingId: string): Promise<string> {
     const booking = await this.findOwn(organizationId, bookingId);
-    const coach = await this.organizationService.findOwnerContact(organizationId);
-
-    return buildBookingIcs({
-      uid: booking.id,
-      start: booking.startTime,
-      end: booking.endTime,
-      summary: `${booking.offerName} mit ${booking.clientName}`,
-      organizer: coach ? { name: coach.name, email: coach.email } : undefined,
-      attendee: { name: booking.clientName, email: booking.clientEmail },
-      description: booking.clientNote ?? undefined,
-    });
+    return buildBookingIcs(coachIcsInput(booking, await this.calendarFeed.calendarOptions(organizationId)));
   }
 
   // Ownership-Prüfung über die organizationId: eine fremde Buchung ist für diesen Coach

@@ -427,6 +427,12 @@ export const availabilitySettings = pgTable('availability_settings', {
   bufferMinutes:      integer('buffer_minutes').notNull().default(0),
   minLeadTimeHours:   integer('min_lead_time_hours').notNull().default(0),
   bookingWindowWeeks: integer('booking_window_weeks').notNull().default(2),
+  // Kalender-Abo des Coachs (doc/produkt/funktionen/kalenderabgleich.md §4). Der Token ist das
+  // Zugangsdatum der Feed-Adresse; null = kein Abo eingerichtet. Er steht im Query-String
+  // (?token=), damit Request-Log und Fehlerüberwachung ihn wie alle Tokens herausfiltern.
+  calendarFeedToken:     text('calendar_feed_token').unique(),
+  // Titel nur mit Angebot statt „Angebot · Klientenname“ – für Feed, Mail-Anhang und Download.
+  calendarFeedHideNames: boolean('calendar_feed_hide_names').notNull().default(false),
   createdAt:          timestamp('created_at').notNull().defaultNow(),
   updatedAt:          timestamp('updated_at').notNull().$onUpdateFn(() => new Date()),
 });

@@ -1,6 +1,6 @@
-// Minimaler iCalendar-Generator (RFC 5545) für Termin-Anhänge in Buchungsmails.
-// Bewusst ohne npm-Dependency: ein paar VEVENTs brauchen keine Bibliothek, und
-// die Kalender-Clients der Klienten sind der einzige Konsument.
+// Minimaler iCalendar-Generator (RFC 5545) für Termin-Anhänge in Buchungsmails und den
+// Kalender-Feed der Coachs (doc/produkt/funktionen/kalenderabgleich.md §4).
+// Bewusst ohne npm-Dependency: ein paar VEVENTs brauchen keine Bibliothek.
 
 export interface BookingIcsInput {
   /** Stabile UID über alle Mails zu diesem Termin hinweg – in der Praxis die booking.id.
@@ -17,8 +17,18 @@ export interface BookingIcsInput {
    *  RFC-Feld, LOCATION dasjenige, das Apple und Google anzeigen und bei einer Adresse
    *  anklickbar machen. Ohne beides fände der Klient den Link nur in der Mail wieder. */
   url?: string;
+  /** TENTATIVE für unbestätigte Buchungen im Feed des Coachs; Standard CONFIRMED. */
+  status?: 'CONFIRMED' | 'TENTATIVE';
   /** Nur für Tests überschreibbar; sonst der Zeitpunkt der Generierung. */
   now?: Date;
+}
+
+/** Kopfzeilen für einen abonnierten Kalender (Feed), nicht für Mail-Anhänge. */
+export interface CalendarFeedHeaders {
+  /** Name, unter dem der Kalender im Abo erscheint (X-WR-CALNAME). */
+  name: string;
+  /** Vorgeschlagener Abruftakt; Outlook klassisch hält sich daran, andere entscheiden selbst. */
+  refreshMinutes: number;
 }
 
 // "2026-08-10T07:30:00.000Z" → "20260810T073000Z". Start/Ende sind in der DB absolute
@@ -69,7 +79,7 @@ export function buildBookingIcs(input: BookingIcsInput): string {
  * (doc/produkt/funktionen/manuelle-termine.md §5). Jeder Termin ist ein eigenes VEVENT mit eigener
  * UID und eigenem Link; Apple, Google und Outlook importieren alle auf einmal.
  */
-export function buildBookingsIcs(inputs: BookingIcsInput[]): string {
+export function buildBookingsIcs(inputs: BookingIcsInput[], feed?: CalendarFeedHeaders): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -78,6 +88,13 @@ export function buildBookingsIcs(inputs: BookingIcsInput[]): string {
     // PUBLISH statt REQUEST: HxRoom verarbeitet keine Zu-/Absagen per Mail, deshalb
     // sollen Kalender-Clients auch keine Antwort-Buttons anbieten.
     'METHOD:PUBLISH',
+    ...(feed
+      ? [
+          `X-WR-CALNAME:${escapeText(feed.name)}`,
+          `X-PUBLISHED-TTL:PT${feed.refreshMinutes}M`,
+          `REFRESH-INTERVAL;VALUE=DURATION:PT${feed.refreshMinutes}M`,
+        ]
+      : []),
     ...inputs.flatMap(eventLines),
     'END:VCALENDAR',
   ];
@@ -95,7 +112,7 @@ function eventLines(input: BookingIcsInput): string[] {
     `DTSTART:${toIcsUtc(input.start)}`,
     `DTEND:${toIcsUtc(input.end)}`,
     `SUMMARY:${escapeText(input.summary)}`,
-    'STATUS:CONFIRMED',
+    `STATUS:${input.status ?? 'CONFIRMED'}`,
     'SEQUENCE:0',
     'TRANSP:OPAQUE',
   ];

@@ -8,6 +8,8 @@ import { OrganizationService } from '../organization/organization.service';
 import { CalendarImportSyncService } from '../calendar-import/calendar-import-sync.service';
 import { MailService } from '../mail/mail.service';
 import { buildBookingIcs } from '../mail/ics';
+import { coachIcsInput, googleCalendarLink, outlookCalendarLink } from '../mail/coach-calendar';
+import { CalendarFeedService } from '../calendar-feed/calendar-feed.service';
 import { renderBookingConfirmationEmail } from '../mail/templates/client/booking-confirmation';
 import { renderBookingConfirmedEmail } from '../mail/templates/client/booking-confirmed';
 import { renderBookingCancelledEmail } from '../mail/templates/client/booking-cancelled';
@@ -49,6 +51,7 @@ export class BookingsService {
     private readonly mailService: MailService,
     private readonly config: ConfigService,
     private readonly calendarSync: CalendarImportSyncService,
+    private readonly calendarFeed: CalendarFeedService,
   ) {}
 
   async create(slug: string, offerId: string, dto: CreateBookingDto) {
@@ -417,6 +420,10 @@ export class BookingsService {
     if (!coach) return;
 
     try {
+      // Termin für den eigenen Kalender des Coachs (kalenderabgleich.md §4): dieselbe Darstellung
+      // wie im Kalender-Abo, gleiche UID – keine Teilnehmer, keine Kontaktdaten.
+      const calendarOptions = await this.calendarFeed.calendarOptions(booking.organizationId);
+      const coachIcs = buildBookingIcs(coachIcsInput(booking, calendarOptions));
       await this.mailService.send({
         kind: 'coach-new-booking',
         to: { email: coach.email, name: coach.name },
@@ -430,7 +437,13 @@ export class BookingsService {
           clientNote: booking.clientNote,
           appointment: toAppointmentInfo(booking),
           bookingsUrl: `${this.config.getOrThrow<string>('COACH_APP_URL').replace(/\/$/, '')}/bookings`,
+          calendarLinks: {
+            google: googleCalendarLink(booking, calendarOptions),
+            outlookWork: outlookCalendarLink(booking, calendarOptions, 'work'),
+            outlookPersonal: outlookCalendarLink(booking, calendarOptions, 'personal'),
+          },
         }),
+        attachment: [{ name: 'termin.ics', content: Buffer.from(coachIcs, 'utf8').toString('base64') }],
       });
     } catch (err) {
       this.logger.error(`Failed to send coach booking notification for booking ${booking.id}`, err instanceof Error ? err.stack : err);

@@ -1,7 +1,7 @@
 import { Link } from 'react-email';
 import { MailLayout } from '../layout';
 import { AppointmentBlock, type AppointmentInfo } from '../_components/appointment';
-import { Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_components/blocks';
+import { Footnote, Greeting, Label, Paragraph, PrimaryButton, Quote } from '../_components/blocks';
 import { link, value } from '../_components/styles';
 import { renderEmail } from '../../render';
 
@@ -60,6 +60,13 @@ export default function BookingCancelledByClientEmail({
       </Paragraph>
 
       <PrimaryButton href={bookingsUrl}>Zu deinen Buchungen</PrimaryButton>
+
+      {/* Keine Absage-Datei: Kalender verarbeiten sie zu uneinheitlich (kalenderabgleich.md §4).
+          Im Kalender-Abo verschwindet der Termin beim nächsten Abruf von selbst. */}
+      <Footnote>
+        Hast du den Termin selbst in deinen Kalender übernommen, lösche ihn dort. Im Kalender-Abo
+        von HxRoom verschwindet er von selbst.
+      </Footnote>
     </MailLayout>
   );
 }

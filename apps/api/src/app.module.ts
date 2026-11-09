@@ -12,6 +12,7 @@ import { BookingPageModule } from './booking-page/booking-page.module';
 import { OffersModule } from './offers/offers.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { CalendarImportModule } from './calendar-import/calendar-import.module';
+import { CalendarFeedModule } from './calendar-feed/calendar-feed.module';
 import { S3Module } from './storage/s3.module';
 import { VirusScanModule } from './virus-scan/virus-scan.module';
 import { LivekitModule } from './livekit/livekit.module';
@@ -46,6 +47,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     OffersModule,
     AvailabilityModule,
     CalendarImportModule,
+    CalendarFeedModule,
     BookingsModule,
     CallModule,
     ClientsModule,

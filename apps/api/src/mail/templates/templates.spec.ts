@@ -324,6 +324,13 @@ describe('Buchungs-Mail-Templates', () => {
       expect(html).toContain('Einen Grund hat');
       expect(html).toContain('nicht angegeben.');
     });
+
+    it('erinnert daran, einen selbst übernommenen Kalendereintrag zu löschen', async () => {
+      const html = await renderBookingCancelledByClientEmail({ ...props, reason: null });
+
+      expect(html).toContain('in deinen Kalender übernommen');
+      expect(html).toContain('Kalender-Abo');
+    });
   });
 
   describe('Coach: Buchungsbenachrichtigung', () => {
@@ -355,6 +362,24 @@ describe('Buchungs-Mail-Templates', () => {
       });
       expect(mit).toContain('+49 170 1234567');
       expect(mit).toContain('neue Rolle');
+    });
+
+    it('bietet die Eintragen-Links nur an, wenn sie übergeben werden', async () => {
+      const ohne = await renderBookingNotificationEmail(props);
+      expect(ohne).not.toContain('In deinen Kalender eintragen');
+
+      const mit = await renderBookingNotificationEmail({
+        ...props,
+        calendarLinks: {
+          google: 'https://calendar.google.com/calendar/render?action=TEMPLATE&amp;x=1',
+          outlookWork: 'https://outlook.office.com/calendar/0/deeplink/compose',
+          outlookPersonal: 'https://outlook.live.com/calendar/0/deeplink/compose',
+        },
+      });
+      expect(mit).toContain('In deinen Kalender eintragen');
+      expect(mit).toContain('https://calendar.google.com/calendar/render');
+      expect(mit).toContain('https://outlook.office.com/calendar/0/deeplink/compose');
+      expect(mit).toContain('https://outlook.live.com/calendar/0/deeplink/compose');
     });
   });
 });

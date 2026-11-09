@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { OrganizationModule } from '../organization/organization.module';
 import { AvailabilityModule } from '../availability/availability.module';
 import { CalendarImportModule } from '../calendar-import/calendar-import.module';
+import { CalendarFeedModule } from '../calendar-feed/calendar-feed.module';
 import { MailModule } from '../mail/mail.module';
 import { CallModule } from '../call/call.module';
 import { BookingCreationController } from './booking-creation.controller';
@@ -18,7 +19,7 @@ import { TestSessionCleanupService } from './test-session-cleanup.service';
 // Klienten sofort erreicht. Die Richtung ist bewusst diese: Das Call-Modul kennt die
 // Buchungen nicht.
 @Module({
-  imports: [OrganizationModule, AvailabilityModule, CalendarImportModule, MailModule, CallModule],
+  imports: [OrganizationModule, AvailabilityModule, CalendarImportModule, CalendarFeedModule, MailModule, CallModule],
   controllers: [BookingCreationController, BookingConfirmationController, BookingCancellationController, CoachBookingsController],
   providers: [BookingsService, CoachBookingsService, BookingExpiryService, BookingReminderService, TestSessionCleanupService],
 })

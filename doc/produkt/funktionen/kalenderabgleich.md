@@ -85,7 +85,10 @@ Neben jedem Kalender steht der Stand: „Abgeglichen vor 3 Minuten“. Die Kopfz
 
 ## 4. Termine im eigenen Kalender (Feed)
 
-Jeder Coach hat eine private Adresse, die alle seine Termine aus HxRoom als Kalender liefert. Er abonniert sie einmal in Google, Apple oder Outlook; danach erscheinen neue, verlegte und abgesagte Termine dort von selbst.
+Jeder Coach kann eine private Adresse einrichten, die alle seine Termine aus HxRoom als Kalender liefert. Er abonniert sie einmal in Google, Apple oder Outlook; danach erscheinen neue, verlegte und abgesagte Termine dort von selbst.
+
+- **Erst auf Knopfdruck:** Die Adresse entsteht, wenn der Coach „Kalender-Abo einrichten“ wählt. „Abo beenden“ löscht sie wieder. So gibt es keine aktive Zugangsadresse, die niemand nutzt.
+- **Abonnieren:** Kopierknopf für die Adresse, „In Apple Kalender abonnieren“ (`webcal://`), „In Google Kalender abonnieren“ (Abo-Link von Google mit `cid=`), für Outlook eine kurze Anleitung.
 
 - **Inhalt:** alle Termine ab 30 Tagen in der Vergangenheit, ohne abgesagte und ohne Probe-Sitzungen. Unbestätigte Buchungen erscheinen als vorläufig (`STATUS:TENTATIVE`) mit „(unbestätigt)“ im Titel.
 - **Titel:** „{Angebot} · {Klientenname}“. Eine Einstellung „Ohne Klientennamen“ setzt nur das Angebot ein, für Coachs, die keine Namen in einem fremden Kalender haben möchten.
@@ -110,9 +113,10 @@ Die Mail „Neue Buchung“ (`mail/templates/coach/booking-notification.tsx`) tr
 
 - **Angebot, keine Einladung.** Die Datei ist `METHOD:PUBLISH` wie in den Klienten-Mails, keine Einladung (`REQUEST`), die der Kalender von selbst einträgt. So entsteht kein doppelter Eintrag, wenn der Coach den Feed nutzt und die Datei nicht anklickt.
 - **Inhalt** wie im Feed: Titel, Link auf die Terminseite, gleiche UID (`booking.id`). Die Einstellung „Ohne Klientennamen“ gilt auch hier.
-- **Absage:** Die Mail „Termin abgesagt“ an den Coach (`booking-cancelled-by-client.tsx`) trägt eine Datei mit derselben UID, höherer `SEQUENCE` und `STATUS:CANCELLED`. Apple und Outlook markieren damit einen übernommenen Eintrag als abgesagt; der Text weist darauf hin, einen selbst eingetragenen Termin sonst von Hand zu löschen. Im Feed verschwindet der Termin beim nächsten Abruf von selbst.
+- **Absage:** Die Mail „Termin abgesagt“ an den Coach (`booking-cancelled-by-client.tsx`) trägt keine Datei, nur den Hinweis, einen selbst übernommenen Eintrag im Kalender zu löschen. Dateien, die einen Eintrag als abgesagt markieren, verarbeiten die Kalender uneinheitlich: Google gar nicht, Outlook zuverlässig nur bei Einladungen mit Organisator. Im Feed verschwindet der Termin beim nächsten Abruf von selbst.
+- **Links:** Google Kalender, Outlook für Microsoft 365 (`outlook.office.com`) und Outlook.com (`outlook.live.com`), jeweils die vorausgefüllte Eintragsseite.
 - **Doppelte Einträge:** Wer Feed und Mail-Datei nutzt, hat den Termin zweimal, im Abo-Kalender und im eigenen. Die Anleitung empfiehlt deshalb eines von beiden: Apple-Nutzern den Feed, Nutzern von Outlook im Web und Google den Feed als Übersicht und die Datei in der Mail nur, wenn sie den Termin sofort brauchen. Der Import (Abschnitt 3) zählt übernommene Termine an ihrer UID nicht als belegte Zeit.
-- Manuell angelegte Termine lösen keine Mail an den Coach aus; dafür gibt es auf der Terminseite bereits „Kalendereintrag“.
+- Manuell angelegte Termine lösen keine Mail an den Coach aus; dafür gibt es auf der Terminseite „Kalendereintrag“. Der Download hat dieselbe Form wie Feed und Mail-Anhang: ohne Organisator und Teilnehmer (sonst bieten Outlook und Apple an, dem Klienten Updates zu schicken), ohne Nachricht des Klienten, und „Ohne Klientennamen“ gilt auch hier.
 
 ## 5. Wirkung auf die Buchbarkeit
 
@@ -152,7 +156,7 @@ Vorlaufzeit, Buchungsfenster und Pufferzeit gelten wie bisher. Die Pufferzeit wi
 - **Datensparsamkeit:** Vom Import bleiben nur Zeiträume. Die Kalenderdatei wird nicht gespeichert und nicht geloggt, auch nicht im Fehlerfall.
 - **Die iCal-Adressen sind Zugangsdaten.** HxRoom speichert sie verschlüsselt (AES-256-GCM, Schlüssel aus der Umgebung) und zeigt sie nach dem Speichern nur gekürzt an (`https://calendar.google.com/…/basic.ics`).
 - **Abruf fremder Adressen (SSRF):** nur `https`, keine IP-Adressen aus privaten, Loopback- und Link-Local-Bereichen (geprüft nach der DNS-Auflösung und bei jeder Weiterleitung), höchstens 3 Weiterleitungen, 10 Sekunden Zeitlimit, höchstens 10 MB.
-- **Feed-Token:** 32 Byte zufällig. Liegt er im Pfad, muss er aus allen Zugriffslogs gefiltert werden (`loggablePath` in der API, Caddy).
+- **Feed-Token:** 32 Byte zufällig, im Query-String (`?token=`). Das Request-Log der API schreibt nur den Pfad, die Fehlerüberwachung entfernt jeden Parameter, der auf „token“ endet; Caddy führt kein Zugriffslog.
 - **Rechtliches:** HxRoom verarbeitet Kalenderdaten des Coachs als Auftragsverarbeiter. Datenschutzhinweise und AVV brauchen dazu einen Absatz (Vorschlag für `recht/`, vor dem Start abzustimmen).
 - **Kontolöschung und Export:** Kalender, belegte Zeiten, Ausnahmen und Feed hängen an der Organisation und werden mit ihr gelöscht. Der Datenexport enthält Ausnahmen und die Namen der Kalender, keine Adressen.
 
@@ -216,21 +220,21 @@ Ein erfolgreicher Abruf ersetzt die belegten Zeiten seines Kalenders in einer Tr
 | `GET/POST /api/v1/calendar-imports`, `PATCH/DELETE …/:id` | Kalender verwalten; `POST` ruft sofort ab |
 | `POST /api/v1/calendar-imports/sync` | Abgleich aller Kalender, Body `{ trigger: 'activity' \| 'manual' }`; Mindestabstand serverseitig |
 | `GET /api/v1/calendar-imports/busy-times?from&to` | belegte Zeiten aktiver Kalender mit Kalendername, für die Wochenansicht |
-| `GET /api/v1/calendar-feed`, `PATCH`, `POST …/regenerate` | Feed-Adresse und Einstellung |
-| `GET /api/v1/calendar-feeds/:token.ics` | öffentlicher Feed, ohne Session |
+| `GET`, `POST`, `PATCH`, `DELETE /api/v1/calendar-feed`, `POST …/regenerate` | Abo lesen, einrichten, „Ohne Klientennamen“, beenden, Adresse erneuern |
+| `GET /api/v1/calendar-feed.ics?token=…` | öffentlicher Feed, ohne Session; unbekannter Token `404` |
 
 ### Abruf und Läufe
 
 - **Parser:** `ical.js` (Mozilla, auch in Thunderbird) für Zeitzonen und Serientermine.
 - **`CalendarImportSyncService`:** `@Cron` alle 5 Minuten, höchstens 3 Abrufe gleichzeitig. Alle Anlässe aus Abschnitt 3.3 laufen über dieselbe Methode; `syncingSince` verhindert doppelte Abrufe desselben Kalenders. Kein bedingter Abruf über ETag: Auch eine unveränderte Datei wird neu gelesen, weil das Zeitfenster täglich weiterwandert. Die Wochenansicht lädt die belegten Zeiten nach jedem Abgleich aus der Coach-App neu (Aktivität oder Knopf); einen allgemeinen Ereigniskanal der Coach-App gibt es nicht.
 - **Fehler-Mail:** neue Vorlage `mail/templates/coach/calendar-import-failing.tsx`.
-- **Feed:** Erzeugung über `mail/ics.ts`, erweitert um `STATUS`, `SEQUENCE` und Kopfzeilen für den Kalender (`X-WR-CALNAME`, `X-PUBLISHED-TTL`, `REFRESH-INTERVAL`).
-- **Coach-Mails:** `BookingsService` hängt an „Neue Buchung“ und „Termin abgesagt“ die Datei aus `buildBookingIcs` an, wie bei den Klienten-Mails. Die Links für Google und Outlook entstehen in einem kleinen Helfer neben `mail/ics.ts`.
+- **Feed:** `CalendarFeedService` (`calendar-feed/`), Erzeugung über `mail/ics.ts`, erweitert um `STATUS` und Kopfzeilen für den Kalender (`X-WR-CALNAME`, `X-PUBLISHED-TTL`, `REFRESH-INTERVAL`). Die Darstellung eines Termins aus Coach-Sicht (Titel, Link, keine Teilnehmer) liegt in `mail/coach-calendar.ts` und gilt für Feed, Mail-Anhang und Download.
+- **Coach-Mails:** `BookingsService` hängt an „Neue Buchung“ die Datei aus `coachIcsInput` an, dazu die Links aus `googleCalendarLink` und `outlookCalendarLink`.
 
 ## 9. Reihenfolge der Umsetzung
 
 1. **Ausnahmen** ✅ umgesetzt: Tabelle, Endpunkte, Erweiterung der Slot-Berechnung, Reiter „Ausnahmen“, Blöcke in der Wochenansicht, Hinweis beim manuellen Anlegen. Legt die Grundlage, auf der der Import aufsetzt.
 2. **Import** ✅ umgesetzt: Tabellen, Abruf mit SSRF-Schutz und Verschlüsselung, Lauf, Reiter „Kalender“, Anlässe aus 3.3, Fehler-Mail und Banner, belegte Zeiten in der Wochenansicht, Hinweis beim manuellen Anlegen.
-3. **Feed und Coach-Mails:** Token, öffentlicher Endpunkt, Logfilter, Abschnitt „Termine in deinem Kalender“; Kalenderdatei und Links in „Neue Buchung“ und „Termin abgesagt“.
+3. **Feed und Coach-Mails** ✅ umgesetzt: Token, öffentlicher Endpunkt, Abschnitt „Termine in deinem Kalender“; Kalenderdatei und Links in „Neue Buchung“, Hinweis in „Termin abgesagt“, angeglichener Download auf der Terminseite.
 
 **Abnahme:** je Schritt im Browser: Sperre setzen → Slot verschwindet auf der Buchungsseite; privaten Termin im Google-Kalender anlegen → nach „Jetzt abgleichen“ ist der Slot weg; Feed in Apple Kalender abonnieren → Buchung erscheint, Absage verschwindet.
