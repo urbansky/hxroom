@@ -8,7 +8,7 @@ const content = {
   headline: 'Terminbuchung und Videocall für dein Coaching –',
   headlineEm: 'in einem.',
   sub: 'Statt Calendly und Zoom: Deine Klienten buchen auf deiner Seite, bekommen Bestätigung und Erinnerung und kommen per Link direkt in deinen Videocall – ohne Konto, ohne Download. Alles unter deinem Namen, Server in Deutschland.',
-  note: '20 Minuten mit Stefan – oder gleich selbst loslegen, kostenlos in der Beta.',
+  note: '15 Minuten mit Stefan – oder gleich selbst loslegen, kostenlos in der Beta.',
 }
 
 // Hero-Loop in zwei Fassungen: 16:10 und unter 640 px Breite eine eigene 4:5-Fassung mit größerer

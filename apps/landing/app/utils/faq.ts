@@ -11,7 +11,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Wie läuft eine Vorführung ab?',
-    a: 'Du buchst auf demo.hxroom.de einen Termin: 20 Minuten, kostenlos. Dabei erlebst du HxRoom so, wie deine Klienten es erleben – Buchung, Bestätigungsmail, Warteraum und Gespräch. Ich zeige dir das Backoffice und beantworte deine Fragen.',
+    a: 'Du buchst auf demo.hxroom.de einen Termin: 15 Minuten, kostenlos. Dabei erlebst du HxRoom so, wie deine Klienten es erleben – Buchung, Bestätigungsmail, Warteraum und Gespräch. Ich zeige dir das Backoffice und beantworte deine Fragen.',
   },
   {
     q: 'Kann ich meinen Zoom behalten?',

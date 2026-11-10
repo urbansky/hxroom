@@ -2,7 +2,7 @@
 const content = {
   headlineMain: 'Schau es dir an.',
   headlineEm: 'Oder leg direkt los.',
-  sub: 'In 20 Minuten zeige ich dir HxRoom – oder du richtest dir deinen Raum gleich selbst ein. Fragen beantworte ich persönlich.',
+  sub: 'In 15 Minuten zeige ich dir HxRoom – oder du richtest dir deinen Raum gleich selbst ein. Fragen beantworte ich persönlich.',
   quote: '„Ich freue mich auf dein Feedback – jede Rückmeldung landet direkt bei mir.“',
   author: 'Stefan, baut HxRoom',
   newsletterSummary: 'Lieber erst mal Neuigkeiten?',

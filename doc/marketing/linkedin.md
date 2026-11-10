@@ -81,7 +81,7 @@ Server in Deutschland, AVV inklusive, keine Weitergabe an US-Dienste.
 
 HxRoom ist bewusst kein Allzweck-Werkzeug: Einzelgespräche statt Gruppen, ein ruhiger Raum statt Reactions und Aufnahmeknopf. Für Konzern-Meetings und Webinare gibt es andere Tools.
 
-HxRoom ist in der Beta und läuft mit echten Klienten. Die Teilnahme ist kostenlos. Lass dir HxRoom in 20 Minuten zeigen auf demo.hxroom.de – oder leg direkt los auf hxroom.de.
+HxRoom ist in der Beta und läuft mit echten Klienten. Die Teilnahme ist kostenlos. Lass dir HxRoom in 15 Minuten zeigen auf demo.hxroom.de – oder leg direkt los auf hxroom.de.
 
 Hinter HxRoom steht Stefan Urbansky, Softwareentwickler aus Dresden mit langjähriger Erfahrung in Videokonferenz-Software. Wenn du schreibst, antwortet Stefan selbst.
 ```
@@ -123,7 +123,7 @@ HxRoom ist die Videoplattform für Coaches: Deine Klienten buchen auf deiner Sei
 
 Im Video siehst du den ganzen Weg: Buchung, Bestätigungsmail, Warteraum, Gespräch.
 
-HxRoom ist in der Beta und kostenlos. Lass es dir in 20 Minuten zeigen: https://demo.hxroom.de
+HxRoom ist in der Beta und kostenlos. Lass es dir in 15 Minuten zeigen: https://demo.hxroom.de/offers/8cb945f3-8c0d-4dcb-8106-b514241e757b
 
 #Coaching #OnlineCoaching #Coach
 ```
@@ -138,7 +138,7 @@ Sein Klient muss sich anmelden, vielleicht eine App laden – und landet in eine
 
 Deshalb baue ich HxRoom. Buchung, Erinnerung, Warteraum und Videogespräch laufen unter dem Namen des Coachs, Klienten brauchen nur einen Link. Die Server stehen in Deutschland.
 
-HxRoom ist jetzt in der Beta und läuft mit echten Klienten. Wenn du Coach bist oder jemanden kennst, der so arbeitet: Ich zeige es dir gern in 20 Minuten.
+HxRoom ist jetzt in der Beta und läuft mit echten Klienten. Wenn du Coach bist oder jemanden kennst, der so arbeitet: Ich zeige es dir gern in 15 Minuten.
 ```
 
 ---
@@ -155,6 +155,6 @@ Anlegen: Adminansicht → „Erstellen“ → „Produkt hinzufügen“. LinkedI
 | Kategorie | aus der Liste von LinkedIn, möglichst Terminplanungs- oder Videokonferenz-Software |
 | Beschreibung | erster Absatz und Funktionsliste aus Abschnitt 3.2 |
 | Website | `https://hxroom.de` |
-| Button | „Demo anfragen“ → `https://demo.hxroom.de` |
+| Button | „Demo anfragen“ → `https://demo.hxroom.de/offers/8cb945f3-8c0d-4dcb-8106-b514241e757b` |
 | Medien | Hero-Video und Screenshots aus `apps/landing/public/screens/` (`booking-page`, `waiting-room`, `call`, `dashboard`, `confirmation-mail`) |
 | Kunden | Beta-Coachs, nur mit deren Einverständnis |

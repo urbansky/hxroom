@@ -22,7 +22,7 @@ HxRoom ist in der Beta und läuft mit echten Klienten. Die Nutzung ist in der Be
 
 - **Kann ich HxRoom schon nutzen?** Ja. HxRoom ist in der Beta und läuft mit echten Klienten. Registrierung kostenlos, oder vorher eine Vorführung buchen.
 - **Was kostet HxRoom?** In der Beta nichts. Die regulären Preise stehen zum offiziellen Start fest, Orientierung ab etwa 19 € im Monat. Beta-Coaches bekommen einen vergünstigten Einführungspreis.
-- **Wie läuft eine Vorführung ab?** 20 Minuten, kostenlos, gebucht über demo.hxroom.de. Man erlebt HxRoom aus Sicht der Klienten – Buchung, Bestätigungsmail, Warteraum, Gespräch – und sieht danach das Backoffice des Coachs.
+- **Wie läuft eine Vorführung ab?** 15 Minuten, kostenlos, gebucht über demo.hxroom.de. Man erlebt HxRoom aus Sicht der Klienten – Buchung, Bestätigungsmail, Warteraum, Gespräch – und sieht danach das Backoffice des Coachs.
 - **Kann ich meinen Zoom behalten?** Ja. Viele Coaches nutzen HxRoom zuerst mit einzelnen Klienten und wechseln Schritt für Schritt.
 - **Funktioniert HxRoom mit Google- oder Outlook-Kalender?** Ja. Der Coach verbindet Kalender aus Google, Outlook oder iCloud; wo er dort belegt ist, ist auf der Buchungsseite kein Termin frei. HxRoom speichert davon nur Beginn und Ende. Umgekehrt lassen sich die HxRoom-Termine im eigenen Kalender abonnieren.
 - **Brauchen Klienten einen Account?** Nein. Link anklicken, direkt im Warteraum landen – kein Download, keine Registrierung, kein Passwort.
@@ -32,6 +32,6 @@ HxRoom ist in der Beta und läuft mit echten Klienten. Die Nutzung ist in der Be
 ## Seiten
 
 - [Startseite](https://hxroom.de): Was HxRoom ist, Produkt-Tour mit Screenshots, Funktionen, häufige Fragen
-- [Vorführung buchen](https://demo.hxroom.de): 20-minütige Produktvorführung mit Stefan Urbansky, kostenlos
+- [Vorführung buchen](https://demo.hxroom.de/offers/8cb945f3-8c0d-4dcb-8106-b514241e757b): 15-minütige Produktvorführung mit Stefan Urbansky, kostenlos
 - [Kostenlos ausprobieren](https://app.hxroom.de/auth/register): Registrierung als Coach
 - [LinkedIn](https://www.linkedin.com/company/hxroom): Unternehmensseite von HxRoom
