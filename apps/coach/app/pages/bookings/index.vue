@@ -296,20 +296,20 @@ const emptyStateText = computed(() => {
         <button
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
-          :class="viewMode === 'agenda' ? 'bg-white dark:bg-muted text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
-          @click="viewMode = 'agenda'"
-        >
-          <UIcon name="i-lucide-list" class="size-4 shrink-0" />
-          Agenda
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
           :class="viewMode === 'week' ? 'bg-white dark:bg-muted text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
           @click="viewMode = 'week'"
         >
           <UIcon name="i-lucide-calendar-days" class="size-4 shrink-0" />
           Wochenansicht
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer"
+          :class="viewMode === 'agenda' ? 'bg-white dark:bg-muted text-highlighted shadow-sm' : 'text-muted hover:text-highlighted'"
+          @click="viewMode = 'agenda'"
+        >
+          <UIcon name="i-lucide-list" class="size-4 shrink-0" />
+          Agenda
         </button>
       </div>
 
