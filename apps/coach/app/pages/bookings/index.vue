@@ -10,22 +10,22 @@ const route = useRoute()
 const router = useRouter()
 
 // Ansicht und Filter stehen in der URL: nur so kann das Dashboard gezielt auf die
-// Wochenansicht verlinken, und ein Reload oder der Zurück-Knopf aus dem Klientenprofil
-// landet wieder dort, wo der Coach war. Die Standardwerte (Agenda, Kommend) bleiben ohne
+// Agenda verlinken, und ein Reload oder der Zurück-Knopf aus dem Klientenprofil landet
+// wieder dort, wo der Coach war. Die Standardwerte (Wochenansicht, Kommend) bleiben ohne
 // Query-Parameter.
-const viewMode = ref<'agenda' | 'week'>(route.query.view === 'week' ? 'week' : 'agenda')
-
+//
 // Auf dem Handy (unter sm) gibt es nur die Agenda: Sieben Spalten sind dort gut 30 px breit,
 // die Termine wären Streifen ohne lesbaren Text (technisches-konzept.md §5, „Navigation“).
-// Den Umschalter blendet das Template aus; hier wird auch ein Link mit ?view=week umgelenkt.
+// Den Umschalter blendet das Template aus. Die Prüfung steht schon hier und nicht erst in
+// onMounted, damit das Handy nicht zuerst die Woche lädt und dann umspringt.
 const phoneQuery = import.meta.client ? window.matchMedia('(max-width: 639.98px)') : null
+const viewMode = ref<'agenda' | 'week'>(
+  route.query.view === 'agenda' || phoneQuery?.matches ? 'agenda' : 'week',
+)
 function enforceAgendaOnPhone() {
   if (phoneQuery?.matches) viewMode.value = 'agenda'
 }
-onMounted(() => {
-  enforceAgendaOnPhone()
-  phoneQuery?.addEventListener('change', enforceAgendaOnPhone)
-})
+onMounted(() => phoneQuery?.addEventListener('change', enforceAgendaOnPhone))
 onBeforeUnmount(() => phoneQuery?.removeEventListener('change', enforceAgendaOnPhone))
 
 type FilterValue = 'upcoming' | 'past' | 'cancelled'
@@ -45,8 +45,10 @@ watch([viewMode, filter], ([mode, value]) => {
   // die vorherige Seite führen. Der Filter gilt nur für die Agenda – die Wochenansicht
   // zeigt immer die volle Woche.
   const query: Record<string, string> = {}
-  if (mode === 'week') query.view = 'week'
-  else if (value !== 'upcoming') query.filter = value
+  if (mode === 'agenda') {
+    query.view = 'agenda'
+    if (value !== 'upcoming') query.filter = value
+  }
   router.replace({ query })
 })
 

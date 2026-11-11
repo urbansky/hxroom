@@ -211,8 +211,8 @@ async function onClientSaved(_client: ClientResponse) {
                  entfernt. Die Icons sind dieselben wie im Umschalter dort. -->
             <template #actions>
               <div class="flex items-center gap-1 shrink-0">
-                <UButton to="/bookings" label="Ganze Agenda" icon="i-lucide-list" color="primary" variant="link" size="sm" class="-my-1" />
-                <UButton to="/bookings?view=week" label="Wochenansicht" icon="i-lucide-calendar-days" color="primary" variant="link" size="sm" class="-my-1 max-sm:hidden" />
+                <UButton to="/bookings?view=agenda" label="Ganze Agenda" icon="i-lucide-list" color="primary" variant="link" size="sm" class="-my-1" />
+                <UButton to="/bookings" label="Wochenansicht" icon="i-lucide-calendar-days" color="primary" variant="link" size="sm" class="-my-1 max-sm:hidden" />
               </div>
             </template>
 
@@ -226,7 +226,7 @@ async function onClientSaved(_client: ClientResponse) {
 
               <UButton
                 v-if="hiddenCount"
-                to="/bookings"
+                to="/bookings?view=agenda"
                 :label="hiddenCount === 1 ? 'Ein weiterer Termin' : `${hiddenCount} weitere Termine`"
                 trailing-icon="i-lucide-arrow-right"
                 color="primary"
