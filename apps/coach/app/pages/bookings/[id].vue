@@ -11,6 +11,7 @@ definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const router = useRouter()
 const { $api } = useApi()
+const toast = useToast()
 
 const bookingId = computed(() => route.params.id as string)
 
@@ -41,6 +42,12 @@ const actions = useBookingActions(booking, {
   onUpdated: updated => (booking.value = updated),
   // Nach der Absage bleibt der Coach hier und sieht den Termin als abgesagt.
   onCancelled: updated => (booking.value = updated),
+  // Nach dem Löschen gibt es hier nichts mehr zu sehen – zurück in die Terminübersicht.
+  onDeleted: async () => {
+    notes.discard()
+    toast.add({ title: 'Termin gelöscht', icon: 'i-lucide-check', color: 'success' })
+    await navigateTo('/bookings')
+  },
 })
 const { actionError, markingNoShow, isCancelled } = actions
 

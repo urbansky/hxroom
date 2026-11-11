@@ -89,6 +89,18 @@ export class CoachBookingsController {
     return this.coachBookingsService.cancel(org.id, id, dto);
   }
 
+  // Endgültig löschen, samt Notizen, Chat und Dateien. Anstehende Termine ergeben 409 –
+  // sie werden zuerst abgesagt.
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @CurrentOrganization() org: { id: string } | undefined,
+    @Param('id') id: string,
+  ) {
+    if (!org) throw new UnauthorizedException('No active organization');
+    return this.coachBookingsService.delete(org.id, id);
+  }
+
   // Nicht erschienen (B6). Eine Unterressource statt eines Status-Patches: Der Übergang hat
   // eigene Regeln (begonnen, bestätigt, kein Einlass), und das Gegenstück ist ein DELETE.
   @Post(':id/no-show')

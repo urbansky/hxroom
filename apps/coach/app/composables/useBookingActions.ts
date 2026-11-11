@@ -1,8 +1,8 @@
-import { isWithinCallWindow, type CoachBookingResponse } from '@hxroom/shared'
+import { canDeleteBooking, isWithinCallWindow, type CoachBookingResponse } from '@hxroom/shared'
 
 /**
- * Was der Coach mit einem Termin tun kann – absagen, Klient zuordnen, nicht erschienen,
- * Kalenderdatei, Sitzung starten. Slideover und Terminseite (technisches-konzept.md §5,
+ * Was der Coach mit einem Termin tun kann – absagen, löschen, Klient zuordnen, nicht
+ * erschienen, Kalenderdatei, Sitzung starten. Slideover und Terminseite (technisches-konzept.md §5,
  * „Terminseite“) teilen sich diese Logik, damit Regeln und Fehlertexte nicht auseinanderlaufen.
  *
  * Der geänderte Termin geht über `onUpdated` an die Aufrufer zurück; wer ihn anzeigt,
@@ -13,6 +13,7 @@ export function useBookingActions(
   handlers: {
     onUpdated?: (booking: CoachBookingResponse) => void
     onCancelled?: (booking: CoachBookingResponse) => void
+    onDeleted?: (bookingId: string) => void
   } = {},
 ) {
   const { $api } = useApi()
@@ -20,6 +21,8 @@ export function useBookingActions(
   const confirmingCancel = ref(false)
   const cancelReason = ref('')
   const cancelling = ref(false)
+  const confirmingDelete = ref(false)
+  const deleting = ref(false)
   const actionError = ref<string | null>(null)
   const downloading = ref(false)
   const markingNoShow = ref(false)
@@ -28,6 +31,7 @@ export function useBookingActions(
   function reset() {
     confirmingCancel.value = false
     cancelReason.value = ''
+    confirmingDelete.value = false
     actionError.value = null
   }
 
@@ -58,6 +62,14 @@ export function useBookingActions(
     !!current.value
     && (current.value.status === 'pending' || current.value.status === 'confirmed')
     && !isPast.value,
+  )
+
+  // Endgültig löschen: dieselbe Regel wie auf dem Server (@hxroom/shared). Anstehende Termine
+  // werden zuerst abgesagt; zwischen Ende und Schluss des Zugangsfensters geht keins von
+  // beidem, dort kann das Gespräch noch laufen.
+  const canDelete = computed(() =>
+    !!current.value
+    && canDeleteBooking({ status: current.value.status, endTime: new Date(current.value.end) }, now.value),
   )
 
   // Nicht erschienen (B6). Dieselbe Regel wie auf dem Server (canMarkNoShow): bestätigt,
@@ -148,10 +160,32 @@ export function useBookingActions(
     }
   }
 
+  async function deleteBooking() {
+    if (!current.value) return
+    const id = current.value.id
+    deleting.value = true
+    actionError.value = null
+    try {
+      await $api(`/bookings/${id}`, { method: 'DELETE' })
+      confirmingDelete.value = false
+      handlers.onDeleted?.(id)
+    } catch (err: any) {
+      actionError.value = err?.statusCode === 409
+        ? 'Ein anstehender Termin lässt sich nicht löschen. Sage ihn zuerst ab.'
+        : 'Termin konnte nicht gelöscht werden.'
+    } finally {
+      deleting.value = false
+    }
+  }
+
   return {
     confirmingCancel,
     cancelReason,
     cancelling,
+    confirmingDelete,
+    deleting,
+    canDelete,
+    deleteBooking,
     actionError,
     downloading,
     markingNoShow,

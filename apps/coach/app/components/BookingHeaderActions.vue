@@ -4,8 +4,8 @@ import type { CoachBookingResponse } from '@hxroom/shared'
 import type { BookingActions } from '~/composables/useBookingActions'
 
 // Die Aktionen im Kopf der Terminseite, nach dem Muster der Klientenseite (UX-01): oben
-// rechts die Hauptaktion, wenn es eine gibt, alles Übrige im Drei-Punkte-Menü, die Absage
-// als Endgültiges ganz unten. Das Slideover behält die BookingActionBar in seinem Fuß;
+// rechts die Hauptaktion, wenn es eine gibt, alles Übrige im Drei-Punkte-Menü, Absage und
+// Löschen als Endgültiges ganz unten. Das Slideover behält die BookingActionBar in seinem Fuß;
 // Logik und Regeln teilen sich beide über useBookingActions.
 const props = defineProps<{
   booking: CoachBookingResponse
@@ -21,6 +21,10 @@ const confirmingCancel = computed({
 const cancelReason = computed({
   get: () => props.actions.cancelReason.value,
   set: (value: string) => (props.actions.cancelReason.value = value),
+})
+const confirmingDelete = computed({
+  get: () => props.actions.confirmingDelete.value,
+  set: (value: boolean) => (props.actions.confirmingDelete.value = value),
 })
 
 const menuItems = computed<DropdownMenuItem[][]>(() => {
@@ -62,6 +66,17 @@ const menuItems = computed<DropdownMenuItem[][]>(() => {
       icon: 'i-lucide-calendar-x',
       color: 'error',
       onSelect: () => (confirmingCancel.value = true),
+    }])
+  }
+  if (props.actions.canDelete.value) {
+    groups.push([{
+      label: 'Termin löschen',
+      icon: 'i-lucide-trash-2',
+      color: 'error',
+      onSelect: () => {
+        props.actions.actionError.value = null
+        confirmingDelete.value = true
+      },
     }])
   }
   return groups
@@ -114,6 +129,34 @@ const menuItems = computed<DropdownMenuItem[][]>(() => {
             color="error"
             :loading="actions.cancelling.value"
             @click="actions.cancelBooking()"
+          />
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="confirmingDelete"
+      title="Termin löschen?"
+      :description="`${formatDayHeading(booking.start)}, ${formatTimeRange(booking)} mit ${booking.clientName}`"
+    >
+      <template #body>
+        <div class="flex flex-col gap-3">
+          <p class="text-sm">
+            Der Termin wird mit allem gelöscht, was dazugehört: Notizen, Chatverlauf und
+            geteilte Dateien. Das lässt sich nicht rückgängig machen. Der Klient bekommt keine Nachricht.
+          </p>
+          <UAlert v-if="actions.actionError.value" icon="i-lucide-circle-x" color="error" variant="soft" :description="actions.actionError.value" />
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex gap-3 justify-end w-full">
+          <UButton label="Abbrechen" color="neutral" variant="outline" @click="confirmingDelete = false" />
+          <UButton
+            label="Endgültig löschen"
+            icon="i-lucide-trash-2"
+            color="error"
+            :loading="actions.deleting.value"
+            @click="actions.deleteBooking()"
           />
         </div>
       </template>

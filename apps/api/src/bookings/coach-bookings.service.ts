@@ -23,7 +23,8 @@ import { CalendarImportsService } from '../calendar-import/calendar-imports.serv
 import { CalendarFeedService } from '../calendar-feed/calendar-feed.service';
 import { coachIcsInput } from '../mail/coach-calendar';
 import { CallEventsService } from '../call/call-events.service';
-import { CALL_OPENS_MINUTES_BEFORE_START } from '@hxroom/shared';
+import { S3Service } from '../storage/s3.service';
+import { CALL_OPENS_MINUTES_BEFORE_START, canDeleteBooking } from '@hxroom/shared';
 import type { AdHocBookingResponse, AssignBookingClientDto, CancelBookingDto, CheckManualBookingDto, CoachBookingResponse, CreateAdHocBookingDto, CreateManualBookingDto, ListCoachBookingsQuery, ManualBookingCheckResponse, ManualBookingResponse } from '@hxroom/shared';
 
 /**
@@ -44,6 +45,7 @@ export class CoachBookingsService {
     private readonly exceptionsService: AvailabilityExceptionsService,
     private readonly calendarImports: CalendarImportsService,
     private readonly calendarFeed: CalendarFeedService,
+    private readonly s3: S3Service,
   ) {}
 
   // `from`/`to` begrenzen den Beginn, nicht das Ende – ob ein Termin schon vorbei ist,
@@ -108,6 +110,46 @@ export class CoachBookingsService {
     }
 
     return toCoachBookingResponse(cancelled);
+  }
+
+  /**
+   * Löscht einen Termin endgültig – samt Notizen, Chat und geteilten Dateien. Anders als die
+   * Absage bleibt nichts zurück, auch kein Eintrag „abgesagt“ im Kalender.
+   *
+   * Nur was nicht mehr ansteht (canDeleteBooking): Ein anstehender Termin wird zuerst
+   * abgesagt, damit der Klient seine Absage-Mail bekommt. Geprüft unter der Sperre der
+   * Buchungszeile wie beim No-Show-Vermerk – ein Einlass im zweiten Tab darf die Prüfung
+   * nicht überholen.
+   *
+   * Notizen, Chatnachrichten und Dateieinträge fallen per Cascade mit dem Termin, die Objekte
+   * im Speicher ({org}/sessions/{booking}/) nach dem Commit: Schlüge die Transaktion fehl,
+   * verwiesen sonst noch Chatnachrichten auf gelöschte Objekte. Ein Fehler beim Speicher
+   * hinterlässt nur verwaiste Objekte ohne Bezug in der Datenbank.
+   */
+  async delete(organizationId: string, bookingId: string): Promise<void> {
+    const origin = await this.db.transaction(async (tx) => {
+      const [booking] = await tx
+        .select({ status: bookings.status, endTime: bookings.endTime, origin: bookings.origin })
+        .from(bookings)
+        .where(and(eq(bookings.id, bookingId), eq(bookings.organizationId, organizationId)))
+        .for('update');
+
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (!canDeleteBooking(booking, new Date())) {
+        throw new ConflictException('Upcoming bookings must be cancelled before deletion');
+      }
+
+      await tx.delete(bookings).where(eq(bookings.id, bookingId));
+      return booking.origin;
+    });
+
+    let filesDeleted = 0;
+    try {
+      filesDeleted = await this.s3.deletePrefix(`${organizationId}/sessions/${bookingId}/`);
+    } catch (err) {
+      this.logger.error(`Failed to delete files of booking ${bookingId} after deletion`, err instanceof Error ? err.stack : err);
+    }
+    this.logger.log('Booking deleted by coach', { bookingId, origin, filesDeleted });
   }
 
   /**

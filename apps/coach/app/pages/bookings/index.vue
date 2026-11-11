@@ -227,6 +227,11 @@ function applyUpdated(updated: CoachBookingResponse) {
   }
 }
 
+function applyDeleted(bookingId: string) {
+  bookings.value = bookings.value.filter(b => b.id !== bookingId)
+  if (selectedBooking.value?.id === bookingId) selectedBooking.value = null
+}
+
 function applyCancelled(updated: CoachBookingResponse) {
   const idx = bookings.value.findIndex(b => b.id === updated.id)
   if (idx === -1) return
@@ -399,6 +404,7 @@ const emptyStateText = computed(() => {
       :booking="selectedBooking"
       @cancelled="applyCancelled"
       @updated="applyUpdated"
+      @deleted="applyDeleted"
     />
 
     <ManualBookingModal

@@ -18,6 +18,15 @@ const cancelReason = computed({
   get: () => props.actions.cancelReason.value,
   set: (value: string) => (props.actions.cancelReason.value = value),
 })
+const confirmingDelete = computed({
+  get: () => props.actions.confirmingDelete.value,
+  set: (value: boolean) => (props.actions.confirmingDelete.value = value),
+})
+
+function askDelete() {
+  props.actions.actionError.value = null
+  confirmingDelete.value = true
+}
 </script>
 
 <template>
@@ -28,6 +37,17 @@ const cancelReason = computed({
     <div class="flex items-center justify-end gap-2">
       <UButton label="Zurück" color="neutral" variant="ghost" size="sm" @click="confirmingCancel = false" />
       <UButton label="Absagen und Klient informieren" color="error" size="sm" :loading="actions.cancelling.value" @click="actions.cancelBooking()" />
+    </div>
+  </div>
+
+  <div v-else-if="confirmingDelete" class="flex flex-col gap-3 w-full">
+    <p class="text-sm">
+      Termin mit Notizen, Chatverlauf und geteilten Dateien endgültig löschen? Das lässt sich
+      nicht rückgängig machen. Der Klient bekommt keine Nachricht.
+    </p>
+    <div class="flex items-center justify-end gap-2">
+      <UButton label="Zurück" color="neutral" variant="ghost" size="sm" @click="confirmingDelete = false" />
+      <UButton label="Endgültig löschen" icon="i-lucide-trash-2" color="error" size="sm" :loading="actions.deleting.value" @click="actions.deleteBooking()" />
     </div>
   </div>
 
@@ -42,6 +62,14 @@ const cancelReason = computed({
         color="error"
         variant="ghost"
         @click="confirmingCancel = true"
+      />
+      <UButton
+        v-if="actions.canDelete.value"
+        label="Termin löschen"
+        icon="i-lucide-trash-2"
+        color="error"
+        variant="ghost"
+        @click="askDelete"
       />
       <UButton
         v-if="actions.canMarkNoShow.value"

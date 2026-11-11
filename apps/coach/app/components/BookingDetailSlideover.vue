@@ -8,6 +8,7 @@ const props = defineProps<{ booking: CoachBookingResponse | null }>()
 const emit = defineEmits<{
   cancelled: [booking: CoachBookingResponse]
   updated: [booking: CoachBookingResponse]
+  deleted: [bookingId: string]
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -19,6 +20,11 @@ const actions = useBookingActions(() => props.booking, {
   onUpdated: booking => emit('updated', booking),
   onCancelled: (booking) => {
     emit('cancelled', booking)
+    open.value = false
+  },
+  onDeleted: (bookingId) => {
+    notes.discard()
+    emit('deleted', bookingId)
     open.value = false
   },
 })

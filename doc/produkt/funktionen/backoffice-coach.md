@@ -32,6 +32,7 @@ Das Backoffice umfasst alle Funktionen **außerhalb des aktiven Videocalls** –
 | 08 | **Google Calendar API Sync** | Bidirektionaler Echtzeit-Sync via Google Calendar API: gebuchte Termine werden sofort übertragen, externe Termine blockieren Slots in HxRoom automatisch – keine Doppelbuchungen möglich. | Pro |
 | 09 | **Wiederkehrende Termine** | Beim manuellen Anlegen bis zu 25 Termine in einem Vorgang, wöchentlich oder alle zwei Wochen. Daraus entstehen einzelne Termine, die der Coach vor dem Speichern verschieben oder streichen kann; der Klient bekommt eine Mail mit allen Terminen. Details: [manuelle-termine.md](manuelle-termine.md). | MVP |
 | 10 | **Angebote verwalten** | Einzelsitzungs-Angebote mit Name, Dauer und optionalem Preis anlegen (z.B. Erstgespräch 30 min kostenlos, Coaching-Sitzung 60 min, Intensiv-Session 90 min). Preis ist in dieser Phase rein informativ – Zahlungsabwicklung siehe „Bezahlung bei Buchung" (Pro). Jedes Angebot ist standardmäßig in der gesamten Verfügbarkeit buchbar; optional kann pro Angebot eine eigene Teilmenge der Verfügbarkeitsslots festgelegt werden. Details: [angebote-verfuegbarkeiten.md](angebote-verfuegbarkeiten.md). | MVP |
+| 11 | **Termin löschen** | Coach löscht einen einzelnen Termin endgültig – samt Notizen, Chatverlauf und geteilten Dateien. Nur für Termine, die nicht mehr anstehen (abgesagt, abgeschlossen, nicht erschienen oder vorbei); ein anstehender Termin wird zuerst abgesagt, damit der Klient seine Absage-Mail bekommt. Der Klient erhält beim Löschen keine Nachricht. | MVP |
 
 ---
 

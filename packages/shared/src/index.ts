@@ -741,6 +741,20 @@ export function isWithinCallWindow(startTime: Date, endTime: Date, now: Date): b
   return now >= callWindowOpensAt(startTime) && now <= callWindowClosesAt(endTime);
 }
 
+/**
+ * Darf der Coach den Termin endgültig löschen – samt Notizen, Chat und Dateien?
+ *
+ * Nicht, solange er noch ansteht: Ein Termin, der still verschwindet, ließe den Klienten vor
+ * einem leeren Warteraum stehen. Der Coach sagt ihn zuerst ab, dabei bekommt der Klient seine
+ * Absage-Mail. Die Grenze ist das Ende des Zugangsfensters, nicht das geplante Ende: Ein
+ * überzogenes Gespräch läuft dann noch, und sein Termin darf nicht mitten im Call wegfallen.
+ * Ein beendetes Gespräch ist 'completed' und damit sofort löschbar.
+ */
+export function canDeleteBooking(booking: { status: BookingStatus; endTime: Date }, now: Date): boolean {
+  const upcoming = booking.status === 'pending' || booking.status === 'confirmed';
+  return !upcoming || now > callWindowClosesAt(booking.endTime);
+}
+
 // Videocall: Zustand einer Sitzung (doc/technik/technisches-konzept.md §8, „Zustand und Ereigniskanal“).
 //
 // Der Warteraum ist kein eigener LiveKit-Raum, sondern dieser Zustand. Ein falscher

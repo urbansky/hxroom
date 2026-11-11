@@ -154,5 +154,17 @@ export function useSessionNotes(bookingId: MaybeRefOrGetter<string | null | unde
     void flush()
   })
 
-  return { content, ready, loadError, status, flush, reload: load }
+  /**
+   * Verwirft, was noch nicht gespeichert ist, und speichert für diese Buchung nichts mehr –
+   * nach dem Löschen des Termins. Sonst liefe der nächste Speicherversuch beim Schließen oder
+   * Verlassen ins Leere und meldete „Notizen nicht gespeichert“ für eine Notiz, die es nicht
+   * mehr geben soll.
+   */
+  function discard() {
+    clearTimeout(saveTimer)
+    activeId = null
+    status.value = null
+  }
+
+  return { content, ready, loadError, status, flush, reload: load, discard }
 }

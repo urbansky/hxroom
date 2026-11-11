@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CALL_CLOSES_MINUTES_AFTER_END, canDeleteBooking } from '@hxroom/shared';
 import { CONFIRMATION_TTL_MINUTES, canClientCancel, canMarkNoShow, isExpiredPending } from './booking.constants';
 
 // Die Grenzentscheidung wird an zwei Stellen getroffen (Lazy-Check in confirm() und
@@ -96,6 +97,35 @@ describe('canMarkNoShow – wann der Coach „nicht erschienen" vermerken darf',
   it('lehnt abgesagte, abgeschlossene, unbestätigte und schon vermerkte Termine ab', () => {
     for (const status of ['cancelled', 'completed', 'pending', 'no_show'] as const) {
       expect(canMarkNoShow({ status, startTime: started, admittedAt: null }, now)).toBe(false);
+    }
+  });
+});
+
+// Liegt in @hxroom/shared, weil die Coach-App danach den Menüpunkt einblendet – getestet
+// wird hier, weil der Server die Löschung damit sperrt.
+describe('canDeleteBooking – wann der Coach einen Termin endgültig löschen darf', () => {
+  const now = new Date('2026-09-25T12:00:00.000Z');
+  const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60_000);
+
+  it('lehnt offene und bestätigte Termine ab, die noch anstehen', () => {
+    for (const status of ['pending', 'confirmed'] as const) {
+      expect(canDeleteBooking({ status, endTime: new Date('2026-09-26T10:00:00.000Z') }, now)).toBe(false);
+    }
+  });
+
+  // Ein überzogenes Gespräch läuft noch: Die Grenze ist das Ende des Zugangsfensters.
+  it('lehnt einen bestätigten Termin ab, solange sein Zugangsfenster offen ist', () => {
+    expect(canDeleteBooking({ status: 'confirmed', endTime: minutesAgo(CALL_CLOSES_MINUTES_AFTER_END) }, now)).toBe(false);
+  });
+
+  it('erlaubt einen bestätigten Termin nach dem Zugangsfenster', () => {
+    expect(canDeleteBooking({ status: 'confirmed', endTime: minutesAgo(CALL_CLOSES_MINUTES_AFTER_END + 1) }, now)).toBe(true);
+  });
+
+  // Abgesagt, beendet oder nicht erschienen: Da wartet niemand mehr – auch nicht vor dem Ende.
+  it('erlaubt abgesagte, abgeschlossene und nicht wahrgenommene Termine jederzeit', () => {
+    for (const status of ['cancelled', 'completed', 'no_show'] as const) {
+      expect(canDeleteBooking({ status, endTime: new Date('2026-09-26T10:00:00.000Z') }, now)).toBe(true);
     }
   });
 });

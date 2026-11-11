@@ -126,6 +126,11 @@ function applyBooking(updated: CoachBookingResponse) {
   if (selectedBooking.value?.id === updated.id) selectedBooking.value = updated
 }
 
+function removeBooking(bookingId: string) {
+  bookings.value = bookings.value.filter(b => b.id !== bookingId)
+  if (selectedBooking.value?.id === bookingId) selectedBooking.value = null
+}
+
 const isClientFormOpen = ref(false)
 
 // Nach dem Anlegen neu laden statt lokal einzufügen – die Kennzahlen der Liste
@@ -272,6 +277,7 @@ async function onClientSaved(_client: ClientResponse) {
       :booking="selectedBooking"
       @cancelled="applyBooking"
       @updated="applyBooking"
+      @deleted="removeBooking"
     />
 
     <ClientFormSlideover
