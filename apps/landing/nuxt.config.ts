@@ -8,6 +8,17 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
+      // Vorschaubild beim Teilen (Slack, LinkedIn, WhatsApp …) für alle Seiten; ein Blogartikel
+      // mit eigenem `image` überschreibt og:image. Die URL muss absolut sein. Quelle:
+      // media/og-image/og-image.html. JPEG statt WebP, weil nicht jeder Dienst WebP anzeigt.
+      meta: [
+        { property: 'og:image', content: 'https://hxroom.de/og-image.jpg' },
+        { property: 'og:image:type', content: 'image/jpeg' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: 'HxRoom – Terminbuchung und Videocall für Coaches in einem. Klienten ohne Konto, Server in Deutschland.' },
+        { name: 'twitter:image', content: 'https://hxroom.de/og-image.jpg' },
+      ],
     },
   },
 
