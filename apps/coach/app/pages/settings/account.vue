@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { USER_NAME_MAX_LENGTH, userNameSchema, type AccountDeletionStatus } from '@hxroom/shared'
+import { USER_NAME_MAX_LENGTH, newPasswordSchema, userNameSchema, type AccountDeletionStatus } from '@hxroom/shared'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -103,7 +103,7 @@ const emailChangeState = computed<EmailChangeState | null>(() => {
 // ─── Passwort ──────────────────────────────────────────────────────────────────────────
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, 'Aktuelles Passwort ist erforderlich'),
-  newPassword:     z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
+  newPassword:     newPasswordSchema,
   repeatPassword:  z.string().min(1, 'Bitte wiederhole das neue Passwort'),
 }).refine(data => data.newPassword === data.repeatPassword, {
   message: 'Die Passwörter stimmen nicht überein',
@@ -422,12 +422,11 @@ async function revokeDeletion() {
             :ui="inputUi"
           />
         </UFormField>
-        <UFormField label="Neues Passwort" name="newPassword">
+        <UFormField label="Neues Passwort" name="newPassword" :help="PASSWORD_HINT">
           <UInput
             v-model="passwordForm.newPassword"
             type="password"
             autocomplete="new-password"
-            placeholder="Mindestens 8 Zeichen"
             class="w-full"
             :ui="inputUi"
           />

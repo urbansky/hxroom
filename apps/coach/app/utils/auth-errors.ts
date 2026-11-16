@@ -10,13 +10,15 @@
  * Der Fallback bleibt pro Aufrufstelle wählbar: "Anmeldung fehlgeschlagen" und
  * "Registrierung fehlgeschlagen" sagen dem Coach mehr als ein allgemeines "Fehler".
  */
+import { PASSWORD_MIN_DISTINCT_CHARS, PASSWORD_MIN_LENGTH } from '@hxroom/shared'
+
 const MESSAGES: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD:      'E-Mail oder Passwort ist falsch.',
   INVALID_PASSWORD:               'Das eingegebene Passwort ist falsch.',
   EMAIL_NOT_VERIFIED:             'Bitte bestätige zuerst deine E-Mail-Adresse.',
   USER_ALREADY_EXISTS:            'Diese E-Mail-Adresse ist bereits registriert.',
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'Diese E-Mail-Adresse ist bereits registriert.',
-  PASSWORD_TOO_SHORT:             'Das Passwort ist zu kurz – mindestens 8 Zeichen.',
+  PASSWORD_TOO_SHORT:             `Das Passwort ist zu kurz – mindestens ${PASSWORD_MIN_LENGTH} Zeichen.`,
   PASSWORD_TOO_LONG:              'Das Passwort ist zu lang.',
   INVALID_TOKEN:                  'Dieser Link ist ungültig oder abgelaufen. Fordere einen neuen an.',
   // Tritt auf, wenn zum Konto kein Passwort-Login gehört – bei HxRoom heute nicht möglich,
@@ -26,6 +28,10 @@ const MESSAGES: Record<string, string> = {
   FAILED_TO_UPDATE_USER:          'Die Änderung konnte nicht gespeichert werden.',
   // Eigener Code aus hooks.before in apps/api/src/auth/auth.module.ts
   TERMS_NOT_ACCEPTED:             'Bitte stimme den AGB und dem Auftragsverarbeitungsvertrag zu.',
+  // Passwortrichtlinie, ebenfalls aus hooks.before (apps/api/src/auth/password-policy.ts)
+  PASSWORD_TOO_SIMPLE:            `Das Passwort braucht mindestens ${PASSWORD_MIN_DISTINCT_CHARS} verschiedene Zeichen.`,
+  PASSWORD_TOO_COMMON:            'Dieses Passwort ist zu verbreitet. Bitte wähle ein anderes.',
+  PASSWORD_RESEMBLES_EMAIL:       'Das Passwort darf nicht auf deiner E-Mail-Adresse beruhen.',
 }
 
 interface AuthErrorLike {

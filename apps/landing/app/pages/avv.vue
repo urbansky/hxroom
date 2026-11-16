@@ -198,7 +198,7 @@ useHead({
         <ul class="legal-list">
           <li>Von außen erreichbar sind nur die Webdienste und der Videoserver, alles Übrige ist durch eine Firewall gesperrt. Die Datenbank ist nur auf dem Server selbst erreichbar.</li>
           <li>Serverzugang nur für den Betreiber, über eine verschlüsselte Verbindung (SSH).</li>
-          <li>Coachs melden sich mit bestätigter E-Mail-Adresse und Passwort an. Passwörter werden nur als Hash gespeichert, Sitzungs-Cookies sind für JavaScript nicht lesbar und laufen nach 7 Tagen ohne Nutzung ab.</li>
+          <li>Coachs melden sich mit bestätigter E-Mail-Adresse und Passwort an. Passwörter haben mindestens 10 Zeichen, verbreitete Passwörter sind gesperrt. Passwörter werden nur als Hash gespeichert, Sitzungs-Cookies sind für JavaScript nicht lesbar und laufen nach 7 Tagen ohne Nutzung ab.</li>
           <li>Klienten erhalten Zugang nur über persönliche Links mit zufälligem 256-Bit-Schlüssel, der Warteraum ist nur in einem Zeitfenster um den Termin geöffnet.</li>
         </ul>
 
@@ -242,6 +242,6 @@ useHead({
       </div>
     </section>
 
-    <p class="legal-updated">Stand: 6. November 2026</p>
+    <p class="legal-updated">Stand: 16. November 2026</p>
   </div>
 </template>

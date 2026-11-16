@@ -1,7 +1,7 @@
 import { Global, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { betterAuth, generateId } from 'better-auth';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, organization } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
@@ -17,8 +17,17 @@ import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
 import { ActivityTracker } from './activity-tracker';
 import { buildLandingUrl } from '../bookings/booking-urls';
-import { TERMS_VERSION, isReservedSlug, isValidSlugFormat, scrubSensitiveText, userNameSchema } from '@hxroom/shared';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  TERMS_VERSION,
+  isReservedSlug,
+  isValidSlugFormat,
+  scrubSensitiveText,
+  userNameSchema,
+} from '@hxroom/shared';
 import { describeAuthEvent } from './auth-events';
+import { checkPasswordPolicy } from './password-policy';
 import { setRequestActor } from '../common/logging/request-context';
 
 const SIGN_UP_PATH = '/sign-up/email';
@@ -82,6 +91,7 @@ export type Auth = ReturnType<typeof betterAuth>;
           ],
           hooks: {
             before: createAuthMiddleware(async (ctx) => {
+              await enforcePasswordPolicy(ctx);
               if (ctx.path !== SIGN_UP_PATH && ctx.path !== UPDATE_USER_PATH) return;
               const body = ctx.body as { name?: unknown; acceptTerms?: unknown } | undefined;
 
@@ -232,6 +242,9 @@ export type Auth = ReturnType<typeof betterAuth>;
           emailAndPassword: {
             enabled: true,
             requireEmailVerification: true,
+            // Länge der Passwortrichtlinie; die übrigen Regeln prüft hooks.before.
+            minPasswordLength: PASSWORD_MIN_LENGTH,
+            maxPasswordLength: PASSWORD_MAX_LENGTH,
             // Wer sein Passwort zurücksetzt, hatte es womöglich nicht mehr allein: bestehende
             // Sitzungen fliegen deshalb raus.
             revokeSessionsOnPasswordReset: true,
@@ -322,6 +335,57 @@ function generateSlug(input: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+type AuthMiddlewareContext = Parameters<Parameters<typeof createAuthMiddleware>[0]>[0];
+
+/** Endpunkte, die ein Passwort setzen, und das Feld, in dem es steht. */
+const PASSWORD_FIELDS: Record<string, string> = {
+  [SIGN_UP_PATH]: 'password',
+  '/change-password': 'newPassword',
+  '/reset-password': 'newPassword',
+  '/admin/create-user': 'password',
+  '/admin/set-user-password': 'newPassword',
+};
+
+/**
+ * Passwortrichtlinie (technisches-konzept.md §7) für jeden Weg, auf dem ein Passwort
+ * entsteht. Fehlt das Passwort oder stimmt die Länge nicht, antwortet der Endpunkt selbst
+ * mit seinem Code (PASSWORD_TOO_SHORT/PASSWORD_TOO_LONG).
+ */
+async function enforcePasswordPolicy(ctx: AuthMiddlewareContext): Promise<void> {
+  const field = PASSWORD_FIELDS[ctx.path];
+  if (!field) return;
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  const password = body[field];
+  if (typeof password !== 'string') return;
+  if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) return;
+
+  const violation = checkPasswordPolicy(password, await resolveAccountEmail(ctx, body));
+  if (violation) throw new APIError('BAD_REQUEST', violation);
+}
+
+/** Die E-Mail-Adresse des Kontos, dessen Passwort gesetzt wird – soweit sie feststeht. */
+async function resolveAccountEmail(ctx: AuthMiddlewareContext, body: Record<string, unknown>): Promise<string | null> {
+  switch (ctx.path) {
+    case SIGN_UP_PATH:
+    case '/admin/create-user':
+      return typeof body.email === 'string' ? body.email : null;
+    case '/change-password':
+      return (await getSessionFromCtx(ctx))?.user.email ?? null;
+    case '/reset-password': {
+      // Der Link aus der Mail trägt den Token; dahinter steht die User-ID.
+      const token = body.token ?? (ctx.query as { token?: unknown } | undefined)?.token;
+      if (typeof token !== 'string') return null;
+      const verification = await ctx.context.internalAdapter.findVerificationValue(`reset-password:${token}`);
+      if (!verification) return null;
+      return (await ctx.context.internalAdapter.findUserById(verification.value))?.email ?? null;
+    }
+    // /admin/set-user-password: Der Hook läuft vor der Rechteprüfung des Endpunkts. Eine
+    // Adresse anhand der userId nachzuschlagen, gäbe Unberechtigten einen Prüfweg an die Hand.
+    default:
+      return null;
+  }
 }
 
 async function ensureUniqueSlug(base: string, db: DrizzleDb): Promise<string> {

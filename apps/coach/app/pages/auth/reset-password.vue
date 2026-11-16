@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { newPasswordSchema } from '@hxroom/shared'
 
 definePageMeta({ layout: 'auth' })
 
@@ -16,7 +17,7 @@ const errorMessage = ref<string | null>(null)
 const pending = ref(false)
 
 const schema = z.object({
-  newPassword:    z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
+  newPassword:    newPasswordSchema,
   repeatPassword: z.string().min(1, 'Bitte wiederhole das neue Passwort'),
 }).refine(data => data.newPassword === data.repeatPassword, {
   message: 'Die Passwörter stimmen nicht überein',
@@ -105,11 +106,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <div class="flex flex-col items-center gap-2 text-center">
             <UIcon name="i-lucide-key-round" class="size-8 text-primary" />
             <h2 class="text-lg font-semibold text-(--ui-text-highlighted)">Neues Passwort setzen</h2>
-            <p class="text-sm text-(--ui-text-muted)">Wähle ein Passwort mit mindestens 8 Zeichen.</p>
+            <p class="text-sm text-(--ui-text-muted)">Wähle ein neues Passwort für dein Konto.</p>
           </div>
 
           <UForm :schema="schema" :state="form" class="flex flex-col gap-4" @submit="onSubmit">
-            <UFormField label="Neues Passwort" name="newPassword">
+            <UFormField label="Neues Passwort" name="newPassword" :help="PASSWORD_HINT">
               <UInput
                 v-model="form.newPassword"
                 type="password"

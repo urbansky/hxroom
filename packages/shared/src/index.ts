@@ -3,6 +3,14 @@ import { isReservedSlug } from './slugs.js';
 
 export { RESERVED_SLUGS, isReservedSlug, isValidSlugFormat } from './slugs.js';
 export { USER_NAME_MAX_LENGTH, userNameSchema } from './account.js';
+export {
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_DISTINCT_CHARS,
+  countDistinctChars,
+  newPasswordSchema,
+  passwordResemblesEmail,
+} from './password.js';
 export { bookingPageCtaLabel, hasBookingPageAbout, formatOfferPrice, type BookingPageProfile } from './booking-page.js';
 export {
   LEGAL_FORMS,

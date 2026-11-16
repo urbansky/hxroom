@@ -282,6 +282,14 @@ Innerhalb des Fensters ist der Link **mehrfach** verwendbar. Ein Verbrauch nach 
 
 Der eigentliche Schutz liegt woanders: Der Klient landet nach dem Öffnen des Links im Warteraum, nicht im Gespräch. In den Call kommt er erst, wenn der Coach ihn einlässt (§8).
 
+**Passwortrichtlinie.** Gilt überall, wo ein Passwort entsteht: Registrierung, Passwort ändern, Passwort zurücksetzen sowie `admin/create-user` und `admin/set-user-password`. Bestehende Passwörter bleiben gültig, es gibt weder Ablaufdatum noch Passwort-Historie.
+
+- 10 bis 128 Zeichen (`minPasswordLength`/`maxPasswordLength` in better-auth), mindestens 4 verschiedene Zeichen ohne Unterschied der Schreibweise. Zeichenklassen werden nicht verlangt, Leerzeichen und Umlaute sind erlaubt.
+- Keine verbreiteten Passwörter: `apps/api/src/auth/password-blocklist.txt` enthält aus der Liste `xato-net-10-million-passwords-1000000.txt` (SecLists, MIT) alle Einträge, die Länge und Zeichenvielfalt bestehen würden, dazu deutsche Klassiker – in Kleinbuchstaben, geprüft ohne Unterschied der Schreibweise. Die Datei liegt nur im API, nicht im Browser-Bundle; `nest-cli.json` kopiert sie nach `dist/auth`.
+- Nicht die eigene E-Mail-Adresse oder ihr Teil vor dem @, auch nicht ergänzt um Ziffern und Sonderzeichen. Bei `admin/set-user-password` entfällt diese Prüfung, weil der Hook vor der Rechteprüfung des Endpunkts läuft.
+
+Länge und Zeichenvielfalt stehen in `packages/shared/src/password.ts` (`newPasswordSchema`) und gelten so auch in den Formularen der Coach-App. Sperrliste und E-Mail-Abgleich prüft `hooks.before` (`auth/password-policy.ts`) mit den Codes `PASSWORD_TOO_SIMPLE`, `PASSWORD_TOO_COMMON` und `PASSWORD_RESEMBLES_EMAIL`; die Coach-App übersetzt sie in `utils/auth-errors.ts`.
+
 ### Betreiber-Zugang (`admin.hxroom.de`)
 
 Der Zugang zum Betreiber-Backoffice läuft über dieselbe better-auth-Instanz wie der Coach-Login – kein zweites Auth-System, kein Shared-Account. Grundlage ist das **better-auth `admin`-Plugin**, das eine globale Rollenspalte `user.role` einführt (`'user'` für Coachs, `'admin'` für Betreiber). Sie ist unabhängig von `member.role`, das weiterhin die organisationsbezogene Rolle (`owner`) trägt.

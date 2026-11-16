@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { userNameSchema } from '@hxroom/shared'
+import { newPasswordSchema, userNameSchema } from '@hxroom/shared'
 
 definePageMeta({ layout: 'auth' })
 
@@ -16,7 +16,7 @@ const pending = ref(false)
 const schema = z.object({
   name: userNameSchema,
   email: z.string().email('Ungültige E-Mail-Adresse'),
-  password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
+  password: newPasswordSchema,
 })
 
 type Schema = z.infer<typeof schema>
@@ -86,7 +86,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 name: 'password',
                 type: 'password',
                 label: 'Passwort',
-                placeholder: 'Mindestens 8 Zeichen',
+                help: PASSWORD_HINT,
                 required: true,
                 autocomplete: 'new-password',
               },
