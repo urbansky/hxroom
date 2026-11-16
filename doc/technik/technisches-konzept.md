@@ -290,6 +290,20 @@ Der eigentliche Schutz liegt woanders: Der Klient landet nach dem Öffnen des Li
 
 Länge und Zeichenvielfalt stehen in `packages/shared/src/password.ts` (`newPasswordSchema`) und gelten so auch in den Formularen der Coach-App. Sperrliste und E-Mail-Abgleich prüft `hooks.before` (`auth/password-policy.ts`) mit den Codes `PASSWORD_TOO_SIMPLE`, `PASSWORD_TOO_COMMON` und `PASSWORD_RESEMBLES_EMAIL`; die Coach-App übersetzt sie in `utils/auth-errors.ts`.
 
+**Rate-Limit.** Der Limiter von better-auth begrenzt die Anfragen an `/api/auth/*` je Client-IP und Pfad; IPv6-Adressen zählen je /64-Netz. Die Grenzen stehen ausdrücklich in `apps/api/src/auth/rate-limit.ts` und gelten in jeder Umgebung:
+
+| Pfad | Grenze |
+|---|---|
+| `/sign-in/*`, `/sign-up/*`, `/change-password`, `/change-email` | 3 Anfragen je 10 s |
+| `/request-password-reset`, `/send-verification-email` | 3 Anfragen je 60 s |
+| alle übrigen | 100 Anfragen je 10 s |
+
+- Die Client-IP kommt aus `X-Forwarded-For`, den Caddy auf die tatsächliche Absenderadresse setzt; ein mitgeschickter Wert wird verworfen. Kommt vor Caddy ein weiterer Proxy hinzu, gehört dessen Adressbereich nach `advanced.ipAddress.trustedProxies` – sonst findet better-auth keine IP und zählt alle Clients gemeinsam.
+- Die Zähler liegen im Speicher der API und beginnen nach einem Neustart von vorn.
+- Über das Limit hinaus antwortet die API mit `429` und `X-Retry-After` (Sekunden), ohne `code`. Coach- und Admin-App zeigen dafür „Zu viele Versuche. Bitte warte einen Moment …“ statt ihrer allgemeinen Fehlermeldung.
+- Aufrufe über `auth.api` im Server laufen am Limiter vorbei (z. B. die Passwortprüfung bei der Kontolöschung, die eine gültige Session voraussetzt).
+- Ein Limit je Konto gibt es nicht: Wer von vielen IP-Adressen aus angreift, wird nur durch die Passwortrichtlinie gebremst.
+
 ### Betreiber-Zugang (`admin.hxroom.de`)
 
 Der Zugang zum Betreiber-Backoffice läuft über dieselbe better-auth-Instanz wie der Coach-Login – kein zweites Auth-System, kein Shared-Account. Grundlage ist das **better-auth `admin`-Plugin**, das eine globale Rollenspalte `user.role` einführt (`'user'` für Coachs, `'admin'` für Betreiber). Sie ist unabhängig von `member.role`, das weiterhin die organisationsbezogene Rolle (`owner`) trägt.

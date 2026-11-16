@@ -28,6 +28,7 @@ import {
 } from '@hxroom/shared';
 import { describeAuthEvent } from './auth-events';
 import { checkPasswordPolicy } from './password-policy';
+import { AUTH_IP_ADDRESS, AUTH_RATE_LIMIT } from './rate-limit';
 import { setRequestActor } from '../common/logging/request-context';
 
 const SIGN_UP_PATH = '/sign-up/email';
@@ -207,6 +208,8 @@ export type Auth = ReturnType<typeof betterAuth>;
               else betterAuthLogger.warn(text);
             },
           },
+          rateLimit: AUTH_RATE_LIMIT,
+          advanced: { ipAddress: AUTH_IP_ADDRESS },
           secret: config.getOrThrow<string>('BETTER_AUTH_SECRET'),
           // Objekt statt String: better-auth löst die baseURL dann pro Request aus dem
           // Host-Header auf und lässt nur die gelisteten Hosts zu (siehe auth-hosts.ts).

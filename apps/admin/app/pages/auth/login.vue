@@ -31,7 +31,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       password: event.data.password,
     })
     if (error) {
-      errorMessage.value = mapAuthError(error.message)
+      errorMessage.value = mapAuthError(error)
       return
     }
 
@@ -52,7 +52,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   }
 }
 
-function mapAuthError(msg?: string): string {
+function mapAuthError(error: { message?: string, status?: number }): string {
+  // Rate-Limiter von better-auth (apps/api/src/auth/rate-limit.ts): Status 429 ohne Code.
+  if (error.status === 429) return 'Zu viele Versuche. Bitte warte einen Moment und versuche es dann erneut.'
+  const msg = error.message
   if (!msg) return 'Anmeldung fehlgeschlagen.'
   const lower = msg.toLowerCase()
   if (lower.includes('banned')) return 'Dieser Account ist gesperrt.'

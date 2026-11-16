@@ -34,13 +34,22 @@ const MESSAGES: Record<string, string> = {
   PASSWORD_RESEMBLES_EMAIL:       'Das Passwort darf nicht auf deiner E-Mail-Adresse beruhen.',
 }
 
+/**
+ * Antwort des Rate-Limiters von better-auth (Grenzen in apps/api/src/auth/rate-limit.ts).
+ * Sie trägt keinen `code`, nur Status 429 – ohne eigene Meldung landete sie bei der
+ * Ersatzmeldung, und „Anmeldung fehlgeschlagen“ verschweigt, dass Warten genügt.
+ */
+const TOO_MANY_REQUESTS_MESSAGE = 'Zu viele Versuche. Bitte warte einen Moment und versuche es dann erneut.'
+
 interface AuthErrorLike {
   code?: string
   message?: string
+  status?: number
 }
 
 export function mapAuthError(error: AuthErrorLike | null | undefined, fallback: string): string {
   if (!error) return fallback
+  if (error.status === 429) return TOO_MANY_REQUESTS_MESSAGE
   if (error.code && MESSAGES[error.code]) return MESSAGES[error.code]!
 
   // "Email is the same" hat keinen eigenen Code, ist beim Adresswechsel aber der
