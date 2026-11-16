@@ -40,6 +40,7 @@ Technische Dokumente werden mit dem Code gepflegt. Fachliche Dokumente ändert n
 **Marketing**
 - [marketing.md](marketing/marketing.md) – Tonalität, Akquise, Maßnahmen
 - [seo.md](marketing/seo.md) – SEO-Strategie
+- [verzeichnisse.md](marketing/verzeichnisse.md) – Verzeichnisse und Vergleichsportale: Reihenfolge, Eintragspaket mit Texten, Pflege
 - [linkedin.md](marketing/linkedin.md) – Unternehmensseite HxRoom: Felder, Texte, Bilder, erster Beitrag
 - [linkedin-artikel-saas.md](marketing/linkedin-artikel-saas.md) – LinkedIn-Beitrag „Stirbt SaaS?“ zum Blogartikel auf hxcode.io, mit Kommentar zu HxRoom
 - [instagram.md](marketing/instagram.md) – Konto `hxroom.de`: Rolle, Profil, Inhalte, erste Beiträge, Ablauf
