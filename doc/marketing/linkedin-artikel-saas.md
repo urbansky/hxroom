@@ -11,7 +11,7 @@ Die vollständige Fassung erscheint im Blog von HxCode:
 | | |
 |---|---|
 | Titel | Jeder kann jetzt Software bauen. Stirbt SaaS? |
-| Adresse | `https://hxcode.io/posts/2026/saas-im-ki-zeitalter` |
+| Adresse | `https://www.hxcode.io/posts/2026/saas-im-ki-zeitalter` |
 | Quelle | `~/Coding/urbansky/hxcode-website-2025/content/posts/2026/saas-im-ki-zeitalter.md` |
 
 Der Artikel endet dort mit dem Abschnitt „Meine eigene Nische“ zu HxRoom und einem Link auf die Kontaktseite von HxCode.
@@ -76,7 +76,7 @@ HxRoom ist in der Beta und kostenlos. In 15 Minuten zeige ich es dir:
 👉 https://demo.hxroom.de/offers/8cb945f3-8c0d-4dcb-8106-b514241e757b
 
 Den ganzen Artikel mit Beispielen und Quellen findest du in meinem Blog:
-👉 https://hxcode.io/posts/2026/saas-im-ki-zeitalter
+👉 https://www.hxcode.io/posts/2026/saas-im-ki-zeitalter
 ```
 
 ---
