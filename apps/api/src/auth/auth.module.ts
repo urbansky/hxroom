@@ -17,6 +17,7 @@ import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
 import { ActivityTracker } from './activity-tracker';
 import { SignupNotifier } from './signup-notifier';
+import { EMAIL_VERIFICATION_EXPIRES_IN_SECONDS, withLoginCallback } from './verification-link';
 import { buildLandingUrl } from '../bookings/booking-urls';
 import {
   PASSWORD_MAX_LENGTH,
@@ -275,6 +276,14 @@ export type Auth = ReturnType<typeof betterAuth>;
             },
           },
           emailVerification: {
+            // Ohne Angabe gälte die Voreinstellung von better-auth, eine Stunde – die Mails
+            // nennen 24 Stunden. Gilt auch für Schritt 2 des E-Mail-Wechsels.
+            expiresIn: EMAIL_VERIFICATION_EXPIRES_IN_SECONDS,
+            // Wer sich mit unbestätigter Adresse anmeldet, bekommt einen neuen Link. Sonst
+            // säße fest, wer den ersten verpasst hat: Ein zweites Konto mit derselben Adresse
+            // lässt die Registrierung nicht zu. Verschickt wird erst nach geprüftem Passwort,
+            // und /sign-in/* ist eng begrenzt (rate-limit.ts).
+            sendOnSignIn: true,
             // Dieser Handler bedient zwei verschiedene Anlässe, weil better-auth ihn auch für
             // Schritt 2 des E-Mail-Wechsels benutzt – ohne einen Marker mitzuliefern.
             // Unterscheidungsmerkmal: beim Wechsel steht in `user.email` schon die neue
@@ -298,7 +307,7 @@ export type Auth = ReturnType<typeof betterAuth>;
                   ? await renderEmailChangeVerificationEmail({ name: user.name, verifyUrl: markEmailChangeCompleted(url) })
                   : await renderEmailVerificationEmail({
                     name: user.name,
-                    verifyUrl: url,
+                    verifyUrl: withLoginCallback(url, config.getOrThrow<string>('COACH_APP_URL')),
                     termsUrl: `${buildLandingUrl(config)}/agb`,
                     dpaUrl: `${buildLandingUrl(config)}/avv`,
                   }),

@@ -7,7 +7,10 @@ definePageMeta({ layout: 'auth' })
 const { $authClient } = useNuxtApp()
 const route = useRoute()
 
-const verified = computed(() => route.query.verified === 'true')
+// Ein abgelaufener oder ungültiger Bestätigungslink landet ebenfalls hier – better-auth hängt
+// dann `error=…` an die Rücksprung-Adresse, die `verified=true` schon trägt.
+const linkError = computed(() => typeof route.query.error === 'string' ? route.query.error : null)
+const verified = computed(() => route.query.verified === 'true' && !linkError.value)
 const errorMessage = ref<string | null>(null)
 const pending = ref(false)
 
@@ -46,6 +49,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         variant="soft"
         title="E-Mail bestätigt"
         description="Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich jetzt anmelden."
+      />
+      <UAlert
+        v-else-if="linkError && !errorMessage"
+        icon="i-lucide-clock-alert"
+        color="warning"
+        variant="soft"
+        :title="linkError === 'TOKEN_EXPIRED' ? 'Bestätigungslink abgelaufen' : 'Bestätigungslink ungültig'"
+        description="Melde dich mit deiner E-Mail-Adresse und deinem Passwort an. Wir schicken dir dann einen neuen Link."
       />
       <UAlert
         v-if="errorMessage"

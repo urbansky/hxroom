@@ -15,7 +15,8 @@ import { PASSWORD_MIN_DISTINCT_CHARS, PASSWORD_MIN_LENGTH } from '@hxroom/shared
 const MESSAGES: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD:      'E-Mail oder Passwort ist falsch.',
   INVALID_PASSWORD:               'Das eingegebene Passwort ist falsch.',
-  EMAIL_NOT_VERIFIED:             'Bitte bestätige zuerst deine E-Mail-Adresse.',
+  // Nur die Anmeldung liefert den Code, und sie schickt dabei einen neuen Link (sendOnSignIn).
+  EMAIL_NOT_VERIFIED:             'Deine E-Mail-Adresse ist noch nicht bestätigt. Wir haben dir einen neuen Bestätigungslink geschickt, er ist 24 Stunden gültig.',
   USER_ALREADY_EXISTS:            'Diese E-Mail-Adresse ist bereits registriert.',
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'Diese E-Mail-Adresse ist bereits registriert.',
   PASSWORD_TOO_SHORT:             `Das Passwort ist zu kurz – mindestens ${PASSWORD_MIN_LENGTH} Zeichen.`,

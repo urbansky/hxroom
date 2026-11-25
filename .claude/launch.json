@@ -6,6 +6,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@hxroom/landing", "dev"],
       "port": 5176
+    },
+    {
+      "name": "coach",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@hxroom/coach", "dev"],
+      "port": 5173
     }
   ]
 }

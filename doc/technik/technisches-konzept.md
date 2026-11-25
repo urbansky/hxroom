@@ -282,6 +282,8 @@ Innerhalb des Fensters ist der Link **mehrfach** verwendbar. Ein Verbrauch nach 
 
 Der eigentliche Schutz liegt woanders: Der Klient landet nach dem Öffnen des Links im Warteraum, nicht im Gespräch. In den Call kommt er erst, wenn der Coach ihn einlässt (§8).
 
+**Bestätigung der E-Mail-Adresse.** Ein Coach kann sich erst anmelden, wenn er den Link aus der Bestätigungsmail geöffnet hat (`requireEmailVerification`). Der Link ist 24 Stunden gültig (`emailVerification.expiresIn`, `apps/api/src/auth/verification-link.ts`). Dieselbe Frist gilt für den zweiten Link beim Wechsel der E-Mail-Adresse. Meldet sich ein Coach mit noch unbestätigter Adresse und richtigem Passwort an, schickt better-auth einen neuen Link (`sendOnSignIn`), und die Anmeldung antwortet mit `EMAIL_NOT_VERIFIED`. Die Coach-App weist dann auf den neuen Link hin. Bei der Anmeldung fehlt die Rücksprung-Adresse, `withLoginCallback` setzt deshalb `{COACH_APP_URL}/auth/login?verified=true`. Ein abgelaufener oder ungültiger Link führt auf dieselbe Seite mit `error=TOKEN_EXPIRED` bzw. `INVALID_TOKEN`. Die Seite zeigt dann statt der Erfolgsmeldung den Hinweis, sich anzumelden, um einen neuen Link zu bekommen.
+
 **Passwortrichtlinie.** Gilt überall, wo ein Passwort entsteht: Registrierung, Passwort ändern, Passwort zurücksetzen sowie `admin/create-user` und `admin/set-user-password`. Bestehende Passwörter bleiben gültig, es gibt weder Ablaufdatum noch Passwort-Historie.
 
 - 10 bis 128 Zeichen (`minPasswordLength`/`maxPasswordLength` in better-auth), mindestens 4 verschiedene Zeichen ohne Unterschied der Schreibweise. Zeichenklassen werden nicht verlangt, Leerzeichen und Umlaute sind erlaubt.
