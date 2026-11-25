@@ -16,6 +16,7 @@ import * as schema from '../db/schema';
 import { ADMIN_ROLES, DEFAULT_ROLE, isAdminRole } from './roles';
 import { resolveAuthHosts } from './auth-hosts';
 import { ActivityTracker } from './activity-tracker';
+import { SignupNotifier } from './signup-notifier';
 import { buildLandingUrl } from '../bookings/booking-urls';
 import {
   PASSWORD_MAX_LENGTH,
@@ -45,8 +46,8 @@ export type Auth = ReturnType<typeof betterAuth>;
   providers: [
     {
       provide: AUTH,
-      inject: [DRIZZLE, ConfigService, MailService],
-      useFactory: (db: DrizzleDb, config: ConfigService, mail: MailService) => {
+      inject: [DRIZZLE, ConfigService, MailService, SignupNotifier],
+      useFactory: (db: DrizzleDb, config: ConfigService, mail: MailService, signupNotifier: SignupNotifier) => {
         // ADMIN_AUTH_URL ist optional: ohne die Variable bleibt genau ein Host erlaubt,
         // das Verhalten entspricht dann dem vor der Trennung.
         const authHosts = resolveAuthHosts(
@@ -174,6 +175,19 @@ export type Auth = ReturnType<typeof betterAuth>;
                     role: 'owner',
                     createdAt: new Date(),
                   });
+
+                  // Nur bei der Selbstregistrierung – einen per admin.createUser angelegten
+                  // Coach kennt der Betreiber schon. Ohne await: Die Antwort an den Coach
+                  // soll nicht auf den Mailversand warten, und notify wirft nie.
+                  if (ctx?.path === SIGN_UP_PATH) {
+                    void signupNotifier.notify({
+                      id: user.id,
+                      name: user.name,
+                      email: user.email,
+                      slug,
+                      createdAt: user.createdAt,
+                    });
+                  }
                 },
               },
             },
@@ -295,6 +309,7 @@ export type Auth = ReturnType<typeof betterAuth>;
       },
     },
     ActivityTracker,
+    SignupNotifier,
   ],
   exports: [AUTH, ActivityTracker],
 })

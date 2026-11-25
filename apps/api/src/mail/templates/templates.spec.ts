@@ -16,6 +16,7 @@ import { renderDeletionReminderEmail } from './coach/deletion-reminder';
 import { renderCalendarImportFailingEmail } from './coach/calendar-import-failing';
 import { renderDeletionExecutedEmail } from './coach/deletion-executed';
 import { renderFeedbackReceivedEmail } from './operator/feedback-received';
+import { renderCoachRegisteredEmail } from './operator/coach-registered';
 
 // Termindaten, wie toAppointmentInfo() sie liefert – Tag und Zeitspanne getrennt, weil der
 // Termin-Block sie in zwei Zeilen zeigt (wie die Agenda im Coach-Dashboard).
@@ -522,6 +523,25 @@ describe('Betreiber-Mail-Templates', () => {
       expect(html).toContain('anna@example.com');
       expect(html).toContain('/clients/c-1');
       expect(html).toContain('unbekannt');
+    });
+  });
+
+  describe('Coach registriert', () => {
+    it('rendert Name, Adresse, Subdomain und den Link zur Coach-Liste', async () => {
+      const html = await renderCoachRegisteredEmail({
+        coachName: 'Anna Bergmann',
+        coachEmail: 'anna@example.com',
+        subdomain: 'anna-bergmann',
+        registeredAtLabel: 'Mittwoch, 25. November 2026, 10:14',
+        coachesUrl: 'https://admin.hxroom.de/coaches',
+      });
+
+      expect(html).toContain('Neuer Coach registriert');
+      expect(html).toContain('Anna Bergmann');
+      expect(html).toContain('anna@example.com');
+      expect(html).toContain('anna-bergmann');
+      expect(html).toContain('Mittwoch, 25. November 2026, 10:14');
+      expect(html).toContain('href="https://admin.hxroom.de/coaches"');
     });
   });
 });
