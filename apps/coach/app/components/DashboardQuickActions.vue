@@ -4,6 +4,10 @@ const emit = defineEmits<{ createClient: [] }>()
 
 const { copyBookingLink } = useBookingLink()
 
+// Handbuch auf hxroom.de (doc/marketing/handbuch.md), zweiter Einstieg neben der Seitenleiste
+const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
+const handbuchUrl = `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}/handbuch`
+
 const linkClasses = 'w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg transition-colors hover:bg-muted cursor-pointer'
 </script>
 
@@ -39,6 +43,11 @@ const linkClasses = 'w-full text-left flex items-center gap-3 -mx-2 px-2 py-2 ro
         <UIcon name="i-lucide-clock" class="size-4 text-muted shrink-0" />
         <span class="text-sm text-highlighted">Verfügbarkeit bearbeiten</span>
       </NuxtLink>
+
+      <a :href="handbuchUrl" target="_blank" rel="noopener" :class="linkClasses">
+        <UIcon name="i-lucide-book-open" class="size-4 text-muted shrink-0" />
+        <span class="text-sm text-highlighted">Handbuch öffnen</span>
+      </a>
     </div>
   </SettingsSection>
 </template>

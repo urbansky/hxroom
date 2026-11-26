@@ -205,7 +205,7 @@ KI-Dienste holen Seiten über Crawler und zerlegen sie in Stücke; eine Antwort 
   - Startseite → Handbuch: Link in Kopfleiste und Fußzeile; jede Funktion in `CoachFeaturesSection` und `TourSection` verlinkt auf ihre Handbuchseite.
   - Blog → Handbuch: Jeder Artikel verlinkt die passenden Seiten („So geht es in HxRoom“).
   - Handbuch → Handbuch: „Weiterlesen“ und Links im Fließtext.
-  - Coach-App → Handbuch: kleiner Hilfe-Link auf den Seiten der App, der die passende Handbuchseite öffnet. Bringt echte Besuche und Signale; eigener Schritt (siehe Abschnitt 10).
+  - Coach-App → Handbuch: zwei feste Einstiege, „Handbuch“ in der Seitenleiste über „Feedback“ und „Handbuch öffnen“ im Schnellzugriff des Dashboards, beide in einem neuen Tab. Die App wird nicht indexiert, die Links dienen den Coachs, nicht der Suche; Links je Seite müssten mit jeder neuen Seite gepflegt werden.
 - **Bilder:** WebP, sprechende Dateinamen (`warteraum-kamera-vorschau.webp`), `loading="lazy"` außer beim ersten Bild, feste Breite und Höhe gegen Layoutsprünge.
 
 ---
@@ -254,6 +254,6 @@ Nur Demodaten. Keine Namen, Adressen oder Fotos echter Klienten oder Coachs, auc
 | 4 | **SEO- und KI-Technik** | JSON-LD, Sitemap, `llms.txt` als Route, `llms-full.txt`, `.md`-Fassungen, `robots.txt` |
 | 5 | **Verlinkung** | Kopfleiste, Fußzeile, Startseiten-Abschnitte, Blogartikel |
 | 6 | **Inhalte, zweite Runde** | Buchungsseite, Angebote und Verfügbarkeit, Termine, Klienten, Hilfe |
-| 7 | **Hilfe-Links in der Coach-App** | Je Seite der App ein Link auf die passende Handbuchseite |
+| 7 | **Handbuch in der Coach-App** | Link in der Seitenleiste und im Schnellzugriff des Dashboards |
 
 Jeder Schritt einzeln, mit Prüfung im Browser. Die technischen Teile wandern nach dem Bau in [technisches-konzept.md](../technik/technisches-konzept.md).

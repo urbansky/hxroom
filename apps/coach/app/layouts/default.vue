@@ -10,10 +10,19 @@ const route = useRoute()
 const { public: { rootDomain, rootDomainHttps } } = useRuntimeConfig()
 const { $api } = useApi()
 
-// Beta: Rückmeldung von jeder Seite aus (technisches-konzept.md §5). Ein eigenes Menü am
-// unteren Rand, damit der Punkt wie ein Menüeintrag aussieht und nicht zum Konto gehört.
+const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`)
+
+// Hilfe am unteren Rand, als eigenes Menü, damit die Punkte wie Menüeinträge aussehen und
+// nicht zum Konto gehören: das Handbuch auf hxroom.de (doc/marketing/handbuch.md) im neuen
+// Tab und, für die Beta, die Rückmeldung von jeder Seite aus (technisches-konzept.md §5).
 const feedbackOpen = ref(false)
-const feedbackNavItems: NavigationMenuItem[] = [
+const helpNavItems: NavigationMenuItem[] = [
+  {
+    label: 'Handbuch',
+    icon: 'i-lucide-book-open',
+    to: `${landingUrl.value}/handbuch`,
+    target: '_blank',
+  },
   {
     // Kurz, damit das Abzeichen auch bei schmaler Seitenleiste daneben passt.
     label: 'Feedback',
@@ -22,8 +31,6 @@ const feedbackNavItems: NavigationMenuItem[] = [
     onSelect: () => { feedbackOpen.value = true },
   },
 ]
-
-const landingUrl = computed(() => `${rootDomainHttps ? 'https' : 'http'}://${rootDomain}`)
 
 const baseNavItems: NavItem[][] = [
   [
@@ -256,7 +263,7 @@ const pageTitle = computed(() => {
         <UNavigationMenu
           :collapsed="collapsed"
           orientation="vertical"
-          :items="feedbackNavItems"
+          :items="helpNavItems"
           :tooltip="true"
           class="w-full sidebar-nav mt-auto"
         />
