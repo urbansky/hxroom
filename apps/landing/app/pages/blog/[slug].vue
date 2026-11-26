@@ -13,6 +13,15 @@ if (!article.value) {
   throw createError({ statusCode: 404, statusMessage: 'Artikel nicht gefunden' })
 }
 
+// „So geht es in HxRoom“: die Handbuchseiten aus dem Frontmatter (`handbuch`)
+const { data: handbuchPages } = await useAsyncData(`blog-handbuch-${route.params.slug}`, async () => {
+  const paths = article.value?.handbuch?.map(p => `/handbuch/${p}`) ?? []
+  if (!paths.length) return []
+  const pages = await queryCollection('handbuch').where('path', 'IN', paths).select('path', 'title', 'description').all()
+  // In der Reihenfolge des Frontmatters
+  return paths.map(p => pages.find(page => page.path === p)).filter(page => !!page)
+})
+
 useHead({
   title: `${article.value.title} · HxRoom Blog`,
   meta: [
@@ -64,6 +73,20 @@ useHead({
       <div class="prose prose-neutral dark:prose-invert max-w-none">
         <ContentRenderer v-if="article" :value="article" />
       </div>
+
+      <section v-if="handbuchPages?.length" class="mt-14 pt-10 border-t border-(--ui-border)">
+        <h2 class="font-serif text-2xl text-(--ui-text-highlighted) mb-5">So geht es in HxRoom</h2>
+        <UPageGrid class="lg:grid-cols-2 xl:grid-cols-2">
+          <UPageCard
+            v-for="page in handbuchPages"
+            :key="page.path"
+            :to="page.path"
+            :title="page.title"
+            :description="page.description"
+            icon="i-lucide-book-open"
+          />
+        </UPageGrid>
+      </section>
     </article>
   </main>
 </template>

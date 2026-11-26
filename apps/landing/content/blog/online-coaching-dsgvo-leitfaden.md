@@ -4,6 +4,7 @@ description: "DSGVO im Online-Coaching: AVV, Datenschutzerklärung, Hosting-Stan
 date: "2026-05-15"
 category: "DSGVO"
 draft: true
+handbuch: [datenschutz/avv, datenschutz/wo-liegen-die-daten, datenschutz/verschluesselung]
 ---
 
 > Du arbeitest mit Menschen, die dir Dinge erzählen, die sie sonst niemandem erzählen. Genau deshalb ist Datenschutz im Coaching keine Pflichtübung, sondern Teil deines Versprechens.

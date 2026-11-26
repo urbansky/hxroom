@@ -4,6 +4,7 @@ description: "Welche DSGVO-Fehler ich bei Coach-Audits immer wieder sehe – und
 date: "2026-06-24"
 category: "DSGVO"
 draft: true
+handbuch: [datenschutz/wo-liegen-die-daten, datenschutz/avv]
 ---
 
 Ich rede viel mit Coaches, die ihre Tool-Landschaft gewachsen aufgebaut haben – nicht geplant. Über die Jahre sind aus „einem Zoom-Link" zehn Tools geworden, aus „einer Mail" drei Verteiler, aus „einer Notiz" ein Notion-Workspace. Und an genau diesen Wachstumsstellen entstehen die DSGVO-Risiken. Hier sind die fünf, die ich am häufigsten sehe – und wie du sie heute behebst.

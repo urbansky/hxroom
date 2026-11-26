@@ -4,6 +4,7 @@ description: "Tools, Hosting, Design, Recht: Was du als Coach pro Monat realisti
 date: "2026-07-22"
 category: "Praxis"
 draft: true
+handbuch: [erste-schritte/was-ist-hxroom, hilfe/was-hxroom-nicht-kann]
 ---
 
 Eine der häufigsten Fragen, die ich von Coaches bekomme, lautet sinngemäß: „Was zahle ich realistisch im Monat, wenn ich das ordentlich aufziehen will?" Und das ist eine gute Frage, weil die Antwort fast immer eine kleine Überraschung ist – in beide Richtungen. Manche unterschätzen die Summe, weil sie nur an „Zoom + Calendly" denken. Andere überschätzen sie, weil sie hoch komplexe Setups vermuten, die sie gar nicht brauchen.

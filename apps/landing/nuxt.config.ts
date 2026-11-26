@@ -1,4 +1,16 @@
+import { readdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { hxroomThemeColors } from '@hxroom/ui/colors'
+
+const HANDBUCH_DIR = fileURLToPath(new URL('./content/handbuch', import.meta.url))
+
+/** Adressen der Handbuchseiten aus den Dateinamen: „5.videocall/1.warteraum.md“ → „/handbuch/videocall/warteraum“. */
+function handbuchPaths(): string[] {
+  const strip = (name: string) => name.replace(/^\d+\./, '').replace(/\.md$/, '')
+  return readdirSync(HANDBUCH_DIR, { recursive: true, encoding: 'utf8' })
+    .filter(file => file.endsWith('.md'))
+    .map(file => `/handbuch/${file.split('/').map(strip).join('/')}`)
+}
 
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/content', '@nuxtjs/plausible'],
@@ -65,7 +77,20 @@ export default defineNuxtConfig({
 
   nitro: {
     prerender: {
-      routes: ['/404.html', '/blog/rss.xml'],
+      // /handbuch ausdrücklich: Der Crawler folgt sonst nur Links ab „/“. Von der Übersicht
+      // aus findet er alle Abschnitte und Seiten.
+      routes: ['/404.html', '/blog/rss.xml', '/handbuch', '/sitemap.xml', '/llms.txt', '/llms-full.txt'],
+    },
+    // Die Markdown-Dateien des Handbuchs im Rohtext für llms-full.txt und die .md-Fassungen
+    // (server/utils/handbuch.ts). Die Collection hält den Text nur als Syntaxbaum.
+    serverAssets: [{ baseName: 'handbuch', dir: HANDBUCH_DIR }],
+  },
+
+  hooks: {
+    // Die Markdown-Fassung jeder Handbuchseite (server/middleware/handbuch-markdown.ts). Auf
+    // sie verlinkt nur llms.txt, und die liest der Crawler nicht aus.
+    'prerender:routes'({ routes }) {
+      for (const path of handbuchPaths()) routes.add(`${path}.md`)
     },
   },
 

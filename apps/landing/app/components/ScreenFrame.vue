@@ -154,18 +154,22 @@ onBeforeUnmount(() => observer?.disconnect())
         </template>
       </video>
     </div>
-    <picture v-else-if="src" class="block">
-      <source v-if="dark && !scheme" :media="DARK" :srcset="dark.src">
-      <img
-        :src="current.src"
-        :alt="alt"
-        :width="width"
-        :height="height"
-        :loading="eager ? 'eager' : 'lazy'"
-        decoding="async"
-        class="block w-full h-auto"
-      >
-    </picture>
+    <!-- Der Slot liegt über dem Bild, etwa für die Markierungen im Handbuch. -->
+    <div v-else-if="src" class="relative">
+      <picture class="block">
+        <source v-if="dark && !scheme" :media="DARK" :srcset="dark.src">
+        <img
+          :src="current.src"
+          :alt="alt"
+          :width="width"
+          :height="height"
+          :loading="eager ? 'eager' : 'lazy'"
+          decoding="async"
+          class="block w-full h-auto"
+        >
+      </picture>
+      <slot />
+    </div>
     <div
       v-else
       class="flex items-center justify-center bg-linear-to-br from-sage-100/70 to-gold-100/50 dark:from-sage-900/40 dark:to-gold-900/20"

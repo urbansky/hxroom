@@ -10,6 +10,9 @@ import { Logo } from '@hxroom/ui'
     <nav class="fixed top-0 left-0 right-0 z-100 flex items-center justify-between px-6 lg:px-12 h-17 bg-(--ui-bg)/70 backdrop-blur-xl border-b border-(--ui-border)">
       <Logo />
       <div class="flex items-center gap-6">
+        <NuxtLink to="/handbuch" class="text-sm text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">
+          Handbuch
+        </NuxtLink>
         <NuxtLink to="/blog" class="text-sm text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">
           Blog
         </NuxtLink>

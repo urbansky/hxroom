@@ -16,6 +16,7 @@ const content = {
       srcDark: '/screens/booking-page-dark.webp',
       alt: 'Buchungsseite mit Angebot, Kalender und freien Zeiten',
       address: 'demo.hxroom.de/offers/…',
+      handbuch: { to: '/handbuch/fuer-klienten/termin-buchen', label: 'So bucht dein Klient' },
     },
     {
       title: 'Er bekommt alles per Mail',
@@ -32,6 +33,7 @@ const content = {
       srcDark: '/screens/waiting-room-dark.webp',
       alt: 'Warteraum mit Foto des Coachs und Termin',
       address: 'demo.hxroom.de/call/…',
+      handbuch: { to: '/handbuch/videocall/warteraum', label: 'Warteraum und Einlass' },
     },
     {
       title: 'Du lässt ihn herein',
@@ -40,8 +42,9 @@ const content = {
       srcDark: '/screens/call-coach-dark.webp',
       alt: 'Gespräch aus Sicht des Coachs mit geöffneten Notizen',
       address: 'app.hxroom.de/call/…',
+      handbuch: { to: '/handbuch/videocall/im-gespraech', label: 'Im Gespräch' },
     },
-  ],
+  ] as { title: string, text: string, src: string, srcDark: string, alt: string, address?: string, handbuch?: { to: string, label: string } }[],
 }
 </script>
 
@@ -70,6 +73,7 @@ const content = {
             <div class="font-serif text-[56px] leading-none italic font-light text-gold-400/70 mb-4">{{ i + 1 }}</div>
             <h3 class="font-serif text-[30px] font-normal leading-[1.2] text-(--color-cream) mb-4">{{ step.title }}</h3>
             <p class="text-[16px] text-(--ui-text) opacity-85 leading-[1.75] max-w-[440px]">{{ step.text }}</p>
+            <HandbuchLink v-if="step.handbuch" :to="step.handbuch.to" :label="step.handbuch.label" class="mt-5" />
           </div>
           <ScreenFrame :src="step.src" :dark="{ src: step.srcDark }" :alt="step.alt" :address="step.address" :width="2880" :height="1800" />
         </li>

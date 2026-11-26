@@ -4,6 +4,7 @@ description: "Zoom war praktisch in 2020. 2026 wirkt es im Coaching wie ein Firm
 date: "2026-05-22"
 category: "Tools"
 draft: true
+handbuch: [erste-schritte/was-ist-hxroom, videocall/im-gespraech]
 ---
 
 > Es gibt diesen Moment kurz vor der Sitzung, in dem dein Klient zum ersten Mal in den Videocall kommt. Genau dieser Moment entscheidet, ob er das Gefühl hat, bei dir zu sein – oder in einem Firmen-Meeting.

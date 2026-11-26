@@ -4,6 +4,7 @@ description: "Eigenes Logo statt Zoom-Schriftzug? Wir zeigen ehrlich, was Custom
 date: "2026-06-10"
 category: "Tools"
 draft: true
+handbuch: [videocall/warteraum, hilfe/was-hxroom-nicht-kann]
 ---
 
 Du sitzt vor dem Bildschirm, gleich kommt deine Klientin in den Raum – und du denkst zum dritten Mal in dieser Woche: „Warum sieht das eigentlich aus wie ein Firmen-Meeting? Ich will, dass es nach **mir** aussieht."

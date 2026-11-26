@@ -4,6 +4,7 @@ description: "Klienten ohne Anmeldung, ohne Download, ohne Account in den Coachi
 date: "2026-07-08"
 category: "Tools"
 draft: true
+handbuch: [fuer-klienten/warteraum, videocall/technische-voraussetzungen]
 ---
 
 Die Frage taucht in jedem zweiten Demo-Call auf: „Können meine Klienten ohne Anmeldung in den Raum kommen?" Die kurze Antwort: **Ja, das geht – und es ist sogar das, was du wollen solltest.** Die etwas längere Antwort: Es kommt auf das Tool an, auf den Browser, auf die Verbindung. Hier die ehrliche Übersicht.

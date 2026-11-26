@@ -16,7 +16,7 @@ Nutze die better-auth-Dokumentation: https://better-auth.com/llms.txt (Backend u
 - Auth: better-auth Session, Guard via @UseGuards(AuthGuard)
 - Fehlerbehandlung: NestJS HttpException mit englischen Fehlertexten
 - DSGVO: Kein Logging von personenbezogenen Daten ohne explizite Kennzeichnung
-- URL-Pfade: Immer Englisch (auch in der Coach-App). Anzeigetexte/Labels dürfen Deutsch sein, Routen nie (z. B. `/settings/account`, nicht `/einstellungen/account`)
+- URL-Pfade: Immer Englisch (auch in der Coach-App). Anzeigetexte/Labels dürfen Deutsch sein, Routen nie (z. B. `/settings/account`, nicht `/einstellungen/account`). Ausnahme ist die öffentliche Landingpage (`apps/landing`): Dort sind die Slugs deutsch, weil sie für die Suche zählen (`/handbuch`, `/datenschutz`)
 
 ## Nuxt UI (Frontend-Konventionen)
 

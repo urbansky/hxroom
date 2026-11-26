@@ -8,8 +8,8 @@ const linkClass = 'text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) tra
 
 <template>
   <footer class="relative z-1 border-t border-(--ui-border) px-6 lg:px-12 pt-14 pb-10">
-    <div class="max-w-[1180px] mx-auto grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] gap-10 max-md:grid-cols-2">
-      <div class="max-md:col-span-2">
+    <div class="max-w-[1180px] mx-auto grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-10 max-lg:grid-cols-3 max-md:grid-cols-2">
+      <div class="max-lg:col-span-3 max-md:col-span-2">
         <Logo />
         <p class="mt-4 text-[14px] text-(--ui-text-muted) leading-[1.6] max-w-[320px]">
           Der Videocall-Raum für Coaches – unter deinem Namen, mit Servern in Deutschland.
@@ -23,6 +23,18 @@ const linkClass = 'text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) tra
           <li><a :href="demoUrl" :class="linkClass">Vorführung buchen</a></li>
           <li><a :href="registerUrl" :class="linkClass">Kostenlos ausprobieren</a></li>
           <li><a :href="loginUrl" :class="linkClass">Anmelden</a></li>
+        </ul>
+      </nav>
+
+      <!-- Auf jeder Seite der Landingpage: interne Links ins Handbuch (doc/marketing/handbuch.md §7) -->
+      <nav aria-label="Handbuch">
+        <p class="text-[11px] tracking-[0.14em] uppercase text-(--ui-text-dimmed) mb-4">Handbuch</p>
+        <ul class="flex flex-col gap-2.5">
+          <li><NuxtLink to="/handbuch/erste-schritte" :class="linkClass">Erste Schritte</NuxtLink></li>
+          <li><NuxtLink to="/handbuch/videocall" :class="linkClass">Videocall</NuxtLink></li>
+          <li><NuxtLink to="/handbuch/datenschutz" :class="linkClass">Datenschutz</NuxtLink></li>
+          <li><NuxtLink to="/handbuch/fuer-klienten" :class="linkClass">Für Klienten</NuxtLink></li>
+          <li><NuxtLink to="/handbuch/hilfe/was-hxroom-nicht-kann" :class="linkClass">Was HxRoom nicht kann</NuxtLink></li>
         </ul>
       </nav>
 

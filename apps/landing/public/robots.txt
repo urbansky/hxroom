@@ -5,7 +5,18 @@ Disallow: /agb
 Disallow: /avv
 Disallow: /blog
 
+# KI-Crawler ausdrücklich erlaubt, mit denselben Ausnahmen: Sie sollen Startseite und
+# Handbuch lesen (doc/marketing/handbuch.md §6.2), samt llms.txt und llms-full.txt.
 User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
 Allow: /
 Disallow: /impressum
 Disallow: /datenschutz
@@ -13,10 +24,4 @@ Disallow: /agb
 Disallow: /avv
 Disallow: /blog
 
-User-agent: OAI-SearchBot
-Allow: /
-Disallow: /impressum
-Disallow: /datenschutz
-Disallow: /agb
-Disallow: /avv
-Disallow: /blog
+Sitemap: https://hxroom.de/sitemap.xml

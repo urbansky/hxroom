@@ -30,6 +30,9 @@ const anchors = [
           <li v-for="item in anchors" :key="item.href">
             <a :href="item.href" class="text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">{{ item.label }}</a>
           </li>
+          <li>
+            <NuxtLink to="/handbuch" class="text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) transition-colors no-underline">Handbuch</NuxtLink>
+          </li>
         </ul>
         <UButton
           :to="demoUrl"

@@ -4,6 +4,7 @@ description: "Hosting in Frankfurt oder in Virginia? Was der Server-Standort kon
 date: "2026-06-17"
 category: "DSGVO"
 draft: true
+handbuch: [datenschutz/wo-liegen-die-daten, datenschutz/verschluesselung]
 ---
 
 Es klingt nach einem technischen Detail: „Wo steht der Server?" Aber im Coaching ist es eine der wichtigsten Architektur-Entscheidungen. Sie bestimmt, wie viel DSGVO-Aufwand auf dich zukommt, wie viel Vertrauen du in einem Satz aufbauen kannst – und wie zukunftssicher dein Setup ist.

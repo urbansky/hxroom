@@ -4,6 +4,7 @@ description: "AVV einfach erklärt: Wann du als Coach einen Auftragsverarbeitung
 date: "2026-06-03"
 category: "DSGVO"
 draft: true
+handbuch: [datenschutz/avv, datenschutz/wo-liegen-die-daten]
 ---
 
 Wenn du als Coach mit Online-Tools arbeitest, taucht früher oder später ein Wort auf, das viele in Panik versetzt: **AVV**. Drei Buchstaben, eine ganze Welt an Pflichten. Ich nehme dir hier den Schrecken – und zeige dir konkret, welche AVVs du heute brauchst.

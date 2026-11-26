@@ -4,6 +4,7 @@ description: "Calendly, Cal.com, HxRoom – welches Buchungssystem passt zu dein
 date: "2026-07-15"
 category: "Tools"
 draft: true
+handbuch: [fuer-klienten/termin-buchen, erste-schritte/was-ist-hxroom]
 ---
 
 Wenn du als Coach online arbeitest, ist deine Buchungs-Strecke der wahrscheinlich wichtigste Marketing-Funnel deines Geschäfts. Sie entscheidet, ob aus einem Interessenten ein Termin wird – und ob aus dem Termin ein ehrlicher erster Eindruck wird. In diesem Vergleich nehmen wir die drei Optionen unter die Lupe, die für Solo-Coaches im DACH-Raum 2026 in Frage kommen: **Calendly**, **Cal.com** und **HxRoom**.

@@ -4,6 +4,7 @@ description: "Vom Zoom-Link zur eigenen Coaching-Marke: Wie du als Coach in 4 Wo
 date: "2026-07-01"
 category: "Branding"
 draft: true
+handbuch: [erste-schritte/einrichtungs-checkliste, videocall/warteraum]
 ---
 
 > Dein Online-Auftritt ist nicht deine Website. Dein Online-Auftritt ist die Summe aller Berührungspunkte zwischen „jemand hört zum ersten Mal deinen Namen" und „jemand sitzt in deiner ersten Sitzung". Genau diese Strecke entscheidet, ob du als professionell wahrgenommen wirst – oder als netter Hobbyist.

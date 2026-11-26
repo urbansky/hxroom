@@ -3,6 +3,7 @@ title: Warum ein eigener Videoraum mehr wert ist als ein Zoom-Link
 description: Zoom-Links sind praktisch – aber sie senden eine Botschaft, die du vielleicht nicht senden willst. Über Branding, Vertrauen und was ein eigener Raum mit deiner Praxis macht.
 date: "2026-05-20"
 category: Praxistipps
+handbuch: [videocall/warteraum, fuer-klienten/warteraum, erste-schritte/was-ist-hxroom]
 ---
 
 Wenn du Klienten einen Zoom-Link schickst, passiert etwas Unscheinbares: Der Klient landet auf einer Seite, die nichts mit dir zu tun hat. Zoom-Logo, generische Hintergrundfarben, vielleicht ein Hinweis auf ein kostenloses Konto. Bevor das Gespräch beginnt, hat die Plattform bereits ihre eigene Marke platziert – nicht deine.

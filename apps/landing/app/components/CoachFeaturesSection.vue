@@ -9,10 +9,10 @@ const content = {
     { icon: 'i-lucide-calendar-sync', title: 'Kalender-Synchronisierung', text: 'Steht in deinem Kalender (z. B. Google, Outlook oder iCloud) schon ein Termin, ist die Zeit auf deiner Buchungsseite auch entsprechend blockiert.' },
     { icon: 'i-lucide-layout-template', title: 'Buchungsseite mit deinem Namen', text: 'Foto, Texte, Angebote und Impressum – unter deinname.hxroom.de.' },
     { icon: 'i-lucide-bell-ring', title: 'Erinnerungen automatisch', text: 'Deine Klienten bekommen 24 Stunden und eine Stunde vorher eine Mail.' },
-    { icon: 'i-lucide-notebook-pen', title: 'Notizen im Gespräch', text: 'Schreib mit, während ihr sprecht. Die Notizen bleiben beim Termin und beim Klienten.' },
-    { icon: 'i-lucide-messages-square', title: 'Chat und Dateien', text: 'Ein Arbeitsblatt teilen oder einen Link schicken, ohne das Gespräch zu verlassen.' },
-    { icon: 'i-lucide-flask-conical', title: 'Probe-Sitzung mit dir selbst', text: 'Am Rechner als Coach, auf dem Handy als Klient – so erlebst du beide Seiten.' },
-  ],
+    { icon: 'i-lucide-notebook-pen', title: 'Notizen im Gespräch', text: 'Schreib mit, während ihr sprecht. Die Notizen bleiben beim Termin und beim Klienten.', handbuch: '/handbuch/videocall/notizen' },
+    { icon: 'i-lucide-messages-square', title: 'Chat und Dateien', text: 'Ein Arbeitsblatt teilen oder einen Link schicken, ohne das Gespräch zu verlassen.', handbuch: '/handbuch/videocall/chat-und-dateien' },
+    { icon: 'i-lucide-flask-conical', title: 'Probe-Sitzung mit dir selbst', text: 'Am Rechner als Coach, auf dem Handy als Klient – so erlebst du beide Seiten.', handbuch: '/handbuch/erste-schritte/probe-sitzung' },
+  ] as { icon: string, title: string, text: string, handbuch?: string }[],
 }
 </script>
 
@@ -36,7 +36,17 @@ const content = {
             <div>
               <h3 class="text-[16px] font-medium text-(--ui-text-highlighted) mb-1.5">{{ feature.title }}</h3>
               <p class="text-[15px] text-(--ui-text) opacity-80 leading-[1.6]">{{ feature.text }}</p>
+              <NuxtLink
+                v-if="feature.handbuch"
+                :to="feature.handbuch"
+                class="inline-flex items-center gap-1 mt-2 text-[14px] text-sage-700 dark:text-sage-300 hover:text-(--ui-text-highlighted) transition-colors no-underline"
+              >
+                So geht’s <UIcon name="i-lucide-arrow-right" class="size-3.5" />
+              </NuxtLink>
             </div>
+          </li>
+          <li class="col-span-2 max-sm:col-span-1">
+            <HandbuchLink to="/handbuch" label="alle Funktionen Schritt für Schritt" />
           </li>
         </ul>
 

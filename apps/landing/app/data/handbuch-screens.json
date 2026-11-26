@@ -1,0 +1,123 @@
+{
+  "datenschutz/daten-exportieren": {
+    "kind": "crop",
+    "src": "/screens/handbuch/datenschutz/daten-exportieren.webp",
+    "dark": "/screens/handbuch/datenschutz/daten-exportieren-dark.webp",
+    "width": 752,
+    "height": 355
+  },
+  "datenschutz/konto-loeschen": {
+    "kind": "crop",
+    "src": "/screens/handbuch/datenschutz/konto-loeschen.webp",
+    "dark": "/screens/handbuch/datenschutz/konto-loeschen-dark.webp",
+    "width": 752,
+    "height": 411
+  },
+  "erste-schritte/checkliste": {
+    "kind": "crop",
+    "src": "/screens/handbuch/erste-schritte/checkliste.webp",
+    "dark": "/screens/handbuch/erste-schritte/checkliste-dark.webp",
+    "width": 1136,
+    "height": 462
+  },
+  "erste-schritte/dashboard": {
+    "kind": "page",
+    "src": "/screens/handbuch/erste-schritte/dashboard.webp",
+    "dark": "/screens/handbuch/erste-schritte/dashboard-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de"
+  },
+  "erste-schritte/probe-sitzung": {
+    "kind": "crop",
+    "src": "/screens/handbuch/erste-schritte/probe-sitzung.webp",
+    "dark": "/screens/handbuch/erste-schritte/probe-sitzung-dark.webp",
+    "width": 512,
+    "height": 650
+  },
+  "fuer-klienten/buchung": {
+    "kind": "phone",
+    "src": "/screens/handbuch/fuer-klienten/buchung.webp",
+    "dark": "/screens/handbuch/fuer-klienten/buchung-dark.webp",
+    "width": 585,
+    "height": 1266
+  },
+  "fuer-klienten/buchung-vorgemerkt": {
+    "kind": "phone",
+    "src": "/screens/handbuch/fuer-klienten/buchung-vorgemerkt.webp",
+    "dark": "/screens/handbuch/fuer-klienten/buchung-vorgemerkt-dark.webp",
+    "width": 585,
+    "height": 1266
+  },
+  "fuer-klienten/warteraum-handy": {
+    "kind": "phone",
+    "src": "/screens/handbuch/fuer-klienten/warteraum-handy.webp",
+    "dark": "/screens/handbuch/fuer-klienten/warteraum-handy-dark.webp",
+    "width": 585,
+    "height": 1266
+  },
+  "videocall/abschlusskarte": {
+    "kind": "crop",
+    "src": "/screens/handbuch/videocall/abschlusskarte.webp",
+    "dark": "/screens/handbuch/videocall/abschlusskarte-dark.webp",
+    "width": 480,
+    "height": 468
+  },
+  "videocall/chat": {
+    "kind": "page",
+    "src": "/screens/handbuch/videocall/chat.webp",
+    "dark": "/screens/handbuch/videocall/chat-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/call/…"
+  },
+  "videocall/geraete-einrichten": {
+    "kind": "crop",
+    "src": "/screens/handbuch/videocall/geraete-einrichten.webp",
+    "dark": "/screens/handbuch/videocall/geraete-einrichten-dark.webp",
+    "width": 480,
+    "height": 587
+  },
+  "videocall/gespraech-coach": {
+    "kind": "page",
+    "src": "/screens/handbuch/videocall/gespraech-coach.webp",
+    "dark": "/screens/handbuch/videocall/gespraech-coach-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/call/…"
+  },
+  "videocall/notizen": {
+    "kind": "page",
+    "src": "/screens/handbuch/videocall/notizen.webp",
+    "dark": "/screens/handbuch/videocall/notizen-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/call/…"
+  },
+  "videocall/warteraum-coach": {
+    "kind": "page",
+    "src": "/screens/handbuch/videocall/warteraum-coach.webp",
+    "dark": "/screens/handbuch/videocall/warteraum-coach-dark.webp",
+    "width": 1440,
+    "height": 1040,
+    "address": "app.hxroom.de/call/…",
+    "markers": [
+      {
+        "x": 46,
+        "y": 29.1
+      },
+      {
+        "x": 32.9,
+        "y": 90.1
+      }
+    ]
+  },
+  "videocall/warteraum-klient": {
+    "kind": "page",
+    "src": "/screens/handbuch/videocall/warteraum-klient.webp",
+    "dark": "/screens/handbuch/videocall/warteraum-klient-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "demo.hxroom.de/call/…"
+  }
+}
