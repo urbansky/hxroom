@@ -25,6 +25,7 @@ const content = {
       srcDark: '/screens/confirmation-mail-dark.webp',
       alt: 'Bestätigungsmail mit Termin und Knopf zum Warteraum',
       address: undefined,
+      handbuch: { to: '/handbuch/termine/mails-an-klienten', label: 'Mails an Klienten' },
     },
     {
       title: 'Er wartet bei dir, nicht bei Zoom',

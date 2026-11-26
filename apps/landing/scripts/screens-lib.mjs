@@ -92,10 +92,13 @@ function shiftLiveBooking(node, liveId, inLiveResponse) {
   return copy;
 }
 
-/** Chat-Nachrichten des laufenden Termins: drei Minuten nach Beginn statt der echten Uhrzeit. */
+/**
+ * Chat-Nachrichten des laufenden Termins: drei Minuten nach Beginn statt der echten Uhrzeit.
+ * Nur Nachrichten (erkennbar am Absender), nicht etwa den Anlagezeitpunkt der Buchung.
+ */
 function retimeMessages(node) {
   if (!node || typeof node !== 'object') return;
-  if (typeof node.createdAt === 'string') {
+  if (typeof node.createdAt === 'string' && 'sender' in node) {
     node.createdAt = new Date(displayStart().getTime() + 3 * 60 * 1000).toISOString();
   }
   Object.values(node).forEach(retimeMessages);
@@ -179,7 +182,7 @@ export async function newContext(browser, demo, scheme, viewport = VIEWPORT, dev
         const messageTime = new Date(new Date(startIso).getTime() + 3 * 60 * 1000).toISOString();
         const retime = (node) => {
           if (!node || typeof node !== 'object') return;
-          if (typeof node.createdAt === 'string') node.createdAt = messageTime;
+          if (typeof node.createdAt === 'string' && 'sender' in node) node.createdAt = messageTime;
           Object.values(node).forEach(retime);
         };
         retime(event);

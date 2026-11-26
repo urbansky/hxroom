@@ -84,6 +84,18 @@ async function capture(page, scheme, name, { crop, padding = 16, markers = [], a
     };
   }
 
+  // Lokale Adressen in der Form, die Coachs sehen: demo.hxroom.localhost → demo.hxroom.de
+  await page.evaluate(() => {
+    const swap = (text) => text.replaceAll('hxroom.localhost', 'hxroom.de').replace(/http:\/\/([a-z0-9-]+\.)?hxroom\.de/g, 'https://$1hxroom.de');
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node.nodeValue.includes('hxroom.localhost')) node.nodeValue = swap(node.nodeValue);
+    }
+    for (const input of document.querySelectorAll('input')) {
+      if (input.value.includes('hxroom.localhost')) input.value = swap(input.value);
+    }
+  });
+
   const file = `${name}${scheme === 'dark' ? '-dark' : ''}.webp`;
   await saveWebp(page, join(OUT, file), crop ? { clip: area } : {});
   console.log(`  ${file}`);
@@ -150,10 +162,6 @@ const scenes = {
     await coach.getByRole('button', { name: 'Probe-Sitzung starten' }).click();
     // „Zum Gespräch“ ist ein Link (UButton mit `to`).
     await coach.getByRole('link', { name: 'Zum Gespräch' }).waitFor({ timeout: 20000 });
-    // Im Feld stünde die lokale Adresse; fürs Bild die Form, die Coachs sehen.
-    await coach.getByRole('dialog').locator('input[readonly]').evaluate((input) => {
-      input.value = input.value.replace(/^http:\/\/([a-z0-9-]+)\.hxroom\.localhost/, 'https://$1.hxroom.de');
-    });
     await coach.waitForTimeout(800);
     await capture(coach, scheme, 'erste-schritte/probe-sitzung', { crop: coach.getByRole('dialog'), padding: 0 });
     await coach.context().close();
@@ -218,9 +226,47 @@ const scenes = {
     await coach.context().close();
   },
 
+  /** Buchungsseite, Rechtliches, Angebote, Verfügbarkeit, Termine. Ändert nichts. */
+  async backoffice({ scheme, demo, coachBrowser }) {
+    const coach = await (await newContext(coachBrowser, demo, scheme)).newPage();
+    await loginCoach(coach, demo);
+    const open = async (path, text) => {
+      await coach.goto(`${COACH_APP}${path}`, { waitUntil: 'domcontentloaded' });
+      await coach.getByText(text, { exact: true }).first().waitFor();
+      await coach.mouse.move(VIEWPORT.width - 10, VIEWPORT.height - 10);
+      await coach.waitForTimeout(1500);
+    };
+
+    await open('/settings/bookingpage', 'Profil');
+    await capture(coach, scheme, 'buchungsseite/einstellungen', { address: 'app.hxroom.de/settings/bookingpage' });
+
+    await open('/settings/legal', 'Impressum');
+    const imprint = coach.locator('section').filter({ has: coach.getByRole('heading', { name: 'Impressum', exact: true }) }).first();
+    await capture(coach, scheme, 'buchungsseite/impressum', { crop: imprint });
+
+    await open('/bookings/offers', 'Sitzungsangebote');
+    await capture(coach, scheme, 'angebote/sitzungsangebote', { address: 'app.hxroom.de/bookings/offers' });
+
+    await open('/bookings/availability', 'Zeiten');
+    await capture(coach, scheme, 'angebote/verfuegbarkeit', { address: 'app.hxroom.de/bookings/availability' });
+
+    await open('/bookings/availability?tab=calendar', 'Belegte Zeiten übernehmen');
+    await capture(coach, scheme, 'angebote/kalender', { address: 'app.hxroom.de/bookings/availability' });
+
+    await open('/bookings', 'Termin anlegen');
+    await capture(coach, scheme, 'termine/wochenansicht', { address: 'app.hxroom.de/bookings' });
+
+    await coach.getByRole('button', { name: 'Termin anlegen' }).first().click();
+    const dialog = coach.getByRole('dialog');
+    await dialog.getByText('Wiederholen', { exact: true }).waitFor();
+    await coach.waitForTimeout(800);
+    await capture(coach, scheme, 'termine/termin-anlegen', { crop: dialog, padding: 0 });
+    await coach.context().close();
+  },
+
   /**
    * Warteraum beider Seiten, Geräte einrichten, Einlass, Gespräch mit Notizen und Chat,
-   * Abschlusskarte. Beendet das Gespräch, deshalb zuletzt.
+   * Abschlusskarte. Beendet das Gespräch, deshalb fast zuletzt.
    */
   async videocall({ scheme, demo, clientBrowser, coachBrowser }) {
     // Warteraum des Klienten. Die Uhr steht kurz nach Beginn („Es geht gleich los“), wie auf
@@ -314,6 +360,25 @@ const scenes = {
     const summary = coach.locator('div').filter({ hasText: 'Sitzung abgeschlossen' }).filter({ has: coach.getByRole('link', { name: 'Zum Dashboard' }) }).last();
     await capture(coach, scheme, 'videocall/abschlusskarte', { crop: summary });
   },
+
+  /** Terminseite und Klientenseite nach dem Gespräch aus videocall – mit Notizen und Chat. */
+  async 'nach-gespraech'({ scheme, demo, coachBrowser }) {
+    const coach = await (await newContext(coachBrowser, demo, scheme)).newPage();
+    await loginCoach(coach, demo);
+
+    await coach.goto(`${COACH_APP}/bookings/${demo.liveBookingId}`, { waitUntil: 'domcontentloaded' });
+    await coach.getByText('Verlauf').first().waitFor();
+    await coach.mouse.move(VIEWPORT.width - 10, VIEWPORT.height - 10);
+    await coach.waitForTimeout(1500);
+    await capture(coach, scheme, 'termine/terminseite', { address: 'app.hxroom.de/bookings/…' });
+
+    await coach.goto(`${COACH_APP}/clients/demo-client-1`, { waitUntil: 'domcontentloaded' });
+    await coach.getByText('Nur für dich').first().waitFor();
+    await coach.mouse.move(VIEWPORT.width - 10, VIEWPORT.height - 10);
+    await coach.waitForTimeout(1500);
+    await capture(coach, scheme, 'klienten/klientenseite', { address: 'app.hxroom.de/clients/…' });
+    await coach.context().close();
+  },
 };
 
 // --- Ablauf ------------------------------------------------------------------------
@@ -324,7 +389,13 @@ if (unknown.length) {
   console.error(`Unbekannte Szene: ${unknown.join(', ')}. Vorhanden: ${Object.keys(scenes).join(', ')}`);
   process.exit(1);
 }
-const selected = Object.entries(scenes).filter(([name]) => !wanted.length || wanted.includes(name));
+// Reihenfolge innerhalb eines Seeds: Was Zustand anlegt, kommt nach dem, was ihn nicht sehen
+// soll – die Probe-Sitzung aus erste-schritte stünde sonst in der Wochenansicht von backoffice,
+// und nach-gespraech braucht das beendete Gespräch aus videocall.
+const ORDER = ['backoffice', 'erste-schritte', 'fuer-klienten', 'datenschutz', 'videocall', 'nach-gespraech'];
+const missing = Object.keys(scenes).filter((name) => !ORDER.includes(name));
+if (missing.length) throw new Error(`Szene ohne Platz in ORDER: ${missing.join(', ')}`);
+const selected = ORDER.filter((name) => !wanted.length || wanted.includes(name)).map((name) => [name, scenes[name]]);
 
 for (const scheme of ['light', 'dark']) {
   const demo = seedDemo();

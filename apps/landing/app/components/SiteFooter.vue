@@ -31,10 +31,11 @@ const linkClass = 'text-[14px] text-(--ui-text-muted) hover:text-(--ui-text) tra
         <p class="text-[11px] tracking-[0.14em] uppercase text-(--ui-text-dimmed) mb-4">Handbuch</p>
         <ul class="flex flex-col gap-2.5">
           <li><NuxtLink to="/handbuch/erste-schritte" :class="linkClass">Erste Schritte</NuxtLink></li>
+          <li><NuxtLink to="/handbuch/termine" :class="linkClass">Termine</NuxtLink></li>
           <li><NuxtLink to="/handbuch/videocall" :class="linkClass">Videocall</NuxtLink></li>
           <li><NuxtLink to="/handbuch/datenschutz" :class="linkClass">Datenschutz</NuxtLink></li>
           <li><NuxtLink to="/handbuch/fuer-klienten" :class="linkClass">Für Klienten</NuxtLink></li>
-          <li><NuxtLink to="/handbuch/hilfe/was-hxroom-nicht-kann" :class="linkClass">Was HxRoom nicht kann</NuxtLink></li>
+          <li><NuxtLink to="/handbuch/hilfe/haeufige-fragen" :class="linkClass">Häufige Fragen</NuxtLink></li>
         </ul>
       </nav>
 

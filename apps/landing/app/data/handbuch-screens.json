@@ -1,4 +1,43 @@
 {
+  "angebote/kalender": {
+    "kind": "page",
+    "src": "/screens/handbuch/angebote/kalender.webp",
+    "dark": "/screens/handbuch/angebote/kalender-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/bookings/availability"
+  },
+  "angebote/sitzungsangebote": {
+    "kind": "page",
+    "src": "/screens/handbuch/angebote/sitzungsangebote.webp",
+    "dark": "/screens/handbuch/angebote/sitzungsangebote-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/bookings/offers"
+  },
+  "angebote/verfuegbarkeit": {
+    "kind": "page",
+    "src": "/screens/handbuch/angebote/verfuegbarkeit.webp",
+    "dark": "/screens/handbuch/angebote/verfuegbarkeit-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/bookings/availability"
+  },
+  "buchungsseite/einstellungen": {
+    "kind": "page",
+    "src": "/screens/handbuch/buchungsseite/einstellungen.webp",
+    "dark": "/screens/handbuch/buchungsseite/einstellungen-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/settings/bookingpage"
+  },
+  "buchungsseite/impressum": {
+    "kind": "crop",
+    "src": "/screens/handbuch/buchungsseite/impressum.webp",
+    "dark": "/screens/handbuch/buchungsseite/impressum-dark.webp",
+    "width": 752,
+    "height": 684
+  },
   "datenschutz/daten-exportieren": {
     "kind": "crop",
     "src": "/screens/handbuch/datenschutz/daten-exportieren.webp",
@@ -56,6 +95,37 @@
     "width": 585,
     "height": 1266
   },
+  "klienten/klientenseite": {
+    "kind": "page",
+    "src": "/screens/handbuch/klienten/klientenseite.webp",
+    "dark": "/screens/handbuch/klienten/klientenseite-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/clients/…"
+  },
+  "termine/termin-anlegen": {
+    "kind": "crop",
+    "src": "/screens/handbuch/termine/termin-anlegen.webp",
+    "dark": "/screens/handbuch/termine/termin-anlegen-dark.webp",
+    "width": 512,
+    "height": 603
+  },
+  "termine/terminseite": {
+    "kind": "page",
+    "src": "/screens/handbuch/termine/terminseite.webp",
+    "dark": "/screens/handbuch/termine/terminseite-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/bookings/…"
+  },
+  "termine/wochenansicht": {
+    "kind": "page",
+    "src": "/screens/handbuch/termine/wochenansicht.webp",
+    "dark": "/screens/handbuch/termine/wochenansicht-dark.webp",
+    "width": 1440,
+    "height": 900,
+    "address": "app.hxroom.de/bookings"
+  },
   "videocall/abschlusskarte": {
     "kind": "crop",
     "src": "/screens/handbuch/videocall/abschlusskarte.webp",
@@ -104,11 +174,11 @@
     "markers": [
       {
         "x": 46,
-        "y": 29.1
+        "y": 27.4
       },
       {
         "x": 32.9,
-        "y": 90.1
+        "y": 88.4
       }
     ]
   },
