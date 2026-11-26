@@ -251,6 +251,10 @@ async function main(): Promise<void> {
             cancelledAt: booking.status === 'cancelled' ? booking.createdAt : null,
             cancelledBy: booking.cancelledBy ?? null,
             cancellationReason: booking.cancellationReason ?? null,
+            // Als schon erinnert: Sonst schickte der Erinnerungslauf echte Mails an die
+            // fiktiven Adressen, sobald Brevo die lokale IP annimmt.
+            reminder24hSentAt: now,
+            reminder1hSentAt: now,
             createdAt: booking.createdAt,
             updatedAt: booking.createdAt,
           };
@@ -277,6 +281,8 @@ async function main(): Promise<void> {
         clientPhone: liveClient.phone,
         clientNote: null,
         clientAccessToken: liveToken,
+        reminder24hSentAt: now,
+        reminder1hSentAt: now,
         confirmedAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
         createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
         updatedAt: now,
